@@ -13,6 +13,7 @@ import {
   taiyiNext,
   taiyiPhases,
   taiyiStatus,
+  taiyiWalkthrough,
 } from "./handlers.js";
 
 /**
@@ -199,6 +200,28 @@ const TaiyiForgePlugin: Plugin = async () => {
         async execute(args, ctx) {
           const r = taiyiMarkAux(ctx.directory, args.slug, args.skill);
           return JSON.stringify(r, null, 2);
+        },
+      }),
+      taiyi_walkthrough: tool({
+        description:
+          "First-run walkthrough in the current workspace: doctor, init demo change, show next step.",
+        args: {
+          slug: tool.schema
+            .string()
+            .optional()
+            .describe("Demo slug, default walkthrough-demo"),
+          profile: tool.schema
+            .enum(["full", "api", "lite"])
+            .optional()
+            .describe("Init profile, default api"),
+        },
+        async execute(args, ctx) {
+          const r = taiyiWalkthrough(ctx.directory, {
+            slug: args.slug,
+            profile: args.profile,
+            plain: true,
+          });
+          return "text" in r && r.text ? r.text : JSON.stringify(r, null, 2);
         },
       }),
     },

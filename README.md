@@ -48,13 +48,13 @@ TAIYI_FORGE_INSTALL=opencode,cursor npm install oh-my-taiyiforge
 }
 ```
 
-安装包后 OpenCode 会加载 **12 个工具**（含 `taiyi_doctor`、`taiyi_list`、`taiyi_next` 等）。
+安装包后 OpenCode 会加载 **13 个工具**（含 `taiyi_doctor`、`taiyi_list`、`taiyi_next`、`taiyi_walkthrough` 等）。
 
 ```bash
 npx taiyi doctor              # 安装自检
 npx taiyi next <slug>         # 人类可读下一步
 npx taiyi init <slug> --profile api|lite
-npm run walkthrough           # 首次体验（仓库内）
+npx taiyi walkthrough         # 首次体验（任意项目目录）
 ```  
 工件落在项目目录 **`.taiyi/changes/<slug>/`**。
 

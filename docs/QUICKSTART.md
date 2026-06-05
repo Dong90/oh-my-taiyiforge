@@ -32,6 +32,8 @@ mkdir demo && cd demo
 npm init -y
 npm install oh-my-taiyiforge
 
+npx taiyi walkthrough       # 首次体验（自动 init 演示变更）
+# 或手动：
 npx taiyi init my-first --title "My First Change"
 npx taiyi next my-first     # 人类可读下一步（推荐）
 ```

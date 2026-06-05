@@ -13,6 +13,7 @@ import { runDoctor } from "../core/doctor.js";
 import { listChanges } from "../core/list-changes.js";
 import { formatGuidePlain } from "../core/format-guide.js";
 import { resolvePackageRoot } from "../core/package-root.js";
+import { formatWalkthroughPlain, runWalkthrough } from "../core/walkthrough.js";
 
 const TEMPLATES_DIR = resolveTemplatesDir(import.meta.url);
 
@@ -208,4 +209,19 @@ export function taiyiAssess(workspaceDir: string, slug: string, signals?: Comple
   } catch (e) {
     return { ok: false as const, error: String(e) };
   }
+}
+
+export function taiyiWalkthrough(
+  workspaceDir: string,
+  options?: { slug?: string; profile?: ChangeProfile; title?: string; plain?: boolean },
+) {
+  const result = runWalkthrough(workspaceDir, {
+    slug: options?.slug,
+    profile: options?.profile,
+    title: options?.title,
+  });
+  if (options?.plain !== false) {
+    return { ok: result.ok, text: formatWalkthroughPlain(result), result };
+  }
+  return { ok: result.ok, result };
 }

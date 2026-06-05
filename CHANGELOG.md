@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.15.0] - 2026-06-05
+
+### Added
+
+- `taiyi walkthrough` / `taiyi_walkthrough`：在**任意项目目录**首次体验（doctor → init → next）
+- 主流程 9 个 Skill 补厚至与辅助 Skill 同级（模板、Handoff、质量自检、禁止项）
+
+### Changed
+
+- `npm run walkthrough` 委托给 `taiyi walkthrough`
+- OpenCode 工具增至 13 个
+
 ## [0.14.0] - 2026-06-05
 
 ### Added

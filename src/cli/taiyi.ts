@@ -16,6 +16,7 @@ import {
   taiyiNext,
   taiyiStatus,
   taiyiSyncOpenspec,
+  taiyiWalkthrough,
 } from "../plugin/handlers.js";
 
 const workspaceDir = process.cwd();
@@ -37,7 +38,8 @@ function usage(): void {
   npm run taiyi -- complete <slug> <phase>
   npm run taiyi -- sync-openspec <slug>
   npm run taiyi -- archive <slug>
-  npm run walkthrough                       首次体验交互引导（仓库内）
+  npm run taiyi -- walkthrough [--slug name] [--profile api|lite]
+                                              在当前项目目录首次体验
 
 Profile: full | api（跳过 ui-design）| lite（五阶段）
 `);
@@ -205,6 +207,22 @@ switch (cmd) {
     const r = taiyiArchive(workspaceDir, slug, { skipSpecs });
     console.log(JSON.stringify(r, null, 2));
     if (!r.ok) process.exit(1);
+    break;
+  }
+  case "walkthrough": {
+    let slug: string | undefined;
+    let profile: ChangeProfile | undefined;
+    const slugIdx = args.indexOf("--slug");
+    if (slugIdx >= 0) slug = args[slugIdx + 1];
+    profile = parseProfile(args);
+    const r = taiyiWalkthrough(workspaceDir, { slug, profile, plain: !jsonMode });
+    if (!r.ok) {
+      if ("text" in r && r.text) console.error(r.text);
+      else console.error(r.result?.error ?? "walkthrough failed");
+      process.exit(1);
+    }
+    if ("text" in r && r.text) console.log(r.text);
+    else console.log(JSON.stringify(r, null, 2));
     break;
   }
   case "complete": {
