@@ -36,10 +36,17 @@ export type GateInput = {
   human: HumanApproval;
 };
 
+export type ChangeProfile = "full" | "api" | "ui" | "lite";
+
 export type ChangeState = {
   slug: string;
   currentPhase: PhaseId;
   completedPhases: PhaseId[];
+  profile: ChangeProfile;
+  skippedPhases: PhaseId[];
+  strictDev: boolean;
+  complexity?: ComplexityAssessment;
+  auxiliaryCompleted: string[];
   createdAt: string;
   updatedAt: string;
 };

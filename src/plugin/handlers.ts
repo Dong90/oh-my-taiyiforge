@@ -1,10 +1,11 @@
 import path from "node:path";
-import type { GateInput, PhaseId, QualityScores } from "../core/types.js";
+import type { ChangeProfile, GateInput, PhaseId, QualityScores } from "../core/types.js";
 import { WorkflowEngine } from "../core/workflow-engine.js";
 import { listPhases, getPhase } from "../core/phase-registry.js";
 import { resolveTaiyiRoot } from "../core/paths.js";
 import { resolveTemplatesDir } from "../core/package-root.js";
-import { assessComplexity, type ComplexitySignals } from "../core/routing/complexity.js";
+import { requiresHumanGate } from "../core/gates/human-gate-config.js";
+import type { ComplexitySignals } from "../core/routing/complexity.js";
 import { buildPhaseGuide } from "../core/phase-guide.js";
 import { getOpenspecStatus, runOpenspecArchive } from "../integrations/openspec.js";
 import { syncTaiyiToOpenspec } from "../integrations/openspec-sync.js";
@@ -15,14 +16,24 @@ export function createEngine(workspaceDir: string): WorkflowEngine {
   return new WorkflowEngine(resolveTaiyiRoot(workspaceDir), TEMPLATES_DIR);
 }
 
-export function taiyiInit(workspaceDir: string, slug: string, title?: string) {
+export function taiyiInit(
+  workspaceDir: string,
+  slug: string,
+  options?: { title?: string; profile?: ChangeProfile; strictDev?: boolean },
+) {
   const engine = createEngine(workspaceDir);
-  const result = engine.initChange(slug, { title, templatesDir: TEMPLATES_DIR });
+  const result = engine.initChange(slug, {
+    title: options?.title,
+    templatesDir: TEMPLATES_DIR,
+    profile: options?.profile,
+    strictDev: options?.strictDev,
+  });
   const { seeded, ...state } = result;
   return {
     ok: true as const,
     state,
     seeded,
+    assessment: state.complexity,
     taiyiRoot: resolveTaiyiRoot(workspaceDir),
   };
 }
@@ -42,7 +53,7 @@ export function taiyiGuide(workspaceDir: string, slug: string) {
   const state = engine.getState(slug);
   if (!state) return { ok: false as const, error: `Change not found: ${slug}` };
   const guide = buildPhaseGuide(resolveTaiyiRoot(workspaceDir), slug, state, workspaceDir);
-  return { ok: true as const, guide };
+  return { ok: true as const, guide, assessment: state.complexity };
 }
 
 export function taiyiPhases() {
@@ -70,7 +81,10 @@ export function taiyiComplete(
     traceability: gates?.quality?.traceability ?? true,
     engineering_quality: gates?.quality?.engineering_quality ?? true,
   };
-  const human = gates?.human ?? { approved: true, approver: "opencode-agent" };
+  const human = gates?.human ?? {
+    approved: true,
+    approver: requiresHumanGate(phase.id) ? "opencode-user" : "opencode-agent",
+  };
   const result = engine.completePhase(slug, phase.id, { quality, human });
   if (!result.ok) {
     return {
@@ -79,12 +93,21 @@ export function taiyiComplete(
       qualityHints: result.qualityHints,
     };
   }
+  const nextState = engine.getState(slug)!;
   return {
     ok: true as const,
-    state: engine.getState(slug),
+    state: nextState,
     phase: phase.id,
-    nextSkill: getPhase(engine.getState(slug)!.currentPhase).skill,
+    nextSkill: getPhase(nextState.currentPhase).skill,
+    assessment: nextState.complexity,
   };
+}
+
+export function taiyiMarkAux(workspaceDir: string, slug: string, skillId: string) {
+  const engine = createEngine(workspaceDir);
+  const result = engine.markAuxiliary(slug, skillId);
+  if (!result.ok) return { ok: false as const, error: result.error };
+  return { ok: true as const, state: engine.getState(slug) };
 }
 
 export function taiyiSyncOpenspec(
@@ -152,11 +175,11 @@ export function taiyiArchive(
   };
 }
 
-export function taiyiAssess(workspaceDir: string, slug: string, signals: ComplexitySignals) {
+export function taiyiAssess(workspaceDir: string, slug: string, signals?: ComplexitySignals) {
   const engine = createEngine(workspaceDir);
   try {
-    const assessment = engine.assessComplexity(slug, signals);
-    return { ok: true as const, assessment };
+    const { signals: used, assessment } = engine.assessComplexity(slug, signals);
+    return { ok: true as const, signals: used, assessment };
   } catch (e) {
     return { ok: false as const, error: String(e) };
   }

@@ -7,6 +7,7 @@ import {
   taiyiComplete,
   taiyiGuide,
   taiyiInit,
+  taiyiMarkAux,
   taiyiPhases,
   taiyiStatus,
 } from "./handlers.js";
@@ -27,9 +28,21 @@ const TaiyiForgePlugin: Plugin = async () => {
             .string()
             .optional()
             .describe("Human-readable change title for templates"),
+          profile: tool.schema
+            .enum(["full", "api", "ui", "lite"])
+            .optional()
+            .describe("full=9 phases; api=skip ui-design; lite=5 phases"),
+          strictDev: tool.schema
+            .boolean()
+            .optional()
+            .describe("Require exitCode:0 evidence in .dev-complete"),
         },
         async execute(args, ctx) {
-          const r = taiyiInit(ctx.directory, args.slug, args.title);
+          const r = taiyiInit(ctx.directory, args.slug, {
+            title: args.title,
+            profile: args.profile,
+            strictDev: args.strictDev,
+          });
           return JSON.stringify(r, null, 2);
         },
       }),
@@ -122,7 +135,7 @@ const TaiyiForgePlugin: Plugin = async () => {
       }),
       taiyi_assess: tool({
         description:
-          "Assess change complexity and recommend auxiliary taiyi-* skills (architect, health, ...).",
+          "Assess change complexity and recommend auxiliary taiyi-* skills. Infers from CHANGE.md when signals omitted.",
         args: {
           slug: tool.schema.string(),
           touchedModules: tool.schema.number().optional(),
@@ -130,11 +143,31 @@ const TaiyiForgePlugin: Plugin = async () => {
           testLevels: tool.schema.number().optional(),
         },
         async execute(args, ctx) {
-          const r = taiyiAssess(ctx.directory, args.slug, {
-            touchedModules: args.touchedModules ?? 0,
-            hasUi: args.hasUi ?? false,
-            testLevels: args.testLevels ?? 1,
-          });
+          const hasSignals =
+            args.touchedModules != null || args.hasUi != null || args.testLevels != null;
+          const r = taiyiAssess(
+            ctx.directory,
+            args.slug,
+            hasSignals
+              ? {
+                  touchedModules: args.touchedModules ?? 0,
+                  hasUi: args.hasUi ?? false,
+                  testLevels: args.testLevels ?? 1,
+                }
+              : undefined,
+          );
+          return JSON.stringify(r, null, 2);
+        },
+      }),
+      taiyi_mark_aux: tool({
+        description:
+          "Record completion of an auxiliary taiyi-* skill (e.g. taiyi-health) on this change.",
+        args: {
+          slug: tool.schema.string(),
+          skill: tool.schema.string().describe("Auxiliary skill id, e.g. taiyi-health"),
+        },
+        async execute(args, ctx) {
+          const r = taiyiMarkAux(ctx.directory, args.slug, args.skill);
           return JSON.stringify(r, null, 2);
         },
       }),

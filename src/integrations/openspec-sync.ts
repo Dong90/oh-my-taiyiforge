@@ -9,6 +9,9 @@ export const TAIYI_TO_OPENSPEC: Record<string, string> = {
   "DESIGN.md": "design.md",
   "UI-DESIGN.md": "clarify.md",
   "TASK.md": "tasks.md",
+  "TEST.md": "specs/test.md",
+  "REVIEW.md": "review.md",
+  "CHANGELOG.md": "changelog.md",
 };
 
 export type SyncResult = {

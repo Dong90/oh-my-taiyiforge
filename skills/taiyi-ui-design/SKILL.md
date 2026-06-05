@@ -1,13 +1,18 @@
 ---
 name: taiyi-ui-design
-description: TaiyiForge 第 4 阶段 — UI/UX 契约，产出 UI-DESIGN.md。
+description: TaiyiForge 第 4 阶段 — UI/UX 契约，产出 UI-DESIGN.md。四端通用。
 ---
 
 # taiyi-ui-design
 
 ## 目的
 
-把 DESIGN 落到**界面层次、状态、无障碍**；无 UI 的变更也要显式声明 N/A。
+把 DESIGN 落到**界面层次、四态、无障碍**；无 UI 须显式 N/A。
+
+## 何时跳过
+
+- `init --profile api` → 引擎跳过本阶段
+- 纯后端变更：勿编造 UI
 
 ## 输入
 
@@ -16,16 +21,30 @@ description: TaiyiForge 第 4 阶段 — UI/UX 契约，产出 UI-DESIGN.md。
 ## 输出
 
 - `.taiyi/changes/<slug>/UI-DESIGN.md`
-- 模板：`templates/UI-DESIGN.md`
 
 ## 执行步骤
 
-1. 若无 UI：写 **Scope: N/A**，说明纯后端/CLI 变更及验证方式
-2. 若有 UI：主路径 + loading/empty/error/success 四态
-3. Links 表指向 DESIGN 与 AC
-4. 无障碍 checklist 不得全空勾选
-5. 通过后：`taiyi complete <slug> ui-design`
+1. **无 UI**：Scope 写 `N/A — 纯 API/后端`，Links 指向 DESIGN；满足校验即可 complete
+2. **有 UI**：填 Layout、States 表（loading/empty/error/success）、Accessibility checklist
+3. 大改版 → 先 `taiyi-restyle` 产出 `ui-restyle-tasks.md`
+4. `npx taiyi complete <slug> ui-design`
 
-## 可选
+## 无 UI 模板片段
 
-- 视觉大改时用 `taiyi-restyle` 生成 restyle 任务清单
+```markdown
+## Scope
+N/A — 本变更无前端界面，验证通过 API/CLI 测试。
+
+## Links
+- DESIGN.md §Architecture
+```
+
+## 质量自检
+
+- [ ] 有 UI 时 States + Accessibility 非空
+- [ ] Links 指向 DESIGN 与 AC
+
+## 禁止
+
+- api profile 仍写大段 UI
+- 无障碍 checklist 全空却声称有 UI

@@ -49,7 +49,10 @@ taiyi_init → taiyi_guide（每步）
 | `taiyi_status` | 状态 + guide |
 | `taiyi_complete` | 完成阶段（含质量校验） |
 | `taiyi_assess` | 复杂度与辅助 skill 建议 |
-| `taiyi_sync_openspec` | 将 `.taiyi/changes/<slug>/` 工件拷贝到 `openspec/changes/<slug>/` |
+| `taiyi_sync_openspec` | 将 `.taiyi/changes/<slug>/` 工件拷贝到 `openspec/changes/<slug>/`（含 TEST/REVIEW/CHANGELOG） |
 | `taiyi_archive` | 九阶段完成后调用 OpenSpec archive（需 `openspec/changes/<slug>/`） |
+| `taiyi_mark_aux` | 标记辅助 Skill（如 `taiyi-health`）已完成 |
+
+`init` 支持 `--profile api|lite`；`guide` 返回 `recommendedAuxiliary` 与 `complexity`。
 
 `taiyi_status` 的 `openspec` 字段会显示是否检测到 OpenSpec 及建议命令。

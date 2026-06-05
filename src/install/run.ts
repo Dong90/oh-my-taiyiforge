@@ -9,6 +9,7 @@ import {
   opencodeConfigDir,
   skillSourceRoot,
 } from "./paths.js";
+import { installCursorRules } from "./cursor-rules.js";
 import { syncTaiyiSkills } from "./sync-skills.js";
 import type { InstallResult, InstallTarget } from "./types.js";
 import { ALL_INSTALL_TARGETS, PLUGIN_NAME } from "./types.js";
@@ -127,7 +128,10 @@ function formatInstallSummary(targets: InstallTarget[], dirs: ReturnType<typeof 
   if (targets.includes("codex")) {
     lines.push(`  Codex     → ${dirs.codex}/taiyi-* + AGENTS.md 段落`);
   }
-  if (targets.includes("cursor")) lines.push(`  Cursor    → ${dirs.cursor}/taiyi-*`);
+  if (targets.includes("cursor")) {
+    lines.push(`  Cursor    → ${dirs.cursor}/taiyi-*`);
+    lines.push(`  Cursor    → ${path.dirname(dirs.cursor)}/rules/taiyiforge.mdc`);
+  }
   const footer = targets.includes("opencode")
     ? "\n重启 OpenCode 后使用 taiyi_init / taiyi_status 等工具。"
     : "\n在 IDE 中加载 taiyi-* Skill，并用 npx taiyi <cmd> 驱动工作流。";
@@ -155,6 +159,7 @@ export async function runInstall(opts: RunInstallOptions = {}): Promise<InstallR
   }
   if (targets.includes("cursor")) {
     results.push({ ...syncTaiyiSkills(skillsSrc, dirs.cursor), target: "cursor" });
+    results.push(installCursorRules(dirs.cursor));
   }
 
   const wantsOpencodeConfig =

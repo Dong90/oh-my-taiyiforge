@@ -109,7 +109,7 @@ Demo motivation with enough detail for validation.
 
   it("assesses complexity from artifact count", () => {
     engine.initChange("big-change");
-    const assessment = engine.assessComplexity("big-change", {
+    const { assessment } = engine.assessComplexity("big-change", {
       touchedModules: 12,
       hasUi: true,
       testLevels: 4,

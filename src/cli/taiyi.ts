@@ -3,9 +3,13 @@ import { WorkflowEngine } from "../core/workflow-engine.js";
 import { listPhases } from "../core/phase-registry.js";
 import { resolveTaiyiRoot } from "../core/paths.js";
 import { resolveTemplatesDir } from "../core/package-root.js";
+import { requiresHumanGate } from "../core/gates/human-gate-config.js";
+import type { ChangeProfile, PhaseId } from "../core/types.js";
 import {
   taiyiArchive,
+  taiyiAssess,
   taiyiGuide,
+  taiyiMarkAux,
   taiyiStatus,
   taiyiSyncOpenspec,
 } from "../plugin/handlers.js";
@@ -17,22 +21,37 @@ function usage(): void {
   console.log(`TaiyiForge (oh-my-taiyiforge)
 
 用法:
-  npm run taiyi -- init <slug> [--title "名称"]  创建变更工作区（自动拷贝模板）
-  npm run taiyi -- status <slug>         查看阶段状态（含 guide）
-  npm run taiyi -- guide <slug>          当前该做什么
-  npm run taiyi -- phases                列出九阶段
-  npm run taiyi -- complete <slug> <phase>  完成阶段（需工件+门禁）
-  npm run taiyi -- sync-openspec <slug>    同步工件到 openspec/changes/
-  npm run taiyi -- archive <slug>          OpenSpec archive（需 integration 完成）
+  npm run taiyi -- init <slug> [--title "名称"] [--profile full|api|ui|lite] [--strict-dev]
+  npm run taiyi -- status <slug>              状态 + guide + 复杂度
+  npm run taiyi -- guide <slug>               当前该做什么（含辅助 Skill 推荐）
+  npm run taiyi -- assess <slug>              评估复杂度（自动读 CHANGE）
+  npm run taiyi -- mark-aux <slug> <skill>    标记辅助 Skill 已完成
+  npm run taiyi -- phases                     九阶段列表
+  npm run taiyi -- complete <slug> <phase>    完成阶段
+  npm run taiyi -- sync-openspec <slug>       同步到 openspec/changes/
+  npm run taiyi -- archive <slug>             OpenSpec archive
 
-示例:
-  npm run taiyi -- init auth-timeout
+Profile:
+  full  九阶段（默认）
+  api   跳过 ui-design
+  lite  change→requirement→dev→test→integration
+
+环境变量:
+  TAIYI_HUMAN_GATE_PHASES=change,design,review  需人工确认的阶段
 `);
 }
 
 const templatesDir = resolveTemplatesDir(import.meta.url);
 const engine = new WorkflowEngine(taiyiRoot, templatesDir);
 const [cmd, ...args] = process.argv.slice(2);
+
+function parseProfile(argv: string[]): ChangeProfile | undefined {
+  const idx = argv.indexOf("--profile");
+  if (idx < 0) return undefined;
+  const v = argv[idx + 1] as ChangeProfile;
+  if (v === "full" || v === "api" || v === "ui" || v === "lite") return v;
+  return undefined;
+}
 
 switch (cmd) {
   case "init": {
@@ -44,7 +63,12 @@ switch (cmd) {
     let title: string | undefined;
     const titleIdx = args.indexOf("--title");
     if (titleIdx >= 0) title = args[titleIdx + 1];
-    const result = engine.initChange(slug, { title, templatesDir });
+    const result = engine.initChange(slug, {
+      title,
+      templatesDir,
+      profile: parseProfile(args) ?? "full",
+      strictDev: args.includes("--strict-dev"),
+    });
     console.log(JSON.stringify(result, null, 2));
     break;
   }
@@ -69,6 +93,34 @@ switch (cmd) {
       process.exit(1);
     }
     const r = taiyiGuide(workspaceDir, slug);
+    if (!r.ok) {
+      console.error(r.error);
+      process.exit(1);
+    }
+    console.log(JSON.stringify(r, null, 2));
+    break;
+  }
+  case "assess": {
+    const slug = args[0];
+    if (!slug) {
+      console.error("缺少 slug");
+      process.exit(1);
+    }
+    const r = taiyiAssess(workspaceDir, slug);
+    if (!r.ok) {
+      console.error(r.error);
+      process.exit(1);
+    }
+    console.log(JSON.stringify(r, null, 2));
+    break;
+  }
+  case "mark-aux": {
+    const [slug, skill] = args;
+    if (!slug || !skill) {
+      console.error("用法: mark-aux <slug> <taiyi-skill>");
+      process.exit(1);
+    }
+    const r = taiyiMarkAux(workspaceDir, slug, skill);
     if (!r.ok) {
       console.error(r.error);
       process.exit(1);
@@ -114,7 +166,9 @@ switch (cmd) {
       console.error("用法: complete <slug> <phase>");
       process.exit(1);
     }
-    const result = engine.completePhase(slug, phase as never, {
+    const phaseId = phase as PhaseId;
+    const needsHuman = requiresHumanGate(phaseId);
+    const result = engine.completePhase(slug, phaseId, {
       quality: {
         completeness: true,
         consistency: true,
@@ -122,7 +176,10 @@ switch (cmd) {
         traceability: true,
         engineering_quality: true,
       },
-      human: { approved: true, approver: "cli-operator" },
+      human: {
+        approved: true,
+        approver: needsHuman ? "cli-operator" : "cli-auto",
+      },
     });
     if (!result.ok) {
       console.error(result.error);

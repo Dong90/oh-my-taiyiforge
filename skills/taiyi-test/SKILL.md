@@ -1,31 +1,52 @@
 ---
 name: taiyi-test
-description: TaiyiForge 第 7 阶段 — 测试计划与 AC 覆盖证据，产出 TEST.md。
+description: TaiyiForge 第 7 阶段 — 测试计划与运行证据，产出 TEST.md。四端通用。
 ---
 
 # taiyi-test
 
 ## 目的
 
-证明实现满足 REQUIREMENT，而不仅是「跑过几条 happy path」。
+证明实现满足 AC：**测什么、怎么跑、实际结果**（非口头声明）。
 
 ## 输入
 
-- 已完成的代码与测试、`REQUIREMENT.md`、`TASK.md`
+- `REQUIREMENT.md` AC
+- 代码与 `.dev-complete`
+- （可选）`taiyi-evolve` 若设计有漂移
 
 ## 输出
 
 - `.taiyi/changes/<slug>/TEST.md`
-- 模板：`templates/TEST.md`
 
 ## 执行步骤
 
-1. Test Plan：unit / integration / e2e 及实际命令
-2. Coverage vs AC 表：每条 AC 有证据（测试名、截图、日志）
-3. 运行测试，勾选 Results；失败不得 complete
-4. Gaps 诚实列出 follow-up
-5. 通过后：`taiyi complete <slug> test`
+1. **Test Plan** 表：层级（单元/集成/E2E）、命令、覆盖 AC
+2. **实际运行**每条命令，记录退出码与日期
+3. 附 CI run URL 或终端摘要
+4. high 复杂度建议在 test 后跑 `taiyi-evolve`
+5. `npx taiyi complete <slug> test`
+
+## 证据格式
+
+```markdown
+## Execution Log
+
+| 命令 | 退出码 | 时间 |
+|------|--------|------|
+| npm test | 0 | 2026-06-05 |
+```
+
+## 质量自检
+
+- [ ] 每条 MVP AC 有对应用例或手动步骤
+- [ ] 含真实 exitCode（Superpowers verification-before-completion）
+
+## 与铁三角
+
+- Superpowers `verification-before-completion`
 
 ## 禁止
 
-- 未运行测试就勾选通过
+- 未跑测试写「已通过」
+- TEST 与 REQUIREMENT AC 无映射

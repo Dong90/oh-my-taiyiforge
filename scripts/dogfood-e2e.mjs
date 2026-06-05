@@ -3,6 +3,7 @@
  * Run nine-phase E2E on a change slug (default: dogfood-demo) in cwd.
  * Usage: node scripts/dogfood-e2e.mjs [slug]
  */
+import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -17,6 +18,11 @@ const { resolveTaiyiRoot } = await import(path.join(pkgRoot, "dist/core/paths.js
 const workspace = process.cwd();
 const taiyiRoot = resolveTaiyiRoot(workspace);
 const engine = new WorkflowEngine(taiyiRoot, templatesDir);
+
+const changeDir = path.join(taiyiRoot, "changes", slug);
+if (fs.existsSync(changeDir)) {
+  fs.rmSync(changeDir, { recursive: true, force: true });
+}
 
 const result = runE2eWorkflow(engine, slug, templatesDir);
 if (!result.ok) {

@@ -1,31 +1,45 @@
 ---
 name: taiyi-integration
-description: TaiyiForge 第 9 阶段 — 归档与 CHANGELOG，闭环沉淀。
+description: TaiyiForge 第 9 阶段 — 归档与 CHANGELOG，闭环沉淀。四端通用。
 ---
 
 # taiyi-integration
 
 ## 目的
 
-合并后**文档进仓、变更可追溯、可回滚**，完成 TaiyiForge 九阶段闭环。
+合并后**文档进仓、变更可追溯、可回滚**，关闭九阶段（或 lite 五阶段）循环。
 
 ## 输入
 
 - 已合并代码、`REVIEW.md`、`CHANGE.md`
+- `state.json` 显示全部必需阶段已完成
 
 ## 输出
 
 - `.taiyi/changes/<slug>/CHANGELOG.md`
-- 模板：`templates/CHANGELOG.md`
 
 ## 执行步骤
 
-1. 按 Added / Changed / Fixed 写用户可见变更
-2. Docs / Skills 勾选：对外行为变则更新 README / AGENTS
-3. Rollback：写清回滚步骤（feature flag、revert、迁移 down）
-4. 可选：**OpenSpec** `taiyi_archive` / `taiyi archive <slug>`（项目需有 `openspec/changes/<slug>/`）、**gstack** `document-release`、发版 tag
-5. 通过后：`taiyi complete <slug> integration`
+1. Added / Changed / Fixed 写**用户可见**变更
+2. Docs 勾选：README / AGENTS 是否需更新
+3. **Rollback** 步骤（revert、flag、迁移 down）
+4. 可选同步与归档：
+   - `npx taiyi sync-openspec <slug>`（含 TEST/REVIEW/CHANGELOG）
+   - `npx taiyi archive <slug>`
+   - gstack `document-release`
+5. `npx taiyi complete <slug> integration`
 
-## 完成标志
+## 完成后
 
-- 九阶段 `state.json` 中 `integration` 已完成；变更可归档或关闭 Issue
+- `npx taiyi guide <slug>` 提示可 archive 或开新 slug
+- 辅助 Skill 记录保留在 `state.auxiliaryCompleted` 供审计
+
+## 质量自检
+
+- [ ] CHANGELOG 与 CHANGE Success Criteria 对应
+- [ ] Rollback 可执行
+
+## 禁止
+
+- integration 未完成就 archive
+- CHANGELOG 只写内部 refactor 无用户价值（应标 Changed/Dev）

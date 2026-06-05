@@ -1,5 +1,24 @@
 # Changelog
 
+## [0.13.0] - 2026-06-05
+
+### Added
+
+- `taiyi_guide` 串联复杂度评估与 `recommendedAuxiliary` / `pendingAuxiliary`
+- `taiyi mark-aux` / `taiyi_mark_aux`：记录辅助 Skill 完成
+- **Profile**：`--profile full|api|ui|lite`（api 跳过 ui-design，lite 五阶段）
+- `--strict-dev`：`.dev-complete` 需 `exitCode: 0` 证据
+- `TAIYI_HUMAN_GATE_PHASES`：可配置人工门（默认 change/design/review）
+- init 自动从 CHANGE 推断复杂度；high 复杂度 review 前强制 `taiyi-health`
+- OpenSpec 同步：TEST / REVIEW / CHANGELOG
+- Cursor 安装时写入 `~/.cursor/rules/taiyiforge.mdc`
+- 主流程 9 个 Skill 补厚
+
+### Changed
+
+- `state.json` 含 `profile`、`skippedPhases`、`complexity`、`auxiliaryCompleted`
+- `ui-design` 工件加强校验（N/A 或 States+A11y）
+
 ## [0.12.0] - 2026-06-05
 
 ### Added

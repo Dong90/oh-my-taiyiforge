@@ -1,14 +1,13 @@
 import fs from "node:fs";
 import path from "node:path";
-import type { ChangeState, GateInput, PhaseId } from "./types.js";
+import type { ChangeProfile, ChangeState, GateInput, PhaseId } from "./types.js";
 import { evaluateHumanGate } from "./gates/human-gate.js";
+import { requiresHumanGate } from "./gates/human-gate-config.js";
 import { evaluateQualityGate } from "./gates/quality-gate.js";
-import {
-  canEnterPhase,
-  getNextPhase,
-  getPhase,
-} from "./phase-registry.js";
+import { canEnterPhase, getNextPhase, getPhase } from "./phase-registry.js";
+import { isPhaseSkipped, skippedPhasesForProfile } from "./profile.js";
 import { assessComplexity, type ComplexitySignals } from "./routing/complexity.js";
+import { inferComplexitySignals } from "./routing/infer-complexity.js";
 import { seedChangeTemplates } from "./template-seed.js";
 import {
   artifactPathForPhase,
@@ -18,7 +17,19 @@ import {
 export type InitChangeOptions = {
   title?: string;
   templatesDir?: string;
+  profile?: ChangeProfile;
+  strictDev?: boolean;
 };
+
+function normalizeState(raw: ChangeState): ChangeState {
+  return {
+    ...raw,
+    profile: raw.profile ?? "full",
+    skippedPhases: raw.skippedPhases ?? [],
+    strictDev: raw.strictDev ?? false,
+    auxiliaryCompleted: raw.auxiliaryCompleted ?? [],
+  };
+}
 
 export class WorkflowEngine {
   constructor(
@@ -41,6 +52,8 @@ export class WorkflowEngine {
   initChange(slug: string, options?: InitChangeOptions): ChangeState & { seeded: string[] } {
     const dir = this.changeDir(slug);
     fs.mkdirSync(dir, { recursive: true });
+    const profile = options?.profile ?? "full";
+    const skippedPhases = skippedPhasesForProfile(profile);
     const templatesDir = options?.templatesDir ?? this.templatesDir;
     const seeded =
       templatesDir != null
@@ -49,11 +62,32 @@ export class WorkflowEngine {
             title: options?.title,
           })
         : [];
+
+    if (profile === "api") {
+      const uiPath = path.join(dir, "UI-DESIGN.md");
+      if (!fs.existsSync(uiPath)) {
+        fs.writeFileSync(
+          uiPath,
+          `# UI-DESIGN: ${options?.title ?? slug}\n\n## Scope\nN/A — 纯 API / 后端变更，无前端界面。\n\n## Links\n- DESIGN.md\n`,
+          "utf8",
+        );
+        seeded.push("UI-DESIGN.md");
+      }
+    }
+
     const now = new Date().toISOString();
+    const signals = inferComplexitySignals(dir);
+    const complexity = assessComplexity(signals);
+
     const state: ChangeState = {
       slug,
       currentPhase: "change",
       completedPhases: [],
+      profile,
+      skippedPhases,
+      strictDev: options?.strictDev ?? false,
+      complexity,
+      auxiliaryCompleted: [],
       createdAt: now,
       updatedAt: now,
     };
@@ -64,7 +98,7 @@ export class WorkflowEngine {
   getState(slug: string): ChangeState | null {
     const file = this.statePath(slug);
     if (!fs.existsSync(file)) return null;
-    return JSON.parse(fs.readFileSync(file, "utf8")) as ChangeState;
+    return normalizeState(JSON.parse(fs.readFileSync(file, "utf8")) as ChangeState);
   }
 
   private writeState(state: ChangeState): void {
@@ -84,14 +118,39 @@ export class WorkflowEngine {
     return fs.existsSync(p) && fs.statSync(p).size > 0;
   }
 
+  markAuxiliary(slug: string, skillId: string): { ok: boolean; error?: string } {
+    const state = this.getState(slug);
+    if (!state) return { ok: false, error: "Change not found" };
+    if (!skillId.startsWith("taiyi-")) {
+      return { ok: false, error: "skillId must be taiyi-*" };
+    }
+    const auxiliaryCompleted = state.auxiliaryCompleted.includes(skillId)
+      ? state.auxiliaryCompleted
+      : [...state.auxiliaryCompleted, skillId];
+    this.writeState({ ...state, auxiliaryCompleted, updatedAt: new Date().toISOString() });
+    return { ok: true };
+  }
+
+  refreshComplexity(slug: string, signals?: ComplexitySignals) {
+    const state = this.getState(slug);
+    if (!state) throw new Error(`Change not found: ${slug}`);
+    const inferred = signals ?? inferComplexitySignals(this.changeDir(slug));
+    const complexity = assessComplexity(inferred);
+    this.writeState({ ...state, complexity, updatedAt: new Date().toISOString() });
+    return { signals: inferred, assessment: complexity };
+  }
+
   completePhase(
     slug: string,
     phaseId: PhaseId,
     gates: GateInput,
-    options?: { skipArtifactValidation?: boolean },
+    options?: { skipArtifactValidation?: boolean; forceHuman?: boolean },
   ): { ok: boolean; error?: string; qualityHints?: string[] } {
     const state = this.getState(slug);
     if (!state) return { ok: false, error: "Change not found" };
+    if (isPhaseSkipped(phaseId, state.skippedPhases)) {
+      return { ok: false, error: `Phase ${phaseId} is skipped for profile ${state.profile}` };
+    }
     if (state.currentPhase !== phaseId) {
       return {
         ok: false,
@@ -101,6 +160,7 @@ export class WorkflowEngine {
 
     const enter = canEnterPhase(phaseId, {
       completedPhases: state.completedPhases,
+      skippedPhases: state.skippedPhases,
     });
     if (!enter.ok) {
       return { ok: false, error: `Missing phases: ${enter.missing.join(", ")}` };
@@ -111,6 +171,16 @@ export class WorkflowEngine {
         ok: false,
         error: `Artifact missing for phase ${phaseId}`,
       };
+    }
+
+    if (phaseId === "review" && state.complexity?.level === "high") {
+      if (!state.auxiliaryCompleted.includes("taiyi-health")) {
+        return {
+          ok: false,
+          error:
+            "High complexity: complete taiyi-health and run `taiyi mark-aux <slug> taiyi-health` before review",
+        };
+      }
     }
 
     let qualityScores = { ...gates.quality };
@@ -132,6 +202,19 @@ export class WorkflowEngine {
             qualityScores.engineering_quality && inferred.scores.engineering_quality,
         };
       }
+
+      if (phaseId === "dev" && state.strictDev) {
+        const devPath = this.artifactPath(slug, "dev");
+        const devText = fs.readFileSync(devPath, "utf8");
+        if (!/strict:\s*true/i.test(devText)) {
+          qualityHints = [
+            ...(qualityHints ?? []),
+            "init 时启用了 strictDev：.dev-complete 首行写 strict: true",
+          ];
+          qualityScores.verifiability = false;
+          qualityScores.completeness = false;
+        }
+      }
     }
 
     const quality = evaluateQualityGate(qualityScores);
@@ -144,26 +227,28 @@ export class WorkflowEngine {
       };
     }
 
-    const human = evaluateHumanGate(gates.human);
-    if (!human.passed) {
-      return { ok: false, error: human.reason ?? "Human gate failed" };
+    const needsHuman = requiresHumanGate(phaseId) || options?.forceHuman;
+    if (needsHuman) {
+      const human = evaluateHumanGate(gates.human);
+      if (!human.passed) {
+        return { ok: false, error: human.reason ?? "Human gate failed" };
+      }
     }
 
     const completed = [...state.completedPhases, phaseId];
-    const next = getNextPhase(phaseId);
+    const next = getNextPhase(phaseId, state.skippedPhases);
     const updated: ChangeState = {
       ...state,
       completedPhases: completed,
       currentPhase: next ?? phaseId,
+      complexity: assessComplexity(inferComplexitySignals(this.changeDir(slug))),
       updatedAt: new Date().toISOString(),
     };
     this.writeState(updated);
     return { ok: true };
   }
 
-  assessComplexity(slug: string, signals: ComplexitySignals) {
-    const state = this.getState(slug);
-    if (!state) throw new Error(`Change not found: ${slug}`);
-    return assessComplexity(signals);
+  assessComplexity(slug: string, signals?: ComplexitySignals) {
+    return this.refreshComplexity(slug, signals);
   }
 }

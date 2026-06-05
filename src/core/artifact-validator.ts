@@ -19,6 +19,10 @@ const PHASE_SECTIONS: Partial<Record<PhaseId, SectionRule[]>> = {
     { heading: "## Options", minChars: 8 },
     { heading: "## Decision", minChars: 8 },
   ],
+  "ui-design": [
+    { heading: "## Scope", minChars: 4 },
+    { heading: "## Links", minChars: 4 },
+  ],
   task: [{ heading: "## Slices", minChars: 8 }],
   test: [{ heading: "## Test Plan", minChars: 8 }],
   review: [{ heading: "## Verdict", minChars: 4 }],
@@ -46,13 +50,25 @@ export function validateArtifactContent(
   const text = stripComments(content);
 
   if (phaseId === "dev") {
-    const ok = text.length >= 3;
-    if (!ok) hints.push("创建非空 .dev-complete 标记文件");
+    const hasMarker = text.length >= 3;
+    if (!hasMarker) hints.push("创建非空 .dev-complete 标记文件");
+
+    const strict = /strict:\s*true/i.test(text);
+    let strictOk = true;
+    if (strict) {
+      const exitOk = /exit(?:Code)?:\s*0\b/i.test(text);
+      const cmdOk = /command:\s*\S+/i.test(text);
+      strictOk = exitOk && cmdOk;
+      if (!exitOk) hints.push("strict dev：.dev-complete 需含 exitCode: 0");
+      if (!cmdOk) hints.push("strict dev：.dev-complete 需含 command: <npm test 等>");
+    }
+
+    const ok = hasMarker && strictOk;
     return {
       scores: {
         completeness: ok,
         consistency: ok,
-        verifiability: ok,
+        verifiability: strictOk,
         traceability: ok,
         engineering_quality: ok,
       },
@@ -82,13 +98,33 @@ export function validateArtifactContent(
   const consistency = !hasPlaceholderOnly;
   if (hasPlaceholderOnly) hints.push("仍含 {{title}} / {{slug}} 占位符");
 
-  const verifiability =
+  let verifiability =
     phaseId === "change"
       ? /Success Criteria|验收|可验证|\[ \]|\[x\]/i.test(content)
       : phaseId === "requirement"
         ? /Given|When|Then/i.test(content)
         : text.length >= minTotal;
-  if (!verifiability) hints.push("缺少可验证表述（AC / Given-When-Then / checklist）");
+
+  if (phaseId === "ui-design") {
+    const scope = sectionBody(content, "## Scope");
+    const isNa =
+      /n\/a|无 ui|无界面|no ui|backend only|纯后端|纯 api/i.test(scope) ||
+      /n\/a|无 ui|无界面/i.test(text);
+    verifiability = isNa
+      ? scope.length >= 4
+      : /## States/i.test(content) &&
+        /Accessibility|无障碍/i.test(content) &&
+        text.length >= minTotal;
+    if (!verifiability) {
+      hints.push(
+        isNa
+          ? "无 UI：Scope 写 N/A 并说明验证方式"
+          : "有 UI：需 States 节 + Accessibility checklist",
+      );
+    }
+  } else if (!verifiability) {
+    hints.push("缺少可验证表述（AC / Given-When-Then / checklist）");
+  }
 
   const traceability =
     phaseId === "requirement"
