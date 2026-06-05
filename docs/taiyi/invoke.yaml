@@ -8,6 +8,7 @@ invoke:
   chat:
     pattern: "/taiyi:<verb>"
     core: [new, continue, apply, status, archive]
+    token: [token-status, token-record, token-scan, token-compress]
     codex: "$taiyi-<verb>   # prompts/taiyi-new.md …"
     opencode: "插件工具 taiyi_init / taiyi_complete / taiyi_harness（无需 shell）"
   engine_shell:

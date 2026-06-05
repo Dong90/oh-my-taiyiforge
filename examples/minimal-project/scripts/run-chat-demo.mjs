@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * 聊天动词演示：/taiyi:new → status → continue（未就绪时指引）→ check
+ * 聊天动词演示：/taiyi:new → status → token → check → continue → loop
  * Usage: node scripts/run-chat-demo.mjs
  */
 import fs from "node:fs";
@@ -12,6 +12,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const workspace = path.resolve(__dirname, "..");
 const pkgRoot = path.resolve(workspace, "../..");
 const forgeSh = path.join(pkgRoot, "scripts/taiyi-forge.sh");
+const slug = "chat-verb-demo";
 const title = "Chat Verb Demo";
 
 const taiyi = (args) => {
@@ -30,11 +31,10 @@ function banner(label, chat) {
   console.log("─".repeat(50));
 }
 
-// 清理旧 chat-demo 变更
 const taiyiRoot = path.join(workspace, ".taiyi", "changes");
 if (fs.existsSync(taiyiRoot)) {
   for (const ent of fs.readdirSync(taiyiRoot)) {
-    if (ent.includes("chat-verb") || ent === "chat-verb-demo") {
+    if (ent.includes("chat-verb")) {
       fs.rmSync(path.join(taiyiRoot, ent), { recursive: true, force: true });
     }
   }
@@ -45,21 +45,39 @@ let r = taiyi(["new", title, "--auto"]);
 console.log(r.out.trimEnd());
 if (r.code !== 0) process.exit(1);
 
-banner("2. 查看进度（含意图分析）", "/taiyi:status");
-r = taiyi(["status"]);
+banner("2. 查看进度", `/taiyi:status ${slug}`);
+r = taiyi(["status", slug]);
 console.log(r.out.trimEnd());
 
-banner("3. 铁三角清单", "/taiyi:check");
-r = taiyi(["check"]);
+banner("3. Token 扫描与压缩", "/taiyi:token scan + compress");
+r = taiyi(["token", "scan", slug]);
+console.log(r.out.trimEnd());
+r = taiyi(["token", "compress", slug]);
 console.log(r.out.trimEnd());
 
-banner("4. 推进（工件未就绪 → 应输出指引）", "/taiyi:continue");
-r = taiyi(["continue"]);
+banner("4. 铁三角清单", `/taiyi:check ${slug}`);
+r = taiyi(["check", slug]);
+console.log(r.out.trimEnd());
+
+banner("5. 推进（未就绪 → 指引）", `/taiyi:continue ${slug}`);
+r = taiyi(["continue", slug]);
 console.log(r.out.trimEnd());
 if (r.code === 0) {
   console.error("预期 continue 在空 CHANGE 时应非零退出");
   process.exit(1);
 }
 
-console.log("\n✓ 聊天动词路径演示完成");
+banner("6. 循环推进", `/taiyi:loop ${slug} x2`);
+r = taiyi(["loop", slug, "x2"]);
+console.log(r.out.trimEnd());
+if (r.code === 0) {
+  console.error("预期 loop 在阻塞时应非零退出");
+  process.exit(1);
+}
+
+banner("7. 重复 check", `/taiyi:check ${slug} x2`);
+r = taiyi(["check", slug, "x2"]);
+console.log(r.out.trimEnd().split("\n").slice(0, 12).join("\n") + "\n  …");
+
+console.log("\n✓ 聊天动词 + Token + Loop 演示完成");
 console.log("完整九阶段请运行: npm run walkthrough");

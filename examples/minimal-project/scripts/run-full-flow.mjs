@@ -23,18 +23,18 @@ const taiyi = (args) => {
   return { code: r.status ?? 1, out: (r.stdout || "") + (r.stderr || "") };
 };
 
-function step(n, label, fn, chatVerb) {
+function step(n, label, fn, chatVerb, opts) {
   console.log(`\n${"═".repeat(60)}`);
   console.log(`步骤 ${n}: ${label}`);
   if (chatVerb) console.log(`💬 聊天等价: ${chatVerb}`);
   console.log("═".repeat(60));
   const result = fn();
   if (result?.out) console.log(result.out.trimEnd());
-  if (result?.code !== undefined && result.code !== 0) {
+  if (result?.code !== undefined && result.code !== 0 && !opts?.allowNonZero) {
     console.error(`\n✗ 失败 exit=${result.code}`);
     process.exit(1);
   }
-  console.log("✓ OK");
+  console.log(opts?.allowNonZero && result?.code !== 0 ? "✓ OK（预期非零）" : "✓ OK");
   return result;
 }
 
@@ -349,6 +349,28 @@ step(stepNum++, "list 变更列表", () => taiyi(["list"]), "/taiyi:list");
 step(stepNum++, "ci verify", () => taiyi(["ci", "verify", "--slug", slug]));
 step(stepNum++, "最终 status", () => taiyi(["status", slug]), "/taiyi:status");
 
+step(stepNum++, "token scan + compress", () => {
+  const a = taiyi(["token", "scan", slug]);
+  if (a.code !== 0) return a;
+  return taiyi(["token", "compress", slug]);
+}, "/taiyi:token scan · /taiyi:token compress");
+
+step(stepNum++, "token record", () =>
+  taiyi(["token", "record", slug, "500", "--phase", "integration", "--label", "walkthrough"]),
+  "/taiyi:token record");
+
+const loopSlug = "loop-walkthrough-demo";
+const loopDir = path.join(workspace, ".taiyi", "changes", loopSlug);
+if (fs.existsSync(loopDir)) fs.rmSync(loopDir, { recursive: true, force: true });
+
+step(stepNum++, "loop 演示变更 init", () =>
+  taiyi(["init", loopSlug, "--auto", "--title", "Loop Walkthrough"]),
+  "/taiyi:new Loop Walkthrough");
+
+step(stepNum++, "loop x2（预期阻塞）", () => taiyi(["loop", loopSlug, "x2"]), "/taiyi:loop x2", {
+  allowNonZero: true,
+});
+
 console.log("\n" + "═".repeat(60));
-console.log("全流程完成 — minimal-demo 九阶段已走完");
+console.log("全流程完成 — minimal-demo 九阶段 + Token/Loop 演示");
 console.log("═".repeat(60));

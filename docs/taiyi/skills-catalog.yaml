@@ -28,3 +28,6 @@ auxiliary:
     output: architecture-sync
   - id: taiyi-restyle
     output: ui-restyle-tasks
+  - id: taiyi-compress
+    output: CONTEXT-COMPACT.md
+    when: Token 超阈值或 /taiyi:token compress / taiyi-compress Skill

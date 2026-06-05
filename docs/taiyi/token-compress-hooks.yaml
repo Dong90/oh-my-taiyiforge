@@ -1,0 +1,47 @@
+version: 1
+description: Token 压缩策略 — 引擎（无 LLM）+ Superpowers / gstack（聊天 Skill，与铁三角同级）
+
+# 引擎策略（shell，首选、零 LLM Token）
+engine:
+  tool: taiyi
+  command: scripts/taiyi-forge.sh token compress <slug>
+  when: 工件按 ## 节截断 → CONTEXT-COMPACT.md；优先于全量读 CHANGE…CHANGELOG
+
+# 第三方 Skill（Agent 聊天加载，optional）
+third_party:
+  - id: superpowers-subagent
+    tool: superpowers
+    skill: subagent-driven-development
+    optional: true
+    when: 大任务/dev 切片用 subagent 隔离上下文，主会话只协调（省 50–100× 主窗 token）
+    harness_check: superpowers/subagent-driven-development
+  - id: superpowers-parallel
+    tool: superpowers
+    skill: dispatching-parallel-agents
+    optional: true
+    when: 多独立 slice 并行，各 agent 不继承主会话历史
+    harness_check: superpowers/dispatching-parallel-agents
+  - id: gstack-checkpoint
+    tool: gstack
+    skill: checkpoint
+    optional: true
+    when: 长会话 / IDE compaction 前落盘 git+决策；新会话读 checkpoint 续作
+    harness_check: gstack/checkpoint
+
+# 阶段推荐（status 超阈值或 token compress 时提示）
+phase_recommend:
+  change:
+    - engine
+    - gstack-checkpoint
+  requirement:
+    - engine
+  design:
+    - engine
+  task:
+    - engine
+    - superpowers-subagent
+  dev:
+    - superpowers-subagent
+    - superpowers-parallel
+  test:
+    - engine

@@ -34,6 +34,7 @@ export function formatStatusPlain(guide: PhaseGuide): string {
   lines.push(formatPhaseProgressLine(guide));
   const intent = formatIntentLine(guide);
   if (intent) lines.push(intent);
+  if (guide.tokenBudgetLine) lines.push(guide.tokenBudgetLine);
   lines.push("");
   if (guide.workflowCompleted) {
     lines.push("九阶段已全部完成。归档: /taiyi:archive");
@@ -53,7 +54,8 @@ export function formatStatusPlain(guide: PhaseGuide): string {
   lines.push(`下一步: ${guide.nextAction}`);
   if (guide.nextSkill) lines.push(`过关后 Skill: ${guide.nextSkill}`);
   lines.push("");
-  lines.push("常用: /taiyi:status | /taiyi:continue | /taiyi:apply（dev/test）");
+  lines.push("常用: /taiyi:status | /taiyi:continue | /taiyi:apply（dev/test）| /taiyi:loop（循环直到完成）");
+  lines.push("次数: /taiyi:continue x3 · /taiyi:apply x2 · /taiyi:loop x10");
   return lines.join("\n");
 }
 
@@ -64,6 +66,7 @@ export function formatGuidePlain(guide: PhaseGuide): string {
   lines.push(formatPhaseProgressLine(guide));
   const intent = formatIntentLine(guide);
   if (intent) lines.push(intent);
+  if (guide.tokenBudgetLine) lines.push(guide.tokenBudgetLine);
   lines.push("");
   if (guide.autoHarness) lines.push(`模式: 全自动 (--auto)`);
   if (guide.profile) lines.push(`Profile: ${guide.profile}`);

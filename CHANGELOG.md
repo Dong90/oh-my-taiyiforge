@@ -1,5 +1,22 @@
 # Changelog
 
+## [0.20.0] - 2026-06-05
+
+### Added
+
+- **Token 预算**：`token status|record|scan|compress` CLI；`.token-usage.json` 累计；阶段上限与 `TAIYI_TOKEN_ENFORCE` 门禁
+- **引擎压缩**：`token compress` → `CONTEXT-COMPACT.md`（零 LLM，按 `##` 节截断）
+- **第三方压缩钩子**：`docs/taiyi/token-compress-hooks.yaml` — Superpowers（`subagent-driven-development`、`dispatching-parallel-agents`）+ gstack（`checkpoint`）
+- **`taiyi-compress` Skill**（第 17 个）与 `docs/taiyi/token-compress.md` 专页
+- **`/taiyi:loop`** + **`xN` 后缀**（continue/apply/check/loop 重复执行；跨会话直到完成）
+- **`/taiyi:token *`** 聊天斜杠（status / record / scan / compress）；Agent 代跑 `taiyi-forge.sh token …`，禁止用户手打 npx
+- **`token-compress-hooks` 集成**：合并进 `harness-hooks`（均为 optional）；超阈值时 status/guide 输出压缩策略
+
+### Changed
+
+- doctor / CI 期望 **17** 个 Skill；`integrations.md`、`token-budget.md`、`ARCHITECTURE.md` 同步
+- `taiyi-orchestrator` 铁三角表增加 Token 压缩第三方 Skill 引用
+
 ## [0.19.0] - 2026-06-05
 
 ### Added

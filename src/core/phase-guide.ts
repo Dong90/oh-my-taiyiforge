@@ -16,6 +16,7 @@ import { inferComplexitySignals } from "./routing/infer-complexity.js";
 import type { ComplexitySignals } from "./routing/complexity.js";
 import { requiresHumanGate } from "./gates/human-gate-config.js";
 import { expectedPhaseCount, isWorkflowCompleted } from "./change-status.js";
+import { buildTokenBudgetSummary } from "./token-runner.js";
 
 export type PhaseGuide = {
   slug: string;
@@ -43,6 +44,9 @@ export type PhaseGuide = {
   auxiliaryCompleted: string[];
   autoHarness: boolean;
   harness?: HarnessContext;
+  /** Token 预算摘要行（status/guide） */
+  tokenBudgetLine?: string;
+  tokenWarnings?: string[];
 };
 
 export function buildPhaseGuide(
@@ -104,8 +108,17 @@ export function buildPhaseGuide(
     totalPhases,
   };
 
-  if (allDone) {
+  const attachToken = (guide: PhaseGuide): PhaseGuide => {
+    const token = buildTokenBudgetSummary(changeDir, slug, state.currentPhase);
     return {
+      ...guide,
+      tokenBudgetLine: token.line,
+      tokenWarnings: token.evalResult.warnings,
+    };
+  };
+
+  if (allDone) {
+    return attachToken({
       ...guideBase,
       slug,
       profile: state.profile,
@@ -129,7 +142,7 @@ export function buildPhaseGuide(
       auxiliaryCompleted: state.auxiliaryCompleted,
       autoHarness: state.autoHarness ?? false,
       harness,
-    };
+    });
   }
 
   const auxNote = pending.length > 0 ? `（可选辅助：${pending.join(", ")}）` : "";
@@ -160,7 +173,7 @@ export function buildPhaseGuide(
     nextAction = `加载 ${phase.skill}，实现后 /taiyi:apply 或 /taiyi:continue`;
   }
 
-  return {
+  return attachToken({
     ...guideBase,
     slug,
     profile: state.profile,
@@ -183,5 +196,5 @@ export function buildPhaseGuide(
     auxiliaryCompleted: state.auxiliaryCompleted,
     autoHarness: state.autoHarness ?? false,
     harness,
-  };
+  });
 }

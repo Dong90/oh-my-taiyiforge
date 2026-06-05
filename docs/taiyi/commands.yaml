@@ -92,6 +92,47 @@ profiles:
         meaning: change 阶段头脑风暴 → 加载 Superpowers brainstorming + taiyi-change
         when: 对标 opsx:explore / OMX clarify，无独立引擎子命令
 
+      - chat: "/taiyi:token status [slug]"
+        codex: "$taiyi-token-status"
+        engine: "taiyi-forge.sh token status [slug]"
+        meaning: Token 用量 / 预算 / 阶段上限；超阈值列出压缩策略
+        when: 任意阶段；/taiyi:status 已含 Token 行时可省略
+
+      - chat: "/taiyi:token record <slug> <tokens> [--phase change] [--kind agent] [--label \"...\"]"
+        codex: "$taiyi-token-record"
+        engine: "taiyi-forge.sh token record <slug> <n> [--phase] [--kind] [--label]"
+        meaning: Agent 上报本轮 Token → `.token-usage.json`
+        when: 每轮对话结束或铁三角 Skill 调用后
+
+      - chat: "/taiyi:token scan <slug>"
+        codex: "$taiyi-token-scan"
+        engine: "taiyi-forge.sh token scan <slug>"
+        meaning: 扫描 CHANGE…CHANGELOG 等工件 Token 并记入 scan
+        when: compress 前了解体量
+
+      - chat: "/taiyi:token compress <slug>"
+        codex: "$taiyi-token-compress"
+        engine: "taiyi-forge.sh token compress <slug>"
+        meaning: 引擎零 LLM 压缩 → CONTEXT-COMPACT.md + 第三方 Skill 提示
+        when: 超 compressThreshold 或 status 建议压缩时
+
+      - chat: "/taiyi:loop [slug] [xN]"
+        codex: "$taiyi-loop"
+        engine: "taiyi-forge.sh loop [slug] [xN]"
+        meaning: |
+          循环 continue 直到九阶段完成或当前阶段阻塞（默认每轮最多 20 次）。
+          阻塞后 Agent 写工件/实现，再调用 loop，直到 /taiyi:archive。
+        when: 自动推进多阶段、直到功能完成
+
+  repeat_suffix:
+    description: 任意上述引擎命令可后缀 xN，单轮重复执行
+    examples:
+      - "/taiyi:continue x3"
+      - "/taiyi:apply x2"
+      - "/taiyi:check x2"
+      - "/taiyi:loop x10"
+    engine: "taiyi-forge.sh <cmd> [slug] xN 或 --times N"
+
   expanded:
     commands:
       - chat: "/taiyi:explore"

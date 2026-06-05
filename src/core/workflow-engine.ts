@@ -18,6 +18,7 @@ import {
   runPostCompleteShellHooks,
   syncAuxiliaryFromArtifacts,
 } from "./harness-runner.js";
+import { enforceTokenBudgetBeforeComplete } from "./token-runner.js";
 import { expectedPhaseCount, isWorkflowCompleted } from "./change-status.js";
 
 export type InitChangeOptions = {
@@ -217,6 +218,12 @@ export class WorkflowEngine {
     if (!autoCheck.ok) {
       return { ok: false, error: autoCheck.error };
     }
+
+    const tokenCheck = enforceTokenBudgetBeforeComplete(changeDir, slug, phaseId);
+    if (!tokenCheck.ok) {
+      return { ok: false, error: tokenCheck.error };
+    }
+
     if (autoCheck.plan) {
       workingState = {
         ...workingState,

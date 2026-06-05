@@ -34,8 +34,9 @@ scripts/taiyi-forge.sh harness <slug>
 
 | 工具 | 加载方式 | 示例 |
 |------|----------|------|
-| superpowers | Cursor 插件 Skill | `brainstorming`、`test-driven-development`、`verification-before-completion` |
-| gstack | gstack Skill / 命令 | `plan-eng-review`、`plan-design-review`（ui 可选）、`qa`（test 可选）、`review`、`document-release` |
+| superpowers | Cursor 插件 Skill | `brainstorming`、`test-driven-development`、`verification-before-completion`；Token 压缩见 **`subagent-driven-development`** / **`dispatching-parallel-agents`** |
+| gstack | gstack Skill / 命令 | `plan-eng-review`、`plan-design-review`（ui 可选）、`qa`（test 可选）、`review`、`document-release`；Token 压缩见 **`checkpoint`** |
+| taiyi | 辅助 Skill | **`taiyi-compress`** + `/taiyi:token compress` |
 | openspec | shell（引擎可自动） | `openspec change show <slug>` |
 
 每完成一项铁三角步骤，**必须打卡**：

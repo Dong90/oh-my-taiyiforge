@@ -21,6 +21,15 @@
 
 在 OpenCode：`use skill tool to load superpowers/brainstorming`
 
+### Token 压缩（optional · 见 [token-compress.md](./token-compress.md)）
+
+| 场景 | Superpowers Skill |
+|------|-------------------|
+| dev / 大实现 | `subagent-driven-development` — 主会话只协调 |
+| 多 slice 并行 | `dispatching-parallel-agents` — 各 agent 独立上下文 |
+
+引擎侧：`/taiyi:token compress <slug>` → `CONTEXT-COMPACT.md`（零 LLM，优先于上表）。
+
 ## gstack / OMO（闭环层）
 
 | TaiyiForge 阶段 | gstack 命令 |
@@ -32,6 +41,12 @@
 | integration | `document-release` — 文档与 CHANGELOG 同步 |
 
 **OMO**：`taiyi_complete` 的 `approver` 字段记录人工审批者；high 级 REVIEW 未解决不得 Approve。
+
+### Token 压缩（optional）
+
+| 场景 | gstack Skill |
+|------|----------------|
+| 长会话 / compaction 前 | `checkpoint` — 落盘进度，新会话续作 |
 
 ## 推荐串联（单变更）
 

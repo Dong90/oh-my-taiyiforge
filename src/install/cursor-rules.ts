@@ -27,10 +27,12 @@ alwaysApply: true
 - /taiyi:continue
 - /taiyi:apply
 - /taiyi:archive
+- /taiyi:loop [slug] [xN]
+- /taiyi:token status · record · scan · compress
 
 九阶段路径见 docs/taiyi/workflow.md
 
-Codex：$taiyi-new、$taiyi-status、$taiyi-continue、$taiyi-apply、$taiyi-archive
+Codex：$taiyi-new、$taiyi-status、$taiyi-continue、$taiyi-apply、$taiyi-archive、$taiyi-token-*
 
 ## 引擎命令（Agent 内部代跑，非用户手打）
 

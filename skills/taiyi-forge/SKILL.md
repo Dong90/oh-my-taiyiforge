@@ -34,6 +34,11 @@ Codex：`$taiyi-new` … `$taiyi-status` …
 | `/taiyi:check` | auto 模式 harness 清单 |
 | `/taiyi:sync` | OpenSpec 同步 |
 | `/taiyi:run` | 演示 walkthrough |
+| `/taiyi:loop [xN]` | 循环 continue 直到完成或阻塞 |
+| `/taiyi:token status` | Token 用量 / 预算 |
+| `/taiyi:token record` | 上报 Token |
+| `/taiyi:token scan` | 扫描工件 Token |
+| `/taiyi:token compress` | 压缩 → CONTEXT-COMPACT.md |
 
 详见 `docs/taiyi/commands.yaml` → `auxiliary`
 

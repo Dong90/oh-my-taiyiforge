@@ -28,7 +28,8 @@
 |------|------|
 | 统一入口 | `taiyi` CLI · `taiyi-forge.sh` · OpenCode `taiyi_*` · `/taiyi:*` |
 | **意图分析** | `inferComplexitySignals` + `assessComplexity`；`/taiyi:status` 输出「意图分析: …」 |
-| 前置校验 | artifact 检测 · auto harness blockers |
+| **Token 预算** | `.token-usage.json` · 阶段上限 · 引擎 + **Superpowers/gstack 压缩** · 见 [token-budget.md](./taiyi/token-budget.md) · [token-compress.md](./taiyi/token-compress.md) |
+| 前置校验 | artifact 检测 · auto harness blockers · token enforce（可选） |
 | 路由决策 | profile full/api/lite · auxiliary-hints · phase-registry |
 | 复杂度评估 | `assess` · `state.complexity` |
 | Harness 编排 | `harness-runner` · `taiyi-orchestrator` |
@@ -77,7 +78,7 @@ Agent 写工件；**状态机与门禁**由引擎校验。
 ```
 src/core/           # 引擎（含 infer-complexity、template-seed）
 docs/taiyi/         # phases、harness-hooks、commands、workflow
-skills/taiyi-*/     # 16 个 Skill
+skills/taiyi-*/     # 17 个 Skill（含 taiyi-compress）
 templates/          # 九阶段 + CONTEXT.md
 .taiyi/             # 运行时（gitignore）
 ```

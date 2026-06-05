@@ -1,6 +1,7 @@
 import { spawnSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
+import { forgeComplete, forgeHarness, forgeHarnessCheck } from "./forge-invoke.js";
 import type { ChangeState, PhaseId } from "./types.js";
 import { getHarnessContext, type HarnessHook } from "../integrations/harness-hooks.js";
 import { auxiliaryForPhase, pendingAuxiliary } from "./routing/auxiliary-hints.js";
@@ -39,6 +40,7 @@ export type HarnessPlan = {
 };
 
 function classifyHook(h: HarnessHook): HarnessStepKind {
+  if (h.tool === "taiyi" && h.command) return "shell";
   if (h.tool === "taiyi" && h.skill?.startsWith("taiyi-")) return "agent";
   if (h.tool === "superpowers" || h.tool === "gstack") return "agent";
   if (h.command?.startsWith("openspec ") || h.command?.startsWith("npx taiyi")) return "shell";
@@ -146,7 +148,7 @@ export function buildHarnessPlan(
     );
     for (const key of pendingHooks) {
       blockers.push(
-        `auto 模式：铁三角未打卡 ${key}（执行后: npx taiyi harness-check ${state.slug} ${key}）`,
+        `auto 模式：铁三角未打卡 ${key}（执行后: ${forgeHarnessCheck(state.slug, key)}）`,
       );
     }
   }
@@ -179,7 +181,7 @@ export function enforceAutoHarnessBeforeComplete(
   if (plan.blockers.length > 0) {
     return {
       ok: false,
-      error: `Auto harness blocked: ${plan.blockers.join("; ")}. Run: npx taiyi harness ${state.slug}`,
+      error: `Auto harness blocked: ${plan.blockers.join("; ")}. Run: ${forgeHarness(state.slug)}`,
       plan,
     };
   }
@@ -242,9 +244,9 @@ export function formatHarnessPlanPlain(plan: HarnessPlan): string {
       `${i + 1}. [${s.kind}] ${label} — ${s.when}${s.optional ? " (可选)" : ""}`,
     );
     if (plan.autoHarness && s.kind === "agent" && !s.optional) {
-      lines.push(`   完成后: npx taiyi harness-check ${plan.slug} ${key}`);
+      lines.push(`   完成后: ${forgeHarnessCheck(plan.slug, key)}`);
     } else if (plan.autoHarness && s.kind === "agent" && s.optional) {
-      lines.push(`   可选: npx taiyi harness-check ${plan.slug} ${key}（不打卡也可 complete）`);
+      lines.push(`   可选: ${forgeHarnessCheck(plan.slug, key)}（不打卡也可 complete）`);
     }
   }
   lines.push(`\n## 2. 辅助 Skill`);
@@ -263,11 +265,11 @@ export function formatHarnessPlanPlain(plan: HarnessPlan): string {
     for (const b of plan.blockers) lines.push(`- ${b}`);
     const firstCheck = plan.blockers.find((b) => b.includes("harness-check"));
     if (firstCheck) {
-      const m = firstCheck.match(/npx taiyi harness-check \S+ \S+/);
+      const m = firstCheck.match(/scripts\/taiyi-forge\.sh harness-check \S+ \S+/);
       if (m) lines.push(`\n→ 下一命令: ${m[0]}`);
     }
   }
-  lines.push(`\nnpx taiyi complete ${plan.slug} ${plan.phase}`);
+  lines.push(`\n${forgeComplete(plan.slug, plan.phase)}`);
   lines.push(`\nAgent：按 1→2→3→4 顺序执行，不得跳过。`);
   return lines.join("\n");
 }

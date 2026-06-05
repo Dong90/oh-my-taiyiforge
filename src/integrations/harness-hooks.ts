@@ -4,6 +4,7 @@ import { fileURLToPath } from "node:url";
 import type { PhaseId } from "../core/types.js";
 import { resolvePackageRoot } from "../core/package-root.js";
 import { getOpenspecStatus } from "./openspec.js";
+import { tokenCompressHarnessHooks } from "./token-compress-hooks.js";
 
 export type HarnessHook = {
   tool: string;
@@ -83,10 +84,20 @@ export function getHarnessContext(
   phase: PhaseId,
 ): HarnessContext {
   const map = getHooksMap();
-  const hooks = (map[phase] ?? []).map((h) => ({
+  const hooks: HarnessHook[] = (map[phase] ?? []).map((h) => ({
     ...h,
     command: h.command?.replace(/<slug>/g, slug),
   }));
+
+  for (const th of tokenCompressHarnessHooks(phase, slug)) {
+    hooks.push({
+      tool: th.tool,
+      skill: th.skill,
+      command: th.command,
+      when: th.when,
+      optional: th.optional,
+    });
+  }
 
   const notes: string[] = [];
   const openspec = getOpenspecStatus(workspaceDir, slug);
@@ -105,6 +116,9 @@ export function getHarnessContext(
   }
   if (phase === "requirement" || phase === "integration") {
     notes.push("OpenSpec 为可选层：未安装 openspec CLI 时 requirement/integration 的 OpenSpec 钩子自动跳过");
+  }
+  if (tokenCompressHarnessHooks(phase, slug).length > 0) {
+    notes.push("Token 压缩：引擎 token compress + Superpowers subagent / gstack checkpoint（均 optional）见 token-budget.md");
   }
 
   return { phase, slug, hooks, notes };

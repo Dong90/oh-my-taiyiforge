@@ -4,8 +4,8 @@
 
 | 命令 | 说明 |
 |------|------|
-| `npm run walkthrough` | 九阶段 shell 全流程（31 步，含铁三角打卡演示） |
-| `npm run chat-demo` | 聊天动词演示：`/taiyi:new` · `status` · `check` · `continue`（不过九阶段） |
+| `npm run walkthrough` | 九阶段 + Token/Loop 演示（35 步，含铁三角打卡） |
+| `npm run chat-demo` | 聊天动词 + Token + Loop：`/taiyi:new` · `token` · `check` · `continue` · `loop` |
 
 前置：在仓库根目录 `npm run build`（链本地 `TAIYI_FORGE_ROOT` 时必需）。
 
@@ -30,6 +30,8 @@
 | 23–25 | review：`health-report.md` + `gstack/review` → complete | → integration | `/taiyi:continue` |
 | 26–28 | integration：`document-release` → `CHANGELOG.md` → complete | 9/9 完成 | `/taiyi:continue` |
 | 29–31 | `list` · `ci verify` · `status` | PASS；status 含意图分析 | `/taiyi:status` · `/taiyi:archive` |
+| 32–33 | token scan / compress / record | `.token-usage.json` · `CONTEXT-COMPACT.md` | `/taiyi:token *` |
+| 34–35 | loop 演示 init + `loop x2`（预期阻塞） | `.loop-state.json` · Agent 循环协议 | `/taiyi:loop` |
 
 ---
 

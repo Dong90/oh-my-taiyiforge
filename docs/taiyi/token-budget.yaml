@@ -1,0 +1,20 @@
+version: 1
+description: TaiyiForge Token 预算与上下文压缩默认配置
+
+enabled: true
+enforce: false
+globalBudget: 500000
+costPerMillionTokens: 3
+compressThreshold: 120000
+maxSectionChars: 600
+
+phaseLimits:
+  change: 80000
+  requirement: 60000
+  design: 100000
+  ui-design: 80000
+  task: 50000
+  dev: 150000
+  test: 80000
+  review: 60000
+  integration: 40000

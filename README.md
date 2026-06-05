@@ -28,7 +28,7 @@
 | **核心引擎** | 统一入口、意图分析、前置校验、路由决策、Harness 编排、状态追踪、CI 验证 |
 | **九阶段主流程** | change → requirement → design → ui-design → task → dev → test → review → integration |
 | **双门禁** | 人工审批门 + 质量五维门（`--auto` 模式含 harness-check） |
-| **15 Skill** | 9 主流程 + 5 辅助 + 1 编排（`taiyi-orchestrator`） |
+| **17 Skill** | 9 主流程 + 6 辅助（含 `taiyi-compress`）+ 1 编排（`taiyi-orchestrator`） |
 
 ### 六大工程规范（顶部）
 
@@ -75,7 +75,7 @@ npx taiyi-forge-install --all
 /taiyi:archive             # 九阶段完成后归档
 ```
 
-辅助（按需）：`/taiyi:doctor` · `/taiyi:list` · `/taiyi:check` · `/taiyi:sync` · `/taiyi:run` · `/taiyi:explore`（→ Superpowers brainstorming）
+辅助（按需）：`/taiyi:doctor` · `/taiyi:list` · `/taiyi:check` · `/taiyi:sync` · `/taiyi:run` · `/taiyi:explore` · `/taiyi:loop` · `/taiyi:token …`
 
 详见 [workflow.md](./docs/taiyi/workflow.md) · [commands.yaml](./docs/taiyi/commands.yaml)
 
