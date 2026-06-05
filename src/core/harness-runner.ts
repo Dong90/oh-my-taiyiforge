@@ -98,6 +98,11 @@ export function buildHarnessPlan(
   const harness = getHarnessContext(workspaceDir, state.slug, phase);
 
   const recommended = auxiliaryForPhase(phase, state.complexity);
+  const auxSkillSet = new Set(recommended);
+  /** 与 §2 辅助重复的 taiyi-* 铁三角钩子不再出现在 §1 */
+  const phaseHooks = harness.hooks.filter(
+    (h) => !(h.tool === "taiyi" && h.skill && auxSkillSet.has(h.skill)),
+  );
   const pending = pendingAuxiliary(recommended, state.auxiliaryCompleted);
   const blockers: string[] = [];
 
@@ -113,7 +118,7 @@ export function buildHarnessPlan(
     };
   });
 
-  const ironTriangle: HarnessStep[] = harness.hooks.map((h) => ({
+  const ironTriangle: HarnessStep[] = phaseHooks.map((h) => ({
     kind: classifyHook(h),
     tool: h.tool,
     skill: h.skill,
@@ -134,7 +139,7 @@ export function buildHarnessPlan(
     const pendingHooks = pendingIronTriangleHooks(
       changeDir,
       phase,
-      harness.hooks,
+      phaseHooks,
       openspec.detected,
     );
     for (const key of pendingHooks) {
@@ -245,12 +250,20 @@ export function formatHarnessPlanPlain(plan: HarnessPlan): string {
   }
   lines.push(`\n## 3. 主流程`);
   lines.push(`- ${plan.mainSkill} → ${plan.mainArtifact}`);
-  lines.push(`\n## 4. 过关`);
-  lines.push(`npx taiyi complete ${plan.slug} ${plan.phase}`);
+  lines.push(`\n## 4. 过关（须先清空 §阻塞）`);
+  lines.push(`- [ ] §1 铁三角：每项 [agent] 已执行并 harness-check（shell 项可选则跳过）`);
+  lines.push(`- [ ] §2 辅助：无 [pending]（或对应工件已生成）`);
+  lines.push(`- [ ] §3 主工件 quality 就绪`);
   if (plan.blockers.length) {
-    lines.push(`\n## 阻塞`);
+    lines.push(`\n## 阻塞（complete 前必须为零）`);
     for (const b of plan.blockers) lines.push(`- ${b}`);
+    const firstCheck = plan.blockers.find((b) => b.includes("harness-check"));
+    if (firstCheck) {
+      const m = firstCheck.match(/npx taiyi harness-check \S+ \S+/);
+      if (m) lines.push(`\n→ 下一命令: ${m[0]}`);
+    }
   }
-  lines.push(`\nAgent：按 1→2→3 顺序执行，不得跳过；完成后再 complete。`);
+  lines.push(`\nnpx taiyi complete ${plan.slug} ${plan.phase}`);
+  lines.push(`\nAgent：按 1→2→3→4 顺序执行，不得跳过。`);
   return lines.join("\n");
 }

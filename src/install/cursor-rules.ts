@@ -7,22 +7,41 @@ const RULE_MARKER = "TAIYI-FORGE:CURSOR-RULE";
 
 export function cursorRulesContent(): string {
   return `---
-description: TaiyiForge 九阶段工作流 — 用 taiyi-* Skill + npx taiyi CLI 驱动 .taiyi/changes/
+description: TaiyiForge 九阶段工作流 — OMX 风格：Skill 写工件，Agent 代跑 taiyi-forge 引擎
 globs:
 alwaysApply: true
 ---
 
-# TaiyiForge（Cursor）
+# TaiyiForge（Cursor 控制面）
 
-- 变更工件目录：\`.taiyi/changes/<slug>/\`
-- 开始：\`npx taiyi init <slug> [--profile full|api|ui|lite] [--auto]\`
-- **全自动（对齐架构图）**：\`--auto\` 后加载 **taiyi-orchestrator** Skill，每阶段先 \`npx taiyi harness <slug>\`，按清单执行铁三角→辅助→主流程，铁三角每步 \`npx taiyi harness-check <slug> <key>\`，再 \`complete\`
-- 半自动：\`npx taiyi next <slug>\` → 加载 Skill → 填工件 → \`complete\`
-- 辅助 Skill 完成后：\`npx taiyi mark-aux <slug> taiyi-health\` 等
-- 无 UI 变更：\`--profile api\` 跳过 ui-design
-- 小修复：\`--profile lite\` 五阶段精简路径
+## 原则（对齐 oh-my-codex / omc.sh）
 
-加载 Skill：读取 \`~/.cursor/skills/taiyi-<phase>/SKILL.md\` 并按 guide 执行。
+1. **聊天里**：加载 \`taiyi-*\` 阶段 Skill、Superpowers、gstack 写工件与评审。
+2. **引擎过关**：你用 **终端工具** 代跑 \`scripts/taiyi-forge.sh\`，**禁止**让用户手打 \`npx taiyi\`。
+3. **禁止**未执行 \`complete\` 就声称阶段已完成。
+
+## 引擎命令（项目根目录）
+
+\`\`\`bash
+./node_modules/oh-my-taiyiforge/scripts/taiyi-forge.sh init <slug> [--auto] --title "..."
+./node_modules/oh-my-taiyiforge/scripts/taiyi-forge.sh next <slug>
+./node_modules/oh-my-taiyiforge/scripts/taiyi-forge.sh harness <slug>
+./node_modules/oh-my-taiyiforge/scripts/taiyi-forge.sh harness-check <slug> <key>
+./node_modules/oh-my-taiyiforge/scripts/taiyi-forge.sh complete <slug> <phase>
+./node_modules/oh-my-taiyiforge/scripts/taiyi-forge.sh list
+\`\`\`
+
+开发仓库内可用 \`scripts/taiyi-forge.sh\`；全局安装可用 \`taiyi-forge\`。
+
+## Skill 加载
+
+- 引擎：\`~/.cursor/skills/taiyi-forge/SKILL.md\`
+- 编排：\`taiyi-orchestrator\`（\`--auto\`）
+- 阶段：\`taiyi-change\` … \`taiyi-integration\`
+
+## 变更目录
+
+\`.taiyi/changes/<slug>/\` · 详见 \`docs/taiyi/control-plane.md\`
 `;
 }
 

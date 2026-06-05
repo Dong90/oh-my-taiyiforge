@@ -1,0 +1,31 @@
+version: 1
+description: TaiyiForge 双轨调用说明（对齐 oh-my-codex skills-catalog invoke 块）
+
+# 聊天面 = Skill / $prompt / 铁三角；引擎面 = taiyi-forge.sh（Agent 代跑）
+
+invoke:
+  repo_root: 在项目根目录执行
+  chat:
+    codex: "$taiyi-forge <subcommand> <args>  或加载 skill taiyi-forge"
+    claude: "加载 ~/.claude/skills/taiyi-forge/SKILL.md，Bash 代跑 scripts/taiyi-forge.sh"
+    cursor: "加载 ~/.cursor/skills/taiyi-forge/SKILL.md，终端工具代跑 scripts/taiyi-forge.sh"
+    opencode: "插件工具 taiyi_init / taiyi_complete / taiyi_harness（无需 shell）"
+  engine_shell:
+    unified: "./node_modules/oh-my-taiyiforge/scripts/taiyi-forge.sh <cmd> ..."
+    global_bin: "taiyi-forge <cmd> ...   # npm i -g oh-my-taiyiforge"
+    legacy: "taiyi <cmd> ...           # 仍可用，不推荐人类手打"
+  phase_skills:
+    note: "写工件用 taiyi-change … taiyi-integration；过关必须用 engine"
+    orchestrator: "taiyi-orchestrator（--auto 编排清单）"
+  iron_triangle:
+    superpowers: "聊天内加载 brainstorming / TDD / verification-before-completion"
+    gstack: "聊天内 /review、/plan-eng-review 等（非 shell 子命令）"
+    openspec: "可选 shell；无 OpenSpec 时 harness 自动跳过"
+
+commands:
+  init: "scripts/taiyi-forge.sh init <slug> [--auto] [--profile api|lite]"
+  next: "scripts/taiyi-forge.sh next <slug>"
+  harness: "scripts/taiyi-forge.sh harness <slug>"
+  harness_check: "scripts/taiyi-forge.sh harness-check <slug> <key>"
+  complete: "scripts/taiyi-forge.sh complete <slug> <phase>"
+  list: "scripts/taiyi-forge.sh list"

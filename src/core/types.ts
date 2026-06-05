@@ -38,10 +38,14 @@ export type GateInput = {
 
 export type ChangeProfile = "full" | "api" | "ui" | "lite";
 
+export type WorkflowStatus = "active" | "completed";
+
 export type ChangeState = {
   slug: string;
   currentPhase: PhaseId;
   completedPhases: PhaseId[];
+  /** 九阶段全部完成后为 completed（currentPhase 保留末阶段便于追溯） */
+  workflowStatus?: WorkflowStatus;
   profile: ChangeProfile;
   skippedPhases: PhaseId[];
   strictDev: boolean;

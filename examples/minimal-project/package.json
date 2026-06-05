@@ -1,0 +1,15 @@
+{
+  "name": "taiyiforge-minimal-demo",
+  "version": "0.1.0",
+  "private": true,
+  "description": "TaiyiForge 全流程演示 — Cursor 端",
+  "type": "module",
+  "scripts": {
+    "test": "node --test test/counter.test.js",
+    "start": "node src/counter.js",
+    "taiyi": "node ../../dist/cli/taiyi.js"
+  },
+  "dependencies": {
+    "oh-my-taiyiforge": "file:../.."
+  }
+}

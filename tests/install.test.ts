@@ -4,6 +4,8 @@ import os from "node:os";
 import path from "node:path";
 import { addPluginToConfigFile } from "../src/install/opencode-plugin.js";
 import { mergeCodexAgentsBlock } from "../src/install/codex-agents.js";
+import { mergeClaudeControlBlock, claudeControlBlock } from "../src/install/claude-control.js";
+import { syncCodexPrompts } from "../src/install/sync-codex-prompts.js";
 import { syncTaiyiSkills } from "../src/install/sync-skills.js";
 import { parseInstallCli, parseInstallTargets } from "../src/install/run.js";
 import { PLUGIN_NAME } from "../src/install/types.js";
@@ -68,6 +70,24 @@ describe("install", () => {
     expect(p.targets).toContain("cursor");
     expect(p.registerPlugin).toBe(true);
     expect(p.opencodeNpmSpec).toBe("local");
+  });
+
+  it("syncs codex prompts", () => {
+    const src = path.join(tmp, "prompts");
+    fs.mkdirSync(src, { recursive: true });
+    fs.writeFileSync(path.join(src, "taiyi-forge.md"), "# forge");
+    const dest = path.join(tmp, "codex-prompts");
+    const r = syncCodexPrompts(src, dest);
+    expect(r.action).toBe("updated");
+    expect(fs.existsSync(path.join(dest, "taiyi-forge.md"))).toBe(true);
+  });
+
+  it("merges claude CLAUDE.md control block", () => {
+    const claudeMd = path.join(tmp, "CLAUDE.md");
+    mergeClaudeControlBlock(claudeMd, claudeControlBlock());
+    const raw = fs.readFileSync(claudeMd, "utf8");
+    expect(raw).toContain("TAIYI-FORGE:CLAUDE:START");
+    expect(raw).toContain("taiyi-forge");
   });
 
   it("syncs taiyi-* skill folders", () => {

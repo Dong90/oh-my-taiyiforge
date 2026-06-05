@@ -23,33 +23,52 @@ npm install oh-my-taiyiforge
 
 使用工具 `taiyi_init` / `taiyi_complete` 等管理 `.taiyi/changes/<slug>/`。详见 `docs/opencode-setup.md`。
 
-## Claude Code
+## Claude Code / Cursor / Codex（OMX 风格）
+
+安装后各端同步 **16 个** `taiyi-*` Skill（含 `taiyi-forge` 引擎控制面 + `taiyi-orchestrator`）。
 
 ```bash
-./scripts/install-skills.sh claude
-# 或在项目内：
-./scripts/install-skills.sh project-claude
+npx taiyi-forge-install --all
+# 或 --claude / --codex / --cursor
 ```
 
-在对话中按阶段加载 Skill，例如读取 `skills/taiyi-design/SKILL.md` 或使用已安装的 `/taiyi-design`（若 CLI 支持）。
+### 双轨调用（见 `docs/taiyi/invoke.yaml`）
 
-## OpenAI Codex
+| 层 | 做什么 | 怎么调 |
+|----|--------|--------|
+| **聊天** | 写工件、铁三角评审 | 加载 `taiyi-change` … `taiyi-integration`、Superpowers、gstack |
+| **引擎** | init / harness / complete / 状态 | **Agent 代跑** `scripts/taiyi-forge.sh`（禁止让用户手打 `npx taiyi`） |
 
-```bash
-./scripts/install-skills.sh codex
-```
+- **Codex**：`$taiyi-forge next <slug>` 或加载 `~/.codex/prompts/taiyi-forge.md`
+- **Claude**：加载 `taiyi-forge` Skill，Bash 代跑脚本
+- **Cursor**：`taiyiforge.mdc` + `taiyi-forge` Skill + 终端工具
 
-将本文件链入项目 `AGENTS.md` 或 `~/.codex/AGENTS.md`。阶段执行时加载对应 `skills/taiyi-<phase>/SKILL.md`。  
 可与 **oh-my-codex (OMX)** 并存：OMX 编排多 Agent，TaiyiForge 管阶段工件与门禁。
 
-## 引擎 CLI（与 Agent 无关）
+## OpenCode
 
 ```bash
-npm install
-npm run taiyi -- init <slug>
-npm run taiyi -- phases
-npm run taiyi -- complete <slug> <phase>
+npm install oh-my-taiyiforge
 ```
+
+在 `opencode.json` 中：
+
+```json
+{ "plugin": ["oh-my-taiyiforge"] }
+```
+
+使用工具 `taiyi_init` / `taiyi_complete` / `taiyi_harness` 等（聊天内可调，无需 shell）。
+
+## 引擎 shell（CI / 脚本 / Agent 代跑）
+
+```bash
+scripts/taiyi-forge.sh init <slug> [--auto] --title "..."
+scripts/taiyi-forge.sh next <slug>
+scripts/taiyi-forge.sh harness <slug>
+scripts/taiyi-forge.sh complete <slug> <phase>
+```
+
+全局安装：`taiyi-forge <cmd>` · 详见 `docs/taiyi/control-plane.md`
 
 ## 文档
 

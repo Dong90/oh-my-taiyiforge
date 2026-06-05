@@ -34,7 +34,7 @@ function readPackageVersion(pkgRoot: string): string {
 export function runDoctor(pkgRoot: string): DoctorReport {
   const checks: DoctorCheck[] = [];
   const dirs = defaultSkillTargets();
-  const expectedSkills = 15;
+  const expectedSkills = 16;
   const packageSkillsDir = path.join(pkgRoot, "skills");
   const packageSkillCount = countTaiyiSkills(packageSkillsDir);
   checks.push({

@@ -1,10 +1,12 @@
 import fs from "node:fs";
 import path from "node:path";
 import type { ChangeState } from "./types.js";
+import { displayPhase, isWorkflowCompleted } from "./change-status.js";
 
 export type ChangeSummary = {
   slug: string;
   currentPhase: string;
+  workflowCompleted: boolean;
   profile: string;
   completed: number;
   total: number;
@@ -24,9 +26,11 @@ export function listChanges(taiyiRoot: string): ChangeSummary[] {
     try {
       const raw = JSON.parse(fs.readFileSync(statePath, "utf8")) as ChangeState;
       const skipped = raw.skippedPhases ?? [];
+      const workflowCompleted = isWorkflowCompleted(raw);
       out.push({
         slug: raw.slug,
-        currentPhase: raw.currentPhase,
+        currentPhase: displayPhase(raw),
+        workflowCompleted,
         profile: raw.profile ?? "full",
         completed: raw.completedPhases.length,
         total: 9 - skipped.length,

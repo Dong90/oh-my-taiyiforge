@@ -1,6 +1,6 @@
 {
   "name": "oh-my-taiyiforge",
-  "version": "0.17.0",
+  "version": "0.18.0",
   "description": "TaiyiForge — OpenCode 插件 + Claude/Codex/Cursor 共用 taiyi-* 九阶段研发工作流",
   "license": "MIT",
   "type": "module",
@@ -21,6 +21,7 @@
     "templates",
     "docs",
     "examples",
+    "prompts",
     "scripts",
     "postinstall.mjs",
     "AGENTS.md",
@@ -29,6 +30,7 @@
   ],
   "bin": {
     "taiyi": "./dist/cli/taiyi.js",
+    "taiyi-forge": "./scripts/taiyi-forge.mjs",
     "taiyi-forge-install": "./dist/cli/install-cli.js"
   },
   "repository": {

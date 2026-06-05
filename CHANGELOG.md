@@ -1,5 +1,22 @@
 # Changelog
 
+## [0.18.0] - 2026-06-05
+
+### Added
+
+- **`taiyi-forge` 引擎 Skill**（第 16 个）：Cursor / Claude / Codex 聊天内驱动引擎，对齐 OMX `omc.sh`
+- **`scripts/taiyi-forge.sh`** + npm bin **`taiyi-forge`**：统一 shell 入口
+- **Codex**：`~/.codex/prompts/taiyi-forge.md`（`$taiyi-forge`）
+- **Claude**：`~/.claude/CLAUDE.md` 控制面段落
+- **Cursor**：`taiyiforge.mdc` 规则（Agent 代跑脚本，禁止手打 `npx taiyi`）
+- `docs/taiyi/control-plane.md`、`docs/taiyi/invoke.yaml`
+
+### Changed
+
+- doctor / CI platform 期望 **16** 个 taiyi-* skills
+- `taiyi-orchestrator` 与各阶段 Skill 引擎命令改为 `scripts/taiyi-forge.sh`
+- `AGENTS.md` 重写为 OMX 双轨调用说明
+
 ## [0.17.0] - 2026-06-05
 
 ### Added

@@ -13,12 +13,16 @@ import {
   pendingAuxiliary,
 } from "./routing/auxiliary-hints.js";
 import { requiresHumanGate } from "./gates/human-gate-config.js";
+import { expectedPhaseCount, isWorkflowCompleted } from "./change-status.js";
 
 export type PhaseGuide = {
   slug: string;
   profile: ChangeState["profile"];
   skippedPhases: PhaseId[];
   currentPhase: ChangeState["currentPhase"];
+  workflowCompleted: boolean;
+  completedCount: number;
+  totalPhases: number;
   skill: string;
   artifact: string;
   artifactPath: string;
@@ -73,11 +77,8 @@ export function buildPhaseGuide(
 
   const next = getNextPhase(state.currentPhase, state.skippedPhases);
   const nextPhaseDef = next ? getPhase(next) : null;
-  const expectedDone = 9 - state.skippedPhases.length;
-  const allDone =
-    !next &&
-    state.completedPhases.includes(state.currentPhase) &&
-    state.completedPhases.length >= expectedDone;
+  const totalPhases = expectedPhaseCount(state);
+  const allDone = isWorkflowCompleted(state);
 
   const recommendedAuxiliary = auxiliaryForPhase(
     state.currentPhase,
@@ -92,8 +93,15 @@ export function buildPhaseGuide(
       ? getHarnessContext(workspaceDir, slug, state.currentPhase)
       : undefined;
 
+  const guideBase = {
+    workflowCompleted: allDone,
+    completedCount: state.completedPhases.length,
+    totalPhases,
+  };
+
   if (allDone) {
     return {
+      ...guideBase,
       slug,
       profile: state.profile,
       skippedPhases: state.skippedPhases,
@@ -145,6 +153,7 @@ export function buildPhaseGuide(
   }
 
   return {
+    ...guideBase,
     slug,
     profile: state.profile,
     skippedPhases: state.skippedPhases,

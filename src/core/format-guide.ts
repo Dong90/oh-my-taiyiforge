@@ -5,7 +5,11 @@ export function formatGuidePlain(guide: PhaseGuide): string {
   const lines: string[] = [];
   lines.push(`# TaiyiForge · ${guide.slug}`);
   lines.push("");
-  lines.push(`阶段: ${guide.currentPhase}`);
+  if (guide.workflowCompleted) {
+    lines.push(`阶段: 已完成 ✓ (${guide.completedCount}/${guide.totalPhases})`);
+  } else {
+    lines.push(`阶段: ${guide.currentPhase}`);
+  }
   if (guide.autoHarness) lines.push(`模式: 全自动 (--auto)`);
   if (guide.profile) lines.push(`Profile: ${guide.profile}`);
   if (guide.skippedPhases?.length) {
@@ -45,9 +49,9 @@ export function formatGuidePlain(guide: PhaseGuide): string {
 export function formatChangeListPlain(changes: ChangeSummary[]): string {
   if (changes.length === 0) return "（无进行中的变更，使用 taiyi init <slug> 创建）";
   return changes
-    .map(
-      (c) =>
-        `${c.slug}\t${c.currentPhase}\t${c.completed}/${c.total}\t${c.profile}${c.complexity ? `\t${c.complexity}` : ""}`,
-    )
+    .map((c) => {
+      const phase = c.workflowCompleted ? "completed" : c.currentPhase;
+      return `${c.slug}\t${phase}\t${c.completed}/${c.total}\t${c.profile}${c.complexity ? `\t${c.complexity}` : ""}`;
+    })
     .join("\n");
 }

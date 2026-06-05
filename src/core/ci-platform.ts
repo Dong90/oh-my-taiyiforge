@@ -10,7 +10,7 @@ import type { ChangeState } from "./types.js";
 
 export type CiPlatformId = InstallTarget;
 
-const EXPECTED_SKILLS = 15; // 14 taiyi-* + taiyi-orchestrator
+const EXPECTED_SKILLS = 16; // 14 taiyi-* phases + taiyi-orchestrator + taiyi-forge
 
 export type CiPlatformProbe = {
   platform: CiPlatformId;

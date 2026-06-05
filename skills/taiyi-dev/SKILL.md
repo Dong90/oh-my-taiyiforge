@@ -33,7 +33,7 @@ description: TaiyiForge 第 6 阶段 — TDD 开发执行。四端通用。
 
 ### 1. 取当前切片
 
-1. `npx taiyi next <slug>` 确认阶段为 dev
+1. `scripts/taiyi-forge.sh next <slug>` 确认阶段为 dev
 2. TASK 中取下一个未勾选 **T***
 3. lite：按 AC 列表逐项实现
 
@@ -69,7 +69,7 @@ slices: T1,T2
 
 ### 5. 完成
 
-`npx taiyi complete <slug> dev`
+`scripts/taiyi-forge.sh complete <slug> dev`
 
 ## 与 profile
 

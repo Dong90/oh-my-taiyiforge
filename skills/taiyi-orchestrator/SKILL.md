@@ -12,12 +12,12 @@ description: TaiyiForge 全自动编排 — 按 harness 清单串联铁三角、
 ## 何时使用
 
 - `state.json` 含 `"autoHarness": true`
-- `npx taiyi next` 显示 `模式: 全自动`
+- `scripts/taiyi-forge.sh next` 显示 `模式: 全自动`
 - 用户要求「按图全自动跑 TaiyiForge」
 
 ## 输入
 
-- `npx taiyi harness <slug>` 输出的清单
+- `scripts/taiyi-forge.sh harness <slug>` 输出的清单
 - 项目内 `.taiyi/changes/<slug>/`
 
 ## 执行步骤（每阶段循环）
@@ -25,7 +25,7 @@ description: TaiyiForge 全自动编排 — 按 harness 清单串联铁三角、
 ### 0. 拉清单
 
 ```bash
-npx taiyi harness <slug>
+scripts/taiyi-forge.sh harness <slug>
 ```
 
 严格按 **§1 铁三角 → §2 辅助 → §3 主流程 → §4 complete** 顺序，**不得跳过**。
@@ -41,8 +41,8 @@ npx taiyi harness <slug>
 每完成一项铁三角步骤，**必须打卡**：
 
 ```bash
-npx taiyi harness-check <slug> superpowers/brainstorming
-npx taiyi harness-check <slug> gstack/review
+scripts/taiyi-forge.sh harness-check <slug> superpowers/brainstorming
+scripts/taiyi-forge.sh harness-check <slug> gstack/review
 ```
 
 `complete` 在 auto 模式下会校验 `.harness-checkpoints.json`。
@@ -56,7 +56,7 @@ npx taiyi harness-check <slug> gstack/review
 3. 工件存在后引擎会自动 `mark-aux`；也可手动：
 
 ```bash
-npx taiyi mark-aux <slug> taiyi-intel-scan
+scripts/taiyi-forge.sh mark-aux <slug> taiyi-intel-scan
 ```
 
 ### 3. 主流程 Skill
@@ -66,8 +66,8 @@ npx taiyi mark-aux <slug> taiyi-intel-scan
 ### 4. 过关
 
 ```bash
-npx taiyi complete <slug> <phase>
-npx taiyi harness <slug>   # 下一阶段重复 0–4
+scripts/taiyi-forge.sh complete <slug> <phase>
+scripts/taiyi-forge.sh harness <slug>   # 下一阶段重复 0–4
 ```
 
 integration 完成后，引擎在 auto 模式下自动尝试 `sync-openspec`（若检测到 OpenSpec）。

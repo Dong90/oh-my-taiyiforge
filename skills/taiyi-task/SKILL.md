@@ -53,7 +53,7 @@ description: TaiyiForge 第 5 阶段 — 可独立 PR 的任务切片，产出 T
 
 ### 4. 完成
 
-`npx taiyi complete <slug> task`
+`scripts/taiyi-forge.sh complete <slug> task`
 
 dev 阶段按 T1→T2… 执行，完成在 TASK 勾选。
 

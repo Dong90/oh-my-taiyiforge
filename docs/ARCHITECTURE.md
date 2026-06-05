@@ -58,7 +58,7 @@ Agent 只负责按 Skill 写工件；**状态机与门禁**由 `taiyi` CLI / `Wo
 ```
 src/core/           # 引擎
 docs/taiyi/         # phases、skills-catalog、agents、quality-gate
-skills/taiyi-*/     # 15 个 Skill（开源分发）
+skills/taiyi-*/     # 16 个 Skill（含 taiyi-forge 引擎 + orchestrator）
 templates/          # 工件模板
 .taiyi/             # 运行时（gitignore）
 AGENTS.md           # Claude/Codex 顶层契约

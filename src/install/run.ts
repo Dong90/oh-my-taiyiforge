@@ -2,14 +2,18 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { installCodexAgents } from "./codex-agents.js";
+import { installClaudeControlPlane } from "./claude-control.js";
 import { addPluginToConfigFile } from "./opencode-plugin.js";
 import {
+  claudeConfigDir,
+  codexPromptsDir,
   defaultSkillTargets,
   opencodeConfigCandidates,
   opencodeConfigDir,
   skillSourceRoot,
 } from "./paths.js";
 import { installCursorRules } from "./cursor-rules.js";
+import { syncCodexPrompts } from "./sync-codex-prompts.js";
 import { syncTaiyiSkills } from "./sync-skills.js";
 import type { InstallResult, InstallTarget } from "./types.js";
 import { ALL_INSTALL_TARGETS, PLUGIN_NAME } from "./types.js";
@@ -124,9 +128,11 @@ function formatInstallSummary(targets: InstallTarget[], dirs: ReturnType<typeof 
     lines.push(`  OpenCode  → opencode.json: "plugin": ["${PLUGIN_NAME}"]`);
     lines.push(`  OpenCode  → ${dirs.opencode}/taiyi-*`);
   }
-  if (targets.includes("claude")) lines.push(`  Claude    → ${dirs.claude}/taiyi-*`);
+  if (targets.includes("claude")) {
+    lines.push(`  Claude    → ${dirs.claude}/taiyi-* + CLAUDE.md 控制面`);
+  }
   if (targets.includes("codex")) {
-    lines.push(`  Codex     → ${dirs.codex}/taiyi-* + AGENTS.md 段落`);
+    lines.push(`  Codex     → ${dirs.codex}/taiyi-* + AGENTS.md + $taiyi-forge prompt`);
   }
   if (targets.includes("cursor")) {
     lines.push(`  Cursor    → ${dirs.cursor}/taiyi-*`);
@@ -134,7 +140,7 @@ function formatInstallSummary(targets: InstallTarget[], dirs: ReturnType<typeof 
   }
   const footer = targets.includes("opencode")
     ? "\n重启 OpenCode 后使用 taiyi_init / taiyi_status 等工具。"
-    : "\n在 IDE 中加载 taiyi-* Skill，并用 npx taiyi <cmd> 驱动工作流。";
+    : "\n聊天：taiyi-* Skill + 铁三角；引擎：Agent 代跑 taiyi-forge / scripts/taiyi-forge.sh（见 docs/taiyi/invoke.yaml）。";
   return `\n[${PLUGIN_NAME}] 已安装：\n${lines.join("\n")}${footer}\n`;
 }
 
@@ -152,10 +158,12 @@ export async function runInstall(opts: RunInstallOptions = {}): Promise<InstallR
   }
   if (targets.includes("claude")) {
     results.push({ ...syncTaiyiSkills(skillsSrc, dirs.claude), target: "claude" });
+    results.push(installClaudeControlPlane(claudeConfigDir()));
   }
   if (targets.includes("codex")) {
     results.push({ ...syncTaiyiSkills(skillsSrc, dirs.codex), target: "codex" });
     results.push(installCodexAgents(resolvedRoot, path.dirname(dirs.codex)));
+    results.push(syncCodexPrompts(path.join(resolvedRoot, "prompts"), codexPromptsDir()));
   }
   if (targets.includes("cursor")) {
     results.push({ ...syncTaiyiSkills(skillsSrc, dirs.cursor), target: "cursor" });
@@ -233,8 +241,8 @@ export async function runInstallCli(argv: string[]): Promise<number> {
 
   --all                 四端全装（默认，无参数时同 --all）
   --opencode              ~/.config/opencode skills + npm + opencode.json plugin
-  --claude                ~/.claude/skills/taiyi-*
-  --codex                 ~/.codex/skills/taiyi-* + AGENTS.md
+  --claude                ~/.claude/skills/taiyi-* + CLAUDE.md 控制面
+  --codex                 ~/.codex/skills/taiyi-* + AGENTS.md + prompts
   --cursor                ~/.cursor/skills/taiyi-*
 
 组合示例：

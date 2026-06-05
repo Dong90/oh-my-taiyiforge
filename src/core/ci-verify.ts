@@ -101,7 +101,7 @@ export function verifyWorkspaceCi(
 
     reports.push({
       slug: s.slug,
-      phase: guide.currentPhase,
+      phase: guide.workflowCompleted ? "completed" : guide.currentPhase,
       profile: guide.profile ?? state.profile,
       autoHarness: state.autoHarness ?? false,
       qualityReady: guide.qualityReady,

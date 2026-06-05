@@ -63,8 +63,8 @@ description: TaiyiForge 第 2 阶段 — 需求与验收标准，产出 REQUIREM
 
 ### 5. 完成
 
-1. `npx taiyi guide <slug>` — `qualityHints` 应为空
-2. `npx taiyi complete <slug> requirement`
+1. `scripts/taiyi-forge.sh guide <slug>` — `qualityHints` 应为空
+2. `scripts/taiyi-forge.sh complete <slug> requirement`
 
 ## REQUIREMENT.md 结构模板
 

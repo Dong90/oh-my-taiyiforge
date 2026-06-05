@@ -37,3 +37,11 @@ export function opencodeConfigCandidates(cwd = process.cwd()): string[] {
 export function opencodeConfigDir(): string {
   return path.join(homeDir(), ".config", "opencode");
 }
+
+export function codexPromptsDir(): string {
+  return process.env.CODEX_PROMPTS_DIR || path.join(homeDir(), ".codex", "prompts");
+}
+
+export function claudeConfigDir(): string {
+  return process.env.CLAUDE_CONFIG_DIR || path.join(homeDir(), ".claude");
+}

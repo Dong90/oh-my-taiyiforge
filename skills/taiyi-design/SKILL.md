@@ -64,7 +64,7 @@ description: TaiyiForge 第 3 阶段 — 技术设计（≥2 方案），产出 
 ### 5. 完成
 
 1. 可选：`gstack plan-eng-review` 结论写入 DESIGN 或 ADR
-2. `npx taiyi complete <slug> design`（**人工门**）
+2. `scripts/taiyi-forge.sh complete <slug> design`（**人工门**）
 
 ## 与 profile
 

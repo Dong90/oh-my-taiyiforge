@@ -26,9 +26,6 @@ hooks:
     - tool: gstack
       skill: review
       when: PR 合并前 diff 结构审查，摘要写入 REVIEW.md
-    - tool: taiyi
-      skill: taiyi-health
-      when: 合并前跑类型检查/lint/测试基线
   integration:
     - tool: openspec
       command: taiyi archive <slug>

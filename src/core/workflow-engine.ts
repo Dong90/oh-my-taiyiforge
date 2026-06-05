@@ -18,6 +18,7 @@ import {
   runPostCompleteShellHooks,
   syncAuxiliaryFromArtifacts,
 } from "./harness-runner.js";
+import { expectedPhaseCount, isWorkflowCompleted } from "./change-status.js";
 
 export type InitChangeOptions = {
   title?: string;
@@ -35,6 +36,7 @@ function normalizeState(raw: ChangeState): ChangeState {
     strictDev: raw.strictDev ?? false,
     autoHarness: raw.autoHarness ?? false,
     auxiliaryCompleted: raw.auxiliaryCompleted ?? [],
+    workflowStatus: raw.workflowStatus ?? (isWorkflowCompleted(raw) ? "completed" : "active"),
   };
 }
 
@@ -100,6 +102,7 @@ export class WorkflowEngine {
       autoHarness,
       complexity,
       auxiliaryCompleted: [],
+      workflowStatus: "active",
       createdAt: now,
       updatedAt: now,
     };
@@ -160,6 +163,9 @@ export class WorkflowEngine {
   ): { ok: boolean; error?: string; qualityHints?: string[] } {
     const state = this.getState(slug);
     if (!state) return { ok: false, error: "Change not found" };
+    if (isWorkflowCompleted(state)) {
+      return { ok: false, error: "Workflow already completed (九阶段已完成)" };
+    }
     if (isPhaseSkipped(phaseId, state.skippedPhases)) {
       return { ok: false, error: `Phase ${phaseId} is skipped for profile ${state.profile}` };
     }
@@ -275,12 +281,20 @@ export class WorkflowEngine {
 
     const completed = [...workingState.completedPhases, phaseId];
     const next = getNextPhase(phaseId, workingState.skippedPhases);
-    const updated: ChangeState = {
+    const draft: ChangeState = {
       ...workingState,
       completedPhases: completed,
       currentPhase: next ?? phaseId,
       complexity: assessComplexity(inferComplexitySignals(changeDir)),
       updatedAt: new Date().toISOString(),
+    };
+    const allDone =
+      !next &&
+      completed.length >= expectedPhaseCount(draft) &&
+      completed.includes("integration");
+    const updated: ChangeState = {
+      ...draft,
+      workflowStatus: allDone ? "completed" : "active",
     };
     this.writeState(updated);
 

@@ -4,7 +4,9 @@ import { listPhases } from "../core/phase-registry.js";
 import { resolveTaiyiRoot } from "../core/paths.js";
 import { resolvePackageRoot, resolveTemplatesDir } from "../core/package-root.js";
 import { requiresHumanGate } from "../core/gates/human-gate-config.js";
-import { formatChangeListPlain } from "../core/format-guide.js";
+import { formatChangeListPlain, formatGuidePlain } from "../core/format-guide.js";
+import { buildPhaseGuide } from "../core/phase-guide.js";
+import { isWorkflowCompleted } from "../core/change-status.js";
 import type { ChangeProfile, PhaseId } from "../core/types.js";
 import {
   taiyiArchive,
@@ -35,7 +37,7 @@ function usage(): void {
 用法:
   npm run taiyi -- doctor                   检查四端安装与配置
   npm run taiyi -- list                     列出 .taiyi/changes/ 下所有变更
-  npm run taiyi -- init <slug> [--profile api|lite] [--strict-dev] [--auto]
+  npm run taiyi -- init <slug> [--profile api|lite] [--strict-dev] [--auto] [--json]
   npm run taiyi -- harness <slug>              全自动编排清单（铁三角→辅助→主流程）
   npm run taiyi -- harness-check <slug> <key>  铁三角步骤打卡（auto 模式）
   npm run taiyi -- next <slug>              人类可读「下一步」（默认纯文本）
@@ -112,9 +114,11 @@ switch (cmd) {
       strictDev: args.includes("--strict-dev"),
       autoHarness: args.includes("--auto"),
     });
-    console.log(JSON.stringify(result, null, 2));
-    if (!jsonMode) {
-      console.log(`\n→ npx taiyi next ${slug}`);
+    if (jsonMode) {
+      console.log(JSON.stringify(result, null, 2));
+    } else {
+      const guide = buildPhaseGuide(taiyiRoot, slug, result, workspaceDir);
+      console.log(formatGuidePlain(guide));
     }
     break;
   }
@@ -339,7 +343,13 @@ switch (cmd) {
     }
     const state = engine.getState(slug);
     if (jsonMode) console.log(JSON.stringify(state, null, 2));
-    else console.log(`✓ ${phase} 完成 → 当前阶段: ${state?.currentPhase}\n→ npx taiyi next ${slug}`);
+    else if (state && isWorkflowCompleted(state)) {
+      console.log(
+        `✓ ${phase} 完成 → 九阶段已全部完成 (${state.completedPhases.length}/${9 - (state.skippedPhases?.length ?? 0)})\n→ npx taiyi list`,
+      );
+    } else {
+      console.log(`✓ ${phase} 完成 → 当前阶段: ${state?.currentPhase}\n→ npx taiyi next ${slug}`);
+    }
     break;
   }
   default:

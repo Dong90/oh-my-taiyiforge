@@ -12,9 +12,9 @@
 | 平台 | 一条命令之后 | 配置位置 |
 |------|----------------|----------|
 | **OpenCode** | `postinstall` 写入 `plugin` + 同步 skills；`--opencode` 还会在 `~/.config/opencode` 执行 `npm install` | `opencode.json` → `"plugin": ["oh-my-taiyiforge"]` |
-| **Claude Code** | `postinstall` 同步 | `~/.claude/skills/taiyi-*` |
-| **Codex** | `postinstall` 同步 skills + 合并 `AGENTS.md` 段落 | `~/.codex/skills/taiyi-*` |
-| **Cursor** | `postinstall` 同步 | `~/.cursor/skills/taiyi-*` |
+| **Claude Code** | `postinstall` 同步 skills + **CLAUDE.md 控制面** | `~/.claude/skills/taiyi-*` |
+| **Codex** | `postinstall` 同步 skills + 合并 `AGENTS.md` + **`$taiyi-forge` prompt** | `~/.codex/skills/taiyi-*` · `~/.codex/prompts/taiyi-forge.md` |
+| **Cursor** | `postinstall` 同步 skills + **`taiyiforge.mdc` 规则** | `~/.cursor/skills/taiyi-*` |
 
 ### 一键（推荐）
 
@@ -48,15 +48,21 @@ TAIYI_FORGE_INSTALL=opencode,cursor npm install oh-my-taiyiforge
 }
 ```
 
-安装包后 OpenCode 会加载 **15 个工具**（含 `taiyi_harness`、`taiyi_harness_check`、`taiyi_walkthrough` 等）。`init --auto` 开启全自动编排。
+安装包后 OpenCode 会加载 **16 个工具**（含 `taiyi_harness`、`taiyi_harness_check`、`taiyi_walkthrough` 等）。`init --auto` 开启全自动编排。
+
+### OMX 风格三端（Cursor / Codex / Claude）
+
+聊天里加载 **`taiyi-*` 阶段 Skill** 写工件；**引擎过关由 Agent 代跑** `scripts/taiyi-forge.sh`（或全局 `taiyi-forge`），用户不必手打 `npx taiyi`。详见 [docs/taiyi/control-plane.md](./docs/taiyi/control-plane.md)。
 
 ```bash
-npx taiyi doctor              # 安装自检
-npx taiyi next <slug>         # 人类可读下一步
-npx taiyi init <slug> --profile api|lite
-npx taiyi walkthrough         # 首次体验（任意项目目录）
-npx taiyi ci verify           # CI：校验 .taiyi 工件（无 LLM）
+scripts/taiyi-forge.sh doctor              # 安装自检
+scripts/taiyi-forge.sh next <slug>         # 人类可读下一步
+scripts/taiyi-forge.sh init <slug> --auto --title "..."
+scripts/taiyi-forge.sh walkthrough         # 首次体验（任意项目目录）
+scripts/taiyi-forge.sh ci verify           # CI：校验 .taiyi 工件（无 LLM）
 ```
+
+Codex 对话：`$taiyi-forge next <slug>`
 
 四端 CI 模板：`examples/ci/github-actions/` · 文档：`docs/ci/README.md`
 
@@ -66,9 +72,9 @@ npx taiyi ci verify           # CI：校验 .taiyi 工件（无 LLM）
 
 ```bash
 cd your-project
-npx oh-my-taiyiforge taiyi init my-feature
+taiyi-forge init my-feature
 # 或在本仓库开发：
-npm run taiyi -- init my-feature
+scripts/taiyi-forge.sh init my-feature
 ```
 
 ## 特性

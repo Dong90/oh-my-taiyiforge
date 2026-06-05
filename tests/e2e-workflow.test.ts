@@ -28,5 +28,19 @@ describe("e2e-workflow", () => {
     const state = engine.getState(slug);
     expect(state?.completedPhases).toHaveLength(9);
     expect(state?.completedPhases).toContain("integration");
+    expect(state?.workflowStatus).toBe("completed");
+
+    const again = engine.completePhase(slug, "integration", {
+      quality: {
+        completeness: true,
+        consistency: true,
+        verifiability: true,
+        traceability: true,
+        engineering_quality: true,
+      },
+      human: { approved: true, approver: "test" },
+    });
+    expect(again.ok).toBe(false);
+    expect(again.error).toMatch(/already completed/i);
   });
 });

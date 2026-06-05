@@ -64,7 +64,7 @@ description: TaiyiForge 第 7 阶段 — 测试计划与运行证据，产出 TE
 
 ### 5. 完成
 
-`npx taiyi complete <slug> test`
+`scripts/taiyi-forge.sh complete <slug> test`
 
 ## TEST.md 模板
 

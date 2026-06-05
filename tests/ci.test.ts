@@ -44,11 +44,11 @@ describe("ci verify", () => {
 });
 
 describe("ci platform", () => {
-  it("smoke installs 15 skills for each platform", () => {
+  it("smoke installs 16 skills for each platform", () => {
     const pkgRoot = path.join(path.dirname(fileURLToPath(import.meta.url)), "..");
     for (const p of ["opencode", "claude", "codex", "cursor"] as const) {
       const probe = probePlatformCi(pkgRoot, p);
-      expect(probe.skillsInstalled).toBeGreaterThanOrEqual(15);
+      expect(probe.skillsInstalled).toBeGreaterThanOrEqual(16);
       expect(probe.ok).toBe(true);
     }
   });
