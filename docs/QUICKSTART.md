@@ -6,8 +6,8 @@
 
 ```bash
 npm install oh-my-taiyiforge
-npx taiyi-forge-install --all
-npx taiyi doctor    # 确认四端 skills + OpenCode plugin
+npx taiyi-forge-install --all    # 含 OpenSpec / gstack / Superpowers / web-quality-skills（可用 --skip-deps 跳过）
+npx taiyi doctor    # 确认四端 skills + deps-* + OpenCode plugin
 ```
 
 | 端 | 验证 |
@@ -41,10 +41,14 @@ npx taiyi next my-first     # 人类可读下一步（推荐）
 编辑 `.taiyi/changes/my-first/CHANGE.md` 后：
 
 ```bash
-npx taiyi complete my-first change
+# change / design / review 为人工门，需 --approver
+npx taiyi complete my-first change --approver "你的名字"
 npx taiyi next my-first
 npx taiyi list
 ```
+
+人工门阶段也可用：`npx taiyi continue my-first --approver "你的名字"` 或 `npx taiyi done my-first --approver "你的名字"`。  
+仅 CI/测试可设 `TAIYI_AUTO_HUMAN=1` 跳过审批。
 
 ## 聊天命令（OpenSpec 风格）
 

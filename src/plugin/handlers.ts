@@ -4,7 +4,8 @@ import { WorkflowEngine } from "../core/workflow-engine.js";
 import { listPhases, getPhase } from "../core/phase-registry.js";
 import { resolveTaiyiRoot } from "../core/paths.js";
 import { resolveTemplatesDir } from "../core/package-root.js";
-import { requiresHumanGate } from "../core/gates/human-gate-config.js";
+import { isAutoApprover, requiresHumanGate } from "../core/gates/human-gate-config.js";
+import { slugValidationError, validateSlug } from "../core/slug.js";
 import type { ComplexitySignals } from "../core/routing/complexity.js";
 import { buildPhaseGuide } from "../core/phase-guide.js";
 import { getOpenspecStatus, runOpenspecArchive } from "../integrations/openspec.js";
@@ -34,6 +35,11 @@ import {
 
 const TEMPLATES_DIR = resolveTemplatesDir(import.meta.url);
 
+function rejectInvalidSlug(slug: string): { ok: false; error: string } | null {
+  const error = slugValidationError(slug);
+  return error ? { ok: false as const, error } : null;
+}
+
 export function createEngine(workspaceDir: string): WorkflowEngine {
   return new WorkflowEngine(resolveTaiyiRoot(workspaceDir), TEMPLATES_DIR);
 }
@@ -48,25 +54,34 @@ export function taiyiInit(
     autoHarness?: boolean;
   },
 ) {
+  const invalid = rejectInvalidSlug(slug);
+  if (invalid) return invalid;
+
   const engine = createEngine(workspaceDir);
-  const result = engine.initChange(slug, {
-    title: options?.title,
-    templatesDir: TEMPLATES_DIR,
-    profile: options?.profile,
-    strictDev: options?.strictDev,
-    autoHarness: options?.autoHarness,
-  });
-  const { seeded, ...state } = result;
-  return {
-    ok: true as const,
-    state,
-    seeded,
-    assessment: state.complexity,
-    taiyiRoot: resolveTaiyiRoot(workspaceDir),
-  };
+  try {
+    const result = engine.initChange(slug, {
+      title: options?.title,
+      templatesDir: TEMPLATES_DIR,
+      profile: options?.profile,
+      strictDev: options?.strictDev,
+      autoHarness: options?.autoHarness,
+    });
+    const { seeded, ...state } = result;
+    return {
+      ok: true as const,
+      state,
+      seeded,
+      assessment: state.complexity,
+      taiyiRoot: resolveTaiyiRoot(workspaceDir),
+    };
+  } catch (e) {
+    return { ok: false as const, error: e instanceof Error ? e.message : String(e) };
+  }
 }
 
 export function taiyiStatus(workspaceDir: string, slug: string) {
+  const invalid = rejectInvalidSlug(slug);
+  if (invalid) return invalid;
   const engine = createEngine(workspaceDir);
   const state = engine.getState(slug);
   if (!state) return { ok: false as const, error: `Change not found: ${slug}` };
@@ -77,6 +92,8 @@ export function taiyiStatus(workspaceDir: string, slug: string) {
 }
 
 export function taiyiGuide(workspaceDir: string, slug: string) {
+  const invalid = rejectInvalidSlug(slug);
+  if (invalid) return invalid;
   const engine = createEngine(workspaceDir);
   const state = engine.getState(slug);
   if (!state) return { ok: false as const, error: `Change not found: ${slug}` };
@@ -100,6 +117,9 @@ export function taiyiComplete(
   phaseId: string,
   gates?: Partial<GateInput>,
 ) {
+  const slugCheck = validateSlug(slug);
+  if (!slugCheck.ok) return { ok: false as const, error: slugCheck.error };
+
   const engine = createEngine(workspaceDir);
   const phase = getPhase(phaseId as PhaseId);
   const quality: QualityScores = {
@@ -109,9 +129,25 @@ export function taiyiComplete(
     traceability: gates?.quality?.traceability ?? true,
     engineering_quality: gates?.quality?.engineering_quality ?? true,
   };
+
+  const needsHuman = requiresHumanGate(phase.id);
+  const requestedApprover = gates?.human?.approver?.trim();
+  if (needsHuman && !requestedApprover) {
+    return {
+      ok: false as const,
+      error: `Human gate required for phase ${phase.id}: provide gates.human.approver`,
+    };
+  }
+  if (needsHuman && requestedApprover && isAutoApprover(requestedApprover)) {
+    return {
+      ok: false as const,
+      error: `Human gate required for phase ${phase.id}: automated approver ${requestedApprover} not allowed`,
+    };
+  }
+
   const human = gates?.human ?? {
     approved: true,
-    approver: requiresHumanGate(phase.id) ? "opencode-user" : "opencode-agent",
+    approver: needsHuman ? "opencode-user" : "opencode-agent",
   };
   const result = engine.completePhase(slug, phase.id, { quality, human });
   if (!result.ok) {
@@ -132,6 +168,8 @@ export function taiyiComplete(
 }
 
 export function taiyiMarkAux(workspaceDir: string, slug: string, skillId: string) {
+  const invalid = rejectInvalidSlug(slug);
+  if (invalid) return invalid;
   const engine = createEngine(workspaceDir);
   const result = engine.markAuxiliary(slug, skillId);
   if (!result.ok) return { ok: false as const, error: result.error };
@@ -143,6 +181,8 @@ export function taiyiSyncOpenspec(
   slug: string,
   options?: { force?: boolean; createChangeDir?: boolean },
 ) {
+  const invalid = rejectInvalidSlug(slug);
+  if (invalid) return invalid;
   const engine = createEngine(workspaceDir);
   const state = engine.getState(slug);
   if (!state) return { ok: false as const, error: `Change not found: ${slug}` };
@@ -161,6 +201,8 @@ export function taiyiArchive(
   slug: string,
   options?: { skipSpecs?: boolean; requireIntegrationComplete?: boolean },
 ) {
+  const invalid = rejectInvalidSlug(slug);
+  if (invalid) return invalid;
   const engine = createEngine(workspaceDir);
   const state = engine.getState(slug);
   if (!state) return { ok: false as const, error: `Change not found: ${slug}` };
@@ -225,6 +267,8 @@ export function taiyiNext(workspaceDir: string, slug: string, plain = true) {
 }
 
 export function taiyiAssess(workspaceDir: string, slug: string, signals?: ComplexitySignals) {
+  const invalid = rejectInvalidSlug(slug);
+  if (invalid) return invalid;
   const engine = createEngine(workspaceDir);
   try {
     const { signals: used, assessment } = engine.assessComplexity(slug, signals);
@@ -238,6 +282,10 @@ export function taiyiWalkthrough(
   workspaceDir: string,
   options?: { slug?: string; profile?: ChangeProfile; title?: string; plain?: boolean },
 ) {
+  if (options?.slug) {
+    const invalid = rejectInvalidSlug(options.slug);
+    if (invalid) return invalid;
+  }
   const result = runWalkthrough(workspaceDir, {
     slug: options?.slug,
     profile: options?.profile,
@@ -250,6 +298,8 @@ export function taiyiWalkthrough(
 }
 
 export function taiyiHarness(workspaceDir: string, slug: string, plain = true) {
+  const invalid = rejectInvalidSlug(slug);
+  if (invalid) return invalid;
   const engine = createEngine(workspaceDir);
   const state = engine.getState(slug);
   if (!state) return { ok: false as const, error: `Change not found: ${slug}` };
@@ -262,6 +312,8 @@ export function taiyiHarness(workspaceDir: string, slug: string, plain = true) {
 }
 
 export function taiyiHarnessCheck(workspaceDir: string, slug: string, hookRef: string) {
+  const invalid = rejectInvalidSlug(slug);
+  if (invalid) return invalid;
   const engine = createEngine(workspaceDir);
   const state = engine.getState(slug);
   if (!state) return { ok: false as const, error: `Change not found: ${slug}` };
@@ -302,6 +354,8 @@ export function taiyiCiPlatform(pkgRoot: string, platform: CiPlatformId, plain =
 }
 
 export function taiyiCiPrompt(workspaceDir: string, slug: string) {
+  const invalid = rejectInvalidSlug(slug);
+  if (invalid) return invalid;
   const engine = createEngine(workspaceDir);
   const state = engine.getState(slug);
   if (!state) return { ok: false as const, error: `Change not found: ${slug}` };
@@ -310,6 +364,8 @@ export function taiyiCiPrompt(workspaceDir: string, slug: string) {
 }
 
 export function taiyiHarnessRunShell(workspaceDir: string, slug: string) {
+  const invalid = rejectInvalidSlug(slug);
+  if (invalid) return invalid;
   const engine = createEngine(workspaceDir);
   const state = engine.getState(slug);
   if (!state) return { ok: false as const, error: `Change not found: ${slug}` };

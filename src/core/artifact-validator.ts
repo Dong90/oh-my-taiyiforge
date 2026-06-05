@@ -134,7 +134,11 @@ export function validateArtifactContent(
     hints.push("REQUIREMENT 应包含 Traceability 或指向 CHANGE");
   }
 
-  const engineering_quality = !/TODO|TBD|待补|占位/i.test(text) || text.length > 120;
+  const hasPendingLanguage = /TODO|TBD|待补|占位/i.test(text);
+  const engineering_quality =
+    phaseId === "review"
+      ? !hasPendingLanguage
+      : !hasPendingLanguage || text.length > 120;
   if (!engineering_quality) hints.push("含 TODO/TBD/待补 等待定用语");
 
   return {

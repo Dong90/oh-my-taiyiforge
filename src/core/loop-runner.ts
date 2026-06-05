@@ -42,7 +42,17 @@ function attemptContinueOnce(
   }
 
   const phaseId = state.currentPhase as PhaseId;
-  const needsHuman = requiresHumanGate(phaseId);
+  if (requiresHumanGate(phaseId)) {
+    const next = taiyiNext(workspaceDir, slug, true);
+    const guide = buildPhaseGuide(taiyiRoot, slug, state, workspaceDir);
+    const hint = next.ok && "text" in next && next.text ? next.text : formatGuidePlain(guide);
+    return {
+      advanced: false,
+      phase: phaseId,
+      message: `阶段 ${phaseId} 需人工审批，loop 不能自动过关。请填好工件后 /taiyi:continue 并显式 complete。\n${hint}`,
+    };
+  }
+
   const result = engine.completePhase(slug, phaseId, {
     quality: {
       completeness: true,
@@ -53,7 +63,7 @@ function attemptContinueOnce(
     },
     human: {
       approved: true,
-      approver: needsHuman ? "loop-operator" : "loop-auto",
+      approver: "loop-auto",
     },
   });
 

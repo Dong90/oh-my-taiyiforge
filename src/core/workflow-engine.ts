@@ -2,7 +2,9 @@ import fs from "node:fs";
 import path from "node:path";
 import type { ChangeProfile, ChangeState, GateInput, PhaseId } from "./types.js";
 import { evaluateHumanGate } from "./gates/human-gate.js";
-import { requiresHumanGate } from "./gates/human-gate-config.js";
+import { rejectAutomatedHumanApproval, requiresHumanGate } from "./gates/human-gate-config.js";
+import { isKnownAuxiliarySkill, KNOWN_AUXILIARY_SKILLS } from "./routing/auxiliary-skills.js";
+import { assertValidSlug, validateSlug } from "./slug.js";
 import { evaluateQualityGate } from "./gates/quality-gate.js";
 import { canEnterPhase, getNextPhase, getPhase } from "./phase-registry.js";
 import { isPhaseSkipped, skippedPhasesForProfile } from "./profile.js";
@@ -60,6 +62,7 @@ export class WorkflowEngine {
   }
 
   initChange(slug: string, options?: InitChangeOptions): ChangeState & { seeded: string[] } {
+    assertValidSlug(slug);
     const dir = this.changeDir(slug);
     fs.mkdirSync(dir, { recursive: true });
     const profile = options?.profile ?? "full";
@@ -112,9 +115,15 @@ export class WorkflowEngine {
   }
 
   getState(slug: string): ChangeState | null {
+    const slugCheck = validateSlug(slug);
+    if (!slugCheck.ok) return null;
     const file = this.statePath(slug);
     if (!fs.existsSync(file)) return null;
-    return normalizeState(JSON.parse(fs.readFileSync(file, "utf8")) as ChangeState);
+    try {
+      return normalizeState(JSON.parse(fs.readFileSync(file, "utf8")) as ChangeState);
+    } catch {
+      return null;
+    }
   }
 
   private writeState(state: ChangeState): void {
@@ -135,10 +144,18 @@ export class WorkflowEngine {
   }
 
   markAuxiliary(slug: string, skillId: string): { ok: boolean; error?: string } {
+    const slugCheck = validateSlug(slug);
+    if (!slugCheck.ok) return { ok: false, error: slugCheck.error };
     const state = this.getState(slug);
     if (!state) return { ok: false, error: "Change not found" };
     if (!skillId.startsWith("taiyi-")) {
       return { ok: false, error: "skillId must be taiyi-*" };
+    }
+    if (!isKnownAuxiliarySkill(skillId)) {
+      return {
+        ok: false,
+        error: `Unknown auxiliary skill: ${skillId} (known: ${[...KNOWN_AUXILIARY_SKILLS].join(", ")})`,
+      };
     }
     const auxiliaryCompleted = state.auxiliaryCompleted.includes(skillId)
       ? state.auxiliaryCompleted
@@ -160,8 +177,10 @@ export class WorkflowEngine {
     slug: string,
     phaseId: PhaseId,
     gates: GateInput,
-    options?: { skipArtifactValidation?: boolean; forceHuman?: boolean },
+    options?: { skipArtifactValidation?: boolean; forceHuman?: boolean; allowAutoHuman?: boolean },
   ): { ok: boolean; error?: string; qualityHints?: string[] } {
+    const slugCheck = validateSlug(slug);
+    if (!slugCheck.ok) return { ok: false, error: slugCheck.error };
     const state = this.getState(slug);
     if (!state) return { ok: false, error: "Change not found" };
     if (isWorkflowCompleted(state)) {
@@ -280,6 +299,14 @@ export class WorkflowEngine {
 
     const needsHuman = requiresHumanGate(phaseId) || options?.forceHuman;
     if (needsHuman) {
+      const autoReject = rejectAutomatedHumanApproval(
+        phaseId,
+        gates.human,
+        options?.allowAutoHuman,
+      );
+      if (!autoReject.ok) {
+        return { ok: false, error: autoReject.error };
+      }
       const human = evaluateHumanGate(gates.human);
       if (!human.passed) {
         return { ok: false, error: human.reason ?? "Human gate failed" };

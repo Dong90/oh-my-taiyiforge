@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.21.0] - 2026-06-05
+
+### Added
+
+- **铁三角依赖自动安装**：`postinstall` / `taiyi-forge-install --all` 默认安装 OpenSpec CLI、gstack（git clone + setup）、Superpowers（OpenCode plugin / Codex symlink / Cursor `npx skills`）、`addyosmani/web-quality-skills`
+- **`--skip-deps`** / `TAIYI_FORGE_SKIP_DEPS=1` 跳过；CI 环境自动跳过
+- **`doctor`** 增加 `deps-openspec` / `deps-gstack` / `deps-superpowers` / `deps-web-quality-skills` 检查项
+
 ## [0.20.0] - 2026-06-05
 
 ### Added

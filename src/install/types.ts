@@ -8,7 +8,16 @@ export const ALL_INSTALL_TARGETS: InstallTarget[] = [
 ];
 
 export type InstallResult = {
-  target: InstallTarget | "opencode-config" | "codex-agents" | "codex-prompts" | "claude-md";
+  target:
+    | InstallTarget
+    | "opencode-config"
+    | "codex-agents"
+    | "codex-prompts"
+    | "claude-md"
+    | "openspec"
+    | "gstack"
+    | "superpowers"
+    | "web-quality-skills";
   path: string;
   action: "created" | "updated" | "skipped" | "failed";
   detail?: string;

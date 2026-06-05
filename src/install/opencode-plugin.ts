@@ -21,24 +21,32 @@ function parseConfig(raw: string): { plugin?: string[] } | null {
   }
 }
 
-function hasPlugin(plugins: string[], name: string): boolean {
-  return plugins.some((p) => p === name || p.startsWith(`${name}@`));
+
+function pluginListed(plugins: string[], pluginEntry: string): boolean {
+  const base = pluginEntry.split("@")[0];
+  return plugins.some(
+    (p) => p === pluginEntry || p === base || p.startsWith(`${base}@`),
+  );
 }
 
-/** Insert plugin into JSON/JSONC config file. */
-export function addPluginToConfigFile(configPath: string, pluginEntry = PLUGIN_NAME): InstallResult {
+/** Insert any plugin entry into JSON/JSONC config file. */
+export function addPluginEntryToConfigFile(
+  configPath: string,
+  pluginEntry: string,
+  resultTarget: InstallResult["target"] = "opencode-config",
+): InstallResult {
   if (!fs.existsSync(configPath)) {
     const initial = { plugin: [pluginEntry] };
     fs.mkdirSync(path.dirname(configPath), { recursive: true });
     fs.writeFileSync(configPath, `${JSON.stringify(initial, null, 2)}\n`, "utf8");
-    return { target: "opencode-config", path: configPath, action: "created" };
+    return { target: resultTarget, path: configPath, action: "created" };
   }
 
   const raw = fs.readFileSync(configPath, "utf8");
   const parsed = parseConfig(raw);
   if (!parsed) {
     return {
-      target: "opencode-config",
+      target: resultTarget,
       path: configPath,
       action: "failed",
       detail: "could not parse config (JSON/JSONC)",
@@ -46,8 +54,8 @@ export function addPluginToConfigFile(configPath: string, pluginEntry = PLUGIN_N
   }
 
   const plugins = parsed.plugin ?? [];
-  if (hasPlugin(plugins, PLUGIN_NAME)) {
-    return { target: "opencode-config", path: configPath, action: "skipped", detail: "already listed" };
+  if (pluginListed(plugins, pluginEntry)) {
+    return { target: resultTarget, path: configPath, action: "skipped", detail: "already listed" };
   }
 
   const pluginArrayRegex = /(("plugin"|plugin)\s*:\s*)\[([\s\S]*?)\]/;
@@ -56,12 +64,17 @@ export function addPluginToConfigFile(configPath: string, pluginEntry = PLUGIN_N
     const formatted = next.map((p) => `"${p}"`).join(",\n    ");
     const updated = raw.replace(pluginArrayRegex, `$1[\n    ${formatted}\n  ]`);
     fs.writeFileSync(configPath, updated.endsWith("\n") ? updated : `${updated}\n`, "utf8");
-    return { target: "opencode-config", path: configPath, action: "updated" };
+    return { target: resultTarget, path: configPath, action: "updated" };
   }
 
   parsed.plugin = [...plugins, pluginEntry];
   fs.writeFileSync(configPath, `${JSON.stringify(parsed, null, 2)}\n`, "utf8");
-  return { target: "opencode-config", path: configPath, action: "updated" };
+  return { target: resultTarget, path: configPath, action: "updated" };
+}
+
+/** Insert TaiyiForge plugin into JSON/JSONC config file. */
+export function addPluginToConfigFile(configPath: string, pluginEntry = PLUGIN_NAME): InstallResult {
+  return addPluginEntryToConfigFile(configPath, pluginEntry, "opencode-config");
 }
 
 export function registerOpencodePlugin(candidates: string[]): InstallResult {

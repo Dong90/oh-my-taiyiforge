@@ -49,7 +49,7 @@ export function runE2eWorkflow(
       };
     }
 
-    const result = engine.completePhase(slug, phaseId, PASSING_GATES);
+    const result = engine.completePhase(slug, phaseId, PASSING_GATES, { allowAutoHuman: true });
     if (!result.ok) {
       const artifact = artifactPathForPhase(changeDir, phaseId);
       return {

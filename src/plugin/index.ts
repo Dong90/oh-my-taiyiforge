@@ -88,14 +88,17 @@ const TaiyiForgePlugin: Plugin = async () => {
           approver: tool.schema
             .string()
             .optional()
-            .describe("Human gate approver id (OMO)"),
+            .describe(
+              "Human gate approver id (required for change/design/review phases; blocked if omitted)",
+            ),
         },
         async execute(args, ctx) {
+          const human =
+            args.approver?.trim()
+              ? { approved: true as const, approver: args.approver.trim() }
+              : undefined;
           const r = taiyiComplete(ctx.directory, args.slug, args.phase, {
-            human: {
-              approved: true,
-              approver: args.approver ?? "opencode-user",
-            },
+            human,
           });
           return JSON.stringify(r, null, 2);
         },

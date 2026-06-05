@@ -39,25 +39,27 @@ export function runWalkthrough(
   const templatesDir = resolveTemplatesDir(import.meta.url);
   const steps: WalkthroughStep[] = [];
 
-  const doctorReport = runDoctor(pkgRoot);
-  steps.push({
-    label: "doctor",
-    ok: doctorReport.ok,
-    detail: doctorReport.ok ? "PASS" : "FAIL",
-  });
-  if (!doctorReport.ok) {
-    return {
-      ok: false,
-      workspaceDir,
-      slug,
-      steps,
-      error: "安装自检未通过，请运行: npx taiyi-forge-install --all",
-    };
-  }
-
   const taiyiRoot = resolveTaiyiRoot(workspaceDir);
   const engine = new WorkflowEngine(taiyiRoot, templatesDir);
   const existing = engine.getState(slug);
+
+  if (!existing) {
+    const doctorReport = runDoctor(pkgRoot);
+    steps.push({
+      label: "doctor",
+      ok: doctorReport.ok,
+      detail: doctorReport.ok ? "PASS" : "FAIL",
+    });
+    if (!doctorReport.ok) {
+      return {
+        ok: false,
+        workspaceDir,
+        slug,
+        steps,
+        error: "安装自检未通过，请运行: npx taiyi-forge-install --all",
+      };
+    }
+  }
 
   if (!existing) {
     try {

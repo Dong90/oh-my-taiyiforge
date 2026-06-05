@@ -107,6 +107,17 @@ Demo motivation with enough detail for validation.
     expect(state?.currentPhase).toBe("requirement");
   });
 
+  it("rejects unknown auxiliary skill in markAuxiliary", () => {
+    engine.initChange("aux-demo");
+    const result = engine.markAuxiliary("aux-demo", "taiyi-not-real");
+    expect(result.ok).toBe(false);
+    expect(result.error).toMatch(/Unknown auxiliary skill/);
+  });
+
+  it("rejects invalid slug on init", () => {
+    expect(() => engine.initChange("../bad")).toThrow(/invalid slug|slug must match/i);
+  });
+
   it("assesses complexity from artifact count", () => {
     engine.initChange("big-change");
     const { assessment } = engine.assessComplexity("big-change", {

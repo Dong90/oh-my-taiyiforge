@@ -13,6 +13,7 @@ import {
   skillSourceRoot,
 } from "./paths.js";
 import { installCursorRules } from "./cursor-rules.js";
+import { installThirdPartyDeps, shouldInstallDeps } from "./third-party-deps.js";
 import { syncCodexPrompts } from "./sync-codex-prompts.js";
 import { syncTaiyiSkills } from "./sync-skills.js";
 import type { InstallResult, InstallTarget } from "./types.js";
@@ -25,6 +26,8 @@ export type RunInstallOptions = {
   registerPlugin?: boolean;
   /** npm install this package into ~/.config/opencode (local path or registry name) */
   opencodeNpmSpec?: string;
+  /** Install gstack / OpenSpec / Superpowers / web-quality-skills (default true; CI skips) */
+  installDeps?: boolean;
   cwd?: string;
   silent?: boolean;
 };
@@ -58,20 +61,25 @@ export type ParsedInstallCli = {
   targets: InstallTarget[];
   registerPlugin: boolean;
   opencodeNpmSpec?: string;
+  installDeps: boolean;
   help?: boolean;
 };
 
 /** Parse `taiyi-forge-install` argv — supports `--all` or any combination of per-target flags. */
 export function parseInstallCli(argv: string[]): ParsedInstallCli {
   if (argv.includes("-h") || argv.includes("--help")) {
-    return { targets: [], registerPlugin: false, help: true };
+    return { targets: [], registerPlugin: false, installDeps: true, help: true };
   }
+
+  const skipDeps = argv.includes("--skip-deps");
+  const installDeps = !skipDeps;
 
   if (argv.includes("--all") || argv.length === 0) {
     return {
       targets: [...ALL_INSTALL_TARGETS],
       registerPlugin: true,
       opencodeNpmSpec: "local",
+      installDeps,
     };
   }
 
@@ -86,6 +94,7 @@ export function parseInstallCli(argv: string[]): ParsedInstallCli {
       targets: [...ALL_INSTALL_TARGETS],
       registerPlugin: true,
       opencodeNpmSpec: "local",
+      installDeps,
     };
   }
 
@@ -94,6 +103,7 @@ export function parseInstallCli(argv: string[]): ParsedInstallCli {
     targets,
     registerPlugin: hasOpencode,
     opencodeNpmSpec: hasOpencode ? "local" : undefined,
+    installDeps,
   };
 }
 
@@ -141,7 +151,9 @@ function formatInstallSummary(targets: InstallTarget[], dirs: ReturnType<typeof 
   const footer = targets.includes("opencode")
     ? "\n重启 OpenCode 后使用 taiyi_init / taiyi_status 等工具。"
     : "\n聊天：taiyi-* Skill + 铁三角；引擎：Agent 代跑 taiyi-forge / scripts/taiyi-forge.sh（见 docs/taiyi/invoke.yaml）。";
-  return `\n[${PLUGIN_NAME}] 已安装：\n${lines.join("\n")}${footer}\n`;
+  const depsNote =
+    "\n铁三角依赖：默认自动安装 OpenSpec CLI、gstack、Superpowers（OpenCode/Codex/Cursor）、web-quality-skills；跳过：--skip-deps 或 TAIYI_FORGE_SKIP_DEPS=1。";
+  return `\n[${PLUGIN_NAME}] 已安装：\n${lines.join("\n")}${footer}${depsNote}\n`;
 }
 
 export async function runInstall(opts: RunInstallOptions = {}): Promise<InstallResult[]> {
@@ -181,6 +193,11 @@ export async function runInstall(opts: RunInstallOptions = {}): Promise<InstallR
   if (opts.opencodeNpmSpec && targets.includes("opencode")) {
     const npmResult = await npmInstallOpencode(opts.opencodeNpmSpec, resolvedRoot);
     results.push(npmResult);
+  }
+
+  const wantsDeps = opts.installDeps ?? shouldInstallDeps();
+  if (wantsDeps) {
+    results.push(...installThirdPartyDeps({ targets, silent }));
   }
 
   for (const r of results) {
@@ -244,6 +261,7 @@ export async function runInstallCli(argv: string[]): Promise<number> {
   --claude                ~/.claude/skills/taiyi-* + CLAUDE.md 控制面
   --codex                 ~/.codex/skills/taiyi-* + AGENTS.md + prompts
   --cursor                ~/.cursor/skills/taiyi-*
+  --skip-deps             不自动安装 OpenSpec / gstack / Superpowers / web-quality-skills
 
 组合示例：
   taiyi-forge-install --claude --cursor
@@ -251,6 +269,8 @@ export async function runInstallCli(argv: string[]): Promise<number> {
 
 Env:
   TAIYI_FORGE_SKIP_POSTINSTALL=1      跳过 postinstall
+  TAIYI_FORGE_SKIP_DEPS=1             跳过铁三角依赖自动安装
+  TAIYI_FORGE_INSTALL_DEPS=0          同 SKIP_DEPS
   TAIYI_FORGE_INSTALL=claude,cursor   postinstall 仅装指定端（逗号分隔）
   TAIYI_FORGE_SKIP_OPENCODE_CONFIG=1  不写入 opencode.json
   OPENCODE_SKILLS_DIR / CLAUDE_SKILLS_DIR / CODEX_SKILLS_DIR / CURSOR_SKILLS_DIR
@@ -264,6 +284,7 @@ Env:
     targets: parsed.targets,
     registerPlugin: parsed.registerPlugin,
     opencodeNpmSpec: parsed.opencodeNpmSpec,
+    installDeps: parsed.installDeps,
   });
   return 0;
 }

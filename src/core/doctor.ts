@@ -4,6 +4,7 @@ import { defaultSkillTargets } from "../install/paths.js";
 import { opencodeConfigCandidates } from "../install/paths.js";
 import { PLUGIN_NAME } from "../install/types.js";
 import { listPhases } from "./phase-registry.js";
+import { detectThirdPartyDeps } from "../install/third-party-deps.js";
 
 export type DoctorCheck = {
   id: string;
@@ -34,9 +35,9 @@ function readPackageVersion(pkgRoot: string): string {
 export function runDoctor(pkgRoot: string): DoctorReport {
   const checks: DoctorCheck[] = [];
   const dirs = defaultSkillTargets();
-  const expectedSkills = 17;
   const packageSkillsDir = path.join(pkgRoot, "skills");
-  const packageSkillCount = countTaiyiSkills(packageSkillsDir);
+  const expectedSkills = countTaiyiSkills(packageSkillsDir);
+  const packageSkillCount = expectedSkills;
   checks.push({
     id: "package-skills",
     ok: packageSkillCount >= expectedSkills,
@@ -107,6 +108,14 @@ export function runDoctor(pkgRoot: string): DoctorReport {
     ok: fs.existsSync(codexAgents) && fs.readFileSync(codexAgents, "utf8").includes("taiyi-"),
     detail: fs.existsSync(codexAgents) ? codexAgents : `missing ${codexAgents}`,
   });
+
+  for (const dep of detectThirdPartyDeps(["opencode", "claude", "codex", "cursor"])) {
+    checks.push({
+      id: `deps-${dep.id}`,
+      ok: dep.installed,
+      detail: dep.detail,
+    });
+  }
 
   // PASS：包内 skills + 阶段注册 + 模板（四端目录为建议项，跑 taiyi-forge-install --all 同步）
   const required = new Set(["package-skills", "phase-registry", "templates"]);

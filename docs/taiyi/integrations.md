@@ -2,6 +2,21 @@
 
 与《AI 驱动研发流程与工具选型指南》对齐：TaiyiForge 管**九阶段工件 + 双门禁**，下列工具管各自专长，**可并存**。
 
+## 铁三角依赖（自动安装）
+
+`postinstall` / `taiyi-forge-install --all` 在默认情况下还会尝试安装：
+
+| 依赖 | 方式 | 说明 |
+|------|------|------|
+| **OpenSpec** | `npm i -g @fission-ai/openspec` | 全局 CLI；项目内仍需 `openspec init` |
+| **gstack** | `git clone` + `./setup` | 需要 **bun**（缺失时会尝试 `npm i -g bun`） |
+| **Superpowers** | OpenCode 写 plugin；Codex clone+symlink；Cursor 尝试 `npx skills add` | Cursor/Claude 插件市场需手动时见 install 日志 |
+| **web-quality-skills** | `npx skills add addyosmani/web-quality-skills -g -y` | accessibility / web-design-guidelines 等 |
+
+跳过：`npx taiyi-forge-install --all --skip-deps` 或 `TAIYI_FORGE_SKIP_DEPS=1`。CI 环境自动跳过。
+
+`npx taiyi doctor` 会列出 `deps-*` 检查项（不影响 Taiyi 核心 PASS/FAIL）。
+
 ## OpenSpec（规范层）
 
 | TaiyiForge 阶段 | OpenSpec 动作 |

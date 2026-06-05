@@ -43,7 +43,8 @@ describe("loop-runner", () => {
 
     const r = runContinueRepeat(engine, tmp, taiyiRoot, "loop-demo", 3);
     expect(r.attempts.length).toBeGreaterThanOrEqual(1);
-    expect(r.attempts[0]?.outcome).toBe("advanced");
+    expect(r.attempts[0]?.outcome).toBe("blocked");
+    expect(r.attempts[0]?.phase).toBe("change");
 
     clearLoopState(changeDir);
     fs.rmSync(tmp, { recursive: true, force: true });

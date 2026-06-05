@@ -49,8 +49,8 @@
 
 ```bash
 npm install oh-my-taiyiforge
-npx taiyi-forge-install --all    # Cursor / Claude / Codex / OpenCode
-npx taiyi doctor                 # 四端 Skills + 控制面自检
+npx taiyi-forge-install --all    # Cursor / Claude / Codex / OpenCode + 铁三角依赖
+npx taiyi doctor                 # 四端 Skills + deps-* 自检
 ```
 
 本地开发：

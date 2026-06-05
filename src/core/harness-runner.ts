@@ -57,6 +57,10 @@ function shellAvailable(cmd: string): boolean {
   return true;
 }
 
+function tokenizeHarnessCommand(command: string): string[] {
+  return command.trim().split(/\s+/).filter(Boolean);
+}
+
 function runShellCommand(
   workspaceDir: string,
   slug: string,
@@ -69,10 +73,16 @@ function runShellCommand(
   if (cmd.startsWith("taiyi archive ") || cmd === `taiyi archive ${slug}`) {
     return { ok: true, detail: "请用 npx taiyi archive（集成在 complete 后钩子）" };
   }
-  const r = spawnSync(cmd, {
+
+  const parts = tokenizeHarnessCommand(cmd);
+  if (parts.length === 0) {
+    return { ok: false, detail: "empty harness command" };
+  }
+  const [bin, ...args] = parts;
+  const r = spawnSync(bin, args, {
     cwd: workspaceDir,
     encoding: "utf8",
-    shell: true,
+    shell: false,
     stdio: ["ignore", "pipe", "pipe"],
   });
   const detail = (r.stdout || r.stderr || "").slice(0, 300);

@@ -17,7 +17,7 @@ description: TaiyiForge 引擎控制面 — 在对话中代跑 scripts/taiyi-for
 |------|------|
 | `/taiyi:new 功能名` | 新建变更 |
 | `/taiyi:status` | **当前阶段（如 3/9）、Skill、工件状态** |
-| `/taiyi:continue` | 规划/收尾阶段推进（**每阶段写完工件后各一次**） |
+| `/taiyi:continue` | 规划/收尾阶段推进（**每阶段写完工件后各一次**；人工门需 `--approver`） |
 | `/taiyi:apply` | dev/test 实现 |
 | `/taiyi:archive` | 归档 |
 
