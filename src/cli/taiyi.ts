@@ -3,6 +3,7 @@ import { WorkflowEngine } from "../core/workflow-engine.js";
 import { listPhases } from "../core/phase-registry.js";
 import { resolveTaiyiRoot } from "../core/paths.js";
 import { resolveTemplatesDir } from "../core/package-root.js";
+import { taiyiGuide, taiyiStatus } from "../plugin/handlers.js";
 
 const workspaceDir = process.cwd();
 const taiyiRoot = resolveTaiyiRoot(workspaceDir);
@@ -12,7 +13,8 @@ function usage(): void {
 
 用法:
   npm run taiyi -- init <slug> [--title "名称"]  创建变更工作区（自动拷贝模板）
-  npm run taiyi -- status <slug>         查看阶段状态
+  npm run taiyi -- status <slug>         查看阶段状态（含 guide）
+  npm run taiyi -- guide <slug>          当前该做什么
   npm run taiyi -- phases                列出九阶段
   npm run taiyi -- complete <slug> <phase>  完成阶段（需工件+门禁）
 
@@ -41,12 +43,30 @@ switch (cmd) {
   }
   case "status": {
     const slug = args[0];
-    const state = engine.getState(slug);
-    if (!state) {
-      console.error("未找到变更:", slug);
+    if (!slug) {
+      console.error("缺少 slug");
       process.exit(1);
     }
-    console.log(JSON.stringify(state, null, 2));
+    const r = taiyiStatus(workspaceDir, slug);
+    if (!r.ok) {
+      console.error(r.error);
+      process.exit(1);
+    }
+    console.log(JSON.stringify(r, null, 2));
+    break;
+  }
+  case "guide": {
+    const slug = args[0];
+    if (!slug) {
+      console.error("缺少 slug");
+      process.exit(1);
+    }
+    const r = taiyiGuide(workspaceDir, slug);
+    if (!r.ok) {
+      console.error(r.error);
+      process.exit(1);
+    }
+    console.log(JSON.stringify(r, null, 2));
     break;
   }
   case "phases": {

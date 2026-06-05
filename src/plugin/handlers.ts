@@ -4,6 +4,7 @@ import { listPhases, getPhase } from "../core/phase-registry.js";
 import { resolveTaiyiRoot } from "../core/paths.js";
 import { resolveTemplatesDir } from "../core/package-root.js";
 import { assessComplexity, type ComplexitySignals } from "../core/routing/complexity.js";
+import { buildPhaseGuide } from "../core/phase-guide.js";
 
 const TEMPLATES_DIR = resolveTemplatesDir(import.meta.url);
 
@@ -27,7 +28,17 @@ export function taiyiStatus(workspaceDir: string, slug: string) {
   const engine = createEngine(workspaceDir);
   const state = engine.getState(slug);
   if (!state) return { ok: false as const, error: `Change not found: ${slug}` };
-  return { ok: true as const, state, taiyiRoot: resolveTaiyiRoot(workspaceDir) };
+  const taiyiRoot = resolveTaiyiRoot(workspaceDir);
+  const guide = buildPhaseGuide(taiyiRoot, slug, state);
+  return { ok: true as const, state, guide, taiyiRoot };
+}
+
+export function taiyiGuide(workspaceDir: string, slug: string) {
+  const engine = createEngine(workspaceDir);
+  const state = engine.getState(slug);
+  if (!state) return { ok: false as const, error: `Change not found: ${slug}` };
+  const guide = buildPhaseGuide(resolveTaiyiRoot(workspaceDir), slug, state);
+  return { ok: true as const, guide };
 }
 
 export function taiyiPhases() {

@@ -3,6 +3,7 @@ import { tool } from "@opencode-ai/plugin/tool";
 import {
   taiyiAssess,
   taiyiComplete,
+  taiyiGuide,
   taiyiInit,
   taiyiPhases,
   taiyiStatus,
@@ -67,6 +68,17 @@ const TaiyiForgePlugin: Plugin = async () => {
               approver: args.approver ?? "opencode-user",
             },
           });
+          return JSON.stringify(r, null, 2);
+        },
+      }),
+      taiyi_guide: tool({
+        description:
+          "What to do now for a change: current skill, artifact path, quality preview, and next action.",
+        args: {
+          slug: tool.schema.string(),
+        },
+        async execute(args, ctx) {
+          const r = taiyiGuide(ctx.directory, args.slug);
           return JSON.stringify(r, null, 2);
         },
       }),

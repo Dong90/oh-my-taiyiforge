@@ -26,6 +26,10 @@ description: TaiyiForge 第 8 阶段 — 合并前评审，产出 REVIEW.md。
 4. high 未解决不得 Approve
 5. 通过后：`taiyi complete <slug> review`
 
-## 可选
+## 可选（铁三角）
 
 - 复杂 diff 前跑 `taiyi-health` 拿质量基线
+- **gstack review**：`gstack review` 做 PR 级结构审查，结论摘要写入 REVIEW.md
+- **Superpowers**：`verification-before-completion` — 无测试/截图证据不得 Approve
+
+详见 `docs/taiyi/integrations.md`

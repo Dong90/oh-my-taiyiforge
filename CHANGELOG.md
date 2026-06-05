@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.6.0] - 2026-06-05
+
+### Added
+
+- `taiyi_guide` 工具与 CLI `guide`：当前 Skill、工件路径、质量预检、下一步动作
+- `taiyi_status` 内嵌 `guide`
+- `docs/taiyi/integrations.md`：OpenSpec / Superpowers / gstack 串联说明
+
+### Changed
+
+- `taiyi-review` / `taiyi-integration` Skill 补充铁三角可选步骤
+
 ## [0.5.0] - 2026-06-05
 
 ### Added
