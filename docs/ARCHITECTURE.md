@@ -49,7 +49,7 @@
 
 - **Claude Code** — `scripts/install-skills.sh claude`
 - **Codex** — `scripts/install-skills.sh codex`
-- **Cursor** — `scripts/install-skills.sh cursor` 或 `@oh-my-taiyiforge`
+- **Cursor** — `postinstall` / `taiyi-forge-install --cursor` → `~/.cursor/skills/taiyi-*`
 
 Agent 只负责按 Skill 写工件；**状态机与门禁**由 `taiyi` CLI / `WorkflowEngine` 校验，避免两端行为漂移。
 

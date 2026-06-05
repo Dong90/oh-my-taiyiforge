@@ -11,7 +11,7 @@ import {
 } from "./paths.js";
 import { syncTaiyiSkills } from "./sync-skills.js";
 import type { InstallResult, InstallTarget } from "./types.js";
-import { PLUGIN_NAME } from "./types.js";
+import { ALL_INSTALL_TARGETS, PLUGIN_NAME } from "./types.js";
 
 export type RunInstallOptions = {
   pkgRoot?: string;
@@ -24,17 +24,72 @@ export type RunInstallOptions = {
   silent?: boolean;
 };
 
+const TARGET_FLAGS: Record<string, InstallTarget> = {
+  "--opencode": "opencode",
+  "--claude": "claude",
+  "--codex": "codex",
+  "--cursor": "cursor",
+};
+
 function log(silent: boolean | undefined, msg: string): void {
   if (!silent) console.log(msg);
 }
 
+function isInstallTarget(t: string): t is InstallTarget {
+  return (ALL_INSTALL_TARGETS as string[]).includes(t);
+}
+
 export function parseInstallTargets(env = process.env): InstallTarget[] {
   const raw = env.TAIYI_FORGE_INSTALL?.trim();
-  if (!raw) return ["opencode", "claude", "codex"];
-  return raw
+  if (!raw) return [...ALL_INSTALL_TARGETS];
+  const picked = raw
     .split(",")
     .map((t) => t.trim().toLowerCase())
-    .filter((t): t is InstallTarget => t === "opencode" || t === "claude" || t === "codex");
+    .filter(isInstallTarget);
+  return picked.length > 0 ? picked : [...ALL_INSTALL_TARGETS];
+}
+
+export type ParsedInstallCli = {
+  targets: InstallTarget[];
+  registerPlugin: boolean;
+  opencodeNpmSpec?: string;
+  help?: boolean;
+};
+
+/** Parse `taiyi-forge-install` argv — supports `--all` or any combination of per-target flags. */
+export function parseInstallCli(argv: string[]): ParsedInstallCli {
+  if (argv.includes("-h") || argv.includes("--help")) {
+    return { targets: [], registerPlugin: false, help: true };
+  }
+
+  if (argv.includes("--all") || argv.length === 0) {
+    return {
+      targets: [...ALL_INSTALL_TARGETS],
+      registerPlugin: true,
+      opencodeNpmSpec: "local",
+    };
+  }
+
+  const targets: InstallTarget[] = [];
+  for (const arg of argv) {
+    const t = TARGET_FLAGS[arg];
+    if (t && !targets.includes(t)) targets.push(t);
+  }
+
+  if (targets.length === 0) {
+    return {
+      targets: [...ALL_INSTALL_TARGETS],
+      registerPlugin: true,
+      opencodeNpmSpec: "local",
+    };
+  }
+
+  const hasOpencode = targets.includes("opencode");
+  return {
+    targets,
+    registerPlugin: hasOpencode,
+    opencodeNpmSpec: hasOpencode ? "local" : undefined,
+  };
 }
 
 export function shouldRunPostinstall(env = process.env): boolean {
@@ -62,6 +117,23 @@ function pickOpencodeConfigPath(cwd: string): string {
   return found ?? global;
 }
 
+function formatInstallSummary(targets: InstallTarget[], dirs: ReturnType<typeof defaultSkillTargets>): string {
+  const lines: string[] = [];
+  if (targets.includes("opencode")) {
+    lines.push(`  OpenCode  → opencode.json: "plugin": ["${PLUGIN_NAME}"]`);
+    lines.push(`  OpenCode  → ${dirs.opencode}/taiyi-*`);
+  }
+  if (targets.includes("claude")) lines.push(`  Claude    → ${dirs.claude}/taiyi-*`);
+  if (targets.includes("codex")) {
+    lines.push(`  Codex     → ${dirs.codex}/taiyi-* + AGENTS.md 段落`);
+  }
+  if (targets.includes("cursor")) lines.push(`  Cursor    → ${dirs.cursor}/taiyi-*`);
+  const footer = targets.includes("opencode")
+    ? "\n重启 OpenCode 后使用 taiyi_init / taiyi_status 等工具。"
+    : "\n在 IDE 中加载 taiyi-* Skill，并用 npx taiyi <cmd> 驱动工作流。";
+  return `\n[${PLUGIN_NAME}] 已安装：\n${lines.join("\n")}${footer}\n`;
+}
+
 export async function runInstall(opts: RunInstallOptions = {}): Promise<InstallResult[]> {
   const pkgRoot = opts.pkgRoot ?? resolvePackageRoot(import.meta.url);
   const resolvedRoot = fs.existsSync(path.join(pkgRoot, "skills")) ? pkgRoot : path.resolve(pkgRoot, "..");
@@ -72,23 +144,28 @@ export async function runInstall(opts: RunInstallOptions = {}): Promise<InstallR
   const silent = opts.silent;
 
   if (targets.includes("opencode")) {
-    results.push(syncTaiyiSkills(skillsSrc, dirs.opencode));
+    results.push({ ...syncTaiyiSkills(skillsSrc, dirs.opencode), target: "opencode" });
   }
   if (targets.includes("claude")) {
-    const r = syncTaiyiSkills(skillsSrc, dirs.claude);
-    results.push({ ...r, target: "claude" });
+    results.push({ ...syncTaiyiSkills(skillsSrc, dirs.claude), target: "claude" });
   }
   if (targets.includes("codex")) {
-    const r = syncTaiyiSkills(skillsSrc, dirs.codex);
-    results.push({ ...r, target: "codex" });
+    results.push({ ...syncTaiyiSkills(skillsSrc, dirs.codex), target: "codex" });
     results.push(installCodexAgents(resolvedRoot, path.dirname(dirs.codex)));
   }
+  if (targets.includes("cursor")) {
+    results.push({ ...syncTaiyiSkills(skillsSrc, dirs.cursor), target: "cursor" });
+  }
 
-  if (opts.registerPlugin !== false && process.env.TAIYI_FORGE_SKIP_OPENCODE_CONFIG !== "1") {
+  const wantsOpencodeConfig =
+    targets.includes("opencode") &&
+    opts.registerPlugin !== false &&
+    process.env.TAIYI_FORGE_SKIP_OPENCODE_CONFIG !== "1";
+  if (wantsOpencodeConfig) {
     results.push(addPluginToConfigFile(pickOpencodeConfigPath(opts.cwd ?? process.cwd())));
   }
 
-  if (opts.opencodeNpmSpec) {
+  if (opts.opencodeNpmSpec && targets.includes("opencode")) {
     const npmResult = await npmInstallOpencode(opts.opencodeNpmSpec, resolvedRoot);
     results.push(npmResult);
   }
@@ -102,14 +179,7 @@ export async function runInstall(opts: RunInstallOptions = {}): Promise<InstallR
   }
 
   if (!silent) {
-    console.log(`
-[${PLUGIN_NAME}] 三端就绪：
-  OpenCode  → opencode.json: "plugin": ["${PLUGIN_NAME}"]
-  Claude    → ${dirs.claude}/taiyi-*
-  Codex     → ${dirs.codex}/taiyi-* + AGENTS.md 段落
-
-重启 OpenCode 后使用 taiyi_init / taiyi_status 等工具。
-`);
+    console.log(formatInstallSummary(targets, dirs));
   }
 
   return results;
@@ -151,48 +221,36 @@ async function npmInstallOpencode(spec: string, pkgRoot: string): Promise<Instal
 
 /** CLI entry for bin/taiyi-forge-install */
 export async function runInstallCli(argv: string[]): Promise<number> {
-  const scope = argv[0] ?? "--all";
-  const base = resolvePackageRoot(import.meta.url);
+  const parsed = parseInstallCli(argv);
 
-  switch (scope) {
-    case "--opencode":
-      await runInstall({
-        pkgRoot: base,
-        targets: ["opencode"],
-        registerPlugin: true,
-        opencodeNpmSpec: "local",
-      });
-      break;
-    case "--claude":
-      await runInstall({ pkgRoot: base, targets: ["claude"], registerPlugin: false });
-      break;
-    case "--codex":
-      await runInstall({ pkgRoot: base, targets: ["codex"], registerPlugin: false });
-      break;
-    case "--all":
-    default:
-      await runInstall({
-        pkgRoot: base,
-        targets: ["opencode", "claude", "codex"],
-        registerPlugin: true,
-        opencodeNpmSpec: "local",
-      });
-      break;
-    case "-h":
-    case "--help":
-      console.log(`Usage: taiyi-forge-install [--all|--opencode|--claude|--codex]
+  if (parsed.help) {
+    console.log(`Usage: taiyi-forge-install [--all] [--opencode] [--claude] [--codex] [--cursor]
 
-  --all       OpenCode plugin + npm + opencode.json + Claude + Codex (default)
-  --opencode  ~/.config/opencode npm install + plugin + skills
-  --claude    ~/.claude/skills/taiyi-*
-  --codex     ~/.codex/skills/taiyi-* + AGENTS.md
+  --all                 四端全装（默认，无参数时同 --all）
+  --opencode              ~/.config/opencode skills + npm + opencode.json plugin
+  --claude                ~/.claude/skills/taiyi-*
+  --codex                 ~/.codex/skills/taiyi-* + AGENTS.md
+  --cursor                ~/.cursor/skills/taiyi-*
+
+组合示例：
+  taiyi-forge-install --claude --cursor
+  taiyi-forge-install --opencode --cursor
 
 Env:
-  TAIYI_FORGE_SKIP_POSTINSTALL=1   skip postinstall
-  TAIYI_FORGE_INSTALL=opencode,claude,codex
-  TAIYI_FORGE_SKIP_OPENCODE_CONFIG=1
+  TAIYI_FORGE_SKIP_POSTINSTALL=1      跳过 postinstall
+  TAIYI_FORGE_INSTALL=claude,cursor   postinstall 仅装指定端（逗号分隔）
+  TAIYI_FORGE_SKIP_OPENCODE_CONFIG=1  不写入 opencode.json
+  OPENCODE_SKILLS_DIR / CLAUDE_SKILLS_DIR / CODEX_SKILLS_DIR / CURSOR_SKILLS_DIR
 `);
-      return 0;
+    return 0;
   }
+
+  const base = resolvePackageRoot(import.meta.url);
+  await runInstall({
+    pkgRoot: base,
+    targets: parsed.targets,
+    registerPlugin: parsed.registerPlugin,
+    opencodeNpmSpec: parsed.opencodeNpmSpec,
+  });
   return 0;
 }

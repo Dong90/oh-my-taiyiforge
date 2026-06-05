@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.12.0] - 2026-06-05
+
+### Added
+
+- **Cursor 纳入默认安装**：`postinstall` / `--all` 同步 `~/.cursor/skills/taiyi-*`
+- **按需组合安装**：`taiyi-forge-install --claude --cursor` 等；`TAIYI_FORGE_INSTALL=opencode,cursor`
+
+### Changed
+
+- 仅装非 OpenCode 端时不再写入 `opencode.json`
+
 ## [0.11.0] - 2026-06-05
 
 ### Changed

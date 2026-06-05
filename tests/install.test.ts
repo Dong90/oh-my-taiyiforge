@@ -5,6 +5,7 @@ import path from "node:path";
 import { addPluginToConfigFile } from "../src/install/opencode-plugin.js";
 import { mergeCodexAgentsBlock } from "../src/install/codex-agents.js";
 import { syncTaiyiSkills } from "../src/install/sync-skills.js";
+import { parseInstallCli, parseInstallTargets } from "../src/install/run.js";
 import { PLUGIN_NAME } from "../src/install/types.js";
 
 describe("install", () => {
@@ -42,6 +43,31 @@ describe("install", () => {
     mergeCodexAgentsBlock(agents, "## Taiyi v2");
     expect(fs.readFileSync(agents, "utf8")).toContain("Taiyi v2");
     expect(fs.readFileSync(agents, "utf8").match(/TAIYI-FORGE:AGENTS:START/g)?.length).toBe(1);
+  });
+
+  it("defaults postinstall targets to all four platforms", () => {
+    expect(parseInstallTargets({})).toEqual(["opencode", "claude", "codex", "cursor"]);
+  });
+
+  it("parses TAIYI_FORGE_INSTALL subset", () => {
+    expect(parseInstallTargets({ TAIYI_FORGE_INSTALL: "claude,cursor" })).toEqual([
+      "claude",
+      "cursor",
+    ]);
+  });
+
+  it("parseInstallCli supports combined flags", () => {
+    const p = parseInstallCli(["--claude", "--cursor"]);
+    expect(p.targets).toEqual(["claude", "cursor"]);
+    expect(p.registerPlugin).toBe(false);
+    expect(p.opencodeNpmSpec).toBeUndefined();
+  });
+
+  it("parseInstallCli --all includes cursor and opencode npm", () => {
+    const p = parseInstallCli(["--all"]);
+    expect(p.targets).toContain("cursor");
+    expect(p.registerPlugin).toBe(true);
+    expect(p.opencodeNpmSpec).toBe("local");
   });
 
   it("syncs taiyi-* skill folders", () => {

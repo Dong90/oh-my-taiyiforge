@@ -7,13 +7,14 @@
 
 [5 分钟快速开始 →](./docs/QUICKSTART.md)
 
-## 三端安装（对齐 Superpowers / oh-my-openagent）
+## 四端安装（对齐 Superpowers / oh-my-openagent）
 
 | 平台 | 一条命令之后 | 配置位置 |
 |------|----------------|----------|
 | **OpenCode** | `postinstall` 写入 `plugin` + 同步 skills；`--opencode` 还会在 `~/.config/opencode` 执行 `npm install` | `opencode.json` → `"plugin": ["oh-my-taiyiforge"]` |
 | **Claude Code** | `postinstall` 同步 | `~/.claude/skills/taiyi-*` |
 | **Codex** | `postinstall` 同步 skills + 合并 `AGENTS.md` 段落 | `~/.codex/skills/taiyi-*` |
+| **Cursor** | `postinstall` 同步 | `~/.cursor/skills/taiyi-*` |
 
 ### 一键（推荐）
 
@@ -23,10 +24,17 @@ npm install oh-my-taiyiforge
 cd oh-my-taiyiforge && npm install && npx taiyi-forge-install --all
 ```
 
-`npm install` 的 **postinstall** 默认会：同步 **OpenCode / Claude / Codex** 三端 skills，并把 `oh-my-taiyiforge` 写入 `~/.config/opencode/opencode.json` 的 `plugin` 数组（与 Superpowers 相同方式）。
+`npm install` 的 **postinstall** 默认会：同步 **OpenCode / Claude / Codex / Cursor** 四端 skills，并把 `oh-my-taiyiforge` 写入 `~/.config/opencode/opencode.json` 的 `plugin` 数组（与 Superpowers 相同方式）。
 
-仅某一端：`npx taiyi-forge-install --opencode` | `--claude` | `--codex`  
-可选 Cursor：`./scripts/install-skills.sh cursor`  
+按需安装（可组合）：
+
+```bash
+npx taiyi-forge-install --all              # 默认，四端全装
+npx taiyi-forge-install --cursor           # 仅 Cursor
+npx taiyi-forge-install --claude --cursor  # Claude + Cursor
+TAIYI_FORGE_INSTALL=opencode,cursor npm install oh-my-taiyiforge
+```
+
 详见 [docs/opencode-setup.md](./docs/opencode-setup.md)
 
 ### OpenCode 示例配置

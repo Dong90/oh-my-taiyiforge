@@ -1,4 +1,11 @@
-export type InstallTarget = "opencode" | "claude" | "codex";
+export type InstallTarget = "opencode" | "claude" | "codex" | "cursor";
+
+export const ALL_INSTALL_TARGETS: InstallTarget[] = [
+  "opencode",
+  "claude",
+  "codex",
+  "cursor",
+];
 
 export type InstallResult = {
   target: InstallTarget | "opencode-config" | "codex-agents";

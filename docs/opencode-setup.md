@@ -9,7 +9,7 @@ npm install oh-my-taiyiforge
 **postinstall 自动完成：**
 
 1. 将 `taiyi-*` skills 同步到 `~/.config/opencode/skills/`
-2. 同步到 `~/.claude/skills/`、`~/.codex/skills/`（三端同源）
+2. 同步到 `~/.claude/skills/`、`~/.codex/skills/`、`~/.cursor/skills/`（四端同源）
 3. 在 `~/.codex/AGENTS.md` 插入 TaiyiForge 指引段落（若不存在则创建）
 4. 向 **`~/.config/opencode/opencode.json`** 的 `plugin` 数组追加 `"oh-my-taiyiforge"`（若尚未存在）
 
@@ -50,7 +50,7 @@ npx taiyi-forge-install --all
 | `taiyi_assess` | 复杂度评估与辅助 skill 建议 |
 | `taiyi_archive` | 九阶段完成后执行 `openspec archive <slug>`（若项目已初始化 OpenSpec） |
 
-## 4. 一键安装（OpenCode + Claude + Codex + Cursor）
+## 4. 一键安装（四端）
 
 在仓库根目录：
 
@@ -61,13 +61,21 @@ npm install
 ./scripts/install.sh --all
 ```
 
-## 5. 与 Claude / Codex 对齐
+按需组合：
+
+```bash
+npx taiyi-forge-install --cursor
+npx taiyi-forge-install --claude --cursor
+TAIYI_FORGE_INSTALL=opencode,cursor npm install
+```
+
+## 5. 与 Claude / Codex / Cursor 对齐
 
 | 端 | 配置 |
 |----|------|
 | OpenCode | `"plugin": ["oh-my-taiyiforge"]` + 上表工具 |
 | Claude | `~/.claude/skills/taiyi-*` |
 | Codex | `~/.codex/skills/taiyi-*` + `AGENTS.md` |
-| Cursor | `~/.cursor/skills/taiyi-*` 或 `@oh-my-taiyiforge` |
+| Cursor | `~/.cursor/skills/taiyi-*` |
 
-Skill 正文均在包内 `skills/taiyi-*/SKILL.md`，**三端同源**。
+Skill 正文均在包内 `skills/taiyi-*/SKILL.md`，**四端同源**。Cursor 无 plugin 工具，用 Skill + `npx taiyi` CLI。
