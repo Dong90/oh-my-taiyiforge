@@ -20,9 +20,13 @@ const TaiyiForgePlugin: Plugin = async () => {
           "Initialize a TaiyiForge change workspace under .taiyi/changes/<slug>. Start the 9-phase document-driven workflow.",
         args: {
           slug: tool.schema.string().describe("Change identifier, e.g. auth-timeout"),
+          title: tool.schema
+            .string()
+            .optional()
+            .describe("Human-readable change title for templates"),
         },
         async execute(args, ctx) {
-          const r = taiyiInit(ctx.directory, args.slug);
+          const r = taiyiInit(ctx.directory, args.slug, args.title);
           return JSON.stringify(r, null, 2);
         },
       }),

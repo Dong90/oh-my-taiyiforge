@@ -26,11 +26,25 @@ describe("plugin-handlers", () => {
     expect(phases.every((p) => p.skill.startsWith("taiyi-"))).toBe(true);
   });
 
-  it("init and complete change phase in project workspace", () => {
-    const init = taiyiInit(workspace, "feat-a");
+  it("init seeds templates and complete change phase in project workspace", () => {
+    const init = taiyiInit(workspace, "feat-a", "Feature A");
     expect(init.ok).toBe(true);
+    expect(init.seeded.length).toBeGreaterThan(0);
     const changeDir = path.join(workspace, ".taiyi", "changes", "feat-a");
-    fs.writeFileSync(path.join(changeDir, "CHANGE.md"), "# Change\n\n## Motivation\nx");
+    fs.writeFileSync(
+      path.join(changeDir, "CHANGE.md"),
+      `# CHANGE: Feature A
+
+## Motivation
+Need feature A for users.
+
+## Scope
+- In: core flow
+
+## Success Criteria
+- [ ] Users can use feature A
+`,
+    );
     const done = taiyiComplete(workspace, "feat-a", "change");
     expect(done.ok).toBe(true);
     const status = taiyiStatus(workspace, "feat-a");

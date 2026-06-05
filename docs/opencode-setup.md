@@ -42,7 +42,7 @@ npx taiyi-forge-install --all
 
 | 工具 | 作用 |
 |------|------|
-| `taiyi_init` | 创建 `.taiyi/changes/<slug>/` |
+| `taiyi_init` | 创建 `.taiyi/changes/<slug>/` 并从 `templates/` 拷贝工件骨架 |
 | `taiyi_status` | 查看阶段状态 |
 | `taiyi_phases` | 列出九阶段与 `taiyi-*` skill |
 | `taiyi_complete` | 完成当前阶段（门禁 + 工件） |

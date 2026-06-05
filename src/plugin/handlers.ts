@@ -2,16 +2,25 @@ import type { GateInput, PhaseId, QualityScores } from "../core/types.js";
 import { WorkflowEngine } from "../core/workflow-engine.js";
 import { listPhases, getPhase } from "../core/phase-registry.js";
 import { resolveTaiyiRoot } from "../core/paths.js";
+import { resolveTemplatesDir } from "../core/package-root.js";
 import { assessComplexity, type ComplexitySignals } from "../core/routing/complexity.js";
 
+const TEMPLATES_DIR = resolveTemplatesDir(import.meta.url);
+
 export function createEngine(workspaceDir: string): WorkflowEngine {
-  return new WorkflowEngine(resolveTaiyiRoot(workspaceDir));
+  return new WorkflowEngine(resolveTaiyiRoot(workspaceDir), TEMPLATES_DIR);
 }
 
-export function taiyiInit(workspaceDir: string, slug: string) {
+export function taiyiInit(workspaceDir: string, slug: string, title?: string) {
   const engine = createEngine(workspaceDir);
-  const state = engine.initChange(slug);
-  return { ok: true as const, state, taiyiRoot: resolveTaiyiRoot(workspaceDir) };
+  const result = engine.initChange(slug, { title, templatesDir: TEMPLATES_DIR });
+  const { seeded, ...state } = result;
+  return {
+    ok: true as const,
+    state,
+    seeded,
+    taiyiRoot: resolveTaiyiRoot(workspaceDir),
+  };
 }
 
 export function taiyiStatus(workspaceDir: string, slug: string) {
@@ -48,7 +57,13 @@ export function taiyiComplete(
   };
   const human = gates?.human ?? { approved: true, approver: "opencode-agent" };
   const result = engine.completePhase(slug, phase.id, { quality, human });
-  if (!result.ok) return { ok: false as const, error: result.error };
+  if (!result.ok) {
+    return {
+      ok: false as const,
+      error: result.error,
+      qualityHints: result.qualityHints,
+    };
+  }
   return {
     ok: true as const,
     state: engine.getState(slug),

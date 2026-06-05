@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.5.0] - 2026-06-05
+
+### Added
+
+- `taiyi init` / `taiyi_init`：自动从 `templates/` 拷贝九阶段 Markdown 工件（不覆盖已有文件）
+- 工件质量推断：`complete` 时校验章节与占位符，失败时返回 `qualityHints`
+- `taiyi_init` 可选参数 `title` 替换模板中的 `{{title}}`
+
+### Changed
+
+- CLI `init` 支持 `--title`
+
 ## [0.4.0] - 2026-06-05
 
 ### Added

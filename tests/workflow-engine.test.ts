@@ -22,6 +22,40 @@ describe("workflow-engine", () => {
     expect(state.slug).toBe("demo-feature");
     expect(state.currentPhase).toBe("change");
     expect(state.completedPhases).toEqual([]);
+    expect(state.seeded).toEqual([]);
+  });
+
+  it("seeds templates when templatesDir provided", () => {
+    const templates = path.join(root, "templates");
+    fs.mkdirSync(templates);
+    fs.writeFileSync(
+      path.join(templates, "CHANGE.md"),
+      "# CHANGE: {{title}}\n\n## Motivation\nseed\n\n## Scope\nx\n\n## Success Criteria\n- [ ] ok\n",
+    );
+    const eng = new WorkflowEngine(root, templates);
+    const result = eng.initChange("seeded", { title: "Seeded Feature" });
+    expect(result.seeded).toContain("CHANGE.md");
+    expect(fs.existsSync(path.join(root, "changes", "seeded", "CHANGE.md"))).toBe(true);
+  });
+
+  it("rejects completePhase when CHANGE.md is still template-quality", () => {
+    const templates = path.join(root, "templates");
+    fs.mkdirSync(templates);
+    fs.writeFileSync(path.join(templates, "CHANGE.md"), "# CHANGE: {{title}}\n\n## Motivation\n\n## Scope\n\n## Success Criteria\n");
+    const eng = new WorkflowEngine(root, templates);
+    eng.initChange("bad-change", { templatesDir: templates });
+    const result = eng.completePhase("bad-change", "change", {
+      quality: {
+        completeness: true,
+        consistency: true,
+        verifiability: true,
+        traceability: true,
+        engineering_quality: true,
+      },
+      human: { approved: true, approver: "human" },
+    });
+    expect(result.ok).toBe(false);
+    expect(result.error).toMatch(/Quality gate failed/);
   });
 
   it("rejects completePhase without artifact file", () => {
@@ -45,7 +79,17 @@ describe("workflow-engine", () => {
     const changeDir = path.join(root, "changes", "demo-feature");
     fs.writeFileSync(
       path.join(changeDir, "CHANGE.md"),
-      "# Change\n\n## Motivation\nDemo",
+      `# Change
+
+## Motivation
+Demo motivation with enough detail for validation.
+
+## Scope
+- In: demo
+
+## Success Criteria
+- [ ] Demo passes validation
+`,
     );
     const result = engine.completePhase("demo-feature", "change", {
       quality: {

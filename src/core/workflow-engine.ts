@@ -9,9 +9,22 @@ import {
   getPhase,
 } from "./phase-registry.js";
 import { assessComplexity, type ComplexitySignals } from "./routing/complexity.js";
+import { seedChangeTemplates } from "./template-seed.js";
+import {
+  artifactPathForPhase,
+  validateArtifactFile,
+} from "./artifact-validator.js";
+
+export type InitChangeOptions = {
+  title?: string;
+  templatesDir?: string;
+};
 
 export class WorkflowEngine {
-  constructor(private readonly workspaceRoot: string) {}
+  constructor(
+    private readonly workspaceRoot: string,
+    private readonly templatesDir?: string,
+  ) {}
 
   private changesDir(): string {
     return path.join(this.workspaceRoot, "changes");
@@ -25,9 +38,17 @@ export class WorkflowEngine {
     return path.join(this.changesDir(), slug);
   }
 
-  initChange(slug: string): ChangeState {
+  initChange(slug: string, options?: InitChangeOptions): ChangeState & { seeded: string[] } {
     const dir = this.changeDir(slug);
     fs.mkdirSync(dir, { recursive: true });
+    const templatesDir = options?.templatesDir ?? this.templatesDir;
+    const seeded =
+      templatesDir != null
+        ? seedChangeTemplates(dir, templatesDir, {
+            slug,
+            title: options?.title,
+          })
+        : [];
     const now = new Date().toISOString();
     const state: ChangeState = {
       slug,
@@ -37,7 +58,7 @@ export class WorkflowEngine {
       updatedAt: now,
     };
     this.writeState(state);
-    return state;
+    return { ...state, seeded };
   }
 
   getState(slug: string): ChangeState | null {
@@ -67,7 +88,8 @@ export class WorkflowEngine {
     slug: string,
     phaseId: PhaseId,
     gates: GateInput,
-  ): { ok: boolean; error?: string } {
+    options?: { skipArtifactValidation?: boolean },
+  ): { ok: boolean; error?: string; qualityHints?: string[] } {
     const state = this.getState(slug);
     if (!state) return { ok: false, error: "Change not found" };
     if (state.currentPhase !== phaseId) {
@@ -91,11 +113,34 @@ export class WorkflowEngine {
       };
     }
 
-    const quality = evaluateQualityGate(gates.quality);
+    let qualityScores = { ...gates.quality };
+    let qualityHints: string[] | undefined;
+
+    if (!options?.skipArtifactValidation) {
+      const artifactFile = artifactPathForPhase(this.changeDir(slug), phaseId);
+      const inferred = validateArtifactFile(artifactFile, phaseId);
+      if (inferred) {
+        qualityHints = inferred.hints;
+        qualityScores = {
+          completeness: qualityScores.completeness && inferred.scores.completeness,
+          consistency: qualityScores.consistency && inferred.scores.consistency,
+          verifiability:
+            qualityScores.verifiability && inferred.scores.verifiability,
+          traceability:
+            qualityScores.traceability && inferred.scores.traceability,
+          engineering_quality:
+            qualityScores.engineering_quality && inferred.scores.engineering_quality,
+        };
+      }
+    }
+
+    const quality = evaluateQualityGate(qualityScores);
     if (!quality.passed) {
+      const hintText = qualityHints?.length ? ` — ${qualityHints.join("; ")}` : "";
       return {
         ok: false,
-        error: `Quality gate failed: ${quality.failed.join(", ")}`,
+        error: `Quality gate failed: ${quality.failed.join(", ")}${hintText}`,
+        qualityHints,
       };
     }
 
