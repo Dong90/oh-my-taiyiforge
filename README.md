@@ -2,107 +2,166 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
-**TaiyiForge** — 九阶段文档驱动研发工作流。  
-安装方式与 **Superpowers / oh-my-openagent** 同类：**OpenCode 走 `plugin` 数组**，**Claude / Codex / Cursor 走 `taiyi-*` Skills**。
+**TaiyiForge** — 将六大工程规范转化为 AI 可执行工作流：九阶段文档驱动研发、双门禁、四端统一控制面。
 
-[5 分钟快速开始 →](./docs/QUICKSTART.md)
+> 聊天里写工件，Agent 代跑引擎；对齐 **OpenSpec** 命令风格，融合 **Superpowers / gstack / OpenSpec** 铁三角。
 
-## 四端安装（对齐 Superpowers / oh-my-openagent）
+[5 分钟快速开始 →](./docs/QUICKSTART.md) · [完整演示 →](./examples/minimal-project/README.md)
 
-| 平台 | 一条命令之后 | 配置位置 |
-|------|----------------|----------|
-| **OpenCode** | `postinstall` 写入 `plugin` + 同步 skills；`--opencode` 还会在 `~/.config/opencode` 执行 `npm install` | `opencode.json` → `"plugin": ["oh-my-taiyiforge"]` |
-| **Claude Code** | `postinstall` 同步 skills + **CLAUDE.md 控制面** | `~/.claude/skills/taiyi-*` |
-| **Codex** | `postinstall` 同步 skills + 合并 `AGENTS.md` + **`$taiyi-forge` prompt** | `~/.codex/skills/taiyi-*` · `~/.codex/prompts/taiyi-forge.md` |
-| **Cursor** | `postinstall` 同步 skills + **`taiyiforge.mdc` 规则** | `~/.cursor/skills/taiyi-*` |
+---
 
-### 一键（推荐）
+## 架构总览
+
+![TaiyiForge 架构图 — 六大工程规范 × 15 Skill × 受控交付](./docs/taiyiforge-architecture.png)
+
+上图从左到右：
+
+| 区域 | 内容 |
+|------|------|
+| **工件体系** | `.taiyi/changes/<slug>/` 下 CHANGE → CHANGELOG 等 Markdown + ADR |
+| **核心引擎** | 统一入口、意图分析、前置校验、路由决策、Harness 编排、状态追踪、CI 验证 |
+| **九阶段主流程** | change → requirement → design → ui-design → task → dev → test → review → integration |
+| **双门禁** | 人工审批门 + 质量五维门（`--auto` 模式含 harness-check） |
+| **15 Skill** | 9 主流程 + 5 辅助 + 1 编排（`taiyi-orchestrator`） |
+
+### 六大工程规范（顶部）
+
+| 规范 | 在 TaiyiForge 中的落点 |
+|------|------------------------|
+| **Harness Engineering** | `init --auto` + harness 清单 + complete 门禁 |
+| **OpenSpec** | 可选：`sync-openspec` / `archive`（未装自动跳过） |
+| **GStack** | design / review / integration 铁三角（plan-eng-review、review、document-release） |
+| **Superpowers** | change / dev / test 铁三角（brainstorming、TDD、verification） |
+| **OMO** | change / design / review 人工门 + `approver` 记录 |
+| **Spec-Kit** | `templates/` 模板 + `quality-gate` 五维检查清单（内置，非独立包） |
+
+真源目录：**`.taiyi/changes/<slug>/`**。OpenSpec 为可选镜像/归档目标，与 Spec-Kit 不冲突。
+
+---
+
+## 快速开始
 
 ```bash
 npm install oh-my-taiyiforge
-# 或本地开发：
-cd oh-my-taiyiforge && npm install && npx taiyi-forge-install --all
+npx taiyi-forge-install --all    # Cursor / Claude / Codex / OpenCode
+npx taiyi doctor                 # 四端 Skills + 控制面自检
 ```
 
-`npm install` 的 **postinstall** 默认会：同步 **OpenCode / Claude / Codex / Cursor** 四端 skills，并把 `oh-my-taiyiforge` 写入 `~/.config/opencode/opencode.json` 的 `plugin` 数组（与 Superpowers 相同方式）。
-
-按需安装（可组合）：
+本地开发：
 
 ```bash
-npx taiyi-forge-install --all              # 默认，四端全装
-npx taiyi-forge-install --cursor           # 仅 Cursor
-npx taiyi-forge-install --claude --cursor  # Claude + Cursor
-TAIYI_FORGE_INSTALL=opencode,cursor npm install oh-my-taiyiforge
+git clone https://github.com/Dong90/oh-my-taiyiforge.git
+cd oh-my-taiyiforge && npm install && npm test
+npx taiyi-forge-install --all
 ```
 
-详见 [docs/opencode-setup.md](./docs/opencode-setup.md)
+---
 
-### OpenCode 示例配置
+## 聊天命令（OpenSpec 风格）
 
-```json
-{
-  "plugin": [
-    "oh-my-openagent",
-    "oh-my-taiyiforge"
-  ]
-}
-```
-
-安装包后 OpenCode 会加载 **16 个工具**（含 `taiyi_harness`、`taiyi_harness_check`、`taiyi_walkthrough` 等）。`init --auto` 开启全自动编排。
-
-### OMX 风格三端（Cursor / Codex / Claude）
-
-聊天里用 **OpenSpec 风格**命令；**九阶段不变**，见 [workflow.md](./docs/taiyi/workflow.md)。
+主流程（Cursor `/taiyi:*`，Codex `$taiyi-*`）：
 
 ```
-/taiyi:new 功能名
-/taiyi:status              # 当前 3/9、该用哪个 Skill
-/taiyi:continue            # 每阶段写完工件后推进（要用多次）
-/taiyi:apply               # dev/test 实现
-/taiyi:archive
+/taiyi:new 功能名          # 新建变更
+/taiyi:status              # 当前第几阶段、该加载哪个 Skill
+/taiyi:continue            # 规划/收尾：写完工件后推进（每阶段一次）
+/taiyi:apply               # dev / test 实现
+/taiyi:archive             # 九阶段完成后归档
 ```
 
-Codex：`$taiyi-new`、`$taiyi-continue`、`$taiyi-apply`、`$taiyi-archive`。详见 [docs/taiyi/commands.yaml](./docs/taiyi/commands.yaml) 与 [control-plane.md](./docs/taiyi/control-plane.md)。
+辅助（按需）：`/taiyi:doctor` · `/taiyi:list` · `/taiyi:check` · `/taiyi:sync` · `/taiyi:run`
 
-引擎（CI / Agent 内部）：
+详见 [workflow.md](./docs/taiyi/workflow.md) · [commands.yaml](./docs/taiyi/commands.yaml)
+
+引擎（Agent / CI 内部代跑）：
 
 ```bash
-scripts/taiyi-forge.sh new 功能名
+scripts/taiyi-forge.sh new "功能名"
+scripts/taiyi-forge.sh status
 scripts/taiyi-forge.sh continue
 scripts/taiyi-forge.sh apply
 scripts/taiyi-forge.sh doctor
 ```
 
-四端 CI 模板：`examples/ci/github-actions/` · 文档：`docs/ci/README.md`
+---
 
-工件落在项目目录 **`.taiyi/changes/<slug>/`**。
+## 九阶段
 
-## CLI（任意目录）
+| # | 阶段 | Skill | 产出 |
+|---|------|-------|------|
+| 1 | change | taiyi-change | CHANGE.md |
+| 2 | requirement | taiyi-requirement | REQUIREMENT.md |
+| 3 | design | taiyi-design | DESIGN.md |
+| 4 | ui-design | taiyi-ui-design | UI-DESIGN.md |
+| 5 | task | taiyi-task | TASK.md |
+| 6 | dev | taiyi-dev | 代码 + 测试（TDD） |
+| 7 | test | taiyi-test | TEST.md |
+| 8 | review | taiyi-review | REVIEW.md |
+| 9 | integration | taiyi-integration | CHANGELOG.md |
+
+辅助 Skill：`taiyi-intel-scan` · `taiyi-architect` · `taiyi-restyle` · `taiyi-evolve` · `taiyi-health`  
+全自动编排：加载 **`taiyi-orchestrator`**（配合 `init --auto`）
+
+---
+
+## 四端安装
+
+| 平台 | 配置位置 |
+|------|----------|
+| **OpenCode** | `opencode.json` → `"plugin": ["oh-my-taiyiforge"]` |
+| **Claude Code** | `~/.claude/skills/taiyi-*` + CLAUDE.md 控制面 |
+| **Codex** | `~/.codex/skills/taiyi-*` + `$taiyi-new` 等 prompts |
+| **Cursor** | `~/.cursor/skills/taiyi-*` + `taiyiforge.mdc` 规则 |
 
 ```bash
-cd your-project
-taiyi-forge init my-feature
-# 或在本仓库开发：
-scripts/taiyi-forge.sh init my-feature
+npx taiyi-forge-install --cursor           # 仅 Cursor
+npx taiyi-forge-install --claude --cursor  # 组合安装
 ```
+
+OpenCode 可与 **oh-my-openagent** 并列：
+
+```json
+{
+  "plugin": ["oh-my-openagent", "oh-my-taiyiforge"]
+}
+```
+
+---
+
+## 一键演示
+
+```bash
+cd examples/minimal-project
+npm install
+npm run walkthrough    # 九阶段 + 铁三角打卡 + CI verify
+```
+
+或仓库根目录：`npm run dogfood`
+
+---
 
 ## 特性
 
-- 九阶段 + `taiyi-*` Skill（非 `flow-*`）
+- 九阶段 + `taiyi-*` Skill，四动词遥控器（不合并阶段）
 - 双门禁：人工审批 + 质量五维
-- `taiyi-dev` 阶段 TDD
-- `npm test` — 引擎与 OpenCode 处理器契约测试（含九阶段 E2E）
-- `npm run dogfood` — 本地跑通 `.taiyi/changes/<slug>/` 全流程（默认 `dogfood-demo`）
-- `templates/` — 九阶段工件模板；`skills/taiyi-*` — 可执行 Skill 正文（v0.4+）
+- 铁三角：OpenSpec / Superpowers / gstack 分阶段 harness 推荐
+- `npm test` — 70+ 契约测试含九阶段 E2E
+- CI 模板：`examples/ci/github-actions/`
+
+---
 
 ## 文档
 
-- [架构](./docs/ARCHITECTURE.md)
-- [OpenCode 安装](./docs/opencode-setup.md)
-- [铁三角集成（OpenSpec / Superpowers / gstack）](./docs/taiyi/integrations.md)
-- [双端 agents.yaml](./docs/taiyi/agents.yaml)
-- [贡献](./CONTRIBUTING.md)
+| 文档 | 说明 |
+|------|------|
+| [ARCHITECTURE.md](./docs/ARCHITECTURE.md) | 架构与代码布局 |
+| [QUICKSTART.md](./docs/QUICKSTART.md) | 5 分钟上手 |
+| [integrations.md](./docs/taiyi/integrations.md) | 铁三角集成说明 |
+| [control-plane.md](./docs/taiyi/control-plane.md) | OMX 风格控制面 |
+| [minimal-project](./examples/minimal-project/README.md) | 安装到执行全流程 |
+
+---
 
 ## 开源
 
-MIT · 发布前将 `package.json` 的 `repository.url` 改为你的 GitHub 地址。
+MIT · [贡献指南](./CONTRIBUTING.md)
