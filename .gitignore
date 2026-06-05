@@ -3,3 +3,4 @@ dist/
 .taiyi/
 .flow-x/
 *.log
+.gstack/

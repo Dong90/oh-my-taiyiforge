@@ -5,6 +5,8 @@
 **TaiyiForge** — 九阶段文档驱动研发工作流。  
 安装方式与 **Superpowers / oh-my-openagent** 同类：**OpenCode 走 `plugin` 数组**，**Claude / Codex / Cursor 走 `taiyi-*` Skills**。
 
+[5 分钟快速开始 →](./docs/QUICKSTART.md)
+
 ## 三端安装（对齐 Superpowers / oh-my-openagent）
 
 | 平台 | 一条命令之后 | 配置位置 |

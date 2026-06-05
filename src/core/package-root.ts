@@ -10,6 +10,8 @@ export function resolvePackageRoot(fromModuleUrl: string): string {
     `${path.sep}dist${path.sep}core`,
     `${path.sep}src${path.sep}core`,
     `${path.sep}src${path.sep}plugin`,
+    `${path.sep}dist${path.sep}integrations`,
+    `${path.sep}src${path.sep}integrations`,
   ];
   for (const m of markers) {
     if (dir.endsWith(m)) return path.join(dir, "..", "..");

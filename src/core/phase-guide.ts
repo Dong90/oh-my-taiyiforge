@@ -7,6 +7,9 @@ import {
   validateArtifactFile,
 } from "./artifact-validator.js";
 
+import type { HarnessContext } from "../integrations/harness-hooks.js";
+import { getHarnessContext } from "../integrations/harness-hooks.js";
+
 export type PhaseGuide = {
   slug: string;
   currentPhase: ChangeState["currentPhase"];
@@ -19,12 +22,14 @@ export type PhaseGuide = {
   nextAction: string;
   nextPhase: string | null;
   nextSkill: string | null;
+  harness?: HarnessContext;
 };
 
 export function buildPhaseGuide(
   taiyiRoot: string,
   slug: string,
   state: ChangeState,
+  workspaceDir?: string,
 ): PhaseGuide {
   const phase = getPhase(state.currentPhase);
   const changeDir = path.join(taiyiRoot, "changes", slug);
@@ -55,6 +60,11 @@ export function buildPhaseGuide(
     state.completedPhases.length >= 9;
 
   let nextAction: string;
+  const harness =
+    workspaceDir != null
+      ? getHarnessContext(workspaceDir, slug, state.currentPhase)
+      : undefined;
+
   if (allDone) {
     return {
       slug,
@@ -65,9 +75,10 @@ export function buildPhaseGuide(
       artifactExists,
       qualityReady: true,
       qualityHints: [],
-      nextAction: "九阶段已完成，可归档变更、合并代码或 taiyi init 开新 slug",
+      nextAction: "九阶段已完成，可 taiyi archive（OpenSpec）或 taiyi init 开新 slug",
       nextPhase: null,
       nextSkill: null,
+      harness,
     };
   }
   if (!artifactExists) {
@@ -90,5 +101,6 @@ export function buildPhaseGuide(
     nextAction,
     nextPhase: next,
     nextSkill: nextPhaseDef?.skill ?? null,
+    harness,
   };
 }

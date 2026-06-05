@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.9.0] - 2026-06-05
+
+### Added
+
+- `harness.hooks`：`taiyi guide/status` 按阶段推荐 OpenSpec / Superpowers / gstack Skill
+- `docs/QUICKSTART.md` 与 `examples/minimal-project/`
+
 ## [0.8.0] - 2026-06-05
 
 ### Added

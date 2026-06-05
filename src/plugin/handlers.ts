@@ -30,7 +30,7 @@ export function taiyiStatus(workspaceDir: string, slug: string) {
   const state = engine.getState(slug);
   if (!state) return { ok: false as const, error: `Change not found: ${slug}` };
   const taiyiRoot = resolveTaiyiRoot(workspaceDir);
-  const guide = buildPhaseGuide(taiyiRoot, slug, state);
+  const guide = buildPhaseGuide(taiyiRoot, slug, state, workspaceDir);
   const openspec = getOpenspecStatus(workspaceDir, slug);
   return { ok: true as const, state, guide, openspec, taiyiRoot };
 }
@@ -39,7 +39,7 @@ export function taiyiGuide(workspaceDir: string, slug: string) {
   const engine = createEngine(workspaceDir);
   const state = engine.getState(slug);
   if (!state) return { ok: false as const, error: `Change not found: ${slug}` };
-  const guide = buildPhaseGuide(resolveTaiyiRoot(workspaceDir), slug, state);
+  const guide = buildPhaseGuide(resolveTaiyiRoot(workspaceDir), slug, state, workspaceDir);
   return { ok: true as const, guide };
 }
 

@@ -1,0 +1,38 @@
+version: 1
+description: TaiyiForge 阶段 × 外部工具/Skill 推荐（OpenSpec / Superpowers / gstack）
+
+hooks:
+  change:
+    - tool: superpowers
+      skill: brainstorming
+      when: 立项前澄清范围与风险
+  requirement:
+    - tool: openspec
+      command: openspec change show <slug>
+      when: 项目已 init OpenSpec 时对照 proposal/specs
+  design:
+    - tool: gstack
+      skill: plan-eng-review
+      when: 架构与边界需要工程评审
+  dev:
+    - tool: superpowers
+      skill: test-driven-development
+      when: TDD 纪律与 taiyi-dev 对齐
+  test:
+    - tool: superpowers
+      skill: verification-before-completion
+      when: 声明测试完成前要有运行证据
+  review:
+    - tool: gstack
+      skill: review
+      when: PR 合并前 diff 结构审查，摘要写入 REVIEW.md
+    - tool: taiyi
+      skill: taiyi-health
+      when: 合并前跑类型检查/lint/测试基线
+  integration:
+    - tool: openspec
+      command: taiyi archive <slug>
+      when: 九阶段完成后归档规格
+    - tool: gstack
+      skill: document-release
+      when: 合并后同步 README/CHANGELOG
