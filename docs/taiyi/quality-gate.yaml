@@ -1,0 +1,15 @@
+version: 1
+name: taiyi-quality-gate
+description: 质量门禁五维 — 全部通过方可 advance
+
+dimensions:
+  - id: completeness
+    label: 完整性
+  - id: consistency
+    label: 一致性
+  - id: verifiability
+    label: 可验证性
+  - id: traceability
+    label: 可追溯性
+  - id: engineering_quality
+    label: 工程质量

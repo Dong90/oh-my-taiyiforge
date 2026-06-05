@@ -1,0 +1,71 @@
+{
+  "name": "oh-my-taiyiforge",
+  "version": "0.3.0",
+  "description": "TaiyiForge — OpenCode 插件 + Claude/Codex/Cursor 共用 taiyi-* 九阶段研发工作流",
+  "license": "MIT",
+  "type": "module",
+  "main": "./dist/plugin/index.js",
+  "types": "./dist/plugin/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/plugin/index.js",
+      "types": "./dist/plugin/index.d.ts"
+    },
+    "./core": {
+      "import": "./dist/core/workflow-engine.js"
+    }
+  },
+  "files": [
+    "dist",
+    "skills",
+    "templates",
+    "docs",
+    "scripts",
+    "postinstall.mjs",
+    "AGENTS.md",
+    "LICENSE",
+    "README.md"
+  ],
+  "bin": {
+    "taiyi": "./dist/cli/taiyi.js",
+    "taiyi-forge-install": "./dist/cli/install-cli.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Dong90/oh-my-taiyiforge.git"
+  },
+  "keywords": [
+    "opencode",
+    "opencode-plugin",
+    "taiyiforge",
+    "claude-code",
+    "codex",
+    "cursor",
+    "ai-workflow",
+    "agent-skills"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "prepare": "npm run build",
+    "postinstall": "node postinstall.mjs",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "taiyi": "node --import tsx src/cli/taiyi.ts",
+    "install:all": "node dist/cli/install-cli.js --all"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "@opencode-ai/plugin": "^1.14.18"
+  },
+  "peerDependencies": {
+    "@opencode-ai/plugin": ">=1.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.7.0",
+    "vitest": "^3.0.0"
+  }
+}

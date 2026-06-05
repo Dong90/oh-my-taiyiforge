@@ -1,0 +1,56 @@
+import { describe, expect, it, beforeEach, afterEach } from "vitest";
+import fs from "node:fs";
+import os from "node:os";
+import path from "node:path";
+import { addPluginToConfigFile } from "../src/install/opencode-plugin.js";
+import { mergeCodexAgentsBlock } from "../src/install/codex-agents.js";
+import { syncTaiyiSkills } from "../src/install/sync-skills.js";
+import { PLUGIN_NAME } from "../src/install/types.js";
+
+describe("install", () => {
+  let tmp: string;
+
+  beforeEach(() => {
+    tmp = fs.mkdtempSync(path.join(os.tmpdir(), "taiyi-install-"));
+  });
+
+  afterEach(() => {
+    fs.rmSync(tmp, { recursive: true, force: true });
+  });
+
+  it("adds plugin to new opencode.json", () => {
+    const cfg = path.join(tmp, "opencode.json");
+    const r = addPluginToConfigFile(cfg);
+    expect(r.action).toBe("created");
+    const j = JSON.parse(fs.readFileSync(cfg, "utf8"));
+    expect(j.plugin).toContain(PLUGIN_NAME);
+  });
+
+  it("skips when plugin already present", () => {
+    const cfg = path.join(tmp, "opencode.json");
+    fs.writeFileSync(cfg, JSON.stringify({ plugin: [PLUGIN_NAME] }));
+    const r = addPluginToConfigFile(cfg);
+    expect(r.action).toBe("skipped");
+  });
+
+  it("merges codex AGENTS block with markers", () => {
+    const agents = path.join(tmp, "AGENTS.md");
+    mergeCodexAgentsBlock(agents, "## Taiyi\n\nUse taiyi-change.");
+    const raw = fs.readFileSync(agents, "utf8");
+    expect(raw).toContain("TAIYI-FORGE:AGENTS:START");
+    expect(raw).toContain("taiyi-change");
+    mergeCodexAgentsBlock(agents, "## Taiyi v2");
+    expect(fs.readFileSync(agents, "utf8")).toContain("Taiyi v2");
+    expect(fs.readFileSync(agents, "utf8").match(/TAIYI-FORGE:AGENTS:START/g)?.length).toBe(1);
+  });
+
+  it("syncs taiyi-* skill folders", () => {
+    const src = path.join(tmp, "skills");
+    fs.mkdirSync(path.join(src, "taiyi-demo"), { recursive: true });
+    fs.writeFileSync(path.join(src, "taiyi-demo", "SKILL.md"), "# demo");
+    const dest = path.join(tmp, "out-skills");
+    const r = syncTaiyiSkills(src, dest);
+    expect(r.action).toBe("updated");
+    expect(fs.existsSync(path.join(dest, "taiyi-demo", "SKILL.md"))).toBe(true);
+  });
+});

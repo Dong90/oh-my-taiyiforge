@@ -1,0 +1,26 @@
+version: 1
+name: taiyi-skills
+description: 主流程 9 + 辅助 5，命名统一 taiyi-*（开源、Claude/Codex 共用）
+
+main_process:
+  - taiyi-change
+  - taiyi-requirement
+  - taiyi-design
+  - taiyi-ui-design
+  - taiyi-task
+  - taiyi-dev
+  - taiyi-test
+  - taiyi-review
+  - taiyi-integration
+
+auxiliary:
+  - id: taiyi-intel-scan
+    output: CONTEXT.md
+  - id: taiyi-architect
+    output: ADR
+  - id: taiyi-health
+    output: health-report
+  - id: taiyi-evolve
+    output: architecture-sync
+  - id: taiyi-restyle
+    output: ui-restyle-tasks
