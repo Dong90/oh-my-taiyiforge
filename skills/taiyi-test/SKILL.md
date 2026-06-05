@@ -93,6 +93,7 @@ description: TaiyiForge 第 7 阶段 — 测试计划与运行证据，产出 TE
 ## 与铁三角
 
 - Superpowers `verification-before-completion` — **先跑再声称通过**
+- gstack `qa` — test 阶段流程/站点 QA；`scripts/taiyi-forge.sh harness-check <slug> gstack/qa`
 - CI 红灯：先修再 complete，勿改 TEST 粉饰
 
 ## 质量自检

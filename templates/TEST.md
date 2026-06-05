@@ -6,7 +6,7 @@
 |-------|-------|----------------|
 | unit | | |
 | integration | | |
-| e2e | | |
+| e2e | | | gstack `qa`（有 web 面时；见 harness-check） |
 
 ## Coverage vs AC
 

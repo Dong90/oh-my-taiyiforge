@@ -52,4 +52,16 @@ describe("format-guide", () => {
     expect(text).toContain("补充架构图");
     expect(text).toContain("/taiyi:status");
   });
+
+  it("formatStatusPlain shows intent analysis when signals present", () => {
+    const text = formatStatusPlain(
+      baseGuide({
+        intentSignals: { touchedModules: 4, hasUi: false, testLevels: 2 },
+        complexity: { level: "medium", score: 5, recommendedSkills: [] },
+      }),
+    );
+    expect(text).toContain("意图分析:");
+    expect(text).toContain("无 UI");
+    expect(text).toContain("复杂度 medium");
+  });
 });

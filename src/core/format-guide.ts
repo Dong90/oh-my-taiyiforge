@@ -2,6 +2,20 @@ import type { PhaseGuide } from "./phase-guide.js";
 import type { ChangeSummary } from "./list-changes.js";
 import { getPhase } from "./phase-registry.js";
 
+function formatIntentLine(guide: PhaseGuide): string | null {
+  const s = guide.intentSignals;
+  if (!s) return null;
+  const parts = [
+    `模块≈${s.touchedModules}`,
+    s.hasUi ? "含 UI" : "无 UI",
+    `测试层级≈${s.testLevels}`,
+  ];
+  if (guide.complexity) {
+    parts.push(`复杂度 ${guide.complexity.level}(${guide.complexity.score})`);
+  }
+  return `意图分析: ${parts.join(" · ")}`;
+}
+
 /** 单行阶段进度（continue / status 顶部） */
 export function formatPhaseProgressLine(guide: PhaseGuide): string {
   if (guide.workflowCompleted) {
@@ -18,6 +32,8 @@ export function formatStatusPlain(guide: PhaseGuide): string {
   const lines: string[] = [];
   lines.push(`# ${guide.slug}`);
   lines.push(formatPhaseProgressLine(guide));
+  const intent = formatIntentLine(guide);
+  if (intent) lines.push(intent);
   lines.push("");
   if (guide.workflowCompleted) {
     lines.push("九阶段已全部完成。归档: /taiyi:archive");
@@ -46,6 +62,8 @@ export function formatGuidePlain(guide: PhaseGuide): string {
   lines.push(`# TaiyiForge · ${guide.slug}`);
   lines.push("");
   lines.push(formatPhaseProgressLine(guide));
+  const intent = formatIntentLine(guide);
+  if (intent) lines.push(intent);
   lines.push("");
   if (guide.autoHarness) lines.push(`模式: 全自动 (--auto)`);
   if (guide.profile) lines.push(`Profile: ${guide.profile}`);
@@ -68,9 +86,10 @@ export function formatGuidePlain(guide: PhaseGuide): string {
   }
   if (guide.harness?.hooks?.length) {
     lines.push("");
-    lines.push(guide.autoHarness ? "铁三角（auto 须全部打卡）:" : "铁三角推荐:");
+    lines.push(guide.autoHarness ? "铁三角（auto 须必选打卡，可选见标注）:" : "铁三角推荐:");
     for (const h of guide.harness.hooks) {
-      lines.push(`  - ${h.tool}: ${h.skill ?? h.command ?? ""} (${h.when})`);
+      const opt = h.optional ? " (可选)" : "";
+      lines.push(`  - ${h.tool}: ${h.skill ?? h.command ?? ""} (${h.when})${opt}`);
     }
   }
   if (guide.autoHarness) {

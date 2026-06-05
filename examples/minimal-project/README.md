@@ -23,7 +23,7 @@
 ```bash
 # 1. 先构建主仓库
 cd /path/to/oh-my-taiyiforge
-npm install && npm test
+npm install && npm run build && npm test
 
 # 2. 进入空示例项目
 cd examples/minimal-project
@@ -62,10 +62,11 @@ taiyi-forge doctor
 
 ```bash
 npm test                        # 先确认 counter 模块
-npm run walkthrough             # = node scripts/run-full-flow.mjs
+npm run walkthrough             # 九阶段 + 铁三角 + CI verify（步骤含 💬 聊天等价）
+npm run chat-demo               # 仅演示 /taiyi:new · status · continue · check
 ```
 
-等价于逐步执行下面 **第四节** 的全部 shell 命令（含铁三角打卡）。
+等价于逐步执行下面 **第四节** 的全部 shell 命令（含铁三角打卡；`gstack/qa`、`plan-design-review` 等为**可选**钩子，不阻塞 `--auto`）。
 
 ---
 
@@ -121,7 +122,7 @@ SLUG=minimal-demo
 | 6c | 铁三角打卡 `superpowers/test-driven-development` |
 | 6d | `$FORGE complete $SLUG dev` |
 | 7a | **taiyi-test**，写 TEST.md + architecture-sync.md |
-| 7b | 打卡 `superpowers/verification-before-completion` |
+| 7b | 打卡 `superpowers/verification-before-completion` + **`gstack/qa`**（CLI-only 可 N/A 打卡） |
 | 7c | `$FORGE apply $SLUG` 或 `$FORGE continue $SLUG` |
 
 ### 阶段 ⑧⑨ 收尾（review / integration）

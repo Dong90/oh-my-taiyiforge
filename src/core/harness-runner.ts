@@ -124,7 +124,9 @@ export function buildHarnessPlan(
     skill: h.skill,
     command: h.command,
     when: h.when,
-    optional: h.tool === "openspec" && !getOpenspecStatus(workspaceDir, state.slug).detected,
+    optional:
+      Boolean(h.optional) ||
+      (h.tool === "openspec" && !getOpenspecStatus(workspaceDir, state.slug).detected),
     status: "pending" as const,
   }));
 
@@ -239,8 +241,10 @@ export function formatHarnessPlanPlain(plan: HarnessPlan): string {
     lines.push(
       `${i + 1}. [${s.kind}] ${label} — ${s.when}${s.optional ? " (可选)" : ""}`,
     );
-    if (plan.autoHarness && s.kind === "agent") {
+    if (plan.autoHarness && s.kind === "agent" && !s.optional) {
       lines.push(`   完成后: npx taiyi harness-check ${plan.slug} ${key}`);
+    } else if (plan.autoHarness && s.kind === "agent" && s.optional) {
+      lines.push(`   可选: npx taiyi harness-check ${plan.slug} ${key}（不打卡也可 complete）`);
     }
   }
   lines.push(`\n## 2. 辅助 Skill`);

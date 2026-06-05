@@ -36,7 +36,7 @@
 |------|------------------------|
 | **Harness Engineering** | `init --auto` + harness 清单 + complete 门禁 |
 | **OpenSpec** | 可选：`sync-openspec` / `archive`（未装自动跳过） |
-| **GStack** | design / review / integration 铁三角（plan-eng-review、review、document-release） |
+| **GStack** | design / ui-design（可选 plan-design-review）/ test（可选 qa）/ review / integration 铁三角 |
 | **Superpowers** | change / dev / test 铁三角（brainstorming、TDD、verification） |
 | **OMO** | change / design / review 人工门 + `approver` 记录 |
 | **Spec-Kit** | `templates/` 模板 + `quality-gate` 五维检查清单（内置，非独立包） |
@@ -57,7 +57,7 @@ npx taiyi doctor                 # 四端 Skills + 控制面自检
 
 ```bash
 git clone https://github.com/Dong90/oh-my-taiyiforge.git
-cd oh-my-taiyiforge && npm install && npm test
+cd oh-my-taiyiforge && npm install && npm run build && npm test
 npx taiyi-forge-install --all
 ```
 
@@ -75,7 +75,7 @@ npx taiyi-forge-install --all
 /taiyi:archive             # 九阶段完成后归档
 ```
 
-辅助（按需）：`/taiyi:doctor` · `/taiyi:list` · `/taiyi:check` · `/taiyi:sync` · `/taiyi:run`
+辅助（按需）：`/taiyi:doctor` · `/taiyi:list` · `/taiyi:check` · `/taiyi:sync` · `/taiyi:run` · `/taiyi:explore`（→ Superpowers brainstorming）
 
 详见 [workflow.md](./docs/taiyi/workflow.md) · [commands.yaml](./docs/taiyi/commands.yaml)
 
@@ -162,6 +162,7 @@ npm run walkthrough    # 九阶段 + 铁三角打卡 + CI verify
 |------|------|
 | [ARCHITECTURE.md](./docs/ARCHITECTURE.md) | 架构与代码布局 |
 | [QUICKSTART.md](./docs/QUICKSTART.md) | 5 分钟上手 |
+| [GAP-CLOSURE.md](./docs/GAP-CLOSURE.md) | 架构审计 7 项 ↔ 实现 ↔ 验证 |
 | [integrations.md](./docs/taiyi/integrations.md) | 铁三角集成说明 |
 | [control-plane.md](./docs/taiyi/control-plane.md) | OMX 风格控制面 |
 | [minimal-project](./examples/minimal-project/README.md) | 安装到执行全流程 |

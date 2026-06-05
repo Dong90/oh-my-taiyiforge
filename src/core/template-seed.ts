@@ -33,5 +33,14 @@ export function seedChangeTemplates(
     fs.writeFileSync(dest, renderTemplate(raw, vars), "utf8");
     seeded.push(phase.artifact);
   }
+
+  const contextTpl = path.join(templatesDir, "CONTEXT.md");
+  const contextDest = path.join(changeDir, "CONTEXT.md");
+  if (fs.existsSync(contextTpl) && !fs.existsSync(contextDest)) {
+    const raw = fs.readFileSync(contextTpl, "utf8");
+    fs.writeFileSync(contextDest, renderTemplate(raw, vars), "utf8");
+    seeded.push("CONTEXT.md");
+  }
+
   return seeded;
 }

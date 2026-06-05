@@ -17,7 +17,7 @@
 |-----------------|-------------------|
 | change | `brainstorming` — 先澄清再写 CHANGE |
 | task / dev | `test-driven-development` — 与 `taiyi-dev` TDD 纪律一致 |
-| review 前 | `verification-before-completion` — 证据先于「完成」声明 |
+| test | `verification-before-completion` — 证据先于「完成」声明 |
 
 在 OpenCode：`use skill tool to load superpowers/brainstorming`
 
@@ -25,9 +25,11 @@
 
 | TaiyiForge 阶段 | gstack 命令 |
 |-----------------|-------------|
-| review | `gstack review` — PR 合并前结构审查 |
-| test 后 | `gstack qa` — 站点/流程 QA |
-| integration | `gstack document-release` — 文档与 CHANGELOG 同步 |
+| design | `plan-eng-review` — 架构与边界工程评审 |
+| ui-design | `plan-design-review` — UI 设计计划评审（**optional**，有界面时建议） |
+| test | `qa` — 站点/流程 QA（**optional**，`harness-check gstack/qa`） |
+| review | `review` — PR 合并前结构审查 |
+| integration | `document-release` — 文档与 CHANGELOG 同步 |
 
 **OMO**：`taiyi_complete` 的 `approver` 字段记录人工审批者；high 级 REVIEW 未解决不得 Approve。
 
@@ -37,7 +39,7 @@
 taiyi_init → taiyi_guide（每步）
   → taiyi-change … taiyi-integration
   → （可选）taiyi_sync_openspec → taiyi_archive
-  → gstack review → merge → gstack document-release
+  → test 阶段：verification + gstack qa → review → gstack review → integration → gstack document-release
 ```
 
 ## OpenCode 工具一览

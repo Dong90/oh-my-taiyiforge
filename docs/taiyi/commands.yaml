@@ -87,6 +87,8 @@ profiles:
         when: onboarding、CI 冒烟，非日常主流程
 
       - chat: "/taiyi:explore"
+        codex: "$taiyi-explore"
+        engine: "加载 Superpowers brainstorming + taiyi-change（无 shell 子命令）"
         meaning: change 阶段头脑风暴 → 加载 Superpowers brainstorming + taiyi-change
         when: 对标 opsx:explore / OMX clarify，无独立引擎子命令
 

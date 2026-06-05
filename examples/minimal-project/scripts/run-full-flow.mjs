@@ -23,9 +23,10 @@ const taiyi = (args) => {
   return { code: r.status ?? 1, out: (r.stdout || "") + (r.stderr || "") };
 };
 
-function step(n, label, fn) {
+function step(n, label, fn, chatVerb) {
   console.log(`\n${"═".repeat(60)}`);
   console.log(`步骤 ${n}: ${label}`);
+  if (chatVerb) console.log(`💬 聊天等价: ${chatVerb}`);
   console.log("═".repeat(60));
   const result = fn();
   if (result?.out) console.log(result.out.trimEnd());
@@ -43,13 +44,14 @@ if (fs.existsSync(changeDir)) {
   fs.rmSync(changeDir, { recursive: true, force: true });
 }
 
-step(0, "doctor 自检", () => taiyi(["doctor"]));
+step(0, "doctor 自检", () => taiyi(["doctor"]), "/taiyi:doctor");
 
 step(1, "init --auto 创建变更", () =>
   taiyi(["init", slug, "--auto", "--title", "Minimal Counter Demo"]),
+  "/taiyi:new Minimal Counter Demo（或 init --auto）",
 );
 
-step(2, "harness 查看 change 阶段清单", () => taiyi(["harness", slug]));
+step(2, "harness 查看 change 阶段清单", () => taiyi(["harness", slug]), "/taiyi:check");
 
 step(3, "辅助 taiyi-intel-scan → CONTEXT.md", () => {
   fs.writeFileSync(
@@ -247,7 +249,7 @@ Frontend.
 ## Gaps
 None.
 `,
-    hooks: ["superpowers/verification-before-completion"],
+    hooks: ["superpowers/verification-before-completion", "gstack/qa"],
   },
   {
     id: "review",
@@ -340,12 +342,12 @@ for (const p of phases) {
     fs.writeFileSync(path.join(changeDir, p.file), p.body, "utf8");
   }
 
-  step(stepNum++, `complete ${p.id}`, () => taiyi(["complete", slug, p.id]));
+  step(stepNum++, `complete ${p.id}`, () => taiyi(["complete", slug, p.id]), `/taiyi:continue 或 /taiyi:apply（${p.id}）`);
 }
 
-step(stepNum++, "list 变更列表", () => taiyi(["list"]));
+step(stepNum++, "list 变更列表", () => taiyi(["list"]), "/taiyi:list");
 step(stepNum++, "ci verify", () => taiyi(["ci", "verify", "--slug", slug]));
-step(stepNum++, "最终 status", () => taiyi(["status", slug]));
+step(stepNum++, "最终 status", () => taiyi(["status", slug]), "/taiyi:status");
 
 console.log("\n" + "═".repeat(60));
 console.log("全流程完成 — minimal-demo 九阶段已走完");

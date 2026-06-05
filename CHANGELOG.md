@@ -1,5 +1,25 @@
 # Changelog
 
+## [0.19.0] - 2026-06-05
+
+### Added
+
+- **铁三角 optional 钩子**：`HarnessHook.optional` + YAML `optional: true`；`--auto` 下 optional 不阻塞 `complete`
+- **test 阶段 `gstack/qa`**、**ui-design 阶段 `gstack/plan-design-review`**（均为 optional）
+- **意图分析**：`inferComplexitySignals` → `/taiyi:status` / `guide` 输出「意图分析: …」
+- **`/taiyi:explore`**：`prompts/taiyi-explore.md` + `commands.yaml`（→ Superpowers brainstorming，无引擎子命令）
+- **`templates/CONTEXT.md`** + init 种子；`taiyi-intel-scan` 引用
+- **`examples/minimal-project/scripts/run-chat-demo.mjs`** + `npm run chat-demo`（聊天动词演示）
+- **`docs/GAP-CLOSURE.md`**：架构审计 7 项 ↔ 实现 ↔ 验证命令对照表
+
+### Changed
+
+- **OpenSpec** requirement/integration 钩子标 optional；`ARCHITECTURE.md` / `workflow.md` 增「可选层」说明
+- **harness 清单**：optional 铁三角标注「(可选)」与「不打卡也可 complete」
+- **`format-guide`**：铁三角文案改为「必选打卡，可选见标注」
+- **文档**：`QUICKSTART.md`、`WALKTHROUGH.md`、`integrations.md`、`README.md` 同步 optional / chat-demo / 意图分析
+- **本地开发**：README / QUICKSTART 强调 `npm run build` 后再跑 walkthrough（`dist` 与源码一致）
+
 ## [0.18.0] - 2026-06-05
 
 ### Added

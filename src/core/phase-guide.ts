@@ -12,6 +12,8 @@ import {
   auxiliaryForPhase,
   pendingAuxiliary,
 } from "./routing/auxiliary-hints.js";
+import { inferComplexitySignals } from "./routing/infer-complexity.js";
+import type { ComplexitySignals } from "./routing/complexity.js";
 import { requiresHumanGate } from "./gates/human-gate-config.js";
 import { expectedPhaseCount, isWorkflowCompleted } from "./change-status.js";
 
@@ -34,6 +36,8 @@ export type PhaseGuide = {
   nextSkill: string | null;
   requiresHumanGate: boolean;
   complexity?: ChangeState["complexity"];
+  /** 从 CHANGE/REQUIREMENT 推断的意图信号（架构图「意图分析」） */
+  intentSignals?: ComplexitySignals;
   recommendedAuxiliary: string[];
   pendingAuxiliary: string[];
   auxiliaryCompleted: string[];
@@ -86,6 +90,7 @@ export function buildPhaseGuide(
   );
   const pending = pendingAuxiliary(recommendedAuxiliary, state.auxiliaryCompleted);
   const humanGate = requiresHumanGate(state.currentPhase);
+  const intentSignals = inferComplexitySignals(changeDir);
 
   let nextAction: string;
   const harness =
@@ -118,6 +123,7 @@ export function buildPhaseGuide(
       nextSkill: null,
       requiresHumanGate: false,
       complexity: state.complexity,
+      intentSignals,
       recommendedAuxiliary: [],
       pendingAuxiliary: [],
       auxiliaryCompleted: state.auxiliaryCompleted,
@@ -171,6 +177,7 @@ export function buildPhaseGuide(
     nextSkill: nextPhaseDef?.skill ?? null,
     requiresHumanGate: humanGate,
     complexity: state.complexity,
+    intentSignals,
     recommendedAuxiliary,
     pendingAuxiliary: pending,
     auxiliaryCompleted: state.auxiliaryCompleted,

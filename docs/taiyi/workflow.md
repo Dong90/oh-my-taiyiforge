@@ -41,6 +41,17 @@
 
 写工件仍用 **taiyi-change … taiyi-integration** Skill，不走 `/taiyi:*`。
 
+## 可选层（架构图对齐）
+
+| 组件 | 行为 |
+|------|------|
+| **OpenSpec** | requirement / integration 钩子 `optional: true`；未装 CLI 自动跳过 |
+| **gstack/qa** | test 阶段 optional；CLI-only 可不打卡 |
+| **gstack/plan-design-review** | ui-design 阶段 optional；纯 API 可跳过 |
+| **/taiyi:explore** | 文档 + `$taiyi-explore` prompt → Superpowers brainstorming |
+
+`/taiyi:status` 会显示 **意图分析**（模块/UI/测试层级推断）与铁三角清单（含「可选」标记）。
+
 ## 九阶段完整路径
 
 ```

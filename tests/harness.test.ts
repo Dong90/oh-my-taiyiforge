@@ -8,7 +8,8 @@ import {
   enforceAutoHarnessBeforeComplete,
   formatHarnessPlanPlain,
 } from "../src/core/harness-runner.js";
-import { markHarnessCheckpoint } from "../src/core/harness-checkpoints.js";
+import { markHarnessCheckpoint, pendingIronTriangleHooks } from "../src/core/harness-checkpoints.js";
+import { getHarnessContext } from "../src/integrations/harness-hooks.js";
 import { E2E_ARTIFACTS } from "../src/core/e2e-fixtures.js";
 import { writeE2eArtifacts } from "../src/core/run-e2e-workflow.js";
 
@@ -106,5 +107,21 @@ describe("auto harness", () => {
     expect(aux).toContain("taiyi-health");
     const blocked = buildHarnessPlan(workspace, root, { ...state, autoHarness: true });
     expect(formatHarnessPlanPlain(blocked)).toContain("下一命令");
+  });
+
+  it("optional iron triangle hooks do not block auto complete", () => {
+    engine.initChange("opt1", { autoHarness: true });
+    const dir = engine.changeDir("opt1");
+    writeChangeArtifact(dir, "opt1");
+    fs.writeFileSync(path.join(dir, "CONTEXT.md"), "# CONTEXT\n", "utf8");
+    markHarnessCheckpoint(dir, "change", "superpowers/brainstorming");
+    engine.completePhase("opt1", "change", GATES);
+
+    const state = engine.getState("opt1")!;
+    expect(state.currentPhase).toBe("requirement");
+    const ctx = getHarnessContext(workspace, "opt1", "test");
+    const pending = pendingIronTriangleHooks(dir, "test", ctx.hooks, false);
+    expect(pending).not.toContain("gstack/qa");
+    expect(pending).toContain("superpowers/verification-before-completion");
   });
 });

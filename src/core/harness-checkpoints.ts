@@ -45,6 +45,7 @@ export function pendingIronTriangleHooks(
   const done = readHarnessCheckpoints(changeDir)[phase] ?? {};
   const pending: string[] = [];
   for (const h of hooks) {
+    if (h.optional) continue;
     if (h.tool === "openspec" && !openspecDetected) continue;
     const key = hookKey(h);
     if (!done[key]) pending.push(key);
