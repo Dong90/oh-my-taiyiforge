@@ -23,7 +23,7 @@ description: TaiyiForge 第 9 阶段 — 归档与 CHANGELOG，闭环沉淀。
 1. 按 Added / Changed / Fixed 写用户可见变更
 2. Docs / Skills 勾选：对外行为变则更新 README / AGENTS
 3. Rollback：写清回滚步骤（feature flag、revert、迁移 down）
-4. 可选：**OpenSpec** `openspec archive <id>`、**gstack** `document-release`、发版 tag
+4. 可选：**OpenSpec** `taiyi_archive` / `taiyi archive <slug>`（项目需有 `openspec/changes/<slug>/`）、**gstack** `document-release`、发版 tag
 5. 通过后：`taiyi complete <slug> integration`
 
 ## 完成标志

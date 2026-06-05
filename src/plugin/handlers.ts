@@ -5,6 +5,7 @@ import { resolveTaiyiRoot } from "../core/paths.js";
 import { resolveTemplatesDir } from "../core/package-root.js";
 import { assessComplexity, type ComplexitySignals } from "../core/routing/complexity.js";
 import { buildPhaseGuide } from "../core/phase-guide.js";
+import { getOpenspecStatus, runOpenspecArchive } from "../integrations/openspec.js";
 
 const TEMPLATES_DIR = resolveTemplatesDir(import.meta.url);
 
@@ -30,7 +31,8 @@ export function taiyiStatus(workspaceDir: string, slug: string) {
   if (!state) return { ok: false as const, error: `Change not found: ${slug}` };
   const taiyiRoot = resolveTaiyiRoot(workspaceDir);
   const guide = buildPhaseGuide(taiyiRoot, slug, state);
-  return { ok: true as const, state, guide, taiyiRoot };
+  const openspec = getOpenspecStatus(workspaceDir, slug);
+  return { ok: true as const, state, guide, openspec, taiyiRoot };
 }
 
 export function taiyiGuide(workspaceDir: string, slug: string) {
@@ -80,6 +82,53 @@ export function taiyiComplete(
     state: engine.getState(slug),
     phase: phase.id,
     nextSkill: getPhase(engine.getState(slug)!.currentPhase).skill,
+  };
+}
+
+export function taiyiArchive(
+  workspaceDir: string,
+  slug: string,
+  options?: { skipSpecs?: boolean; requireIntegrationComplete?: boolean },
+) {
+  const engine = createEngine(workspaceDir);
+  const state = engine.getState(slug);
+  if (!state) return { ok: false as const, error: `Change not found: ${slug}` };
+
+  if (options?.requireIntegrationComplete !== false) {
+    if (!state.completedPhases.includes("integration")) {
+      return {
+        ok: false as const,
+        error: "Complete taiyi integration phase before OpenSpec archive",
+        state,
+      };
+    }
+  }
+
+  const openspec = getOpenspecStatus(workspaceDir, slug);
+  const result = runOpenspecArchive(workspaceDir, slug, {
+    skipSpecs: options?.skipSpecs,
+    yes: true,
+  });
+
+  if (result.skipped && result.ok) {
+    return { ok: true as const, skipped: true as const, reason: result.reason, openspec, state };
+  }
+  if (!result.ok) {
+    return {
+      ok: false as const,
+      error: result.reason ?? "openspec archive failed",
+      openspec,
+      stdout: result.stdout,
+      stderr: result.stderr,
+      state,
+    };
+  }
+
+  return {
+    ok: true as const,
+    openspec,
+    stdout: result.stdout,
+    state,
   };
 }
 

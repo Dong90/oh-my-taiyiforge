@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.8.0] - 2026-06-05
+
+### Added
+
+- **OpenSpec 集成**：`taiyi_archive` 工具 + CLI `archive`
+- `taiyi_status` 返回 `openspec` 检测状态与建议命令
+
 ## [0.7.0] - 2026-06-05
 
 ### Added

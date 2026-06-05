@@ -1,6 +1,7 @@
 import type { Plugin } from "@opencode-ai/plugin";
 import { tool } from "@opencode-ai/plugin/tool";
 import {
+  taiyiArchive,
   taiyiAssess,
   taiyiComplete,
   taiyiGuide,
@@ -79,6 +80,23 @@ const TaiyiForgePlugin: Plugin = async () => {
         },
         async execute(args, ctx) {
           const r = taiyiGuide(ctx.directory, args.slug);
+          return JSON.stringify(r, null, 2);
+        },
+      }),
+      taiyi_archive: tool({
+        description:
+          "Run OpenSpec archive for a change slug after TaiyiForge integration phase. Requires openspec/changes/<slug>/ in the project.",
+        args: {
+          slug: tool.schema.string(),
+          skipSpecs: tool.schema
+            .boolean()
+            .optional()
+            .describe("Pass --skip-specs to openspec archive (doc-only changes)"),
+        },
+        async execute(args, ctx) {
+          const r = taiyiArchive(ctx.directory, args.slug, {
+            skipSpecs: args.skipSpecs,
+          });
           return JSON.stringify(r, null, 2);
         },
       }),

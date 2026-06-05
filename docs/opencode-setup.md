@@ -48,6 +48,7 @@ npx taiyi-forge-install --all
 | `taiyi_phases` | 列出九阶段与 `taiyi-*` skill |
 | `taiyi_complete` | 完成当前阶段（门禁 + 工件） |
 | `taiyi_assess` | 复杂度评估与辅助 skill 建议 |
+| `taiyi_archive` | 九阶段完成后执行 `openspec archive <slug>`（若项目已初始化 OpenSpec） |
 
 ## 4. 一键安装（OpenCode + Claude + Codex + Cursor）
 
