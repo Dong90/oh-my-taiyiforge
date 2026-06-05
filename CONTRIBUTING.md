@@ -9,12 +9,22 @@
 - 行为变更须 **先写/改测试**（`npm test`），再改实现（TDD）
 - Claude 与 Codex 共用 `skills/`，勿写仅单端可用的硬编码路径
 
+## 发布到 npm
+
+```bash
+npm login
+npm publish --access public
+```
+
+`prepublishOnly` 会自动执行 `build` 与 `test`（含九阶段 E2E）。
+
 ## 本地开发
 
 ```bash
 npm install
 npm test
 npm run test:watch
+npm run dogfood
 ```
 
 ## 提交前检查

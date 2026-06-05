@@ -1,6 +1,6 @@
 {
   "name": "oh-my-taiyiforge",
-  "version": "0.6.0",
+  "version": "0.7.0",
   "description": "TaiyiForge — OpenCode 插件 + Claude/Codex/Cursor 共用 taiyi-* 九阶段研发工作流",
   "license": "MIT",
   "type": "module",
@@ -51,7 +51,9 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "taiyi": "node --import tsx src/cli/taiyi.ts",
-    "install:all": "node dist/cli/install-cli.js --all"
+    "install:all": "node dist/cli/install-cli.js --all",
+    "dogfood": "node scripts/dogfood-e2e.mjs",
+    "prepublishOnly": "npm run build && npm test"
   },
   "engines": {
     "node": ">=20"

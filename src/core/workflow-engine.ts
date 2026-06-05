@@ -34,7 +34,7 @@ export class WorkflowEngine {
     return path.join(this.changesDir(), slug, "state.json");
   }
 
-  private changeDir(slug: string): string {
+  changeDir(slug: string): string {
     return path.join(this.changesDir(), slug);
   }
 

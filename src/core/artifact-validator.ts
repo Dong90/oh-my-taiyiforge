@@ -44,6 +44,22 @@ export function validateArtifactContent(
 ): { scores: QualityScores; hints: string[] } {
   const hints: string[] = [];
   const text = stripComments(content);
+
+  if (phaseId === "dev") {
+    const ok = text.length >= 3;
+    if (!ok) hints.push("创建非空 .dev-complete 标记文件");
+    return {
+      scores: {
+        completeness: ok,
+        consistency: ok,
+        verifiability: ok,
+        traceability: ok,
+        engineering_quality: ok,
+      },
+      hints,
+    };
+  }
+
   const minTotal = phaseId === "ui-design" ? 40 : 60;
 
   let completeness = text.length >= minTotal;

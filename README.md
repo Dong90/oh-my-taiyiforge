@@ -55,7 +55,8 @@ npm run taiyi -- init my-feature
 - 九阶段 + `taiyi-*` Skill（非 `flow-*`）
 - 双门禁：人工审批 + 质量五维
 - `taiyi-dev` 阶段 TDD
-- `npm test` — 引擎与 OpenCode 处理器契约测试
+- `npm test` — 引擎与 OpenCode 处理器契约测试（含九阶段 E2E）
+- `npm run dogfood` — 本地跑通 `.taiyi/changes/<slug>/` 全流程（默认 `dogfood-demo`）
 - `templates/` — 九阶段工件模板；`skills/taiyi-*` — 可执行 Skill 正文（v0.4+）
 
 ## 文档

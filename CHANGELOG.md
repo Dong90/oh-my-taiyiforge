@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.7.0] - 2026-06-05
+
+### Added
+
+- 九阶段 E2E：`tests/e2e-workflow.test.ts` + `npm run dogfood`
+- `src/core/e2e-fixtures.ts`：共享最小合法工件（CI / dogfood 同源）
+
+### Changed
+
+- `prepublishOnly`：发布前自动 build + test
+
 ## [0.6.0] - 2026-06-05
 
 ### Added

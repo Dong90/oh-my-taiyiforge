@@ -49,8 +49,27 @@ export function buildPhaseGuide(
 
   const next = getNextPhase(state.currentPhase);
   const nextPhaseDef = next ? getPhase(next) : null;
+  const allDone =
+    !next &&
+    state.completedPhases.includes(state.currentPhase) &&
+    state.completedPhases.length >= 9;
 
   let nextAction: string;
+  if (allDone) {
+    return {
+      slug,
+      currentPhase: state.currentPhase,
+      skill: phase.skill,
+      artifact: phase.artifact,
+      artifactPath,
+      artifactExists,
+      qualityReady: true,
+      qualityHints: [],
+      nextAction: "九阶段已完成，可归档变更、合并代码或 taiyi init 开新 slug",
+      nextPhase: null,
+      nextSkill: null,
+    };
+  }
   if (!artifactExists) {
     nextAction = `加载 Skill「${phase.skill}」，编辑 ${phase.artifact}`;
   } else if (!qualityReady) {
