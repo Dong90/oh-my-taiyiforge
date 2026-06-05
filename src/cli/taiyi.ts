@@ -2,7 +2,7 @@
 import { WorkflowEngine } from "../core/workflow-engine.js";
 import { listPhases } from "../core/phase-registry.js";
 import { resolveTaiyiRoot } from "../core/paths.js";
-import { resolveTemplatesDir } from "../core/package-root.js";
+import { resolvePackageRoot, resolveTemplatesDir } from "../core/package-root.js";
 import { requiresHumanGate } from "../core/gates/human-gate-config.js";
 import { formatChangeListPlain } from "../core/format-guide.js";
 import type { ChangeProfile, PhaseId } from "../core/types.js";
@@ -19,7 +19,11 @@ import {
   taiyiWalkthrough,
   taiyiHarness,
   taiyiHarnessCheck,
+  taiyiCiVerify,
+  taiyiCiPlatform,
+  taiyiCiPrompt,
 } from "../plugin/handlers.js";
+import type { CiPlatformId } from "../core/ci-platform.js";
 
 const workspaceDir = process.cwd();
 const taiyiRoot = resolveTaiyiRoot(workspaceDir);
@@ -43,9 +47,12 @@ function usage(): void {
   npm run taiyi -- sync-openspec <slug>
   npm run taiyi -- archive <slug>
   npm run taiyi -- walkthrough [--slug name] [--profile api|lite]
-                                              在当前项目目录首次体验
+  npm run taiyi -- ci verify [--slug x] [--require-complete]
+  npm run taiyi -- ci platform <opencode|claude|codex|cursor>
+  npm run taiyi -- ci prompt <slug>          生成 CI Agent 推进 prompt 文件
 
 Profile: full | api（跳过 ui-design）| lite（五阶段）
+CI: 见 docs/ci/README.md 与 examples/ci/github-actions/
 `);
 }
 
@@ -213,6 +220,52 @@ switch (cmd) {
     console.log(JSON.stringify(r, null, 2));
     if (!r.ok) process.exit(1);
     break;
+  }
+  case "ci": {
+    const [sub, ...rest] = args;
+    const pkgRoot = resolvePackageRoot(import.meta.url);
+    if (sub === "verify") {
+      let slug: string | undefined;
+      const slugIdx = rest.indexOf("--slug");
+      if (slugIdx >= 0) slug = rest[slugIdx + 1];
+      const r = taiyiCiVerify(workspaceDir, {
+        slug,
+        requireComplete: rest.includes("--require-complete"),
+        plain: !jsonMode,
+      });
+      if ("text" in r && r.text) console.log(r.text);
+      else console.log(JSON.stringify(r, null, 2));
+      if (!r.ok) process.exit(1);
+      break;
+    }
+    if (sub === "platform") {
+      const platform = rest[0] as CiPlatformId;
+      if (!platform || !["opencode", "claude", "codex", "cursor"].includes(platform)) {
+        console.error("用法: ci platform <opencode|claude|codex|cursor>");
+        process.exit(1);
+      }
+      const r = taiyiCiPlatform(pkgRoot, platform, !jsonMode);
+      if ("text" in r && r.text) console.log(r.text);
+      else console.log(JSON.stringify(r, null, 2));
+      if (!r.ok) process.exit(1);
+      break;
+    }
+    if (sub === "prompt") {
+      const slug = rest[0];
+      if (!slug) {
+        console.error("用法: ci prompt <slug>");
+        process.exit(1);
+      }
+      const r = taiyiCiPrompt(workspaceDir, slug);
+      if (!r.ok) {
+        console.error(r.error);
+        process.exit(1);
+      }
+      console.log(jsonMode ? JSON.stringify(r, null, 2) : `CI prompt: ${r.promptFile}`);
+      break;
+    }
+    console.error("用法: ci verify | ci platform | ci prompt");
+    process.exit(1);
   }
   case "harness": {
     const slug = args[0];

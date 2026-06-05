@@ -21,6 +21,16 @@ import {
 } from "../core/harness-runner.js";
 import { markHarnessCheckpoint, hookKey } from "../core/harness-checkpoints.js";
 import { getHarnessContext } from "../integrations/harness-hooks.js";
+import {
+  verifyWorkspaceCi,
+  formatCiVerifyPlain,
+} from "../core/ci-verify.js";
+import {
+  probePlatformCi,
+  formatPlatformProbePlain,
+  writeCiAgentPrompt,
+  type CiPlatformId,
+} from "../core/ci-platform.js";
 
 const TEMPLATES_DIR = resolveTemplatesDir(import.meta.url);
 
@@ -266,6 +276,37 @@ export function taiyiHarnessCheck(workspaceDir: string, slug: string, hookRef: s
     key,
     message: `已打卡 ${key}，可继续主流程或 complete`,
   };
+}
+
+export function taiyiCiVerify(
+  workspaceDir: string,
+  options?: { slug?: string; requireComplete?: boolean; plain?: boolean },
+) {
+  const taiyiRoot = resolveTaiyiRoot(workspaceDir);
+  const report = verifyWorkspaceCi(workspaceDir, taiyiRoot, {
+    slug: options?.slug,
+    requireComplete: options?.requireComplete,
+  });
+  if (options?.plain !== false) {
+    return { ok: report.ok, text: formatCiVerifyPlain(report), report };
+  }
+  return { ok: report.ok, report };
+}
+
+export function taiyiCiPlatform(pkgRoot: string, platform: CiPlatformId, plain = true) {
+  const probe = probePlatformCi(pkgRoot, platform);
+  if (plain) {
+    return { ok: probe.ok, text: formatPlatformProbePlain(probe), probe };
+  }
+  return { ok: probe.ok, probe };
+}
+
+export function taiyiCiPrompt(workspaceDir: string, slug: string) {
+  const engine = createEngine(workspaceDir);
+  const state = engine.getState(slug);
+  if (!state) return { ok: false as const, error: `Change not found: ${slug}` };
+  const file = writeCiAgentPrompt(workspaceDir, resolveTaiyiRoot(workspaceDir), state);
+  return { ok: true as const, promptFile: file, phase: state.currentPhase };
 }
 
 export function taiyiHarnessRunShell(workspaceDir: string, slug: string) {

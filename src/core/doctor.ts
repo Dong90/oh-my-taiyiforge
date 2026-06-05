@@ -34,7 +34,14 @@ function readPackageVersion(pkgRoot: string): string {
 export function runDoctor(pkgRoot: string): DoctorReport {
   const checks: DoctorCheck[] = [];
   const dirs = defaultSkillTargets();
-  const expectedSkills = 14;
+  const expectedSkills = 15;
+  const packageSkillsDir = path.join(pkgRoot, "skills");
+  const packageSkillCount = countTaiyiSkills(packageSkillsDir);
+  checks.push({
+    id: "package-skills",
+    ok: packageSkillCount >= expectedSkills,
+    detail: `${packageSkillCount}/${expectedSkills} in ${packageSkillsDir}`,
+  });
 
   const platforms: { id: string; path: string }[] = [
     { id: "opencode-skills", path: dirs.opencode },
@@ -101,7 +108,8 @@ export function runDoctor(pkgRoot: string): DoctorReport {
     detail: fs.existsSync(codexAgents) ? codexAgents : `missing ${codexAgents}`,
   });
 
-  // cursor-rule 为增强项；skills 齐即可用
-  const ok = checks.filter((c) => c.id !== "cursor-rule").every((c) => c.ok);
+  // PASS：包内 skills + 阶段注册 + 模板（四端目录为建议项，跑 taiyi-forge-install --all 同步）
+  const required = new Set(["package-skills", "phase-registry", "templates"]);
+  const ok = checks.filter((c) => required.has(c.id)).every((c) => c.ok);
   return { ok, version: readPackageVersion(pkgRoot), checks };
 }

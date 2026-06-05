@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.17.0] - 2026-06-05
+
+### Added
+
+- **`taiyi ci verify`**：PR 无 LLM 校验 `.taiyi/changes/` 工件与 auto 门禁
+- **`taiyi ci platform`**：四端 skills 隔离安装冒烟（opencode / claude / codex / cursor）
+- **`taiyi ci prompt`**：生成 CI Agent 推进 prompt（`.taiyi/ci-prompts/`）
+- `examples/ci/github-actions/` 五套工作流模板 + `docs/ci/README.md`
+- 本仓库 CI：`ci:verify` + platform matrix
+
+### Changed
+
+- doctor 期望 15 个 taiyi-* skills（含 orchestrator）
+
 ## [0.16.0] - 2026-06-05
 
 ### Added

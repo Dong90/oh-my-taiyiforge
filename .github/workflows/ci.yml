@@ -20,3 +20,20 @@ jobs:
       - run: npm ci
       - run: npm test
       - run: npm run dogfood
+      - run: npm run ci:verify
+
+  platform-smoke:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        platform: [opencode, claude, codex, cursor]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+      - run: npx taiyi ci platform ${{ matrix.platform }}

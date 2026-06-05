@@ -55,6 +55,12 @@ npx taiyi doctor              # 安装自检
 npx taiyi next <slug>         # 人类可读下一步
 npx taiyi init <slug> --profile api|lite
 npx taiyi walkthrough         # 首次体验（任意项目目录）
+npx taiyi ci verify           # CI：校验 .taiyi 工件（无 LLM）
+```
+
+四端 CI 模板：`examples/ci/github-actions/` · 文档：`docs/ci/README.md`
+
+```bash
 ```  
 工件落在项目目录 **`.taiyi/changes/<slug>/`**。
 

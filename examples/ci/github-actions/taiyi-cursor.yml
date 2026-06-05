@@ -1,0 +1,44 @@
+# Cursor — PR 校验 + 可选 Cursor Agent CLI 推进
+name: TaiyiForge Cursor
+
+on:
+  workflow_dispatch:
+    inputs:
+      slug:
+        required: true
+        description: Taiyi change slug
+  pull_request:
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - run: npm ci && npm install oh-my-taiyiforge --no-save
+      - run: npx taiyi ci platform cursor
+      - run: npx taiyi ci verify
+
+  advance:
+    if: github.event_name == 'workflow_dispatch'
+    needs: verify
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - run: npm ci && npm install oh-my-taiyiforge --no-save
+      - run: npx taiyi ci prompt "${{ inputs.slug }}"
+      - name: Cursor Agent advance (optional)
+        env:
+          CURSOR_API_KEY: ${{ secrets.CURSOR_API_KEY }}
+        run: |
+          PROMPT=$(ls .taiyi/ci-prompts/${{ inputs.slug }}-*.txt 2>/dev/null | head -1)
+          if command -v cursor >/dev/null 2>&1 && [ -n "$CURSOR_API_KEY" ] && [ -n "$PROMPT" ]; then
+            cursor agent -p "$(cat "$PROMPT")" || echo "按本地 Cursor 文档调整 agent 子命令"
+          else
+            echo "跳过：需要 cursor CLI + CURSOR_API_KEY；本地开发用 taiyi-orchestrator"
+          fi

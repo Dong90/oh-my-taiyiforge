@@ -1,0 +1,29 @@
+# 复制到业务仓库 .github/workflows/taiyi-verify-pr.yml
+# PR 无 LLM：校验 .taiyi/changes/ 工件与 auto 门禁
+name: TaiyiForge Verify
+
+on:
+  pull_request:
+    paths:
+      - ".taiyi/**"
+      - "**/*"
+
+jobs:
+  taiyi-verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install TaiyiForge
+        run: npm install oh-my-taiyiforge --no-save
+
+      - name: Verify Taiyi changes
+        run: npx taiyi ci verify

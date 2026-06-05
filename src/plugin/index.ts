@@ -16,7 +16,10 @@ import {
   taiyiWalkthrough,
   taiyiHarness,
   taiyiHarnessCheck,
+  taiyiCiVerify,
+  taiyiCiPlatform,
 } from "./handlers.js";
+import { resolvePackageRoot } from "../core/package-root.js";
 
 /**
  * OpenCode 插件入口 — 在 opencode.json 的 plugin 数组中加入 "oh-my-taiyiforge" 即可加载。
@@ -229,6 +232,32 @@ const TaiyiForgePlugin: Plugin = async () => {
         async execute(args, ctx) {
           const r = taiyiHarnessCheck(ctx.directory, args.slug, args.hookKey);
           return JSON.stringify(r, null, 2);
+        },
+      }),
+      taiyi_ci_verify: tool({
+        description: "CI: verify .taiyi/changes artifacts and auto-harness gates (no LLM).",
+        args: {
+          slug: tool.schema.string().optional(),
+          requireComplete: tool.schema.boolean().optional(),
+        },
+        async execute(args, ctx) {
+          const r = taiyiCiVerify(ctx.directory, {
+            slug: args.slug,
+            requireComplete: args.requireComplete,
+          });
+          return "text" in r && r.text ? r.text : JSON.stringify(r, null, 2);
+        },
+      }),
+      taiyi_ci_platform: tool({
+        description: "CI: smoke-test skill sync for one platform (opencode|claude|codex|cursor).",
+        args: {
+          platform: tool.schema.enum(["opencode", "claude", "codex", "cursor"]),
+        },
+        async execute(args, _ctx) {
+          void _ctx;
+          const pkgRoot = resolvePackageRoot(import.meta.url);
+          const r = taiyiCiPlatform(pkgRoot, args.platform, true);
+          return "text" in r && r.text ? r.text : JSON.stringify(r, null, 2);
         },
       }),
       taiyi_walkthrough: tool({

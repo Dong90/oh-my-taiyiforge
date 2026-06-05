@@ -1,0 +1,45 @@
+# OpenCode — PR 校验 + 可选 Agent 推进（需 OPENCODE_API_KEY 或自托管）
+name: TaiyiForge OpenCode
+
+on:
+  workflow_dispatch:
+    inputs:
+      slug:
+        description: Taiyi change slug
+        required: true
+  pull_request:
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - run: npm ci
+      - run: npm install oh-my-taiyiforge --no-save
+      - run: npx taiyi ci platform opencode
+      - run: npx taiyi ci verify
+
+  advance:
+    if: github.event_name == 'workflow_dispatch'
+    needs: verify
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - run: npm ci && npm install oh-my-taiyiforge --no-save
+      - name: Generate CI prompt
+        run: npx taiyi ci prompt "${{ inputs.slug }}"
+      - name: OpenCode advance (optional)
+        env:
+          OPENCODE_API_KEY: ${{ secrets.OPENCODE_API_KEY }}
+        run: |
+          if command -v opencode >/dev/null 2>&1 && [ -n "$OPENCODE_API_KEY" ]; then
+            opencode run "执行 .taiyi/ci-prompts/ 下 prompt，按 taiyi-orchestrator 推进"
+          else
+            echo "跳过 LLM 推进：安装 opencode CLI 并配置 OPENCODE_API_KEY"
+          fi
