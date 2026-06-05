@@ -29,7 +29,14 @@ export type InitChangeOptions = {
   profile?: ChangeProfile;
   strictDev?: boolean;
   autoHarness?: boolean;
+  /** Reinitialize even when state.json already exists (resets progress). */
+  force?: boolean;
 };
+
+export type StateLookup =
+  | { status: "ok"; state: ChangeState }
+  | { status: "missing" }
+  | { status: "corrupt"; error: string };
 
 function normalizeState(raw: ChangeState): ChangeState {
   return {
@@ -64,6 +71,10 @@ export class WorkflowEngine {
   initChange(slug: string, options?: InitChangeOptions): ChangeState & { seeded: string[] } {
     assertValidSlug(slug);
     const dir = this.changeDir(slug);
+    const existing = this.statePath(slug);
+    if (fs.existsSync(existing) && !options?.force) {
+      throw new Error(`Change already exists: ${slug}. Use --force to reinitialize.`);
+    }
     fs.mkdirSync(dir, { recursive: true });
     const profile = options?.profile ?? "full";
     const skippedPhases = skippedPhasesForProfile(profile);
@@ -114,20 +125,35 @@ export class WorkflowEngine {
     return { ...state, seeded };
   }
 
-  getState(slug: string): ChangeState | null {
+  lookupState(slug: string): StateLookup {
     const slugCheck = validateSlug(slug);
-    if (!slugCheck.ok) return null;
+    if (!slugCheck.ok) return { status: "missing" };
     const file = this.statePath(slug);
-    if (!fs.existsSync(file)) return null;
+    if (!fs.existsSync(file)) return { status: "missing" };
     try {
-      return normalizeState(JSON.parse(fs.readFileSync(file, "utf8")) as ChangeState);
-    } catch {
-      return null;
+      return {
+        status: "ok",
+        state: normalizeState(JSON.parse(fs.readFileSync(file, "utf8")) as ChangeState),
+      };
+    } catch (e) {
+      return {
+        status: "corrupt",
+        error: e instanceof Error ? e.message : String(e),
+      };
     }
   }
 
+  getState(slug: string): ChangeState | null {
+    const lookup = this.lookupState(slug);
+    return lookup.status === "ok" ? lookup.state : null;
+  }
+
   private writeState(state: ChangeState): void {
-    fs.writeFileSync(this.statePath(state.slug), JSON.stringify(state, null, 2));
+    const file = this.statePath(state.slug);
+    fs.mkdirSync(path.dirname(file), { recursive: true });
+    const tmp = `${file}.tmp.${process.pid}`;
+    fs.writeFileSync(tmp, JSON.stringify(state, null, 2), "utf8");
+    fs.renameSync(tmp, file);
   }
 
   private artifactPath(slug: string, phaseId: PhaseId): string {

@@ -4,6 +4,7 @@ import type { ChangeProfile, PhaseId } from "./types.js";
 export const PROFILE_SKIPPED: Record<ChangeProfile, PhaseId[]> = {
   full: [],
   api: ["ui-design"],
+  /** Alias of `full` — explicit UI-heavy naming; same nine phases. */
   ui: [],
   lite: ["design", "ui-design", "task", "review"],
 };

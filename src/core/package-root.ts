@@ -12,6 +12,8 @@ export function resolvePackageRoot(fromModuleUrl: string): string {
     `${path.sep}src${path.sep}plugin`,
     `${path.sep}dist${path.sep}integrations`,
     `${path.sep}src${path.sep}integrations`,
+    `${path.sep}dist${path.sep}install`,
+    `${path.sep}src${path.sep}install`,
   ];
   for (const m of markers) {
     if (dir.endsWith(m)) return path.join(dir, "..", "..");

@@ -35,6 +35,8 @@
 | `/taiyi:doctor` | 安装/升级后自检（≈ `omx doctor`） |
 | `/taiyi:list` | **多个变更并行**时列 slug（否则 continue 报错） |
 | `/taiyi:check` | `--auto` 时每阶段看 harness 铁三角清单 |
+| `/taiyi:loop` | 循环 `continue` 直到完成或阻塞（人工门需 `--approver`） |
+| `/taiyi:token *` | Token 预算：status / record / scan / compress |
 | `/taiyi:sync` | 同步到 OpenSpec（≈ `opsx:sync`） |
 | `/taiyi:run` | 首次体验演示（≈ `omc.sh run`，非日常） |
 | `/taiyi:explore` | change 阶段：Superpowers brainstorming（≈ clarify/explore） |

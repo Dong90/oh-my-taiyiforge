@@ -50,8 +50,13 @@ export function validateArtifactContent(
   const text = stripComments(content);
 
   if (phaseId === "dev") {
-    const hasMarker = text.length >= 3;
-    if (!hasMarker) hints.push("创建非空 .dev-complete 标记文件");
+    const trimmed = text.trim();
+    const hasMarker =
+      trimmed.length >= 8 &&
+      (/complete|done|dev/i.test(trimmed) || trimmed.split("\n").some((l) => l.trim().length >= 4));
+    if (!hasMarker) {
+      hints.push("创建 .dev-complete 标记（≥8 字符，含 complete/done/dev 或有效说明行）");
+    }
 
     const strict = /strict:\s*true/i.test(text);
     let strictOk = true;

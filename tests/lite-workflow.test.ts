@@ -54,7 +54,7 @@ describe("lite-workflow", () => {
     );
     expect(engine.completePhase("lite-fix", "requirement", GATES).ok).toBe(true);
 
-    fs.writeFileSync(path.join(dir, ".dev-complete"), "done\n");
+    fs.writeFileSync(path.join(dir, ".dev-complete"), "dev complete: lite workflow smoke\n");
     expect(engine.completePhase("lite-fix", "dev", GATES).ok).toBe(true);
 
     fs.writeFileSync(

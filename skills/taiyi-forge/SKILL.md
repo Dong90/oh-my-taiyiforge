@@ -64,7 +64,7 @@ scripts/taiyi-forge.sh init my-feature --auto --title "功能名"
 scripts/taiyi-forge.sh next my-feature
 scripts/taiyi-forge.sh harness my-feature
 scripts/taiyi-forge.sh harness-check my-feature superpowers/brainstorming
-scripts/taiyi-forge.sh complete my-feature change
+scripts/taiyi-forge.sh complete my-feature change --approver "你的名字"
 scripts/taiyi-forge.sh list
 scripts/taiyi-forge.sh doctor
 ```

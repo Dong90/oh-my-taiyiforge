@@ -122,6 +122,7 @@ npm run chat-demo      # 聊天动词：new / status / check / continue
 |---------|------|
 | `full` | 九阶段（默认） |
 | `api` | 跳过 `ui-design`（纯后端/API） |
+| `ui` | 与 `full` 相同（显式 UI 项目命名） |
 | `lite` | 五阶段：change → requirement → dev → test → integration |
 
 ```bash

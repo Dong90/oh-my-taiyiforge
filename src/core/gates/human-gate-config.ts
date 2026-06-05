@@ -1,5 +1,49 @@
 import type { HumanApproval, PhaseId } from "../types.js";
 
+export function allowAutoHumanEnv(env = process.env): boolean {
+  return env.TAIYI_AUTO_HUMAN === "1" || env.TAIYI_AUTO_HUMAN === "true";
+}
+
+/** Shared human-gate resolution for CLI complete and plugin taiyi_complete. */
+export function resolveHumanForComplete(
+  phaseId: PhaseId,
+  requestedApprover: string | undefined,
+  env = process.env,
+):
+  | { ok: true; human: HumanApproval; allowAutoHuman?: boolean }
+  | { ok: false; error: string } {
+  const needsHuman = requiresHumanGate(phaseId, env);
+  const allowAutoHuman = allowAutoHumanEnv(env);
+  const approver = requestedApprover?.trim();
+
+  if (needsHuman && !approver && !allowAutoHuman) {
+    return {
+      ok: false,
+      error: `Human gate required for phase ${phaseId}: provide gates.human.approver`,
+    };
+  }
+  if (needsHuman && approver && isAutoApprover(approver) && !allowAutoHuman) {
+    return {
+      ok: false,
+      error: `Human gate required for phase ${phaseId}: automated approver ${approver} not allowed`,
+    };
+  }
+
+  const humanApprover = needsHuman
+    ? (approver ?? (allowAutoHuman ? "cli-operator" : ""))
+    : (approver ?? "opencode-agent");
+
+  if (needsHuman && !humanApprover) {
+    return { ok: false, error: `Human gate required for phase ${phaseId}` };
+  }
+
+  return {
+    ok: true,
+    human: { approved: true, approver: humanApprover },
+    allowAutoHuman: needsHuman && !approver && allowAutoHuman ? true : undefined,
+  };
+}
+
 export const DEFAULT_HUMAN_GATE_PHASES: PhaseId[] = ["change", "design", "review"];
 
 /** Automated callers must not bypass human gates (loop / CLI / agent defaults). */

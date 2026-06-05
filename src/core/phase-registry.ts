@@ -79,8 +79,12 @@ export function listPhases(): PhaseDefinition[] {
   return [...PHASES];
 }
 
+export function tryGetPhase(id: string): PhaseDefinition | null {
+  return PHASES.find((p) => p.id === id) ?? null;
+}
+
 export function getPhase(id: PhaseId): PhaseDefinition {
-  const phase = PHASES.find((p) => p.id === id);
+  const phase = tryGetPhase(id);
   if (!phase) throw new Error(`Unknown phase: ${id}`);
   return phase;
 }

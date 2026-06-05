@@ -18,6 +18,10 @@ import {
   taiyiHarnessCheck,
   taiyiCiVerify,
   taiyiCiPlatform,
+  taiyiContinue,
+  taiyiLoop,
+  taiyiApply,
+  taiyiToken,
 } from "./handlers.js";
 import { resolvePackageRoot } from "../core/package-root.js";
 
@@ -260,6 +264,65 @@ const TaiyiForgePlugin: Plugin = async () => {
           void _ctx;
           const pkgRoot = resolvePackageRoot(import.meta.url);
           const r = taiyiCiPlatform(pkgRoot, args.platform, true);
+          return "text" in r && r.text ? r.text : JSON.stringify(r, null, 2);
+        },
+      }),
+      taiyi_continue: tool({
+        description:
+          "Advance one phase (or xN repeats): complete current phase when artifact and gates pass.",
+        args: {
+          slug: tool.schema.string(),
+          approver: tool.schema
+            .string()
+            .optional()
+            .describe("Human gate approver for change/design/review"),
+          times: tool.schema.number().optional().describe("Repeat continue up to N times in one call"),
+        },
+        async execute(args, ctx) {
+          const r = taiyiContinue(ctx.directory, args.slug, {
+            approver: args.approver,
+            times: args.times,
+            plain: true,
+          });
+          return "text" in r && r.text ? r.text : JSON.stringify(r, null, 2);
+        },
+      }),
+      taiyi_loop: tool({
+        description: "Loop continue until workflow completes or blocks (human gate / quality).",
+        args: {
+          slug: tool.schema.string(),
+          times: tool.schema.number().optional().describe("Max attempts per round (default env TAIYI_LOOP_MAX)"),
+        },
+        async execute(args, ctx) {
+          const r = taiyiLoop(ctx.directory, args.slug, { times: args.times, plain: true });
+          return "text" in r && r.text ? r.text : JSON.stringify(r, null, 2);
+        },
+      }),
+      taiyi_apply: tool({
+        description: "Show harness plan for dev/test implementation phase (/taiyi:apply).",
+        args: {
+          slug: tool.schema.string(),
+          times: tool.schema.number().optional().describe("Repeat harness display N times"),
+        },
+        async execute(args, ctx) {
+          const r = taiyiApply(ctx.directory, args.slug, { times: args.times, plain: true });
+          return "text" in r && r.text ? r.text : JSON.stringify(r, null, 2);
+        },
+      }),
+      taiyi_token: tool({
+        description: "Token budget: status, record, scan, or compress for a change.",
+        args: {
+          sub: tool.schema.enum(["status", "record", "scan", "compress"]),
+          slug: tool.schema.string().optional(),
+          tokens: tool.schema.number().optional().describe("For record subcommand"),
+          phase: tool.schema.string().optional(),
+        },
+        async execute(args, ctx) {
+          const r = taiyiToken(ctx.directory, args.sub, {
+            slug: args.slug,
+            tokens: args.tokens,
+            phase: args.phase as import("../core/types.js").PhaseId | undefined,
+          });
           return "text" in r && r.text ? r.text : JSON.stringify(r, null, 2);
         },
       }),

@@ -4,7 +4,6 @@ import { requiresHumanGate } from "./gates/human-gate-config.js";
 import { isWorkflowCompleted } from "./change-status.js";
 import { buildPhaseGuide } from "./phase-guide.js";
 import { formatGuidePlain, formatPhaseProgressLine } from "./format-guide.js";
-import { taiyiNext } from "../plugin/handlers.js";
 import { defaultLoopMax } from "./repeat-parse.js";
 import { bumpLoopRound, clearLoopState } from "./loop-state.js";
 import { loopSlash } from "./loop-invoke.js";
@@ -43,9 +42,8 @@ function attemptContinueOnce(
 
   const phaseId = state.currentPhase as PhaseId;
   if (requiresHumanGate(phaseId)) {
-    const next = taiyiNext(workspaceDir, slug, true);
     const guide = buildPhaseGuide(taiyiRoot, slug, state, workspaceDir);
-    const hint = next.ok && "text" in next && next.text ? next.text : formatGuidePlain(guide);
+    const hint = formatGuidePlain(guide);
     return {
       advanced: false,
       phase: phaseId,
@@ -77,9 +75,8 @@ function attemptContinueOnce(
     };
   }
 
-  const next = taiyiNext(workspaceDir, slug, true);
   const guide = buildPhaseGuide(taiyiRoot, slug, state, workspaceDir);
-  const hint = next.ok && "text" in next && next.text ? next.text : formatGuidePlain(guide);
+  const hint = formatGuidePlain(guide);
   return {
     advanced: false,
     phase: phaseId,

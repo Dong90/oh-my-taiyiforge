@@ -4,7 +4,7 @@ import { WorkflowEngine } from "../core/workflow-engine.js";
 import { listPhases } from "../core/phase-registry.js";
 import { resolveTaiyiRoot } from "../core/paths.js";
 import { resolvePackageRoot, resolveTemplatesDir } from "../core/package-root.js";
-import { isAutoApprover, requiresHumanGate } from "../core/gates/human-gate-config.js";
+import { resolveHumanForComplete } from "../core/gates/human-gate-config.js";
 import { formatChangeListPlain, formatGuidePlain, formatPhaseProgressLine, formatStatusPlain } from "../core/format-guide.js";
 import { buildPhaseGuide } from "../core/phase-guide.js";
 import { isWorkflowCompleted } from "../core/change-status.js";
@@ -53,7 +53,7 @@ function usage(): void {
 用法:
   npm run taiyi -- doctor                   检查四端安装与配置
   npm run taiyi -- list                     列出 .taiyi/changes/ 下所有变更
-  npm run taiyi -- init <slug> [--profile api|lite] [--strict-dev] [--auto] [--json]
+  npm run taiyi -- init <slug> [--profile api|lite|ui] [--strict-dev] [--auto] [--force] [--json]
   npm run taiyi -- harness <slug>              全自动编排清单（铁三角→辅助→主流程）
   npm run taiyi -- harness-check <slug> <key>  铁三角步骤打卡（auto 模式）
   npm run taiyi -- new <标题>              /taiyi:new — 自动 slug + auto
@@ -150,29 +150,14 @@ function tryCompletePhase(
   if (isWorkflowCompleted(state)) return { ok: true };
 
   const phaseId = options?.phaseId ?? (state.currentPhase as PhaseId);
-  const needsHuman = requiresHumanGate(phaseId);
-  const allowAutoHuman =
-    process.env.TAIYI_AUTO_HUMAN === "1" || process.env.TAIYI_AUTO_HUMAN === "true";
-  const approver = options?.approver?.trim();
-
-  if (needsHuman && !approver && !allowAutoHuman) {
+  const humanResolved = resolveHumanForComplete(phaseId, options?.approver);
+  if (!humanResolved.ok) {
     return {
       ok: false,
-      error: `阶段 ${phaseId} 需人工审批。使用 --approver "你的名字"，例如: npx taiyi complete ${slug} ${phaseId} --approver "你的名字"`,
+      error: humanResolved.error.includes("approver")
+        ? `阶段 ${phaseId} 需人工审批。使用 --approver "你的名字"，例如: npx taiyi complete ${slug} ${phaseId} --approver "你的名字"`
+        : humanResolved.error,
     };
-  }
-  if (needsHuman && approver && isAutoApprover(approver)) {
-    return {
-      ok: false,
-      error: `阶段 ${phaseId} 不接受自动审批者 ${approver}`,
-    };
-  }
-
-  const humanApprover = needsHuman
-    ? (approver ?? (allowAutoHuman ? "cli-operator" : ""))
-    : "cli-auto";
-  if (needsHuman && !humanApprover) {
-    return { ok: false, error: `阶段 ${phaseId} 需人工审批` };
   }
 
   const result = engine.completePhase(
@@ -186,12 +171,9 @@ function tryCompletePhase(
         traceability: true,
         engineering_quality: true,
       },
-      human: {
-        approved: true,
-        approver: humanApprover,
-      },
+      human: humanResolved.human,
     },
-    needsHuman && !approver && allowAutoHuman ? { allowAutoHuman: true } : undefined,
+    humanResolved.allowAutoHuman ? { allowAutoHuman: true } : undefined,
   );
   if (!result.ok) return { ok: false, error: result.error ?? "complete failed" };
   return { ok: true };
@@ -262,18 +244,24 @@ switch (cmd) {
     let title: string | undefined;
     const titleIdx = args.indexOf("--title");
     if (titleIdx >= 0) title = args[titleIdx + 1];
-    const result = engine.initChange(slug, {
-      title,
-      templatesDir,
-      profile: parseProfile(args) ?? "full",
-      strictDev: args.includes("--strict-dev"),
-      autoHarness: args.includes("--auto"),
-    });
-    if (jsonMode) {
-      console.log(JSON.stringify(result, null, 2));
-    } else {
-      const guide = buildPhaseGuide(taiyiRoot, slug, result, workspaceDir);
-      console.log(formatGuidePlain(guide));
+    try {
+      const result = engine.initChange(slug, {
+        title,
+        templatesDir,
+        profile: parseProfile(args) ?? "full",
+        strictDev: args.includes("--strict-dev"),
+        autoHarness: args.includes("--auto"),
+        force: args.includes("--force"),
+      });
+      if (jsonMode) {
+        console.log(JSON.stringify(result, null, 2));
+      } else {
+        const guide = buildPhaseGuide(taiyiRoot, slug, result, workspaceDir);
+        console.log(formatGuidePlain(guide));
+      }
+    } catch (e) {
+      console.error(e instanceof Error ? e.message : String(e));
+      process.exit(1);
     }
     break;
   }
@@ -284,19 +272,25 @@ switch (cmd) {
       process.exit(1);
     }
     const slug = slugifyTitle(title);
-    const result = engine.initChange(slug, {
-      title,
-      templatesDir,
-      profile: parseProfile(args) ?? "full",
-      strictDev: args.includes("--strict-dev"),
-      autoHarness: true,
-    });
-    if (jsonMode) {
-      console.log(JSON.stringify(result, null, 2));
-    } else {
-      const guide = buildPhaseGuide(taiyiRoot, slug, result, workspaceDir);
-      console.log(`变更: ${slug}\n`);
-      console.log(formatGuidePlain(guide));
+    try {
+      const result = engine.initChange(slug, {
+        title,
+        templatesDir,
+        profile: parseProfile(args) ?? "full",
+        strictDev: args.includes("--strict-dev"),
+        autoHarness: true,
+        force: args.includes("--force"),
+      });
+      if (jsonMode) {
+        console.log(JSON.stringify(result, null, 2));
+      } else {
+        const guide = buildPhaseGuide(taiyiRoot, slug, result, workspaceDir);
+        console.log(`变更: ${slug}\n`);
+        console.log(formatGuidePlain(guide));
+      }
+    } catch (e) {
+      console.error(e instanceof Error ? e.message : String(e));
+      process.exit(1);
     }
     break;
   }
@@ -616,23 +610,19 @@ switch (cmd) {
       console.error("用法: complete <slug> <phase> [--approver 名字]  （或: done [slug] [--approver 名字]）");
       process.exit(1);
     }
-    const r = taiyiComplete(workspaceDir, slug, phase, approver
-      ? { human: { approved: true, approver } }
-      : undefined);
-    if (!r.ok) {
-      console.error(r.error);
-      process.exit(1);
-    }
-    printCompleteSuccess(slug, phase as PhaseId);
+    completeCurrentPhase(slug, phase as PhaseId, approver);
     break;
   }
   case "token": {
     const [sub, slugArg, tokensArg, ...rest] = args;
-    const slug = slugArg ?? resolveActiveSlug(workspaceDir, taiyiRoot);
-    if (!slug) {
-      console.error("缺少 slug（多变更时请指定）");
+    const slugResolved = slugArg
+      ? { ok: true as const, slug: slugArg, inferred: false }
+      : resolveActiveSlug(taiyiRoot);
+    if (!slugResolved.ok) {
+      console.error(slugResolved.error);
       process.exit(1);
     }
+    const slug = slugResolved.slug;
     const changeDir = path.join(taiyiRoot, "changes", slug);
     const state = engine.getState(slug);
     const phaseIdx = rest.indexOf("--phase");

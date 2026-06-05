@@ -1,6 +1,6 @@
 import fs from "node:fs";
 import path from "node:path";
-import { fileURLToPath } from "node:url";
+import { resolvePackageRoot } from "../core/package-root.js";
 import { installCodexAgents } from "./codex-agents.js";
 import { installClaudeControlPlane } from "./claude-control.js";
 import { addPluginToConfigFile } from "./opencode-plugin.js";
@@ -111,17 +111,6 @@ export function shouldRunPostinstall(env = process.env): boolean {
   if (env.TAIYI_FORGE_SKIP_POSTINSTALL === "1") return false;
   if (env.CI === "true" || env.CI === "1") return false;
   return true;
-}
-
-export function resolvePackageRoot(moduleUrl: string): string {
-  const dir = path.dirname(fileURLToPath(moduleUrl));
-  if (dir.endsWith(`${path.sep}dist${path.sep}install`)) {
-    return path.join(dir, "..", "..");
-  }
-  if (dir.endsWith(`${path.sep}install`)) {
-    return path.join(dir, "..");
-  }
-  return dir;
 }
 
 function pickOpencodeConfigPath(cwd: string): string {
@@ -249,6 +238,10 @@ async function npmInstallOpencode(spec: string, pkgRoot: string): Promise<Instal
   }
 }
 
+export function installResultsExitCode(results: InstallResult[]): number {
+  return results.some((r) => r.action === "failed") ? 1 : 0;
+}
+
 /** CLI entry for bin/taiyi-forge-install */
 export async function runInstallCli(argv: string[]): Promise<number> {
   const parsed = parseInstallCli(argv);
@@ -279,12 +272,12 @@ Env:
   }
 
   const base = resolvePackageRoot(import.meta.url);
-  await runInstall({
+  const results = await runInstall({
     pkgRoot: base,
     targets: parsed.targets,
     registerPlugin: parsed.registerPlugin,
     opencodeNpmSpec: parsed.opencodeNpmSpec,
     installDeps: parsed.installDeps,
   });
-  return 0;
+  return installResultsExitCode(results);
 }

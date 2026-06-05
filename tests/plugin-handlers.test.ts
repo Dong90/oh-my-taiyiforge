@@ -27,7 +27,7 @@ describe("plugin-handlers", () => {
   });
 
   it("rejects complete on human phase without approver", () => {
-    const init = taiyiInit(workspace, "feat-b", "Feature B");
+    const init = taiyiInit(workspace, "feat-b", { title: "Feature B" });
     expect(init.ok).toBe(true);
     const changeDir = path.join(workspace, ".taiyi", "changes", "feat-b");
     fs.writeFileSync(

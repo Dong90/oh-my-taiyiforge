@@ -118,6 +118,11 @@ Demo motivation with enough detail for validation.
     expect(() => engine.initChange("../bad")).toThrow(/invalid slug|slug must match/i);
   });
 
+  it("rejects re-init without force", () => {
+    engine.initChange("once");
+    expect(() => engine.initChange("once")).toThrow(/already exists/);
+  });
+
   it("assesses complexity from artifact count", () => {
     engine.initChange("big-change");
     const { assessment } = engine.assessComplexity("big-change", {

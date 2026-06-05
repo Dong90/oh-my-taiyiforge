@@ -1,10 +1,24 @@
 import path from "node:path";
 import type { ChangeProfile, GateInput, PhaseId, QualityScores } from "../core/types.js";
 import { WorkflowEngine } from "../core/workflow-engine.js";
-import { listPhases, getPhase } from "../core/phase-registry.js";
+import { listPhases, getPhase, tryGetPhase } from "../core/phase-registry.js";
 import { resolveTaiyiRoot } from "../core/paths.js";
 import { resolveTemplatesDir } from "../core/package-root.js";
-import { isAutoApprover, requiresHumanGate } from "../core/gates/human-gate-config.js";
+import { resolveHumanForComplete } from "../core/gates/human-gate-config.js";
+import { resolveActiveSlug } from "../core/active-slug.js";
+import { isWorkflowCompleted } from "../core/change-status.js";
+import {
+  formatAgentLoopProtocol,
+  formatLoopResultPlain,
+  runContinueRepeat,
+  runLoopUntilComplete,
+} from "../core/loop-runner.js";
+import {
+  tokenCompress,
+  tokenRecord,
+  tokenScan,
+  tokenStatusPlain,
+} from "../core/token-runner.js";
 import { slugValidationError, validateSlug } from "../core/slug.js";
 import type { ComplexitySignals } from "../core/routing/complexity.js";
 import { buildPhaseGuide } from "../core/phase-guide.js";
@@ -40,6 +54,20 @@ function rejectInvalidSlug(slug: string): { ok: false; error: string } | null {
   return error ? { ok: false as const, error } : null;
 }
 
+function requireChangeState(
+  engine: WorkflowEngine,
+  slug: string,
+): { ok: true; state: import("../core/types.js").ChangeState } | { ok: false; error: string } {
+  const lookup = engine.lookupState(slug);
+  if (lookup.status === "corrupt") {
+    return { ok: false, error: `Corrupt state.json for ${slug}: ${lookup.error}` };
+  }
+  if (lookup.status === "missing") {
+    return { ok: false, error: `Change not found: ${slug}` };
+  }
+  return { ok: true, state: lookup.state };
+}
+
 export function createEngine(workspaceDir: string): WorkflowEngine {
   return new WorkflowEngine(resolveTaiyiRoot(workspaceDir), TEMPLATES_DIR);
 }
@@ -52,6 +80,7 @@ export function taiyiInit(
     profile?: ChangeProfile;
     strictDev?: boolean;
     autoHarness?: boolean;
+    force?: boolean;
   },
 ) {
   const invalid = rejectInvalidSlug(slug);
@@ -65,6 +94,7 @@ export function taiyiInit(
       profile: options?.profile,
       strictDev: options?.strictDev,
       autoHarness: options?.autoHarness,
+      force: options?.force,
     });
     const { seeded, ...state } = result;
     return {
@@ -83,8 +113,9 @@ export function taiyiStatus(workspaceDir: string, slug: string) {
   const invalid = rejectInvalidSlug(slug);
   if (invalid) return invalid;
   const engine = createEngine(workspaceDir);
-  const state = engine.getState(slug);
-  if (!state) return { ok: false as const, error: `Change not found: ${slug}` };
+  const stateResult = requireChangeState(engine, slug);
+  if (!stateResult.ok) return stateResult;
+  const state = stateResult.state;
   const taiyiRoot = resolveTaiyiRoot(workspaceDir);
   const guide = buildPhaseGuide(taiyiRoot, slug, state, workspaceDir);
   const openspec = getOpenspecStatus(workspaceDir, slug);
@@ -95,8 +126,9 @@ export function taiyiGuide(workspaceDir: string, slug: string) {
   const invalid = rejectInvalidSlug(slug);
   if (invalid) return invalid;
   const engine = createEngine(workspaceDir);
-  const state = engine.getState(slug);
-  if (!state) return { ok: false as const, error: `Change not found: ${slug}` };
+  const stateResult = requireChangeState(engine, slug);
+  if (!stateResult.ok) return stateResult;
+  const state = stateResult.state;
   const guide = buildPhaseGuide(resolveTaiyiRoot(workspaceDir), slug, state, workspaceDir);
   return { ok: true as const, guide, assessment: state.complexity };
 }
@@ -120,8 +152,12 @@ export function taiyiComplete(
   const slugCheck = validateSlug(slug);
   if (!slugCheck.ok) return { ok: false as const, error: slugCheck.error };
 
+  const phase = tryGetPhase(phaseId);
+  if (!phase) {
+    return { ok: false as const, error: `Unknown phase: ${phaseId}` };
+  }
+
   const engine = createEngine(workspaceDir);
-  const phase = getPhase(phaseId as PhaseId);
   const quality: QualityScores = {
     completeness: gates?.quality?.completeness ?? true,
     consistency: gates?.quality?.consistency ?? true,
@@ -130,26 +166,12 @@ export function taiyiComplete(
     engineering_quality: gates?.quality?.engineering_quality ?? true,
   };
 
-  const needsHuman = requiresHumanGate(phase.id);
-  const requestedApprover = gates?.human?.approver?.trim();
-  if (needsHuman && !requestedApprover) {
-    return {
-      ok: false as const,
-      error: `Human gate required for phase ${phase.id}: provide gates.human.approver`,
-    };
-  }
-  if (needsHuman && requestedApprover && isAutoApprover(requestedApprover)) {
-    return {
-      ok: false as const,
-      error: `Human gate required for phase ${phase.id}: automated approver ${requestedApprover} not allowed`,
-    };
-  }
+  const humanResolved = resolveHumanForComplete(phase.id, gates?.human?.approver);
+  if (!humanResolved.ok) return humanResolved;
 
-  const human = gates?.human ?? {
-    approved: true,
-    approver: needsHuman ? "opencode-user" : "opencode-agent",
-  };
-  const result = engine.completePhase(slug, phase.id, { quality, human });
+  const result = engine.completePhase(slug, phase.id, { quality, human: humanResolved.human }, {
+    allowAutoHuman: humanResolved.allowAutoHuman,
+  });
   if (!result.ok) {
     return {
       ok: false as const,
@@ -320,7 +342,13 @@ export function taiyiHarnessCheck(workspaceDir: string, slug: string, hookRef: s
   const changeDir = path.join(resolveTaiyiRoot(workspaceDir), "changes", slug);
   const harness = getHarnessContext(workspaceDir, slug, state.currentPhase);
   const match = harness.hooks.find((h) => hookKey(h) === hookRef || h.skill === hookRef);
-  const key = match ? hookKey(match) : hookRef;
+  if (!match) {
+    return {
+      ok: false as const,
+      error: `Unknown harness hook: ${hookRef}`,
+    };
+  }
+  const key = hookKey(match);
   markHarnessCheckpoint(changeDir, state.currentPhase, key);
   return {
     ok: true as const,
@@ -371,4 +399,183 @@ export function taiyiHarnessRunShell(workspaceDir: string, slug: string) {
   if (!state) return { ok: false as const, error: `Change not found: ${slug}` };
   const results = runPostCompleteShellHooks(workspaceDir, slug, state.currentPhase);
   return { ok: true as const, results, phase: state.currentPhase };
+}
+
+export function taiyiContinue(
+  workspaceDir: string,
+  slug: string,
+  options?: { approver?: string; times?: number; plain?: boolean },
+) {
+  const invalid = rejectInvalidSlug(slug);
+  if (invalid) return invalid;
+  const engine = createEngine(workspaceDir);
+  const taiyiRoot = resolveTaiyiRoot(workspaceDir);
+  const stateResult = requireChangeState(engine, slug);
+  if (!stateResult.ok) return stateResult;
+  const state = stateResult.state;
+
+  if (isWorkflowCompleted(state)) {
+    return { ok: true as const, completed: true as const, message: "九阶段已全部完成" };
+  }
+
+  const times = options?.times ?? 1;
+  if (times > 1) {
+    const result = runContinueRepeat(engine, workspaceDir, taiyiRoot, slug, times);
+    if (options?.plain !== false) {
+      return {
+        ok: result.ok,
+        text: formatLoopResultPlain(result, engine, taiyiRoot, workspaceDir),
+        result,
+      };
+    }
+    return { ok: result.ok, result };
+  }
+
+  const phaseId = state.currentPhase;
+  const humanResolved = resolveHumanForComplete(phaseId, options?.approver);
+  if (!humanResolved.ok) return humanResolved;
+
+  const complete = engine.completePhase(
+    slug,
+    phaseId,
+    {
+      quality: {
+        completeness: true,
+        consistency: true,
+        verifiability: true,
+        traceability: true,
+        engineering_quality: true,
+      },
+      human: humanResolved.human,
+    },
+    { allowAutoHuman: humanResolved.allowAutoHuman },
+  );
+
+  if (!complete.ok) {
+    const guide = buildPhaseGuide(taiyiRoot, slug, state, workspaceDir);
+    return {
+      ok: false as const,
+      error: complete.error,
+      text: options?.plain !== false ? formatGuidePlain(guide) : undefined,
+      guide,
+    };
+  }
+
+  const nextState = engine.getState(slug)!;
+  const guide = buildPhaseGuide(taiyiRoot, slug, nextState, workspaceDir);
+  return {
+    ok: true as const,
+    state: nextState,
+    text: options?.plain !== false ? formatGuidePlain(guide) : undefined,
+    guide,
+  };
+}
+
+export function taiyiLoop(
+  workspaceDir: string,
+  slug: string,
+  options?: { times?: number; plain?: boolean },
+) {
+  const invalid = rejectInvalidSlug(slug);
+  if (invalid) return invalid;
+  const engine = createEngine(workspaceDir);
+  const taiyiRoot = resolveTaiyiRoot(workspaceDir);
+  const stateResult = requireChangeState(engine, slug);
+  if (!stateResult.ok) return stateResult;
+
+  const result = runLoopUntilComplete(
+    engine,
+    workspaceDir,
+    taiyiRoot,
+    slug,
+    options?.times,
+  );
+  if (options?.plain === false) {
+    return { ok: result.ok, result };
+  }
+  const text = formatLoopResultPlain(result, engine, taiyiRoot, workspaceDir);
+  const protocol =
+    !result.ok
+      ? `\n\n${formatAgentLoopProtocol(slug, result.loopRound, result.maxRounds)}`
+      : "";
+  return { ok: result.ok, text: text + protocol, result };
+}
+
+export function taiyiApply(
+  workspaceDir: string,
+  slug: string,
+  options?: { times?: number; plain?: boolean },
+) {
+  const invalid = rejectInvalidSlug(slug);
+  if (invalid) return invalid;
+  const engine = createEngine(workspaceDir);
+  const stateResult = requireChangeState(engine, slug);
+  if (!stateResult.ok) return stateResult;
+  const state = stateResult.state;
+
+  if (isWorkflowCompleted(state)) {
+    return { ok: true as const, completed: true as const, message: "九阶段已全部完成" };
+  }
+
+  const phase = state.currentPhase;
+  if (phase !== "dev" && phase !== "test") {
+    return {
+      ok: false as const,
+      error: `当前阶段为「${phase}」。apply 用于 dev/test 实现与验证`,
+    };
+  }
+
+  const harness = taiyiHarness(workspaceDir, slug, options?.plain !== false);
+  const times = options?.times ?? 1;
+  return { ...harness, phase, times };
+}
+
+export function taiyiToken(
+  workspaceDir: string,
+  sub: "status" | "record" | "scan" | "compress",
+  options?: {
+    slug?: string;
+    tokens?: number;
+    phase?: PhaseId;
+    kind?: "agent" | "artifact" | "scan";
+    label?: string;
+  },
+) {
+  const taiyiRoot = resolveTaiyiRoot(workspaceDir);
+  const slugResult = options?.slug?.trim()
+    ? { ok: true as const, slug: options.slug.trim(), inferred: false }
+    : resolveActiveSlug(taiyiRoot);
+  if (!slugResult.ok) return slugResult;
+
+  const slug = slugResult.slug;
+  const invalid = rejectInvalidSlug(slug);
+  if (invalid) return invalid;
+
+  const engine = createEngine(workspaceDir);
+  const stateResult = requireChangeState(engine, slug);
+  const state = stateResult.ok ? stateResult.state : null;
+  const changeDir = path.join(taiyiRoot, "changes", slug);
+  const phase = (options?.phase ?? state?.currentPhase ?? "change") as PhaseId;
+
+  if (sub === "status") {
+    return { ok: true as const, text: tokenStatusPlain(changeDir, slug, state?.currentPhase) };
+  }
+  if (sub === "record") {
+    const n = options?.tokens;
+    if (n == null || !Number.isFinite(n) || n < 0) {
+      return { ok: false as const, error: "token record requires non-negative tokens number" };
+    }
+    return {
+      ok: true as const,
+      text: tokenRecord(changeDir, slug, n, {
+        phase,
+        kind: options?.kind ?? "agent",
+        label: options?.label,
+      }),
+    };
+  }
+  if (sub === "scan") {
+    return { ok: true as const, text: tokenScan(changeDir, slug, phase) };
+  }
+  return { ok: true as const, text: tokenCompress(changeDir, slug, phase) };
 }
