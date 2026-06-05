@@ -6,6 +6,7 @@ export function formatGuidePlain(guide: PhaseGuide): string {
   lines.push(`# TaiyiForge · ${guide.slug}`);
   lines.push("");
   lines.push(`阶段: ${guide.currentPhase}`);
+  if (guide.autoHarness) lines.push(`模式: 全自动 (--auto)`);
   if (guide.profile) lines.push(`Profile: ${guide.profile}`);
   if (guide.skippedPhases?.length) {
     lines.push(`跳过: ${guide.skippedPhases.join(", ")}`);
@@ -26,10 +27,14 @@ export function formatGuidePlain(guide: PhaseGuide): string {
   }
   if (guide.harness?.hooks?.length) {
     lines.push("");
-    lines.push("铁三角推荐:");
+    lines.push(guide.autoHarness ? "铁三角（auto 须全部打卡）:" : "铁三角推荐:");
     for (const h of guide.harness.hooks) {
       lines.push(`  - ${h.tool}: ${h.skill ?? h.command ?? ""} (${h.when})`);
     }
+  }
+  if (guide.autoHarness) {
+    lines.push("");
+    lines.push(`编排: npx taiyi harness ${guide.slug}`);
   }
   lines.push("");
   lines.push(`→ ${guide.nextAction}`);

@@ -46,6 +46,25 @@ npx taiyi next my-first
 npx taiyi list
 ```
 
+## 全自动模式（对齐架构图）
+
+```bash
+npx taiyi init my-feature --auto --title "My Feature"
+npx taiyi harness my-feature    # 铁三角 → 辅助 → 主流程 有序清单
+```
+
+在 Cursor 加载 **`taiyi-orchestrator`** Skill，让 Agent 按清单自动执行 Superpowers / gstack / taiyi 辅助，每步铁三角后：
+
+```bash
+npx taiyi harness-check my-feature superpowers/brainstorming
+```
+
+`complete` 会校验打卡与辅助工件。全局默认 auto：
+
+```bash
+export TAIYI_AUTO_HARNESS=1
+```
+
 ## Profile（按变更类型）
 
 | Profile | 说明 |

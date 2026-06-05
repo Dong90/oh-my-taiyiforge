@@ -14,6 +14,13 @@ import { listChanges } from "../core/list-changes.js";
 import { formatGuidePlain } from "../core/format-guide.js";
 import { resolvePackageRoot } from "../core/package-root.js";
 import { formatWalkthroughPlain, runWalkthrough } from "../core/walkthrough.js";
+import {
+  buildHarnessPlan,
+  formatHarnessPlanPlain,
+  runPostCompleteShellHooks,
+} from "../core/harness-runner.js";
+import { markHarnessCheckpoint, hookKey } from "../core/harness-checkpoints.js";
+import { getHarnessContext } from "../integrations/harness-hooks.js";
 
 const TEMPLATES_DIR = resolveTemplatesDir(import.meta.url);
 
@@ -24,7 +31,12 @@ export function createEngine(workspaceDir: string): WorkflowEngine {
 export function taiyiInit(
   workspaceDir: string,
   slug: string,
-  options?: { title?: string; profile?: ChangeProfile; strictDev?: boolean },
+  options?: {
+    title?: string;
+    profile?: ChangeProfile;
+    strictDev?: boolean;
+    autoHarness?: boolean;
+  },
 ) {
   const engine = createEngine(workspaceDir);
   const result = engine.initChange(slug, {
@@ -32,6 +44,7 @@ export function taiyiInit(
     templatesDir: TEMPLATES_DIR,
     profile: options?.profile,
     strictDev: options?.strictDev,
+    autoHarness: options?.autoHarness,
   });
   const { seeded, ...state } = result;
   return {
@@ -224,4 +237,41 @@ export function taiyiWalkthrough(
     return { ok: result.ok, text: formatWalkthroughPlain(result), result };
   }
   return { ok: result.ok, result };
+}
+
+export function taiyiHarness(workspaceDir: string, slug: string, plain = true) {
+  const engine = createEngine(workspaceDir);
+  const state = engine.getState(slug);
+  if (!state) return { ok: false as const, error: `Change not found: ${slug}` };
+  const taiyiRoot = resolveTaiyiRoot(workspaceDir);
+  const plan = buildHarnessPlan(workspaceDir, taiyiRoot, state);
+  if (plain) {
+    return { ok: true as const, text: formatHarnessPlanPlain(plan), plan, state };
+  }
+  return { ok: true as const, plan, state };
+}
+
+export function taiyiHarnessCheck(workspaceDir: string, slug: string, hookRef: string) {
+  const engine = createEngine(workspaceDir);
+  const state = engine.getState(slug);
+  if (!state) return { ok: false as const, error: `Change not found: ${slug}` };
+  const changeDir = path.join(resolveTaiyiRoot(workspaceDir), "changes", slug);
+  const harness = getHarnessContext(workspaceDir, slug, state.currentPhase);
+  const match = harness.hooks.find((h) => hookKey(h) === hookRef || h.skill === hookRef);
+  const key = match ? hookKey(match) : hookRef;
+  markHarnessCheckpoint(changeDir, state.currentPhase, key);
+  return {
+    ok: true as const,
+    phase: state.currentPhase,
+    key,
+    message: `已打卡 ${key}，可继续主流程或 complete`,
+  };
+}
+
+export function taiyiHarnessRunShell(workspaceDir: string, slug: string) {
+  const engine = createEngine(workspaceDir);
+  const state = engine.getState(slug);
+  if (!state) return { ok: false as const, error: `Change not found: ${slug}` };
+  const results = runPostCompleteShellHooks(workspaceDir, slug, state.currentPhase);
+  return { ok: true as const, results, phase: state.currentPhase };
 }

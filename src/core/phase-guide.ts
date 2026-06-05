@@ -33,6 +33,7 @@ export type PhaseGuide = {
   recommendedAuxiliary: string[];
   pendingAuxiliary: string[];
   auxiliaryCompleted: string[];
+  autoHarness: boolean;
   harness?: HarnessContext;
 };
 
@@ -112,6 +113,7 @@ export function buildPhaseGuide(
       recommendedAuxiliary: [],
       pendingAuxiliary: [],
       auxiliaryCompleted: state.auxiliaryCompleted,
+      autoHarness: state.autoHarness ?? false,
       harness,
     };
   }
@@ -138,6 +140,8 @@ export function buildPhaseGuide(
     !state.auxiliaryCompleted.includes("taiyi-health")
   ) {
     nextAction = `high 复杂度：先 taiyi-health → taiyi mark-aux ${slug} taiyi-health，再 complete review`;
+  } else if (state.autoHarness) {
+    nextAction = `全自动：npx taiyi harness ${slug} → 按清单执行铁三角与辅助 → complete ${state.currentPhase}`;
   }
 
   return {
@@ -159,6 +163,7 @@ export function buildPhaseGuide(
     recommendedAuxiliary,
     pendingAuxiliary: pending,
     auxiliaryCompleted: state.auxiliaryCompleted,
+    autoHarness: state.autoHarness ?? false,
     harness,
   };
 }

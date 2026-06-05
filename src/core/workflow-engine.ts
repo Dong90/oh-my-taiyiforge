@@ -13,12 +13,18 @@ import {
   artifactPathForPhase,
   validateArtifactFile,
 } from "./artifact-validator.js";
+import {
+  enforceAutoHarnessBeforeComplete,
+  runPostCompleteShellHooks,
+  syncAuxiliaryFromArtifacts,
+} from "./harness-runner.js";
 
 export type InitChangeOptions = {
   title?: string;
   templatesDir?: string;
   profile?: ChangeProfile;
   strictDev?: boolean;
+  autoHarness?: boolean;
 };
 
 function normalizeState(raw: ChangeState): ChangeState {
@@ -27,6 +33,7 @@ function normalizeState(raw: ChangeState): ChangeState {
     profile: raw.profile ?? "full",
     skippedPhases: raw.skippedPhases ?? [],
     strictDev: raw.strictDev ?? false,
+    autoHarness: raw.autoHarness ?? false,
     auxiliaryCompleted: raw.auxiliaryCompleted ?? [],
   };
 }
@@ -79,6 +86,10 @@ export class WorkflowEngine {
     const signals = inferComplexitySignals(dir);
     const complexity = assessComplexity(signals);
 
+    const autoHarness =
+      options?.autoHarness ??
+      (process.env.TAIYI_AUTO_HARNESS === "1" || process.env.TAIYI_AUTO_HARNESS === "true");
+
     const state: ChangeState = {
       slug,
       currentPhase: "change",
@@ -86,6 +97,7 @@ export class WorkflowEngine {
       profile,
       skippedPhases,
       strictDev: options?.strictDev ?? false,
+      autoHarness,
       complexity,
       auxiliaryCompleted: [],
       createdAt: now,
@@ -173,14 +185,40 @@ export class WorkflowEngine {
       };
     }
 
-    if (phaseId === "review" && state.complexity?.level === "high") {
-      if (!state.auxiliaryCompleted.includes("taiyi-health")) {
+    const changeDir = this.changeDir(slug);
+    const syncedAux = syncAuxiliaryFromArtifacts(changeDir, state.auxiliaryCompleted);
+    let workingState = { ...state, auxiliaryCompleted: syncedAux };
+    if (syncedAux.length !== state.auxiliaryCompleted.length) {
+      this.writeState({ ...workingState, updatedAt: new Date().toISOString() });
+    }
+
+    if (phaseId === "review" && workingState.complexity?.level === "high") {
+      if (!workingState.auxiliaryCompleted.includes("taiyi-health")) {
         return {
           ok: false,
           error:
             "High complexity: complete taiyi-health and run `taiyi mark-aux <slug> taiyi-health` before review",
         };
       }
+    }
+
+    const workspaceDir = path.dirname(this.workspaceRoot);
+    const autoCheck = enforceAutoHarnessBeforeComplete(
+      workspaceDir,
+      this.workspaceRoot,
+      workingState,
+    );
+    if (!autoCheck.ok) {
+      return { ok: false, error: autoCheck.error };
+    }
+    if (autoCheck.plan) {
+      workingState = {
+        ...workingState,
+        auxiliaryCompleted: syncAuxiliaryFromArtifacts(
+          changeDir,
+          workingState.auxiliaryCompleted,
+        ),
+      };
     }
 
     let qualityScores = { ...gates.quality };
@@ -235,16 +273,20 @@ export class WorkflowEngine {
       }
     }
 
-    const completed = [...state.completedPhases, phaseId];
-    const next = getNextPhase(phaseId, state.skippedPhases);
+    const completed = [...workingState.completedPhases, phaseId];
+    const next = getNextPhase(phaseId, workingState.skippedPhases);
     const updated: ChangeState = {
-      ...state,
+      ...workingState,
       completedPhases: completed,
       currentPhase: next ?? phaseId,
-      complexity: assessComplexity(inferComplexitySignals(this.changeDir(slug))),
+      complexity: assessComplexity(inferComplexitySignals(changeDir)),
       updatedAt: new Date().toISOString(),
     };
     this.writeState(updated);
+
+    if (workingState.autoHarness) {
+      runPostCompleteShellHooks(workspaceDir, slug, phaseId);
+    }
     return { ok: true };
   }
 

@@ -14,6 +14,8 @@ import {
   taiyiPhases,
   taiyiStatus,
   taiyiWalkthrough,
+  taiyiHarness,
+  taiyiHarnessCheck,
 } from "./handlers.js";
 
 /**
@@ -40,12 +42,17 @@ const TaiyiForgePlugin: Plugin = async () => {
             .boolean()
             .optional()
             .describe("Require exitCode:0 evidence in .dev-complete"),
+          autoHarness: tool.schema
+            .boolean()
+            .optional()
+            .describe("Full auto orchestration: iron triangle + auxiliary required before complete"),
         },
         async execute(args, ctx) {
           const r = taiyiInit(ctx.directory, args.slug, {
             title: args.title,
             profile: args.profile,
             strictDev: args.strictDev,
+            autoHarness: args.autoHarness,
           });
           return JSON.stringify(r, null, 2);
         },
@@ -199,6 +206,28 @@ const TaiyiForgePlugin: Plugin = async () => {
         },
         async execute(args, ctx) {
           const r = taiyiMarkAux(ctx.directory, args.slug, args.skill);
+          return JSON.stringify(r, null, 2);
+        },
+      }),
+      taiyi_harness: tool({
+        description:
+          "Auto orchestration plan: iron triangle hooks, auxiliary skills, main phase (for --auto mode).",
+        args: {
+          slug: tool.schema.string(),
+        },
+        async execute(args, ctx) {
+          const r = taiyiHarness(ctx.directory, args.slug, true);
+          return "text" in r && r.text ? r.text : JSON.stringify(r, null, 2);
+        },
+      }),
+      taiyi_harness_check: tool({
+        description: "Mark an iron-triangle hook as completed (checkpoint for auto mode).",
+        args: {
+          slug: tool.schema.string(),
+          hookKey: tool.schema.string().describe("e.g. superpowers/brainstorming"),
+        },
+        async execute(args, ctx) {
+          const r = taiyiHarnessCheck(ctx.directory, args.slug, args.hookKey);
           return JSON.stringify(r, null, 2);
         },
       }),

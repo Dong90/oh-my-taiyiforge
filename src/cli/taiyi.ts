@@ -17,6 +17,8 @@ import {
   taiyiStatus,
   taiyiSyncOpenspec,
   taiyiWalkthrough,
+  taiyiHarness,
+  taiyiHarnessCheck,
 } from "../plugin/handlers.js";
 
 const workspaceDir = process.cwd();
@@ -29,7 +31,9 @@ function usage(): void {
 用法:
   npm run taiyi -- doctor                   检查四端安装与配置
   npm run taiyi -- list                     列出 .taiyi/changes/ 下所有变更
-  npm run taiyi -- init <slug> [--profile api|lite] [--strict-dev]
+  npm run taiyi -- init <slug> [--profile api|lite] [--strict-dev] [--auto]
+  npm run taiyi -- harness <slug>              全自动编排清单（铁三角→辅助→主流程）
+  npm run taiyi -- harness-check <slug> <key>  铁三角步骤打卡（auto 模式）
   npm run taiyi -- next <slug>              人类可读「下一步」（默认纯文本）
   npm run taiyi -- guide <slug> [--json]    详细 guide（默认 JSON）
   npm run taiyi -- status <slug> [--json]
@@ -99,6 +103,7 @@ switch (cmd) {
       templatesDir,
       profile: parseProfile(args) ?? "full",
       strictDev: args.includes("--strict-dev"),
+      autoHarness: args.includes("--auto"),
     });
     console.log(JSON.stringify(result, null, 2));
     if (!jsonMode) {
@@ -207,6 +212,35 @@ switch (cmd) {
     const r = taiyiArchive(workspaceDir, slug, { skipSpecs });
     console.log(JSON.stringify(r, null, 2));
     if (!r.ok) process.exit(1);
+    break;
+  }
+  case "harness": {
+    const slug = args[0];
+    if (!slug) {
+      console.error("缺少 slug");
+      process.exit(1);
+    }
+    const r = taiyiHarness(workspaceDir, slug, !jsonMode);
+    if (!r.ok) {
+      console.error(r.error);
+      process.exit(1);
+    }
+    if ("text" in r && r.text) console.log(r.text);
+    else console.log(JSON.stringify(r, null, 2));
+    break;
+  }
+  case "harness-check": {
+    const [slug, hookRef] = args;
+    if (!slug || !hookRef) {
+      console.error("用法: harness-check <slug> <hook-key>");
+      process.exit(1);
+    }
+    const r = taiyiHarnessCheck(workspaceDir, slug, hookRef);
+    if (!r.ok) {
+      console.error(r.error);
+      process.exit(1);
+    }
+    console.log(jsonMode ? JSON.stringify(r, null, 2) : r.message);
     break;
   }
   case "walkthrough": {

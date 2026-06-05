@@ -1,5 +1,21 @@
 # Changelog
 
+## [0.16.0] - 2026-06-05
+
+### Added
+
+- **`--auto` / `TAIYI_AUTO_HARNESS=1`**：全自动编排模式（对齐架构图调度）
+- `taiyi harness` / `taiyi_harness`：铁三角 → 辅助 → 主流程 有序清单
+- `taiyi harness-check` / `taiyi_harness_check`：铁三角步骤打卡（`.harness-checkpoints.json`）
+- 辅助工件自动检测（`CONTEXT.md` 等）与 auto 模式 complete 门禁
+- integration 后 auto 尝试 `sync-openspec`（OpenSpec 已安装时）
+- **`taiyi-orchestrator`** Skill + Cursor rules 全自动指引
+
+### Changed
+
+- `complete` 在 auto 模式下未打卡/缺辅助工件会拒绝
+- OpenCode 工具增至 15 个
+
 ## [0.15.0] - 2026-06-05
 
 ### Added

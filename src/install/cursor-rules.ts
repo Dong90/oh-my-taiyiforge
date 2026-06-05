@@ -15,8 +15,9 @@ alwaysApply: true
 # TaiyiForge（Cursor）
 
 - 变更工件目录：\`.taiyi/changes/<slug>/\`
-- 开始：\`npx taiyi init <slug> [--profile full|api|ui|lite]\`
-- 每步：\`npx taiyi guide <slug>\` → 加载 guide 中的 Skill → 填工件 → \`npx taiyi complete <slug> <phase>\`
+- 开始：\`npx taiyi init <slug> [--profile full|api|ui|lite] [--auto]\`
+- **全自动（对齐架构图）**：\`--auto\` 后加载 **taiyi-orchestrator** Skill，每阶段先 \`npx taiyi harness <slug>\`，按清单执行铁三角→辅助→主流程，铁三角每步 \`npx taiyi harness-check <slug> <key>\`，再 \`complete\`
+- 半自动：\`npx taiyi next <slug>\` → 加载 Skill → 填工件 → \`complete\`
 - 辅助 Skill 完成后：\`npx taiyi mark-aux <slug> taiyi-health\` 等
 - 无 UI 变更：\`--profile api\` 跳过 ui-design
 - 小修复：\`--profile lite\` 五阶段精简路径

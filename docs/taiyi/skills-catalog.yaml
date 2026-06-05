@@ -13,6 +13,10 @@ main_process:
   - taiyi-review
   - taiyi-integration
 
+orchestrator:
+  - id: taiyi-orchestrator
+    when: init --auto 或 TAIYI_AUTO_HARNESS=1
+
 auxiliary:
   - id: taiyi-intel-scan
     output: CONTEXT.md
