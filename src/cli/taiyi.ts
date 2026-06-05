@@ -3,7 +3,12 @@ import { WorkflowEngine } from "../core/workflow-engine.js";
 import { listPhases } from "../core/phase-registry.js";
 import { resolveTaiyiRoot } from "../core/paths.js";
 import { resolveTemplatesDir } from "../core/package-root.js";
-import { taiyiArchive, taiyiGuide, taiyiStatus } from "../plugin/handlers.js";
+import {
+  taiyiArchive,
+  taiyiGuide,
+  taiyiStatus,
+  taiyiSyncOpenspec,
+} from "../plugin/handlers.js";
 
 const workspaceDir = process.cwd();
 const taiyiRoot = resolveTaiyiRoot(workspaceDir);
@@ -17,6 +22,7 @@ function usage(): void {
   npm run taiyi -- guide <slug>          当前该做什么
   npm run taiyi -- phases                列出九阶段
   npm run taiyi -- complete <slug> <phase>  完成阶段（需工件+门禁）
+  npm run taiyi -- sync-openspec <slug>    同步工件到 openspec/changes/
   npm run taiyi -- archive <slug>          OpenSpec archive（需 integration 完成）
 
 示例:
@@ -76,6 +82,18 @@ switch (cmd) {
         `${p.order}. ${p.id} → ${p.skill} → ${p.artifact} (requires: ${p.requires.join(", ") || "-"})`,
       );
     }
+    break;
+  }
+  case "sync-openspec": {
+    const slug = args[0];
+    if (!slug) {
+      console.error("缺少 slug");
+      process.exit(1);
+    }
+    const force = args.includes("--force");
+    const r = taiyiSyncOpenspec(workspaceDir, slug, { force });
+    console.log(JSON.stringify(r, null, 2));
+    if (!r.ok) process.exit(1);
     break;
   }
   case "archive": {

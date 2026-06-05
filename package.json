@@ -1,6 +1,6 @@
 {
   "name": "oh-my-taiyiforge",
-  "version": "0.9.0",
+  "version": "0.10.0",
   "description": "TaiyiForge — OpenCode 插件 + Claude/Codex/Cursor 共用 taiyi-* 九阶段研发工作流",
   "license": "MIT",
   "type": "module",

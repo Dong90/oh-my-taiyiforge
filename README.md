@@ -40,7 +40,7 @@ cd oh-my-taiyiforge && npm install && npx taiyi-forge-install --all
 }
 ```
 
-安装包后 OpenCode 会加载 **7 个工具**：`taiyi_init`、`taiyi_guide`、`taiyi_status`、`taiyi_phases`、`taiyi_complete`、`taiyi_archive`、`taiyi_assess`。  
+安装包后 OpenCode 会加载 **8 个工具**：`taiyi_init`、`taiyi_guide`、`taiyi_status`、`taiyi_phases`、`taiyi_complete`、`taiyi_sync_openspec`、`taiyi_archive`、`taiyi_assess`。  
 工件落在项目目录 **`.taiyi/changes/<slug>/`**。
 
 ## CLI（任意目录）

@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.10.0] - 2026-06-05
+
+### Added
+
+- `taiyi_sync_openspec` / CLI `sync-openspec`：Taiyi 工件 → OpenSpec 目录映射
+- GitHub Actions CI：`npm test` + `npm run dogfood`
+
 ## [0.9.0] - 2026-06-05
 
 ### Added

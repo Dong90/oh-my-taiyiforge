@@ -36,7 +36,7 @@
 ```text
 taiyi_init → taiyi_guide（每步）
   → taiyi-change … taiyi-integration
-  → （可选）openspec archive
+  → （可选）taiyi_sync_openspec → taiyi_archive
   → gstack review → merge → gstack document-release
 ```
 
@@ -49,6 +49,7 @@ taiyi_init → taiyi_guide（每步）
 | `taiyi_status` | 状态 + guide |
 | `taiyi_complete` | 完成阶段（含质量校验） |
 | `taiyi_assess` | 复杂度与辅助 skill 建议 |
+| `taiyi_sync_openspec` | 将 `.taiyi/changes/<slug>/` 工件拷贝到 `openspec/changes/<slug>/` |
 | `taiyi_archive` | 九阶段完成后调用 OpenSpec archive（需 `openspec/changes/<slug>/`） |
 
 `taiyi_status` 的 `openspec` 字段会显示是否检测到 OpenSpec 及建议命令。

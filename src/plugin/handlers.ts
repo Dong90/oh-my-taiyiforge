@@ -1,3 +1,4 @@
+import path from "node:path";
 import type { GateInput, PhaseId, QualityScores } from "../core/types.js";
 import { WorkflowEngine } from "../core/workflow-engine.js";
 import { listPhases, getPhase } from "../core/phase-registry.js";
@@ -6,6 +7,7 @@ import { resolveTemplatesDir } from "../core/package-root.js";
 import { assessComplexity, type ComplexitySignals } from "../core/routing/complexity.js";
 import { buildPhaseGuide } from "../core/phase-guide.js";
 import { getOpenspecStatus, runOpenspecArchive } from "../integrations/openspec.js";
+import { syncTaiyiToOpenspec } from "../integrations/openspec-sync.js";
 
 const TEMPLATES_DIR = resolveTemplatesDir(import.meta.url);
 
@@ -83,6 +85,24 @@ export function taiyiComplete(
     phase: phase.id,
     nextSkill: getPhase(engine.getState(slug)!.currentPhase).skill,
   };
+}
+
+export function taiyiSyncOpenspec(
+  workspaceDir: string,
+  slug: string,
+  options?: { force?: boolean; createChangeDir?: boolean },
+) {
+  const engine = createEngine(workspaceDir);
+  const state = engine.getState(slug);
+  if (!state) return { ok: false as const, error: `Change not found: ${slug}` };
+
+  const changeDir = path.join(resolveTaiyiRoot(workspaceDir), "changes", slug);
+  const result = syncTaiyiToOpenspec(workspaceDir, slug, changeDir, {
+    force: options?.force,
+    createChangeDir: options?.createChangeDir ?? true,
+  });
+
+  return { ...result, state };
 }
 
 export function taiyiArchive(

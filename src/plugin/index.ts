@@ -2,6 +2,7 @@ import type { Plugin } from "@opencode-ai/plugin";
 import { tool } from "@opencode-ai/plugin/tool";
 import {
   taiyiArchive,
+  taiyiSyncOpenspec,
   taiyiAssess,
   taiyiComplete,
   taiyiGuide,
@@ -80,6 +81,25 @@ const TaiyiForgePlugin: Plugin = async () => {
         },
         async execute(args, ctx) {
           const r = taiyiGuide(ctx.directory, args.slug);
+          return JSON.stringify(r, null, 2);
+        },
+      }),
+      taiyi_sync_openspec: tool({
+        description:
+          "Copy TaiyiForge artifacts from .taiyi/changes/<slug>/ into openspec/changes/<slug>/ (proposal, design, tasks, specs).",
+        args: {
+          slug: tool.schema.string(),
+          force: tool.schema.boolean().optional().describe("Overwrite existing OpenSpec files"),
+          createChangeDir: tool.schema
+            .boolean()
+            .optional()
+            .describe("Create openspec/changes/<slug>/ if missing (default true)"),
+        },
+        async execute(args, ctx) {
+          const r = taiyiSyncOpenspec(ctx.directory, args.slug, {
+            force: args.force,
+            createChangeDir: args.createChangeDir,
+          });
           return JSON.stringify(r, null, 2);
         },
       }),
