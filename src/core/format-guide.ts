@@ -1,15 +1,52 @@
 import type { PhaseGuide } from "./phase-guide.js";
 import type { ChangeSummary } from "./list-changes.js";
+import { getPhase } from "./phase-registry.js";
+
+/** 单行阶段进度（continue / status 顶部） */
+export function formatPhaseProgressLine(guide: PhaseGuide): string {
+  if (guide.workflowCompleted) {
+    return `阶段: 已完成 ✓ (${guide.completedCount}/${guide.totalPhases}) → /taiyi:archive`;
+  }
+  const order = getPhase(guide.currentPhase).order;
+  const impl = guide.currentPhase === "dev" || guide.currentPhase === "test";
+  const verb = impl ? "/taiyi:apply" : "/taiyi:continue";
+  return `当前: ${guide.currentPhase}（${order}/${guide.totalPhases}）| Skill: ${guide.skill} | 推进: ${verb}`;
+}
+
+/** /taiyi:status 人类可读摘要 */
+export function formatStatusPlain(guide: PhaseGuide): string {
+  const lines: string[] = [];
+  lines.push(`# ${guide.slug}`);
+  lines.push(formatPhaseProgressLine(guide));
+  lines.push("");
+  if (guide.workflowCompleted) {
+    lines.push("九阶段已全部完成。归档: /taiyi:archive");
+    return lines.join("\n");
+  }
+  lines.push(`工件: ${guide.artifact} (${guide.qualityReady ? "就绪" : "未就绪"})`);
+  if (guide.autoHarness) lines.push("模式: 全自动 (--auto)");
+  if (guide.pendingAuxiliary.length) {
+    lines.push(`待做辅助: ${guide.pendingAuxiliary.join(", ")}`);
+  }
+  if (guide.qualityHints.length) {
+    lines.push("");
+    lines.push("待完善:");
+    for (const h of guide.qualityHints) lines.push(`  - ${h}`);
+  }
+  lines.push("");
+  lines.push(`下一步: ${guide.nextAction}`);
+  if (guide.nextSkill) lines.push(`过关后 Skill: ${guide.nextSkill}`);
+  lines.push("");
+  lines.push("常用: /taiyi:status | /taiyi:continue | /taiyi:apply（dev/test）");
+  return lines.join("\n");
+}
 
 export function formatGuidePlain(guide: PhaseGuide): string {
   const lines: string[] = [];
   lines.push(`# TaiyiForge · ${guide.slug}`);
   lines.push("");
-  if (guide.workflowCompleted) {
-    lines.push(`阶段: 已完成 ✓ (${guide.completedCount}/${guide.totalPhases})`);
-  } else {
-    lines.push(`阶段: ${guide.currentPhase}`);
-  }
+  lines.push(formatPhaseProgressLine(guide));
+  lines.push("");
   if (guide.autoHarness) lines.push(`模式: 全自动 (--auto)`);
   if (guide.profile) lines.push(`Profile: ${guide.profile}`);
   if (guide.skippedPhases?.length) {
@@ -38,7 +75,7 @@ export function formatGuidePlain(guide: PhaseGuide): string {
   }
   if (guide.autoHarness) {
     lines.push("");
-    lines.push(`编排: npx taiyi harness ${guide.slug}`);
+    lines.push(`编排: /taiyi:continue（或 taiyi-forge.sh harness ${guide.slug}）`);
   }
   lines.push("");
   lines.push(`→ ${guide.nextAction}`);
@@ -47,7 +84,7 @@ export function formatGuidePlain(guide: PhaseGuide): string {
 }
 
 export function formatChangeListPlain(changes: ChangeSummary[]): string {
-  if (changes.length === 0) return "（无进行中的变更，使用 taiyi init <slug> 创建）";
+  if (changes.length === 0) return "（无进行中的变更 → /taiyi:new <名称>）";
   return changes
     .map((c) => {
       const phase = c.workflowCompleted ? "completed" : c.currentPhase;

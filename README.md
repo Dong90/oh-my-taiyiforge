@@ -52,17 +52,26 @@ TAIYI_FORGE_INSTALL=opencode,cursor npm install oh-my-taiyiforge
 
 ### OMX 风格三端（Cursor / Codex / Claude）
 
-聊天里加载 **`taiyi-*` 阶段 Skill** 写工件；**引擎过关由 Agent 代跑** `scripts/taiyi-forge.sh`（或全局 `taiyi-forge`），用户不必手打 `npx taiyi`。详见 [docs/taiyi/control-plane.md](./docs/taiyi/control-plane.md)。
+聊天里用 **OpenSpec 风格**命令；**九阶段不变**，见 [workflow.md](./docs/taiyi/workflow.md)。
 
-```bash
-scripts/taiyi-forge.sh doctor              # 安装自检
-scripts/taiyi-forge.sh next <slug>         # 人类可读下一步
-scripts/taiyi-forge.sh init <slug> --auto --title "..."
-scripts/taiyi-forge.sh walkthrough         # 首次体验（任意项目目录）
-scripts/taiyi-forge.sh ci verify           # CI：校验 .taiyi 工件（无 LLM）
+```
+/taiyi:new 功能名
+/taiyi:status              # 当前 3/9、该用哪个 Skill
+/taiyi:continue            # 每阶段写完工件后推进（要用多次）
+/taiyi:apply               # dev/test 实现
+/taiyi:archive
 ```
 
-Codex 对话：`$taiyi-forge next <slug>`
+Codex：`$taiyi-new`、`$taiyi-continue`、`$taiyi-apply`、`$taiyi-archive`。详见 [docs/taiyi/commands.yaml](./docs/taiyi/commands.yaml) 与 [control-plane.md](./docs/taiyi/control-plane.md)。
+
+引擎（CI / Agent 内部）：
+
+```bash
+scripts/taiyi-forge.sh new 功能名
+scripts/taiyi-forge.sh continue
+scripts/taiyi-forge.sh apply
+scripts/taiyi-forge.sh doctor
+```
 
 四端 CI 模板：`examples/ci/github-actions/` · 文档：`docs/ci/README.md`
 

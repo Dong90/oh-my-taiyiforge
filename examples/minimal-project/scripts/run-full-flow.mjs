@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * minimal-project 全流程演示：逐步执行并打印结果（供 Cursor / 人工对照查 bug）
+ * minimal-project 全流程演示：逐步执行并打印结果（供 Cursor / 人工对照）
  * Usage: node scripts/run-full-flow.mjs
  */
 import fs from "node:fs";
@@ -39,7 +39,6 @@ function step(n, label, fn) {
 
 const changeDir = path.join(workspace, ".taiyi", "changes", slug);
 
-// 清理旧变更
 if (fs.existsSync(changeDir)) {
   fs.rmSync(changeDir, { recursive: true, force: true });
 }
@@ -124,12 +123,16 @@ const phases = [
 ## Out of Scope
 Web UI.
 `,
-    hooks: [], // openspec 未安装时自动跳过，无需打卡
+    hooks: [],
   },
   {
     id: "design",
     file: "DESIGN.md",
-    aux: { dir: "adr", file: "adr/001-counter-module.md", content: "# ADR-001: Counter module\n\nStatus: accepted\n" },
+    aux: {
+      dir: "adr",
+      file: "adr/001-counter-module.md",
+      content: "# ADR-001: Counter module\n\nStatus: accepted\n",
+    },
     body: `# DESIGN: Minimal Counter
 
 ## Context
@@ -165,7 +168,10 @@ createCounter → { increment, reset, value }
   {
     id: "ui-design",
     file: "UI-DESIGN.md",
-    aux: { file: "ui-restyle-tasks.md", content: "# UI Restyle\n\nN/A — CLI only demo.\n" },
+    aux: {
+      file: "ui-restyle-tasks.md",
+      content: "# UI Restyle\n\nN/A — CLI only demo.\n",
+    },
     body: `# UI-DESIGN: Minimal Counter
 
 ## Scope
@@ -218,7 +224,10 @@ Frontend.
   {
     id: "test",
     file: "TEST.md",
-    aux: { file: "architecture-sync.md", content: "# Architecture Sync\n\nTest phase: no arch changes.\n" },
+    aux: {
+      file: "architecture-sync.md",
+      content: "# Architecture Sync\n\nTest phase: no arch changes.\n",
+    },
     body: `# TEST: Minimal Counter
 
 ## Test Plan
@@ -243,7 +252,10 @@ None.
   {
     id: "review",
     file: "REVIEW.md",
-    aux: { file: "health-report.md", content: "# Health\n\nnpm test: pass\nLint: n/a\n" },
+    aux: {
+      file: "health-report.md",
+      content: "# Health\n\nnpm test: pass\nLint: n/a\n",
+    },
     body: `# REVIEW: Minimal Counter
 
 ## Summary
@@ -293,8 +305,7 @@ for (const p of phases) {
   step(stepNum++, `harness ${p.id}`, () => taiyi(["harness", slug]));
 
   if (p.aux?.dir) {
-    const d = path.join(changeDir, p.aux.dir);
-    fs.mkdirSync(d, { recursive: true });
+    fs.mkdirSync(path.join(changeDir, p.aux.dir), { recursive: true });
     if (p.aux.file && p.aux.content) {
       fs.writeFileSync(path.join(changeDir, p.aux.file), p.aux.content, "utf8");
     }
@@ -309,7 +320,11 @@ for (const p of phases) {
 
   if (p.dev) {
     step(stepNum++, "dev 工件 .dev-complete", () => {
-      const test = spawnSync("npm", ["test"], { cwd: workspace, encoding: "utf8", shell: true });
+      const test = spawnSync("npm", ["test"], {
+        cwd: workspace,
+        encoding: "utf8",
+        shell: true,
+      });
       fs.writeFileSync(
         path.join(changeDir, ".dev-complete"),
         `command: npm test\nexitCode: ${test.status === 0 ? 0 : 1}\n`,

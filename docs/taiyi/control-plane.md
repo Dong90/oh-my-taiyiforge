@@ -17,9 +17,11 @@
 
 | 端 | 聊天入口 | 引擎入口 |
 |----|----------|----------|
-| Codex | `$taiyi-forge` + `~/.codex/prompts/taiyi-forge.md` | Agent 跑 `taiyi-forge.sh` |
-| Claude | `taiyi-forge` Skill + CLAUDE.md 段落 | Agent Bash |
-| Cursor | `taiyi-forge` Skill + `taiyiforge.mdc` | Agent 终端 |
+| Codex | `$taiyi-new` … `$taiyi-archive`（`prompts/taiyi-*.md`） | Agent 跑 `taiyi-forge.sh` |
+| Claude | `/taiyi:new` … `/taiyi:archive` + Skill | Agent Bash |
+| Cursor | `/taiyi:new` … `/taiyi:status` + rules | Agent 终端 |
+
+完整九阶段路径：`docs/taiyi/workflow.md`
 | OpenCode | `taiyi_*` tools | 同左 |
 
 详见 `docs/taiyi/invoke.yaml`。

@@ -6,9 +6,9 @@ description: TaiyiForge 双轨调用说明（对齐 oh-my-codex skills-catalog i
 invoke:
   repo_root: 在项目根目录执行
   chat:
-    codex: "$taiyi-forge <subcommand> <args>  或加载 skill taiyi-forge"
-    claude: "加载 ~/.claude/skills/taiyi-forge/SKILL.md，Bash 代跑 scripts/taiyi-forge.sh"
-    cursor: "加载 ~/.cursor/skills/taiyi-forge/SKILL.md，终端工具代跑 scripts/taiyi-forge.sh"
+    pattern: "/taiyi:<verb>"
+    core: [new, continue, apply, status, archive]
+    codex: "$taiyi-<verb>   # prompts/taiyi-new.md …"
     opencode: "插件工具 taiyi_init / taiyi_complete / taiyi_harness（无需 shell）"
   engine_shell:
     unified: "./node_modules/oh-my-taiyiforge/scripts/taiyi-forge.sh <cmd> ..."

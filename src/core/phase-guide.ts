@@ -113,7 +113,7 @@ export function buildPhaseGuide(
       qualityReady: true,
       qualityHints: [],
       nextAction:
-        "九阶段已完成，可 taiyi sync-openspec / taiyi archive，或 taiyi init 开新 slug",
+        "九阶段已完成 → /taiyi:archive（可选 sync-openspec）",
       nextPhase: null,
       nextSkill: null,
       requiresHumanGate: false,
@@ -135,11 +135,11 @@ export function buildPhaseGuide(
         : "";
     nextAction = `${pre}加载 Skill「${phase.skill}」，编辑 ${phase.artifact}`;
   } else if (!qualityReady) {
-    nextAction = `完善 ${phase.artifact}（见 qualityHints），再执行 complete ${state.currentPhase}`;
+    nextAction = `完善 ${phase.artifact}（见 qualityHints），再 /taiyi:continue`;
   } else if (humanGate) {
-    nextAction = `人工确认后执行: taiyi complete ${slug} ${state.currentPhase}${auxNote}`;
+    nextAction = `人工确认后 /taiyi:continue${auxNote}`;
   } else {
-    nextAction = `工件就绪，可直接: taiyi complete ${slug} ${state.currentPhase}${auxNote}`;
+    nextAction = `工件就绪，执行 /taiyi:continue${auxNote}`;
   }
 
   if (
@@ -147,9 +147,11 @@ export function buildPhaseGuide(
     state.complexity?.level === "high" &&
     !state.auxiliaryCompleted.includes("taiyi-health")
   ) {
-    nextAction = `high 复杂度：先 taiyi-health → taiyi mark-aux ${slug} taiyi-health，再 complete review`;
+    nextAction = `high 复杂度：先 taiyi-health → mark-aux，再 /taiyi:continue`;
   } else if (state.autoHarness) {
-    nextAction = `全自动：npx taiyi harness ${slug} → 按清单执行铁三角与辅助 → complete ${state.currentPhase}`;
+    nextAction = `全自动：harness 清单 → 铁三角打卡 → /taiyi:continue`;
+  } else if (state.currentPhase === "dev" || state.currentPhase === "test") {
+    nextAction = `加载 ${phase.skill}，实现后 /taiyi:apply 或 /taiyi:continue`;
   }
 
   return {

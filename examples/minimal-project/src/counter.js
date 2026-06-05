@@ -1,16 +1,16 @@
-/** 最小演示：可递增计数器 */
+/** Minimal demo module for TaiyiForge dev/test phases */
 export function createCounter(initial = 0) {
   let value = initial;
   return {
-    get value() {
-      return value;
-    },
     increment(step = 1) {
       value += step;
       return value;
     },
     reset() {
       value = initial;
+      return value;
+    },
+    get value() {
       return value;
     },
   };

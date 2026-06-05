@@ -1,0 +1,110 @@
+version: 2
+description: |
+  TaiyiForge 聊天命令 — 对齐 OpenSpec /opsx:<verb> 命名。
+  用户只说 /taiyi:new 等；Agent 代跑 taiyi-forge.sh；引擎保留 init/complete 给 CI。
+
+namespace: taiyi
+chat_pattern: "/taiyi:<verb> [args]"
+codex_pattern: "$taiyi-<verb> [args]   # prompts/taiyi-<verb>.md"
+
+references:
+  openspec_core:
+    - "/opsx:new"
+    - "/opsx:continue"
+    - "/opsx:apply"
+    - "/opsx:archive"
+  openspec_expanded:
+    - "/opsx:explore"
+    - "/opsx:verify"
+    - "/opsx:sync"
+
+profiles:
+  core:
+    description: 四动词 + status（九阶段见 workflow.md）
+    commands:
+      - chat: "/taiyi:new 用户登录"
+        codex: "$taiyi-new 用户登录"
+        engine: "taiyi-forge.sh new 用户登录"
+        meaning: 创建变更目录 + auto 编排（对标 opsx:new / propose）
+
+      - chat: "/taiyi:continue"
+        codex: "$taiyi-continue"
+        engine: "taiyi-forge.sh continue [slug]"
+        meaning: |
+          推进工作流：工件就绪则过关当前阶段，否则输出 next 指引（对标 opsx:continue）。
+          单变更可省略 slug。
+
+      - chat: "/taiyi:apply"
+        codex: "$taiyi-apply"
+        engine: "taiyi-forge.sh apply [slug]"
+        meaning: |
+          进入/继续实现（dev、test 阶段）；对标 opsx:apply。
+          规划阶段会提示先 /taiyi:continue。
+
+      - chat: "/taiyi:status"
+        codex: "$taiyi-status"
+        engine: "taiyi-forge.sh status [slug]"
+        meaning: |
+          阶段进度（如 design 3/9）、当前 Skill、工件是否就绪、下一步动作。
+          随时可打，解决「不知道在第几阶段」。
+
+      - chat: "/taiyi:archive"
+        codex: "$taiyi-archive"
+        engine: "taiyi-forge.sh archive [slug]"
+        meaning: 九阶段完成后归档（对标 opsx:archive）
+
+  auxiliary:
+    description: 辅助命令（对标 OMX doctor / omc run 配套；非主流程必经）
+    commands:
+      - chat: "/taiyi:doctor"
+        codex: "$taiyi-doctor"
+        engine: "taiyi-forge.sh doctor"
+        meaning: 四端 skills + 控制面安装自检（对标 omx doctor）
+        when: 首次安装、升级后、continue 异常时
+
+      - chat: "/taiyi:list"
+        codex: "$taiyi-list"
+        engine: "taiyi-forge.sh ls"
+        meaning: 列出所有变更及阶段进度
+        when: 多变更并行时必须（否则 status/continue 无法推断 slug）
+
+      - chat: "/taiyi:check"
+        codex: "$taiyi-check"
+        engine: "taiyi-forge.sh check [slug]"
+        meaning: auto 模式 harness 清单（铁三角 → 辅助 → 主 Skill）
+        when: init --auto 后每阶段过关前；对标 OMX run 的分阶段执行
+
+      - chat: "/taiyi:sync"
+        codex: "$taiyi-sync"
+        engine: "taiyi-forge.sh sync [slug]"
+        meaning: Taiyi 工件 → OpenSpec（对标 opsx:sync）
+        when: 项目已装 OpenSpec，integration 前后
+
+      - chat: "/taiyi:run"
+        codex: "$taiyi-run"
+        engine: "taiyi-forge.sh run [--slug name]"
+        meaning: 首次体验 / 演示全流程（对标 omc.sh run 的「一键跑通」）
+        when: onboarding、CI 冒烟，非日常主流程
+
+      - chat: "/taiyi:explore"
+        meaning: change 阶段头脑风暴 → 加载 Superpowers brainstorming + taiyi-change
+        when: 对标 opsx:explore / OMX clarify，无独立引擎子命令
+
+  expanded:
+    commands:
+      - chat: "/taiyi:explore"
+        engine: "提示加载 taiyi-change + Superpowers brainstorming"
+      - chat: "/taiyi:verify"
+        engine: "taiyi-forge.sh next（test 阶段）"
+      - chat: "/taiyi:sync"
+        engine: "taiyi-forge.sh sync-openspec [slug]"
+      - chat: "/taiyi:doctor"
+        engine: "taiyi-forge.sh doctor"
+
+legacy_aliases:
+  shell: [done, next, n, go, ls, check, sync]
+  chat: ["/tf new", "/tf next", "/tf done"]
+  note: "仍可用，文档以 /taiyi:<verb> 为准"
+
+phase_skills:
+  note: "写 CHANGE/DESIGN 等工件：taiyi-change … taiyi-integration（@skill），不走 /taiyi:*"

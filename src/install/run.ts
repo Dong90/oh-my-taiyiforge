@@ -132,7 +132,7 @@ function formatInstallSummary(targets: InstallTarget[], dirs: ReturnType<typeof 
     lines.push(`  Claude    → ${dirs.claude}/taiyi-* + CLAUDE.md 控制面`);
   }
   if (targets.includes("codex")) {
-    lines.push(`  Codex     → ${dirs.codex}/taiyi-* + AGENTS.md + $taiyi-forge prompt`);
+    lines.push(`  Codex     → ${dirs.codex}/taiyi-* + AGENTS.md + $taiyi-new/continue/apply/status/archive`);
   }
   if (targets.includes("cursor")) {
     lines.push(`  Cursor    → ${dirs.cursor}/taiyi-*`);

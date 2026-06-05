@@ -17,10 +17,22 @@ alwaysApply: true
 ## 原则（对齐 oh-my-codex / omc.sh）
 
 1. **聊天里**：加载 \`taiyi-*\` 阶段 Skill、Superpowers、gstack 写工件与评审。
-2. **引擎过关**：你用 **终端工具** 代跑 \`scripts/taiyi-forge.sh\`，**禁止**让用户手打 \`npx taiyi\`。
-3. **禁止**未执行 \`complete\` 就声称阶段已完成。
+2. **引擎过关**：用户说 **/taiyi:new**、**/taiyi:continue**、**/taiyi:apply**、**/taiyi:archive**（Codex：**$taiyi-new** 等），你用 **终端工具** 代跑 \`scripts/taiyi-forge.sh\`。
+3. **禁止**让用户手打长 shell 路径；**禁止**未执行过关就声称阶段已完成。
 
-## 引擎命令（项目根目录）
+## 聊天命令（OpenSpec 风格，见 docs/taiyi/commands.yaml）
+
+- /taiyi:new 功能名
+- /taiyi:status
+- /taiyi:continue
+- /taiyi:apply
+- /taiyi:archive
+
+九阶段路径见 docs/taiyi/workflow.md
+
+Codex：$taiyi-new、$taiyi-status、$taiyi-continue、$taiyi-apply、$taiyi-archive
+
+## 引擎命令（Agent 内部代跑，非用户手打）
 
 \`\`\`bash
 ./node_modules/oh-my-taiyiforge/scripts/taiyi-forge.sh init <slug> [--auto] --title "..."

@@ -7,19 +7,37 @@ description: TaiyiForge 引擎控制面 — 在对话中代跑 scripts/taiyi-for
 
 ## 何时使用
 
-- 用户说 `$taiyi-forge`、`taiyi-forge next`、`过关`、`complete`、`harness`
-- 需要 **推进阶段、打卡、查状态**（引擎层），而非写 CHANGE/DESIGN 等工件（用 `taiyi-change` 等）
+- 用户输入 **OpenSpec 风格**命令：`/taiyi:new`、`/taiyi:continue`、`/taiyi:apply`、`/taiyi:archive`
+- Codex：`$taiyi-new`、`$taiyi-continue`、`$taiyi-apply`、`$taiyi-archive`
+- 需要 **推进引擎状态**（非写 CHANGE/DESIGN 工件 — 那些用 `taiyi-change` 等）
 
-## 调用方式（四端）
+## 核心命令（四动词 + status，九阶段见 docs/taiyi/workflow.md）
 
-| 端 | 你怎么调 |
-|----|----------|
-| **Codex** | 对话输入 `$taiyi-forge next <slug>` 或加载本 Skill |
-| **Claude Code** | 加载本 Skill，用 **Bash** 代跑下方命令 |
-| **Cursor** | 加载本 Skill，用 **终端工具** 代跑下方命令 |
-| **OpenCode** | 优先用插件工具 `taiyi_init` / `taiyi_complete`（与本脚本等价） |
+| 聊天 | 含义 |
+|------|------|
+| `/taiyi:new 功能名` | 新建变更 |
+| `/taiyi:status` | **当前阶段（如 3/9）、Skill、工件状态** |
+| `/taiyi:continue` | 规划/收尾阶段推进（**每阶段写完工件后各一次**） |
+| `/taiyi:apply` | dev/test 实现 |
+| `/taiyi:archive` | 归档 |
 
-## 你必须代跑 shell（禁止只口头说「已完成」）
+Codex：`$taiyi-new` … `$taiyi-status` …
+
+九阶段不会合并：`continue` 在 change→requirement→…→integration 要**反复使用**，中间用 `taiyi-change` 等 Skill 写工件。
+
+## 辅助命令（对标 OMX doctor / run）
+
+| 聊天 | 用途 |
+|------|------|
+| `/taiyi:doctor` | 安装自检 |
+| `/taiyi:list` | 多变更时列 slug |
+| `/taiyi:check` | auto 模式 harness 清单 |
+| `/taiyi:sync` | OpenSpec 同步 |
+| `/taiyi:run` | 演示 walkthrough |
+
+详见 `docs/taiyi/commands.yaml` → `auxiliary`
+
+## 调用方式（四端明细）
 
 在项目根目录执行（路径三选一，Agent 自动探测）：
 

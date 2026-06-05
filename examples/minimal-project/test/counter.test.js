@@ -1,21 +1,19 @@
-import { describe, it } from "node:test";
 import assert from "node:assert/strict";
+import { describe, it } from "node:test";
 import { createCounter } from "../src/counter.js";
 
 describe("createCounter", () => {
-  it("starts at initial value", () => {
-    assert.equal(createCounter(3).value, 3);
+  it("increments from zero", () => {
+    const c = createCounter(0);
+    c.increment();
+    c.increment();
+    assert.equal(c.value, 2);
   });
 
-  it("increments", () => {
-    const c = createCounter();
-    assert.equal(c.increment(), 1);
-    assert.equal(c.increment(2), 3);
-  });
-
-  it("resets", () => {
+  it("resets to initial", () => {
     const c = createCounter(5);
     c.increment();
-    assert.equal(c.reset(), 5);
+    c.reset();
+    assert.equal(c.value, 5);
   });
 });

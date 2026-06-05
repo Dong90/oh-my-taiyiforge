@@ -67,7 +67,7 @@ Real motivation with enough text for validation checks.
 
     const guide = buildPhaseGuide(root, slug, state);
     expect(guide.qualityReady).toBe(true);
-    expect(guide.nextAction).toMatch(/complete/);
+    expect(guide.nextAction).toMatch(/\/taiyi:continue/);
     expect(guide.nextSkill).toBe("taiyi-requirement");
   });
 });

@@ -35,7 +35,7 @@ export function mergeClaudeControlBlock(claudeMdPath: string, block: string): In
 export function claudeControlBlock(): string {
   return `## TaiyiForge（OMX 风格）
 
-- **引擎**：加载 Skill \`taiyi-forge\`，用 **Bash** 代跑 \`scripts/taiyi-forge.sh\`（或 \`taiyi-forge\` 全局命令），不要让人手打 \`npx taiyi\`。
+- **引擎**：加载 Skill \`taiyi-forge\`，用户说 **/taiyi:new**、**/taiyi:continue**、**/taiyi:apply**、**/taiyi:archive**，你用 Bash 代跑 \`scripts/taiyi-forge.sh\`。
 - **写工件**：\`taiyi-change\` … \`taiyi-integration\`；**编排**：\`taiyi-orchestrator\`（\`--auto\`）。
 - **铁三角**：Superpowers / gstack 在对话内加载。
 - 详见 \`docs/taiyi/control-plane.md\` 与 \`docs/taiyi/invoke.yaml\`。`;
