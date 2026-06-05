@@ -1,57 +1,64 @@
 # TaiyiForge 最小示例
 
-在**任意空目录**演示九阶段工作流（无需真实业务代码）。
+在**任意空目录**演示工作流（无需真实业务代码）。
 
-## 1. 安装
+## 1. 安装与自检
 
 ```bash
 npm install oh-my-taiyiforge
-# 或本地开发：
-# npm install file:../../oh-my-taiyiforge
 npx taiyi-forge-install --all
+npx taiyi doctor          # 四端 skills + plugin 自检
 ```
 
-OpenCode 用户确保 `opencode.json` 含 `"oh-my-taiyiforge"`。
-
-## 2. 创建变更
+## 2. 按变更类型创建
 
 ```bash
 cd your-empty-project
-npx taiyi init hello-taiyi --title "Hello TaiyiForge"
+
+# 全功能九阶段
+npx taiyi init hello --title "Hello TaiyiForge"
+
+# 纯 API（跳过 ui-design）
+npx taiyi init api-fix --profile api --title "REST endpoint"
+
+# 小修复五阶段
+npx taiyi init hotfix --profile lite --title "Fix typo"
 ```
 
-会在 `.taiyi/changes/hello-taiyi/` 生成 8 个 Markdown 模板。
-
-## 3. 按阶段推进
+## 3. 日常循环（推荐）
 
 ```bash
-npx taiyi guide hello-taiyi    # 当前该做什么 + 铁三角推荐
-# 编辑 CHANGE.md …
-npx taiyi complete hello-taiyi change
-# 重复 guide → 编辑 → complete 直到 integration
+npx taiyi next hello        # 人类可读「下一步」
+npx taiyi list              # 所有进行中的变更
+# 编辑工件 …
+npx taiyi complete hello change
+npx taiyi next hello
 ```
 
-或一键冒烟（本仓库内）：
+`guide` / `status` 仍可用 `--json` 给 Agent 解析。
+
+## 4. 辅助 Skill
 
 ```bash
-cd oh-my-taiyiforge
-npm run dogfood
+npx taiyi assess hello
+npx taiyi mark-aux hello taiyi-intel-scan
 ```
 
-## 4. OpenSpec（可选）
-
-若项目已 `openspec init` 且有 `openspec/changes/hello-taiyi/`：
+## 5. 冒烟与引导
 
 ```bash
-npx taiyi archive hello-taiyi
+# 仓库内一键九阶段
+cd oh-my-taiyiforge && npm run dogfood
+
+# 首次体验（api profile + doctor）
+npm run walkthrough
 ```
 
-## 5. 铁三角
+## 6. OpenSpec（可选）
 
-| 层 | 本示例中的用法 |
-|----|----------------|
-| OpenSpec | 可选 archive |
-| Superpowers | `guide` 的 `harness.hooks` 推荐 brainstorming / TDD |
-| gstack | review 阶段加载 `gstack/review` Skill（Agent 内，非 shell） |
+```bash
+npx taiyi sync-openspec hello
+npx taiyi archive hello
+```
 
 详见 [docs/QUICKSTART.md](../../docs/QUICKSTART.md)。

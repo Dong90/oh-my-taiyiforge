@@ -48,9 +48,14 @@ TAIYI_FORGE_INSTALL=opencode,cursor npm install oh-my-taiyiforge
 }
 ```
 
-安装包后 OpenCode 会加载 **9 个工具**：`taiyi_init`、`taiyi_guide`、`taiyi_status`、`taiyi_phases`、`taiyi_complete`、`taiyi_sync_openspec`、`taiyi_archive`、`taiyi_assess`、`taiyi_mark_aux`。
+安装包后 OpenCode 会加载 **12 个工具**（含 `taiyi_doctor`、`taiyi_list`、`taiyi_next` 等）。
 
-变更类型：`npx taiyi init <slug> --profile api|lite`（纯 API 跳过 ui-design；lite 五阶段精简路径）。  
+```bash
+npx taiyi doctor              # 安装自检
+npx taiyi next <slug>         # 人类可读下一步
+npx taiyi init <slug> --profile api|lite
+npm run walkthrough           # 首次体验（仓库内）
+```  
 工件落在项目目录 **`.taiyi/changes/<slug>/`**。
 
 ## CLI（任意目录）

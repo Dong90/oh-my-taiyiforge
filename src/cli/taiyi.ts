@@ -4,46 +4,49 @@ import { listPhases } from "../core/phase-registry.js";
 import { resolveTaiyiRoot } from "../core/paths.js";
 import { resolveTemplatesDir } from "../core/package-root.js";
 import { requiresHumanGate } from "../core/gates/human-gate-config.js";
+import { formatChangeListPlain } from "../core/format-guide.js";
 import type { ChangeProfile, PhaseId } from "../core/types.js";
 import {
   taiyiArchive,
   taiyiAssess,
+  taiyiDoctor,
   taiyiGuide,
+  taiyiList,
   taiyiMarkAux,
+  taiyiNext,
   taiyiStatus,
   taiyiSyncOpenspec,
 } from "../plugin/handlers.js";
 
 const workspaceDir = process.cwd();
 const taiyiRoot = resolveTaiyiRoot(workspaceDir);
+const jsonMode = process.argv.includes("--json");
 
 function usage(): void {
   console.log(`TaiyiForge (oh-my-taiyiforge)
 
 用法:
-  npm run taiyi -- init <slug> [--title "名称"] [--profile full|api|ui|lite] [--strict-dev]
-  npm run taiyi -- status <slug>              状态 + guide + 复杂度
-  npm run taiyi -- guide <slug>               当前该做什么（含辅助 Skill 推荐）
-  npm run taiyi -- assess <slug>              评估复杂度（自动读 CHANGE）
-  npm run taiyi -- mark-aux <slug> <skill>    标记辅助 Skill 已完成
-  npm run taiyi -- phases                     九阶段列表
-  npm run taiyi -- complete <slug> <phase>    完成阶段
-  npm run taiyi -- sync-openspec <slug>       同步到 openspec/changes/
-  npm run taiyi -- archive <slug>             OpenSpec archive
+  npm run taiyi -- doctor                   检查四端安装与配置
+  npm run taiyi -- list                     列出 .taiyi/changes/ 下所有变更
+  npm run taiyi -- init <slug> [--profile api|lite] [--strict-dev]
+  npm run taiyi -- next <slug>              人类可读「下一步」（默认纯文本）
+  npm run taiyi -- guide <slug> [--json]    详细 guide（默认 JSON）
+  npm run taiyi -- status <slug> [--json]
+  npm run taiyi -- assess <slug>
+  npm run taiyi -- mark-aux <slug> <skill>
+  npm run taiyi -- complete <slug> <phase>
+  npm run taiyi -- sync-openspec <slug>
+  npm run taiyi -- archive <slug>
+  npm run walkthrough                       首次体验交互引导（仓库内）
 
-Profile:
-  full  九阶段（默认）
-  api   跳过 ui-design
-  lite  change→requirement→dev→test→integration
-
-环境变量:
-  TAIYI_HUMAN_GATE_PHASES=change,design,review  需人工确认的阶段
+Profile: full | api（跳过 ui-design）| lite（五阶段）
 `);
 }
 
 const templatesDir = resolveTemplatesDir(import.meta.url);
 const engine = new WorkflowEngine(taiyiRoot, templatesDir);
-const [cmd, ...args] = process.argv.slice(2);
+const argv = process.argv.slice(2).filter((a) => a !== "--json");
+const [cmd, ...args] = argv;
 
 function parseProfile(argv: string[]): ChangeProfile | undefined {
   const idx = argv.indexOf("--profile");
@@ -53,7 +56,33 @@ function parseProfile(argv: string[]): ChangeProfile | undefined {
   return undefined;
 }
 
+function printDoctor(): void {
+  const r = taiyiDoctor();
+  if (jsonMode) {
+    console.log(JSON.stringify(r, null, 2));
+    if (!r.ok) process.exit(1);
+    return;
+  }
+  console.log(`TaiyiForge doctor v${r.report.version} — ${r.ok ? "PASS" : "FAIL"}\n`);
+  for (const c of r.report.checks) {
+    console.log(`${c.ok ? "✓" : "✗"} ${c.id}: ${c.detail}`);
+  }
+  if (!r.ok) {
+    console.log("\n修复: npx taiyi-forge-install --all");
+    process.exit(1);
+  }
+}
+
 switch (cmd) {
+  case "doctor":
+    printDoctor();
+    break;
+  case "list": {
+    const r = taiyiList(workspaceDir);
+    if (jsonMode) console.log(JSON.stringify(r, null, 2));
+    else console.log(formatChangeListPlain(r.changes));
+    break;
+  }
   case "init": {
     const slug = args[0];
     if (!slug) {
@@ -70,6 +99,24 @@ switch (cmd) {
       strictDev: args.includes("--strict-dev"),
     });
     console.log(JSON.stringify(result, null, 2));
+    if (!jsonMode) {
+      console.log(`\n→ npx taiyi next ${slug}`);
+    }
+    break;
+  }
+  case "next": {
+    const slug = args[0];
+    if (!slug) {
+      console.error("缺少 slug");
+      process.exit(1);
+    }
+    const r = taiyiNext(workspaceDir, slug, !jsonMode);
+    if (!r.ok) {
+      console.error(r.error);
+      process.exit(1);
+    }
+    if ("text" in r && r.text) console.log(r.text);
+    else console.log(JSON.stringify(r, null, 2));
     break;
   }
   case "status": {
@@ -185,7 +232,9 @@ switch (cmd) {
       console.error(result.error);
       process.exit(1);
     }
-    console.log(engine.getState(slug));
+    const state = engine.getState(slug);
+    if (jsonMode) console.log(JSON.stringify(state, null, 2));
+    else console.log(`✓ ${phase} 完成 → 当前阶段: ${state?.currentPhase}\n→ npx taiyi next ${slug}`);
     break;
   }
   default:

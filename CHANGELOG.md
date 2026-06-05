@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.14.0] - 2026-06-05
+
+### Added
+
+- `taiyi doctor` / `taiyi_doctor`：四端 skills、OpenCode plugin、模板一键自检
+- `taiyi list` / `taiyi_list`：列出 `.taiyi/changes/` 进度
+- `taiyi next` / `taiyi_next`：人类可读下一步（复杂度、辅助 Skill、铁三角）
+- `npm run walkthrough`：首次体验引导脚本
+- `complete` 成功后提示 `taiyi next`
+
 ## [0.13.0] - 2026-06-05
 
 ### Added

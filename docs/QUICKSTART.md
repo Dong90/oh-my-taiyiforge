@@ -7,6 +7,7 @@
 ```bash
 npm install oh-my-taiyiforge
 npx taiyi-forge-install --all
+npx taiyi doctor    # 确认四端 skills + OpenCode plugin
 ```
 
 | 端 | 验证 |
@@ -32,14 +33,15 @@ npm init -y
 npm install oh-my-taiyiforge
 
 npx taiyi init my-first --title "My First Change"
-npx taiyi guide my-first    # 含复杂度 + 辅助 Skill 推荐
+npx taiyi next my-first     # 人类可读下一步（推荐）
 ```
 
-按 `guide.nextAction` 编辑 `.taiyi/changes/my-first/CHANGE.md`，然后：
+编辑 `.taiyi/changes/my-first/CHANGE.md` 后：
 
 ```bash
 npx taiyi complete my-first change
-npx taiyi guide my-first
+npx taiyi next my-first
+npx taiyi list
 ```
 
 ## Profile（按变更类型）

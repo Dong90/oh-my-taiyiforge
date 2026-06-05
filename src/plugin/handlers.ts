@@ -9,6 +9,10 @@ import type { ComplexitySignals } from "../core/routing/complexity.js";
 import { buildPhaseGuide } from "../core/phase-guide.js";
 import { getOpenspecStatus, runOpenspecArchive } from "../integrations/openspec.js";
 import { syncTaiyiToOpenspec } from "../integrations/openspec-sync.js";
+import { runDoctor } from "../core/doctor.js";
+import { listChanges } from "../core/list-changes.js";
+import { formatGuidePlain } from "../core/format-guide.js";
+import { resolvePackageRoot } from "../core/package-root.js";
 
 const TEMPLATES_DIR = resolveTemplatesDir(import.meta.url);
 
@@ -173,6 +177,27 @@ export function taiyiArchive(
     stdout: result.stdout,
     state,
   };
+}
+
+export function taiyiDoctor(pkgRoot?: string) {
+  const root = pkgRoot ?? resolvePackageRoot(import.meta.url);
+  const report = runDoctor(root);
+  return { ok: report.ok, report };
+}
+
+export function taiyiList(workspaceDir: string) {
+  const taiyiRoot = resolveTaiyiRoot(workspaceDir);
+  const changes = listChanges(taiyiRoot);
+  return { ok: true as const, changes, taiyiRoot };
+}
+
+export function taiyiNext(workspaceDir: string, slug: string, plain = true) {
+  const r = taiyiGuide(workspaceDir, slug);
+  if (!r.ok) return r;
+  if (plain) {
+    return { ok: true as const, text: formatGuidePlain(r.guide), guide: r.guide };
+  }
+  return { ok: true as const, guide: r.guide, assessment: r.assessment };
 }
 
 export function taiyiAssess(workspaceDir: string, slug: string, signals?: ComplexitySignals) {

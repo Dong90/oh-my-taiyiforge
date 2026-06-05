@@ -5,9 +5,12 @@ import {
   taiyiSyncOpenspec,
   taiyiAssess,
   taiyiComplete,
+  taiyiDoctor,
   taiyiGuide,
   taiyiInit,
+  taiyiList,
   taiyiMarkAux,
+  taiyiNext,
   taiyiPhases,
   taiyiStatus,
 } from "./handlers.js";
@@ -157,6 +160,33 @@ const TaiyiForgePlugin: Plugin = async () => {
               : undefined,
           );
           return JSON.stringify(r, null, 2);
+        },
+      }),
+      taiyi_doctor: tool({
+        description: "Check TaiyiForge install: skills on 4 platforms, OpenCode plugin, templates.",
+        args: {},
+        async execute(_args, ctx) {
+          void ctx;
+          const r = taiyiDoctor();
+          return JSON.stringify(r, null, 2);
+        },
+      }),
+      taiyi_list: tool({
+        description: "List all changes under .taiyi/changes/ with phase progress.",
+        args: {},
+        async execute(_args, ctx) {
+          const r = taiyiList(ctx.directory);
+          return JSON.stringify(r, null, 2);
+        },
+      }),
+      taiyi_next: tool({
+        description: "Human-readable next step for a change (plain text + guide fields).",
+        args: {
+          slug: tool.schema.string(),
+        },
+        async execute(args, ctx) {
+          const r = taiyiNext(ctx.directory, args.slug, true);
+          return "text" in r && r.text ? r.text : JSON.stringify(r, null, 2);
         },
       }),
       taiyi_mark_aux: tool({
