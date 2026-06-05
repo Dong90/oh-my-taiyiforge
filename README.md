@@ -56,6 +56,7 @@ npm run taiyi -- init my-feature
 - 双门禁：人工审批 + 质量五维
 - `taiyi-dev` 阶段 TDD
 - `npm test` — 引擎与 OpenCode 处理器契约测试
+- `templates/` — 九阶段工件模板；`skills/taiyi-*` — 可执行 Skill 正文（v0.4+）
 
 ## 文档
 

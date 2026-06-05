@@ -11,8 +11,8 @@ description: TaiyiForge 第 6 阶段 — TDD 开发执行。Claude / Codex / Cur
 
 ## 输出
 
-- 实现代码 + 自动化测试
-- `.taiyi/changes/<slug>/.dev-complete`（引擎校验）
+- 实现代码 + 自动化测试（按 `TASK.md` 切片推进）
+- 标记完成：创建非空文件 `.taiyi/changes/<slug>/.dev-complete`（引擎校验用，内容可为 `done` + 日期）
 
 ## TDD 纪律
 
