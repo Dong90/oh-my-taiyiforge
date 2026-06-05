@@ -12,7 +12,16 @@
 
 ## 架构总览
 
-![TaiyiForge 架构图 — 六大工程规范 × 15 Skill × 受控交付](./docs/taiyiforge-architecture.png)
+<p align="center">
+  <img
+    src="docs/taiyiforge-architecture.png"
+    alt="TaiyiForge 架构图 — 六大工程规范 × 15 Skill × 受控交付"
+    width="900"
+  />
+</p>
+
+<!-- GitHub 镜像（相对路径失效时可用） -->
+<!-- ![架构图](https://raw.githubusercontent.com/Dong90/oh-my-taiyiforge/main/docs/taiyiforge-architecture.png) -->
 
 上图从左到右：
 
