@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.11.0] - 2026-06-05
+
+### Changed
+
+- 五辅助 Skill 补厚：`taiyi-intel-scan`、`taiyi-architect`、`taiyi-health`、`taiyi-evolve`、`taiyi-restyle`
+  - 增加触发条件、输出模板、与主流程/铁三角衔接、质量自检与禁止项
+
 ## [0.10.0] - 2026-06-05
 
 ### Added
