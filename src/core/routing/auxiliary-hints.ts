@@ -23,7 +23,7 @@ export function auxiliaryForPhase(
   assessment?: ComplexityAssessment,
 ): string[] {
   const set = new Set<string>(AUX_BY_PHASE[phaseId] ?? []);
-  if (assessment) {
+  if (assessment?.recommendedSkills) {
     for (const s of assessment.recommendedSkills) {
       const home = AUX_HOME_PHASE[s];
       if (!home || home === phaseId) set.add(s);

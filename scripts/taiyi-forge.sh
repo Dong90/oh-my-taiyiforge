@@ -39,10 +39,12 @@ TaiyiForge（对齐 OpenSpec /opsx:<verb>）
   /taiyi:status             当前第几阶段、该用哪个 Skill
   /taiyi:archive            归档
   /taiyi:loop [slug] [xN]   循环 continue 直到完成或阻塞
+  /taiyi:review-loop [slug] 会话内循环 review 直到机器审查通过
+  /taiyi:review-check <slug>  单次机器探测（不计轮次）
   /taiyi:token status       Token 用量 / 预算
   /taiyi:token compress     压缩 → CONTEXT-COMPACT.md
 
-Codex: $taiyi-new / $taiyi-continue / $taiyi-apply / $taiyi-status / $taiyi-archive / $taiyi-token-*
+Codex: $taiyi-new / $taiyi-continue / $taiyi-apply / $taiyi-status / $taiyi-archive / $taiyi-review-loop / $taiyi-review-check / $taiyi-token-*
 
 引擎（Agent 代跑）:
   scripts/taiyi-forge.sh new <标题>
@@ -97,7 +99,7 @@ case "$cmd" in
   list)
     run_taiyi list
     ;;
-  doctor|init|next|harness|harness-check|complete|assess|mark-aux|status|guide|sync-openspec|walkthrough|ci|token|loop)
+  doctor|init|next|harness|harness-check|complete|assess|mark-aux|status|guide|sync-openspec|walkthrough|ci|token|loop|review-check|review-loop)
     run_taiyi "$cmd" "$@"
     ;;
   help|--help|-h)

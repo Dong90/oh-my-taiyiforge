@@ -2,6 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 import type { PhaseId, QualityScores } from "./types.js";
 import { getPhase } from "./phase-registry.js";
+import { evaluateMachineReview } from "./review-gate.js";
 
 type SectionRule = { heading: string; minChars?: number };
 
@@ -31,6 +32,60 @@ const PHASE_SECTIONS: Partial<Record<PhaseId, SectionRule[]>> = {
 
 function stripComments(text: string): string {
   return text.replace(/<!--[\s\S]*?-->/g, "").trim();
+}
+
+const ELLIPSIS = /…|\.\.\.(?!\w)/;
+
+function cellSubstantive(text: string, min = 3): boolean {
+  const t = text.replace(/\*\*/g, "").trim();
+  return t.length >= min && !ELLIPSIS.test(t) && !/^x$/i.test(t);
+}
+
+function requirementHasFilledStories(content: string): boolean {
+  const rows = content.match(/^\| US-\d+ \|[^|\n]+\|[^|\n]+\|[^|\n]+\|/gm) ?? [];
+  return rows.some((row) => {
+    const cells = row
+      .split("|")
+      .map((c) => c.trim())
+      .filter(Boolean);
+    return cells.length >= 4 && cells.slice(1).every((c) => cellSubstantive(c, 3));
+  });
+}
+
+function requirementHasFilledGwt(content: string): boolean {
+  const lines = content.split("\n");
+  const keys = ["Given", "When", "Then"] as const;
+  const found: Record<string, boolean> = { Given: false, When: false, Then: false };
+  for (const line of lines) {
+    for (const key of keys) {
+      const m = line.match(new RegExp(`^\\s*-\\s*\\*\\*${key}\\*\\*\\s*(.+)$`, "i"));
+      if (m && cellSubstantive(m[1] ?? "", 8)) found[key] = true;
+    }
+  }
+  return found.Given && found.When && found.Then;
+}
+
+function designHasRealOptions(content: string): boolean {
+  const body = sectionBody(content, "## Options");
+  const rows = body.match(/^\| [AB] \|[^|\n]+\|/gm) ?? [];
+  return (
+    rows.length >= 2 &&
+    rows.every((row) => {
+      const cells = row.split("|").map((c) => c.trim()).filter(Boolean);
+      return cells.length >= 2 && cellSubstantive(cells[1] ?? "", 4);
+    })
+  );
+}
+
+function designHasRealDecision(content: string): boolean {
+  const body = sectionBody(content, "## Decision");
+  const chosen = body.match(/\*\*Chosen:\*\*\s*(.+)/i)?.[1] ?? "";
+  const reason = body.match(/\*\*Reason:\*\*\s*(.+)/i)?.[1] ?? "";
+  return (
+    cellSubstantive(chosen, 6) &&
+    !/^Option\s*[….]{1,3}\s*$/i.test(chosen.trim()) &&
+    cellSubstantive(reason, 8)
+  );
 }
 
 function sectionBody(content: string, heading: string): string {
@@ -103,12 +158,39 @@ export function validateArtifactContent(
   const consistency = !hasPlaceholderOnly;
   if (hasPlaceholderOnly) hints.push("仍含 {{title}} / {{slug}} 占位符");
 
+  let placeholderContent = false;
+  if (phaseId === "requirement") {
+    if (!requirementHasFilledStories(content)) {
+      placeholderContent = true;
+      hints.push("User Stories 表格须填写完整（非空单元格、非 … 占位）");
+    }
+    if (!requirementHasFilledGwt(content)) {
+      placeholderContent = true;
+      hints.push("Acceptance Criteria 须含实质 Given/When/Then（各 ≥8 字符）");
+    }
+  }
+  if (phaseId === "design") {
+    if (!designHasRealOptions(content)) {
+      placeholderContent = true;
+      hints.push("Options 须至少 2 个方案且 Summary 已填写");
+    }
+    if (!designHasRealDecision(content)) {
+      placeholderContent = true;
+      hints.push("Decision 须写明 Chosen 与 Reason（非 Option … 占位）");
+    }
+  }
+
   let verifiability =
     phaseId === "change"
       ? /Success Criteria|验收|可验证|\[ \]|\[x\]/i.test(content)
       : phaseId === "requirement"
-        ? /Given|When|Then/i.test(content)
+        ? requirementHasFilledGwt(content)
         : text.length >= minTotal;
+
+  if (placeholderContent) {
+    completeness = false;
+    verifiability = false;
+  }
 
   if (phaseId === "ui-design") {
     const scope = sectionBody(content, "## Scope");
@@ -140,17 +222,29 @@ export function validateArtifactContent(
   }
 
   const hasPendingLanguage = /TODO|TBD|待补|占位/i.test(text);
-  const engineering_quality =
+  let engineering_quality: boolean =
     phaseId === "review"
       ? !hasPendingLanguage
       : !hasPendingLanguage || text.length > 120;
+  if (placeholderContent) engineering_quality = false;
   if (!engineering_quality) hints.push("含 TODO/TBD/待补 等待定用语");
+
+  let machineReviewOk = true;
+  if (phaseId === "review") {
+    const machine = evaluateMachineReview(content);
+    machineReviewOk = machine.passed;
+    if (!machine.passed) {
+      hints.push(...machine.hints);
+      engineering_quality = false;
+      verifiability = false;
+    }
+  }
 
   return {
     scores: {
       completeness,
       consistency,
-      verifiability,
+      verifiability: phaseId === "review" ? machineReviewOk && verifiability : verifiability,
       traceability: phaseId === "change" ? true : traceability,
       engineering_quality,
     },

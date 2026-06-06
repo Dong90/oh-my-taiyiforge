@@ -54,7 +54,7 @@ export function formatStatusPlain(guide: PhaseGuide): string {
   lines.push(`下一步: ${guide.nextAction}`);
   if (guide.nextSkill) lines.push(`过关后 Skill: ${guide.nextSkill}`);
   lines.push("");
-  lines.push("常用: /taiyi:status | /taiyi:continue | /taiyi:apply（dev/test）| /taiyi:loop（循环直到完成）");
+  lines.push("常用: /taiyi:status | /taiyi:continue | /taiyi:apply（dev/test）| /taiyi:loop | /taiyi:review-loop（review 机器审查）");
   lines.push("次数: /taiyi:continue x3 · /taiyi:apply x2 · /taiyi:loop x10");
   return lines.join("\n");
 }

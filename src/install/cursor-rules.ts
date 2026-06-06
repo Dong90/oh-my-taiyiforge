@@ -22,17 +22,21 @@ alwaysApply: true
 
 ## 聊天命令（OpenSpec 风格，见 docs/taiyi/commands.yaml）
 
+在 Cursor 输入 / 可选 taiyi-status 等（等同 /taiyi:status）；或直接打字 /taiyi:continue。
+
 - /taiyi:new 功能名
 - /taiyi:status
 - /taiyi:continue
 - /taiyi:apply
 - /taiyi:archive
 - /taiyi:loop [slug] [xN]
+- /taiyi:review-loop [slug] — 会话内循环 review 直到机器审查通过
+- /taiyi:review-check <slug> — 单次机器探测
 - /taiyi:token status · record · scan · compress
 
 九阶段路径见 docs/taiyi/workflow.md
 
-Codex：$taiyi-new、$taiyi-status、$taiyi-continue、$taiyi-apply、$taiyi-archive、$taiyi-token-*
+Codex：$taiyi-new、$taiyi-status、$taiyi-continue、$taiyi-apply、$taiyi-archive、$taiyi-review-loop、$taiyi-review-check、$taiyi-token-*
 
 ## 引擎命令（Agent 内部代跑，非用户手打）
 
@@ -42,6 +46,8 @@ Codex：$taiyi-new、$taiyi-status、$taiyi-continue、$taiyi-apply、$taiyi-arc
 ./node_modules/oh-my-taiyiforge/scripts/taiyi-forge.sh harness <slug>
 ./node_modules/oh-my-taiyiforge/scripts/taiyi-forge.sh harness-check <slug> <key>
 ./node_modules/oh-my-taiyiforge/scripts/taiyi-forge.sh complete <slug> <phase>
+./node_modules/oh-my-taiyiforge/scripts/taiyi-forge.sh review-loop [slug]
+./node_modules/oh-my-taiyiforge/scripts/taiyi-forge.sh review-check <slug>
 ./node_modules/oh-my-taiyiforge/scripts/taiyi-forge.sh list
 \`\`\`
 

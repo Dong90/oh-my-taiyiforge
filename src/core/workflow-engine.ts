@@ -22,6 +22,8 @@ import {
 } from "./harness-runner.js";
 import { enforceTokenBudgetBeforeComplete } from "./token-runner.js";
 import { expectedPhaseCount, isWorkflowCompleted } from "./change-status.js";
+import { normalizeState } from "./normalize-state.js";
+import { deliveryGateEnabled, evaluateDeliveryGate } from "./gates/delivery-gate.js";
 
 export type InitChangeOptions = {
   title?: string;
@@ -38,17 +40,7 @@ export type StateLookup =
   | { status: "missing" }
   | { status: "corrupt"; error: string };
 
-function normalizeState(raw: ChangeState): ChangeState {
-  return {
-    ...raw,
-    profile: raw.profile ?? "full",
-    skippedPhases: raw.skippedPhases ?? [],
-    strictDev: raw.strictDev ?? false,
-    autoHarness: raw.autoHarness ?? false,
-    auxiliaryCompleted: raw.auxiliaryCompleted ?? [],
-    workflowStatus: raw.workflowStatus ?? (isWorkflowCompleted(raw) ? "completed" : "active"),
-  };
-}
+export { normalizeState } from "./normalize-state.js";
 
 export class WorkflowEngine {
   constructor(
@@ -255,6 +247,18 @@ export class WorkflowEngine {
     }
 
     const workspaceDir = path.dirname(this.workspaceRoot);
+
+    if (phaseId === "integration" && deliveryGateEnabled(workspaceDir)) {
+      const delivery = evaluateDeliveryGate(workspaceDir);
+      if (!delivery.passed) {
+        const hintText = delivery.hints?.length ? ` — ${delivery.hints.join("; ")}` : "";
+        return {
+          ok: false,
+          error: `Delivery gate failed: ${delivery.reason}${hintText}`,
+        };
+      }
+    }
+
     const autoCheck = enforceAutoHarnessBeforeComplete(
       workspaceDir,
       this.workspaceRoot,

@@ -116,6 +116,21 @@ profiles:
         meaning: 引擎零 LLM 压缩 → CONTEXT-COMPACT.md + 第三方 Skill 提示
         when: 超 compressThreshold 或 status 建议压缩时
 
+      - chat: "/taiyi:review-loop [slug]"
+        codex: "$taiyi-review-loop"
+        engine: "taiyi-forge.sh review-loop [slug]"
+        meaning: |
+          启动 review 会话循环：Agent 在同一会话内重复 taiyi-review → 修代码 → review-check，
+          直到机器门禁通过才停止（对齐 /taiyi:loop 的「直到完成」语义）。
+          通过后用户再 complete review --approver。
+        when: 任意阶段可直接启动 review 循环；审查不过继续直到可合并
+
+      - chat: "/taiyi:review-check <slug>"
+        codex: "$taiyi-review-check"
+        engine: "taiyi-forge.sh review-check <slug>"
+        meaning: 单次机器审查（不计轮次）
+        when: 快速探测 REVIEW.md 是否可过关
+
       - chat: "/taiyi:loop [slug] [xN]"
         codex: "$taiyi-loop"
         engine: "taiyi-forge.sh loop [slug] [xN]"

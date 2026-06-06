@@ -13,6 +13,7 @@ export type InstallResult = {
     | "opencode-config"
     | "codex-agents"
     | "codex-prompts"
+    | "cursor-commands"
     | "claude-md"
     | "openspec"
     | "gstack"

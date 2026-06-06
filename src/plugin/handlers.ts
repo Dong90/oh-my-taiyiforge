@@ -19,6 +19,7 @@ import {
   tokenScan,
   tokenStatusPlain,
 } from "../core/token-runner.js";
+import { formatReviewLoopOutput, runReviewMachineCheck } from "../core/review-loop-runner.js";
 import { slugValidationError, validateSlug } from "../core/slug.js";
 import type { ComplexitySignals } from "../core/routing/complexity.js";
 import { buildPhaseGuide } from "../core/phase-guide.js";
@@ -578,4 +579,27 @@ export function taiyiToken(
     return { ok: true as const, text: tokenScan(changeDir, slug, phase) };
   }
   return { ok: true as const, text: tokenCompress(changeDir, slug, phase) };
+}
+
+export function taiyiReviewCheck(workspaceDir: string, slug: string, plain = true) {
+  const invalid = rejectInvalidSlug(slug);
+  if (invalid) return invalid;
+  const engine = createEngine(workspaceDir);
+  const result = runReviewMachineCheck(engine, slug, { bumpRound: false, workspaceDir });
+  if (plain) {
+    return { ok: result.ok, text: result.text, result };
+  }
+  return { ok: result.ok, result };
+}
+
+export function taiyiReviewLoop(workspaceDir: string, slug: string, plain = true) {
+  const invalid = rejectInvalidSlug(slug);
+  if (invalid) return invalid;
+  const engine = createEngine(workspaceDir);
+  const result = runReviewMachineCheck(engine, slug, { bumpRound: true, workspaceDir });
+  const text = formatReviewLoopOutput(result);
+  if (plain) {
+    return { ok: result.ok, text, result };
+  }
+  return { ok: result.ok, result: { ...result, text } };
 }

@@ -70,7 +70,7 @@ describe("profile-workflow", () => {
     }, null, 2));
     fs.writeFileSync(
       path.join(dir, "REVIEW.md"),
-      `# REVIEW\n\n## Summary\nx\n\n## Findings\n| Severity | File | Issue | Suggestion |\n|---|---|---|---|\n\n## Verdict\nApprove\n`,
+      `# REVIEW\n\n## Summary\nx\n\n## Findings\n| Severity | File | Issue | Suggestion |\n|---|---|---|---|\n\n## Verdict\n- [x] **Approve** — 可合并\n`,
     );
     const r = engine.completePhase("big", "review", GATES);
     expect(r.ok).toBe(false);

@@ -75,7 +75,7 @@ npx taiyi-forge-install --all
 /taiyi:archive             # 九阶段完成后归档
 ```
 
-辅助（按需）：`/taiyi:doctor` · `/taiyi:list` · `/taiyi:check` · `/taiyi:sync` · `/taiyi:run` · `/taiyi:explore` · `/taiyi:loop` · `/taiyi:token …`
+辅助（按需）：`/taiyi:doctor` · `/taiyi:list` · `/taiyi:check` · `/taiyi:sync` · `/taiyi:run` · `/taiyi:explore` · `/taiyi:loop` · `/taiyi:review-loop` · `/taiyi:review-check` · `/taiyi:token …`
 
 详见 [workflow.md](./docs/taiyi/workflow.md) · [commands.yaml](./docs/taiyi/commands.yaml)
 
@@ -151,7 +151,9 @@ npm run walkthrough    # 九阶段 + 铁三角打卡 + CI verify
 - 九阶段 + `taiyi-*` Skill，四动词遥控器（不合并阶段）
 - 双门禁：人工审批 + 质量五维
 - 铁三角：OpenSpec / Superpowers / gstack 分阶段 harness 推荐
-- `npm test` — 70+ 契约测试含九阶段 E2E
+- `npm test` — 140 契约测试含九阶段 E2E
+- **Integration 交付门** — git 仓库须 commit + 干净工作区才能 complete integration（[delivery-gate.md](./docs/taiyi/delivery-gate.md)）
+- **Dogfood 修复演示** — legacy state / scope 门禁 / commit 方案（[examples/dogfood-showcase](./examples/dogfood-showcase/README.md)）
 - CI 模板：`examples/ci/github-actions/`
 
 ---

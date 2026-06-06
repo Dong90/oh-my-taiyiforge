@@ -36,6 +36,8 @@
 | `/taiyi:list` | **多个变更并行**时列 slug（否则 continue 报错） |
 | `/taiyi:check` | `--auto` 时每阶段看 harness 铁三角清单 |
 | `/taiyi:loop` | 循环 `continue` 直到完成或阻塞（人工门需 `--approver`） |
+| `/taiyi:review-loop` | review 机器审查；不过则继续修再跑 |
+| `/taiyi:review-check` | 单次机器审查 REVIEW.md |
 | `/taiyi:token *` | Token 预算：status / record / scan / compress |
 | `/taiyi:sync` | 同步到 OpenSpec（≈ `opsx:sync`） |
 | `/taiyi:run` | 首次体验演示（≈ `omc.sh run`，非日常） |
@@ -69,6 +71,7 @@
 ⑦ test         → taiyi-test          → TEST.md          → /taiyi:apply 或 continue
 ⑧ review       → taiyi-review        → REVIEW.md        → /taiyi:continue
 ⑨ integration  → taiyi-integration   → CHANGELOG.md     → /taiyi:continue
+   ※ git 仓库默认启用**交付门**：须先 commit 实现代码且工作区干净（见 delivery-gate.md）
 
 /taiyi:archive
 ```

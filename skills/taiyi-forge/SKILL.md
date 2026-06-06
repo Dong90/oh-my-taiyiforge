@@ -35,6 +35,7 @@ Codex：`$taiyi-new` … `$taiyi-status` …
 | `/taiyi:sync` | OpenSpec 同步 |
 | `/taiyi:run` | 演示 walkthrough |
 | `/taiyi:loop [xN]` | 循环 continue 直到完成或阻塞 |
+| `/taiyi:review-loop` | review 机器审查；不过则修完再跑，通过后再 complete |
 | `/taiyi:token status` | Token 用量 / 预算 |
 | `/taiyi:token record` | 上报 Token |
 | `/taiyi:token scan` | 扫描工件 Token |

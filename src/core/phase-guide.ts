@@ -17,6 +17,7 @@ import type { ComplexitySignals } from "./routing/complexity.js";
 import { requiresHumanGate } from "./gates/human-gate-config.js";
 import { expectedPhaseCount, isWorkflowCompleted } from "./change-status.js";
 import { buildTokenBudgetSummary } from "./token-runner.js";
+import { normalizeState } from "./normalize-state.js";
 
 export type PhaseGuide = {
   slug: string;
@@ -55,13 +56,7 @@ export function buildPhaseGuide(
   rawState: ChangeState,
   workspaceDir?: string,
 ): PhaseGuide {
-  const state: ChangeState = {
-    ...rawState,
-    profile: rawState.profile ?? "full",
-    skippedPhases: rawState.skippedPhases ?? [],
-    strictDev: rawState.strictDev ?? false,
-    auxiliaryCompleted: rawState.auxiliaryCompleted ?? [],
-  };
+  const state = normalizeState(rawState);
   const phase = getPhase(state.currentPhase);
   const changeDir = path.join(taiyiRoot, "changes", slug);
   const artifactPath = artifactPathForPhase(changeDir, state.currentPhase);
@@ -166,7 +161,9 @@ export function buildPhaseGuide(
     state.complexity?.level === "high" &&
     !state.auxiliaryCompleted.includes("taiyi-health")
   ) {
-    nextAction = `high 复杂度：先 taiyi-health → mark-aux，再 /taiyi:continue`;
+    nextAction = `high 复杂度：先 taiyi-health → mark-aux，再 /taiyi:review-loop`;
+  } else if (state.currentPhase === "review") {
+    nextAction = `/taiyi:review-loop（会话内循环 review 直到机器审查通过）→ 通过后 complete review --approver`;
   } else if (state.autoHarness) {
     nextAction = `全自动：harness 清单 → 铁三角打卡 → /taiyi:continue`;
   } else if (state.currentPhase === "dev" || state.currentPhase === "test") {

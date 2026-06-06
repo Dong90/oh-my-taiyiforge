@@ -1,0 +1,14 @@
+{
+  "slug": "novel-derive-graphics-commentary",
+  "title": "演示用 legacy state",
+  "profile": "full",
+  "complexity": "medium",
+  "autoHarness": true,
+  "currentPhase": "complete",
+  "completedPhases": ["change", "requirement", "design", "ui-design", "task", "dev", "test", "review", "integration"],
+  "skippedPhases": [],
+  "strictDev": false,
+  "auxiliaryCompleted": [],
+  "createdAt": "2026-06-06",
+  "updatedAt": "2026-06-06"
+}

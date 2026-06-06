@@ -27,6 +27,8 @@ import {
   taiyiCiVerify,
   taiyiCiPlatform,
   taiyiCiPrompt,
+  taiyiReviewCheck,
+  taiyiReviewLoop,
 } from "../plugin/handlers.js";
 import type { CiPlatformId } from "../core/ci-platform.js";
 import {
@@ -79,6 +81,8 @@ function usage(): void {
   npm run taiyi -- token record <slug> <n>   → /taiyi:token record …
   npm run taiyi -- token scan <slug>         → /taiyi:token scan
   npm run taiyi -- token compress <slug>     → /taiyi:token compress
+  npm run taiyi -- review-check <slug>       → 机器审查 REVIEW.md（不计轮次）
+  npm run taiyi -- review-loop [slug]        → /taiyi:review-loop — 不过则继续修再跑
 
 Profile: full | api（跳过 ui-design）| lite（五阶段）
 Token: 见 docs/taiyi/token-budget.yaml · TAIYI_TOKEN_BUDGET / TAIYI_TOKEN_ENFORCE
@@ -612,6 +616,28 @@ switch (cmd) {
     }
     completeCurrentPhase(slug, phase as PhaseId, approver);
     break;
+  }
+  case "review-check": {
+    const slug = requireSlug(args);
+    const r = taiyiReviewCheck(workspaceDir, slug, !jsonMode);
+    if (!r.ok) {
+      if ("text" in r && r.text) console.error(r.text);
+      else console.error("error" in r ? r.error : "review-check failed");
+      process.exit(1);
+    }
+    if ("text" in r && r.text) console.log(r.text);
+    else console.log(JSON.stringify(r, null, 2));
+    break;
+  }
+  case "review-loop": {
+    const slug = requireSlug(args);
+    const r = taiyiReviewLoop(workspaceDir, slug, !jsonMode);
+    if (jsonMode) {
+      console.log(JSON.stringify(r, null, 2));
+    } else if ("text" in r && r.text) {
+      console.log(r.text);
+    }
+    process.exit(r.ok ? 0 : 1);
   }
   case "token": {
     const [sub, slugArg, tokensArg, ...rest] = args;

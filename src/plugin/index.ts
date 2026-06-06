@@ -22,6 +22,8 @@ import {
   taiyiLoop,
   taiyiApply,
   taiyiToken,
+  taiyiReviewCheck,
+  taiyiReviewLoop,
 } from "./handlers.js";
 import { resolvePackageRoot } from "../core/package-root.js";
 
@@ -323,6 +325,28 @@ const TaiyiForgePlugin: Plugin = async () => {
             tokens: args.tokens,
             phase: args.phase as import("../core/types.js").PhaseId | undefined,
           });
+          return "text" in r && r.text ? r.text : JSON.stringify(r, null, 2);
+        },
+      }),
+      taiyi_review_check: tool({
+        description:
+          "Machine review gate: REVIEW.md must be Approve with no open high findings (no round bump).",
+        args: {
+          slug: tool.schema.string(),
+        },
+        async execute(args, ctx) {
+          const r = taiyiReviewCheck(ctx.directory, args.slug, true);
+          return "text" in r && r.text ? r.text : JSON.stringify(r, null, 2);
+        },
+      }),
+      taiyi_review_loop: tool({
+        description:
+          "Machine review loop step: check REVIEW.md; on fail stay in review and bump round (.review-loop-state.json).",
+        args: {
+          slug: tool.schema.string(),
+        },
+        async execute(args, ctx) {
+          const r = taiyiReviewLoop(ctx.directory, args.slug, true);
           return "text" in r && r.text ? r.text : JSON.stringify(r, null, 2);
         },
       }),

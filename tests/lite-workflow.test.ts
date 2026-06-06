@@ -50,7 +50,7 @@ describe("lite-workflow", () => {
 
     fs.writeFileSync(
       path.join(dir, "REQUIREMENT.md"),
-      `# REQ\n\n## User Stories\n| ID | As | Want | So |\n|---|---|---|---|\n| US-1 | u | fix | ok |\n\n## Acceptance Criteria\n**Given** x **When** y **Then** z\n\n## Traceability\n| AC | CHANGE |\n|---|---|\n| 1 | SC |\n`,
+      `# REQ\n\n## User Stories\n| ID | As a… | I want… | So that… |\n| US-1 | user | fix export | file downloads |\n\n## Acceptance Criteria (Given / When / Then)\n### US-1\n- **Given** broken export path in production\n- **When** user triggers export from dashboard\n- **Then** export completes without server error\n\n## Traceability\n| AC | Links to CHANGE.md |\n| US-1 | Success Criteria |\n`,
     );
     expect(engine.completePhase("lite-fix", "requirement", GATES).ok).toBe(true);
 
