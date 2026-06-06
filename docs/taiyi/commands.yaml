@@ -62,6 +62,23 @@ profiles:
         meaning: 四端 skills + 控制面安装自检（对标 omx doctor）
         when: 首次安装、升级后、continue 异常时
 
+      - chat: "/taiyi:audit [slug]"
+        codex: "$taiyi-audit"
+        engine: "taiyi-forge.sh audit [slug]"
+        meaning: |
+          流程/交付排查：legacy state、工件漂移、CHANGE↔CHANGELOG、
+          integration 与 git 交付未闭环、OpenSpec 目录缺失。
+          非 doctor（安装）也非 review-check（仅 REVIEW.md）。
+        when: 九阶段标完成但代码未入库、status 异常、合并前自检
+
+      - chat: "/taiyi:verify [slug]"
+        codex: "$taiyi-verify"
+        engine: "taiyi-forge.sh verify [slug] [--require-complete]"
+        meaning: |
+          PR/CI 工件门禁：当前阶段工件质量、harness 阻塞（无 LLM）。
+          与 audit 分工：verify=工件过关 · audit=交付闭环与漂移。
+        when: PR 检查、合并前；CI 可用等价命令 `taiyi ci verify`（别名）
+
       - chat: "/taiyi:list"
         codex: "$taiyi-list"
         engine: "taiyi-forge.sh ls"
@@ -152,8 +169,6 @@ profiles:
     commands:
       - chat: "/taiyi:explore"
         engine: "提示加载 taiyi-change + Superpowers brainstorming"
-      - chat: "/taiyi:verify"
-        engine: "taiyi-forge.sh next（test 阶段）"
       - chat: "/taiyi:sync"
         engine: "taiyi-forge.sh sync-openspec [slug]"
       - chat: "/taiyi:doctor"

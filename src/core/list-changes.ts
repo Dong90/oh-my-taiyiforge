@@ -2,6 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 import type { ChangeState } from "./types.js";
 import { displayPhase, isWorkflowCompleted } from "./change-status.js";
+import { normalizeState } from "./normalize-state.js";
 
 export type ChangeSummary = {
   slug: string;
@@ -25,17 +26,18 @@ export function listChanges(taiyiRoot: string): ChangeSummary[] {
     if (!fs.existsSync(statePath)) continue;
     try {
       const raw = JSON.parse(fs.readFileSync(statePath, "utf8")) as ChangeState;
-      const skipped = raw.skippedPhases ?? [];
-      const workflowCompleted = isWorkflowCompleted(raw);
+      const state = normalizeState(raw);
+      const skipped = state.skippedPhases ?? [];
+      const workflowCompleted = isWorkflowCompleted(state);
       out.push({
-        slug: raw.slug,
-        currentPhase: displayPhase(raw),
+        slug: state.slug,
+        currentPhase: displayPhase(state),
         workflowCompleted,
-        profile: raw.profile ?? "full",
-        completed: raw.completedPhases.length,
+        profile: state.profile ?? "full",
+        completed: state.completedPhases.length,
         total: 9 - skipped.length,
-        complexity: raw.complexity?.level,
-        updatedAt: raw.updatedAt,
+        complexity: state.complexity?.level,
+        updatedAt: state.updatedAt,
       });
     } catch {
       /* skip corrupt */

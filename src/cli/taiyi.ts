@@ -24,6 +24,7 @@ import {
   taiyiWalkthrough,
   taiyiHarness,
   taiyiHarnessCheck,
+  taiyiAudit,
   taiyiCiVerify,
   taiyiCiPlatform,
   taiyiCiPrompt,
@@ -74,7 +75,9 @@ function usage(): void {
   npm run taiyi -- sync-openspec <slug>
   npm run taiyi -- archive <slug>
   npm run taiyi -- walkthrough [--slug name] [--profile api|lite]
-  npm run taiyi -- ci verify [--slug x] [--require-complete]
+  npm run taiyi -- audit [slug]              /taiyi:audit — 流程/交付排查（非 doctor）
+  npm run taiyi -- verify [slug] [--require-complete]   /taiyi:verify — PR/CI 工件门禁
+  npm run taiyi -- ci verify [--slug x] [--require-complete]   （verify 别名，供 GitHub Actions）
   npm run taiyi -- ci platform <opencode|claude|codex|cursor>
   npm run taiyi -- ci prompt <slug>          生成 CI Agent 推进 prompt 文件
   npm run taiyi -- token status [slug]       → /taiyi:token status
@@ -129,6 +132,23 @@ function stripFlags(argv: string[]): string[] {
     out.push(a);
   }
   return out;
+}
+
+function parseOptionalSlug(argv: string[]): string | undefined {
+  const slugIdx = argv.indexOf("--slug");
+  if (slugIdx >= 0 && argv[slugIdx + 1]) return argv[slugIdx + 1];
+  return stripFlags(argv)[0];
+}
+
+function runVerifyCommand(verifyArgs: string[]): void {
+  const r = taiyiCiVerify(workspaceDir, {
+    slug: parseOptionalSlug(verifyArgs),
+    requireComplete: verifyArgs.includes("--require-complete"),
+    plain: !jsonMode,
+  });
+  if (jsonMode) console.log(JSON.stringify(r.report, null, 2));
+  else if ("text" in r && r.text) console.log(r.text);
+  if (!r.ok) process.exit(1);
 }
 
 function requireSlug(argv: string[]): string {
@@ -232,6 +252,17 @@ function printDoctor(): void {
 switch (cmd) {
   case "doctor":
     printDoctor();
+    break;
+  case "audit": {
+    const slug = args[0];
+    const r = taiyiAudit(workspaceDir, { slug, plain: !jsonMode });
+    if (jsonMode) console.log(JSON.stringify(r.report, null, 2));
+    else if ("text" in r && r.text) console.log(r.text);
+    if (!r.ok) process.exit(1);
+    break;
+  }
+  case "verify":
+    runVerifyCommand(args);
     break;
   case "list": {
     const r = taiyiList(workspaceDir);
@@ -503,17 +534,7 @@ switch (cmd) {
     const [sub, ...rest] = args;
     const pkgRoot = resolvePackageRoot(import.meta.url);
     if (sub === "verify") {
-      let slug: string | undefined;
-      const slugIdx = rest.indexOf("--slug");
-      if (slugIdx >= 0) slug = rest[slugIdx + 1];
-      const r = taiyiCiVerify(workspaceDir, {
-        slug,
-        requireComplete: rest.includes("--require-complete"),
-        plain: !jsonMode,
-      });
-      if ("text" in r && r.text) console.log(r.text);
-      else console.log(JSON.stringify(r, null, 2));
-      if (!r.ok) process.exit(1);
+      runVerifyCommand(rest);
       break;
     }
     if (sub === "platform") {

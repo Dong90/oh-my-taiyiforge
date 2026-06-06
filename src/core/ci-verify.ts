@@ -1,6 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import type { ChangeState } from "./types.js";
+import { normalizeState } from "./normalize-state.js";
 import { listChanges } from "./list-changes.js";
 import { buildPhaseGuide } from "./phase-guide.js";
 import { buildHarnessPlan } from "./harness-runner.js";
@@ -32,7 +33,7 @@ function loadState(changeDir: string): ChangeState | null {
   const p = path.join(changeDir, "state.json");
   if (!fs.existsSync(p)) return null;
   try {
-    return JSON.parse(fs.readFileSync(p, "utf8")) as ChangeState;
+    return normalizeState(JSON.parse(fs.readFileSync(p, "utf8")) as ChangeState);
   } catch {
     return null;
   }

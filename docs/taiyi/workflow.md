@@ -36,6 +36,8 @@
 | `/taiyi:list` | **多个变更并行**时列 slug（否则 continue 报错） |
 | `/taiyi:check` | `--auto` 时每阶段看 harness 铁三角清单 |
 | `/taiyi:loop` | 循环 `continue` 直到完成或阻塞（人工门需 `--approver`） |
+| `/taiyi:verify` | PR/CI 工件门禁（`ci verify` 的斜杠入口） |
+| `/taiyi:audit` | 流程/交付排查（git 未入库、CHANGE 漂移等） |
 | `/taiyi:review-loop` | review 机器审查；不过则继续修再跑 |
 | `/taiyi:review-check` | 单次机器审查 REVIEW.md |
 | `/taiyi:token *` | Token 预算：status / record / scan / compress |

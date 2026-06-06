@@ -30,6 +30,8 @@ Codex：`$taiyi-new` … `$taiyi-status` …
 | 聊天 | 用途 |
 |------|------|
 | `/taiyi:doctor` | 安装自检 |
+| `/taiyi:audit` | 流程/交付排查（非 doctor） |
+| `/taiyi:verify` | PR/CI 工件门禁（`ci verify` 别名） |
 | `/taiyi:list` | 多变更时列 slug |
 | `/taiyi:check` | auto 模式 harness 清单 |
 | `/taiyi:sync` | OpenSpec 同步 |

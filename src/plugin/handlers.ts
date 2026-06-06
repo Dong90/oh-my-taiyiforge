@@ -41,6 +41,7 @@ import {
   verifyWorkspaceCi,
   formatCiVerifyPlain,
 } from "../core/ci-verify.js";
+import { auditWorkspace, formatAuditPlain } from "../core/workflow-audit.js";
 import {
   probePlatformCi,
   formatPlatformProbePlain,
@@ -357,6 +358,18 @@ export function taiyiHarnessCheck(workspaceDir: string, slug: string, hookRef: s
     key,
     message: `已打卡 ${key}，可继续主流程或 complete`,
   };
+}
+
+export function taiyiAudit(
+  workspaceDir: string,
+  options?: { slug?: string; plain?: boolean },
+) {
+  const taiyiRoot = resolveTaiyiRoot(workspaceDir);
+  const report = auditWorkspace(workspaceDir, taiyiRoot, { slug: options?.slug });
+  if (options?.plain !== false) {
+    return { ok: report.ok, text: formatAuditPlain(report), report };
+  }
+  return { ok: report.ok, report };
 }
 
 export function taiyiCiVerify(

@@ -154,6 +154,7 @@ npm run walkthrough    # 九阶段 + 铁三角打卡 + CI verify
 - `npm test` — 140 契约测试含九阶段 E2E
 - **Integration 交付门** — git 仓库须 commit + 干净工作区才能 complete integration（[delivery-gate.md](./docs/taiyi/delivery-gate.md)）
 - **Dogfood 修复演示** — legacy state / scope 门禁 / commit 方案（[examples/dogfood-showcase](./examples/dogfood-showcase/README.md)）
+- **`/taiyi:audit`** — 流程/交付排查（CHANGE↔CHANGELOG 漂移、git 未入库、legacy state）
 - CI 模板：`examples/ci/github-actions/`
 
 ---
