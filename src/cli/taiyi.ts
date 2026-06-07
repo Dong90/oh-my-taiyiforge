@@ -1,5 +1,4 @@
 #!/usr/bin/env node
-import path from "node:path";
 import { WorkflowEngine } from "../core/workflow-engine.js";
 import { listPhases } from "../core/phase-registry.js";
 import { resolveTaiyiRoot } from "../core/paths.js";
@@ -32,15 +31,11 @@ import {
   taiyiCiPrompt,
   taiyiReviewCheck,
   taiyiReviewLoop,
+  taiyiToken,
 } from "../plugin/handlers.js";
 import type { CiPlatformId } from "../core/ci-platform.js";
-import {
-  tokenCompress,
-  tokenRecord,
-  tokenScan,
-  tokenStatusPlain,
-} from "../core/token-runner.js";
 import { parseRepeatCount } from "../core/repeat-parse.js";
+import { formatArchivePlain, formatSyncOpenspecPlain } from "../core/format-integration.js";
 import {
   formatAgentLoopProtocol,
   formatLoopResultPlain,
@@ -74,11 +69,11 @@ function usage(): void {
   npm run taiyi -- assess <slug>
   npm run taiyi -- mark-aux <slug> <skill>
   npm run taiyi -- complete <slug> <phase> [--approver 名字]
-  npm run taiyi -- sync-openspec <slug>
+  npm run taiyi -- sync [slug]              /taiyi:sync（别名 sync-openspec）
   npm run taiyi -- archive <slug>
   npm run taiyi -- walkthrough [--slug name] [--profile api|lite]
   npm run taiyi -- audit [slug]              /taiyi:audit — 流程/交付排查（非 doctor）
-  npm run taiyi -- health [slug]            /taiyi:health — 加载 taiyi-health，写 health-report.md
+  npm run taiyi -- health [slug]            /taiyi:health — 输出 health Agent 协议（须 Skill 写报告 + mark-aux）
   npm run taiyi -- verify [slug] [--require-complete]   /taiyi:verify — PR/CI 工件门禁
   npm run taiyi -- ci verify [--slug x] [--require-complete]   （verify 别名，供 GitHub Actions）
   npm run taiyi -- ci platform <opencode|claude|codex|cursor>
@@ -140,7 +135,8 @@ function stripFlags(argv: string[]): string[] {
 function parseOptionalSlug(argv: string[]): string | undefined {
   const slugIdx = argv.indexOf("--slug");
   if (slugIdx >= 0 && argv[slugIdx + 1]) return argv[slugIdx + 1];
-  return stripFlags(argv)[0];
+  const { positional } = parseRepeatCount(stripFlags(argv));
+  return positional[0];
 }
 
 function runVerifyCommand(verifyArgs: string[]): void {
@@ -257,16 +253,16 @@ switch (cmd) {
     printDoctor();
     break;
   case "audit": {
-    const slug = args[0];
-    const r = taiyiAudit(workspaceDir, { slug, plain: !jsonMode });
+    const { positional } = parseRepeatCount(stripFlags(args));
+    const r = taiyiAudit(workspaceDir, { slug: positional[0], plain: !jsonMode });
     if (jsonMode) console.log(JSON.stringify(r.report, null, 2));
     else if ("text" in r && r.text) console.log(r.text);
     if (!r.ok) process.exit(1);
     break;
   }
   case "health": {
-    const slug = args[0];
-    const r = taiyiHealth(workspaceDir, slug);
+    const { positional } = parseRepeatCount(stripFlags(args));
+    const r = taiyiHealth(workspaceDir, positional[0]);
     if (!r.ok) {
       console.error("error" in r ? r.error : "health failed");
       process.exit(1);
@@ -478,11 +474,7 @@ switch (cmd) {
     break;
   }
   case "guide": {
-    const slug = args[0];
-    if (!slug) {
-      console.error("缺少 slug");
-      process.exit(1);
-    }
+    const slug = requireSlug(args);
     const r = taiyiGuide(workspaceDir, slug);
     if (!r.ok) {
       console.error(r.error);
@@ -492,11 +484,7 @@ switch (cmd) {
     break;
   }
   case "assess": {
-    const slug = args[0];
-    if (!slug) {
-      console.error("缺少 slug");
-      process.exit(1);
-    }
+    const slug = requireSlug(args);
     const r = taiyiAssess(workspaceDir, slug);
     if (!r.ok) {
       console.error(r.error);
@@ -527,15 +515,18 @@ switch (cmd) {
     }
     break;
   }
+  case "sync":
   case "sync-openspec": {
-    const slug = args[0];
-    if (!slug) {
-      console.error("缺少 slug");
-      process.exit(1);
-    }
+    const slug = requireSlug(args);
     const force = args.includes("--force");
     const r = taiyiSyncOpenspec(workspaceDir, slug, { force });
-    console.log(JSON.stringify(r, null, 2));
+    if (jsonMode) {
+      console.log(JSON.stringify(r, null, 2));
+    } else if (r.ok || "copied" in r) {
+      console.log(formatSyncOpenspecPlain(slug, r));
+    } else {
+      console.error("error" in r ? r.error : formatSyncOpenspecPlain(slug, r));
+    }
     if (!r.ok) process.exit(1);
     break;
   }
@@ -543,7 +534,13 @@ switch (cmd) {
     const slug = requireSlug(args);
     const skipSpecs = args.includes("--skip-specs");
     const r = taiyiArchive(workspaceDir, slug, { skipSpecs });
-    console.log(JSON.stringify(r, null, 2));
+    if (jsonMode) {
+      console.log(JSON.stringify(r, null, 2));
+    } else if (r.ok) {
+      console.log(formatArchivePlain(slug, r));
+    } else {
+      console.error(formatArchivePlain(slug, r));
+    }
     if (!r.ok) process.exit(1);
     break;
   }
@@ -616,8 +613,9 @@ switch (cmd) {
     break;
   }
   case "harness-check": {
-    const [slug, ...hookParts] = args;
-    const hookRef = hookParts.join(" ").trim();
+    const { positional } = parseRepeatCount(stripFlags(args));
+    const slug = positional[0];
+    const hookRef = positional.slice(1).join(" ").trim();
     if (!slug || !hookRef) {
       console.error("用法: harness-check <slug> <hook-key>");
       process.exit(1);
@@ -648,7 +646,8 @@ switch (cmd) {
   }
   case "complete": {
     const { argv: completeArgs, approver } = extractApprover(args);
-    const [slug, phase] = completeArgs;
+    const { positional } = parseRepeatCount(stripFlags(completeArgs));
+    const [slug, phase] = positional;
     if (!slug || !phase) {
       console.error("用法: complete <slug> <phase> [--approver 名字]  （或: done [slug] [--approver 名字]）");
       process.exit(1);
@@ -679,47 +678,49 @@ switch (cmd) {
     process.exit(r.ok ? 0 : 1);
   }
   case "token": {
-    const [sub, slugArg, tokensArg, ...rest] = args;
-    const slugResolved = slugArg
-      ? { ok: true as const, slug: slugArg, inferred: false }
-      : resolveActiveSlug(taiyiRoot);
-    if (!slugResolved.ok) {
-      console.error(slugResolved.error);
+    const [sub, ...tokenArgs] = args;
+    const phaseIdx = tokenArgs.indexOf("--phase");
+    const phase = (phaseIdx >= 0 ? tokenArgs[phaseIdx + 1] : undefined) as PhaseId | undefined;
+    const kindIdx = tokenArgs.indexOf("--kind");
+    const kind =
+      kindIdx >= 0 ? (tokenArgs[kindIdx + 1] as "agent" | "artifact" | "scan") : undefined;
+    const labelIdx = tokenArgs.indexOf("--label");
+    const label = labelIdx >= 0 ? tokenArgs[labelIdx + 1] : undefined;
+    const { positional } = parseRepeatCount(stripFlags(tokenArgs));
+
+    const effectiveSub =
+      sub === "status" || !sub
+        ? ("status" as const)
+        : sub === "record" || sub === "scan" || sub === "compress"
+          ? sub
+          : null;
+    if (!effectiveSub) {
+      console.error("用法: /taiyi:token status|record|scan|compress …（Agent 代跑 taiyi-forge.sh token …）");
       process.exit(1);
     }
-    const slug = slugResolved.slug;
-    const changeDir = path.join(taiyiRoot, "changes", slug);
-    const state = engine.getState(slug);
-    const phaseIdx = rest.indexOf("--phase");
-    const phase = (phaseIdx >= 0 ? rest[phaseIdx + 1] : state?.currentPhase ?? "change") as PhaseId;
-    const kindIdx = rest.indexOf("--kind");
-    const kind = kindIdx >= 0 ? (rest[kindIdx + 1] as "agent" | "artifact" | "scan") : "agent";
-    const labelIdx = rest.indexOf("--label");
-    const label = labelIdx >= 0 ? rest[labelIdx + 1] : undefined;
 
-    if (sub === "status" || !sub) {
-      console.log(tokenStatusPlain(changeDir, slug, state?.currentPhase));
-      break;
-    }
-    if (sub === "record") {
-      const n = Number(tokensArg);
-      if (!Number.isFinite(n) || n < 0) {
-        console.error("用法: token record <slug> <tokens> [--phase change] [--kind agent]");
-        process.exit(1);
+    let slug: string | undefined;
+    let tokens: number | undefined;
+    if (effectiveSub === "record") {
+      if (positional.length >= 2) {
+        slug = positional[0];
+        tokens = Number(positional[1]);
+      } else if (positional.length === 1) {
+        const n = Number(positional[0]);
+        if (Number.isFinite(n)) tokens = n;
+        else slug = positional[0];
       }
-      console.log(tokenRecord(changeDir, slug, n, { phase, kind, label }));
-      break;
+    } else if (positional[0]) {
+      slug = positional[0];
     }
-    if (sub === "scan") {
-      console.log(tokenScan(changeDir, slug, phase));
-      break;
+
+    const r = taiyiToken(workspaceDir, effectiveSub, { slug, tokens, phase, kind, label });
+    if (!r.ok) {
+      console.error("error" in r ? r.error : "token failed");
+      process.exit(1);
     }
-    if (sub === "compress") {
-      console.log(tokenCompress(changeDir, slug, phase));
-      break;
-    }
-    console.error("用法: /taiyi:token status|record|scan|compress …（Agent 代跑 taiyi-forge.sh token …）");
-    process.exit(1);
+    if ("text" in r && r.text) console.log(r.text);
+    break;
   }
   default:
     usage();

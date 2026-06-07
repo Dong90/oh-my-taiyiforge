@@ -104,10 +104,7 @@ case "$cmd" in
   run)
     run_taiyi walkthrough "$@"
     ;;
-  list)
-    run_taiyi list
-    ;;
-  audit|health|verify|doctor|init|next|harness|harness-check|complete|assess|mark-aux|status|guide|sync-openspec|walkthrough|ci|token|loop|review-check|review-loop)
+  audit|health|verify|doctor|init|next|harness|harness-check|complete|assess|mark-aux|status|guide|sync|sync-openspec|walkthrough|ci|token|loop|review-check|review-loop|phases)
     run_taiyi "$cmd" "$@"
     ;;
   help|--help|-h)

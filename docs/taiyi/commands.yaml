@@ -113,8 +113,8 @@ profiles:
 
       - chat: "/taiyi:sync"
         codex: "$taiyi-sync"
-        engine: "taiyi-forge.sh sync [slug]"
-        meaning: Taiyi 工件 → OpenSpec（对标 opsx:sync）
+        engine: "taiyi-forge.sh sync [slug]   # 引擎子命令为 sync（非 sync-openspec）；CLI 也接受 sync-openspec"
+        meaning: Taiyi 工件 → OpenSpec（对标 opsx:sync）。聊天动词无连字符，引擎用 sync 别名
         when: 项目已装 OpenSpec，integration 前后
 
       - chat: "/taiyi:run"
@@ -190,8 +190,8 @@ profiles:
       - chat: "/taiyi:review-check <slug>"
         codex: "$taiyi-review-check"
         engine: "taiyi-forge.sh review-check <slug>"
-        meaning: 单次机器审查（不计轮次）
-        when: 快速探测 REVIEW.md 是否可过关
+        meaning: 单次 review 循环门禁（无 open high；≠ complete review 的 Approve 勾选）
+        when: 快速探测 REVIEW.md 是否可结束 review 循环
 
       - chat: "/taiyi:loop [slug] [xN]"
         codex: "$taiyi-loop"
@@ -223,7 +223,7 @@ profiles:
         meaning: 重算复杂度写入 state（不 mark-aux）
 
   repeat_suffix:
-    description: 任意上述引擎命令可后缀 xN，单轮重复执行
+    description: 多数引擎命令可后缀 xN；complete/mark-aux/harness-check 等须显式参数，不支持 xN
     examples:
       - "/taiyi:continue x3"
       - "/taiyi:apply x2"
@@ -236,7 +236,7 @@ profiles:
       - chat: "/taiyi:explore"
         engine: "提示加载 taiyi-change + Superpowers brainstorming"
       - chat: "/taiyi:sync"
-        engine: "taiyi-forge.sh sync-openspec [slug]"
+        engine: "taiyi-forge.sh sync [slug]"
       - chat: "/taiyi:doctor"
         engine: "taiyi-forge.sh doctor"
 

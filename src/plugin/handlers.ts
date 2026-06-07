@@ -372,7 +372,7 @@ export function taiyiHarnessCheck(workspaceDir: string, slug: string, hookRef: s
     ok: true as const,
     phase: state.currentPhase,
     key,
-    message: `已打卡 ${key}，可继续主流程或 complete`,
+    message: `已打卡 ${key}（登记步骤；不验证是否已执行 hook）。可继续主流程或 complete`,
   };
 }
 
@@ -392,16 +392,9 @@ export function taiyiHealth(workspaceDir: string, slug?: string) {
   const taiyiRoot = resolveTaiyiRoot(workspaceDir);
   let resolved = slug?.trim();
   if (!resolved) {
-    const changes = listChanges(taiyiRoot);
-    if (changes.length === 1) resolved = changes[0]!.slug;
-    else if (changes.length === 0) {
-      return { ok: false as const, error: "无活跃变更；先 taiyi init 或指定 slug" };
-    } else {
-      return {
-        ok: false as const,
-        error: `多变更并行，请指定 slug：${changes.map((c) => c.slug).join(", ")}`,
-      };
-    }
+    const inferred = resolveActiveSlug(taiyiRoot);
+    if (!inferred.ok) return { ok: false as const, error: inferred.error };
+    resolved = inferred.slug;
   }
   const invalid = rejectInvalidSlug(resolved);
   if (invalid) return invalid;

@@ -1,5 +1,6 @@
 import type { Plugin } from "@opencode-ai/plugin";
 import { tool } from "@opencode-ai/plugin/tool";
+import { formatArchivePlain, formatSyncOpenspecPlain } from "../core/format-integration.js";
 import {
   taiyiArchive,
   taiyiSyncOpenspec,
@@ -138,7 +139,7 @@ const TaiyiForgePlugin: Plugin = async () => {
             force: args.force,
             createChangeDir: args.createChangeDir,
           });
-          return JSON.stringify(r, null, 2);
+          return formatSyncOpenspecPlain(args.slug, r);
         },
       }),
       taiyi_archive: tool({
@@ -155,7 +156,7 @@ const TaiyiForgePlugin: Plugin = async () => {
           const r = taiyiArchive(ctx.directory, args.slug, {
             skipSpecs: args.skipSpecs,
           });
-          return JSON.stringify(r, null, 2);
+          return formatArchivePlain(args.slug, r);
         },
       }),
       taiyi_assess: tool({
@@ -292,10 +293,14 @@ const TaiyiForgePlugin: Plugin = async () => {
         },
       }),
       taiyi_loop: tool({
-        description: "Loop continue until workflow completes or blocks (human gate / quality).",
+        description:
+          "Loop continue until workflow completes or blocks (human gate / quality). Omit times for default max per round (TAIYI_LOOP_MAX, usually 20); set times=1 for a single attempt.",
         args: {
           slug: tool.schema.string(),
-          times: tool.schema.number().optional().describe("Max attempts per round (default env TAIYI_LOOP_MAX)"),
+          times: tool.schema
+            .number()
+            .optional()
+            .describe("Max continue attempts this round; omit=default 20, 1=single try"),
         },
         async execute(args, ctx) {
           const r = taiyiLoop(ctx.directory, args.slug, { times: args.times, plain: true });
