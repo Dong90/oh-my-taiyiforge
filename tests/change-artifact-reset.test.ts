@@ -22,6 +22,7 @@ describe("change-artifact-reset", () => {
     fs.mkdirSync(path.join(changeDir, "adr"), { recursive: true });
     fs.writeFileSync(path.join(changeDir, "adr", "001.md"), "# ADR\n\nlong enough body for adr gate\n", "utf8");
     fs.writeFileSync(path.join(changeDir, ".harness-checkpoints.json"), "{}", "utf8");
+    fs.writeFileSync(path.join(changeDir, ".loop-state.json"), '{"slug":"x","round":3}', "utf8");
     fs.writeFileSync(path.join(changeDir, "state.json"), '{"slug":"x"}', "utf8");
 
     const removed = resetChangeArtifacts(changeDir);
@@ -31,6 +32,7 @@ describe("change-artifact-reset", () => {
     expect(fs.existsSync(path.join(changeDir, "health-report.md"))).toBe(false);
     expect(fs.existsSync(path.join(changeDir, "adr"))).toBe(false);
     expect(fs.existsSync(path.join(changeDir, ".harness-checkpoints.json"))).toBe(false);
+    expect(fs.existsSync(path.join(changeDir, ".loop-state.json"))).toBe(false);
     expect(fs.existsSync(path.join(changeDir, "state.json"))).toBe(true);
     expect(removed.length).toBeGreaterThan(0);
   });

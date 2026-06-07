@@ -11,12 +11,22 @@ import { E2E_ARTIFACTS } from "../src/core/e2e-fixtures.js";
 
 describe("repeat-parse", () => {
   it("parses x5 suffix", () => {
-    expect(parseRepeatCount(["my-slug", "x5"]).times).toBe(5);
-    expect(parseRepeatCount(["my-slug", "x5"]).positional).toEqual(["my-slug"]);
+    const r = parseRepeatCount(["my-slug", "x5"]);
+    expect(r.times).toBe(5);
+    expect(r.timesExplicit).toBe(true);
+    expect(r.positional).toEqual(["my-slug"]);
   });
 
   it("parses --times", () => {
-    expect(parseRepeatCount(["--times", "3"]).times).toBe(3);
+    const r = parseRepeatCount(["--times", "3"]);
+    expect(r.times).toBe(3);
+    expect(r.timesExplicit).toBe(true);
+  });
+
+  it("default times=1 without explicit repeat", () => {
+    const r = parseRepeatCount(["my-slug"]);
+    expect(r.times).toBe(1);
+    expect(r.timesExplicit).toBe(false);
   });
 
   it("default loop max is positive", () => {
@@ -41,10 +51,13 @@ describe("loop-runner", () => {
       "utf8",
     );
 
+    const blocked = runContinueRepeat(engine, tmp, taiyiRoot, "loop-demo", 1);
+    expect(blocked.stopReason).toBe("blocked");
+    expect(blocked.attempts[0]?.outcome).toBe("blocked");
+    expect(blocked.attempts[0]?.phase).toBe("change");
+
     const r = runContinueRepeat(engine, tmp, taiyiRoot, "loop-demo", 3);
     expect(r.attempts.length).toBeGreaterThanOrEqual(1);
-    expect(r.attempts[0]?.outcome).toBe("blocked");
-    expect(r.attempts[0]?.phase).toBe("change");
 
     clearLoopState(changeDir);
     fs.rmSync(tmp, { recursive: true, force: true });

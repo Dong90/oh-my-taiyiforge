@@ -39,7 +39,7 @@
 | `/taiyi:verify` | PR/CI 工件门禁（`ci verify` 的斜杠入口） |
 | `/taiyi:audit` | 流程/交付排查（git 未入库、CHANGE 漂移等） |
 | `/taiyi:review-loop` | review 机器审查；不过则继续修再跑 |
-| `/taiyi:review-check` | 单次机器审查 REVIEW.md |
+| `/taiyi:review-check` | 单次 review **循环门禁**（无 open high；≠ `complete review` 的 Approve 勾选） |
 | `/taiyi:token *` | Token 预算：status / record / scan / compress |
 | `/taiyi:sync` | 同步到 OpenSpec（≈ `opsx:sync`） |
 | `/taiyi:run` | 首次体验演示（≈ `omc.sh run`，非日常） |

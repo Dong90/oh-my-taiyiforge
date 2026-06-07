@@ -332,7 +332,7 @@ const TaiyiForgePlugin: Plugin = async () => {
       }),
       taiyi_review_check: tool({
         description:
-          "Machine review gate: REVIEW.md must be Approve with no open high findings (no round bump).",
+          "Review loop gate (not complete review): no open high findings and not Request changes; Approve checkbox not required. Use complete review for strict machine gate.",
         args: {
           slug: tool.schema.string(),
         },

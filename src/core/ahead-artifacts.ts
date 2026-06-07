@@ -5,7 +5,10 @@ import { getPhase, getPhaseOrder, listPhases } from "./phase-registry.js";
 import { isSeedTemplate } from "./seed-marker.js";
 
 export type AheadArtifactFinding = {
-  code: "artifacts.ahead-of-phase" | "artifacts.orphan-skipped";
+  code:
+    | "artifacts.ahead-of-phase"
+    | "artifacts.orphan-skipped"
+    | "artifacts.missing-for-incomplete";
   phase: PhaseId;
   file: string;
   message: string;
@@ -33,22 +36,37 @@ export function detectAheadArtifacts(
 
   for (const phase of listPhases()) {
     if (phase.kind !== "markdown") continue;
-    if (!artifactExists(changeDir, phase.artifact)) continue;
+    const exists = artifactExists(changeDir, phase.artifact);
+    const phaseOrder = getPhaseOrder(phase.id);
 
     if (skipped.has(phase.id)) {
-      findings.push({
-        code: "artifacts.orphan-skipped",
-        phase: phase.id,
-        file: phase.artifact,
-        message: `profile 已跳过 ${phase.id}，但 ${phase.artifact} 仍存在（可能是旧版全量 seed 或手动创建）`,
-      });
+      if (exists) {
+        findings.push({
+          code: "artifacts.orphan-skipped",
+          phase: phase.id,
+          file: phase.artifact,
+          message: `profile 已跳过 ${phase.id}，但 ${phase.artifact} 仍存在（可能是旧版全量 seed 或手动创建）`,
+        });
+      }
       continue;
     }
 
     if (completed.has(phase.id)) continue;
     if (phase.id === state.currentPhase) continue;
 
-    if (getPhaseOrder(phase.id) > currentOrder) {
+    if (phaseOrder < currentOrder && !exists) {
+      findings.push({
+        code: "artifacts.missing-for-incomplete",
+        phase: phase.id,
+        file: phase.artifact,
+        message: `当前阶段为 ${state.currentPhase}，但更早阶段 ${phase.id} 未 completed 且缺少 ${phase.artifact}`,
+      });
+      continue;
+    }
+
+    if (!exists) continue;
+
+    if (phaseOrder > currentOrder) {
       findings.push({
         code: "artifacts.ahead-of-phase",
         phase: phase.id,

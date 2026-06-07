@@ -51,9 +51,14 @@ export function normalizeState(raw: ChangeState): ChangeState {
     complexity: normalizeComplexity(raw.complexity),
     currentPhase: normalizeCurrentPhase({ ...raw, completedPhases, skippedPhases }),
   };
+  const completed = isWorkflowCompleted(draft);
+  const workflowStatus =
+    raw.workflowStatus === "completed" && !completed
+      ? "active"
+      : (raw.workflowStatus ?? (completed ? "completed" : "active"));
+
   return {
     ...draft,
-    workflowStatus:
-      raw.workflowStatus ?? (isWorkflowCompleted(draft) ? "completed" : "active"),
+    workflowStatus,
   };
 }

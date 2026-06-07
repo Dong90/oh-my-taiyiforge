@@ -15,7 +15,7 @@ Codex：`$taiyi-review-loop` · `$taiyi-review-check`
 
 | 命令 | 语义 |
 |------|------|
-| `/taiyi:review-check` | 只跑一次机器门禁，适合快速探测 |
+| `/taiyi:review-check` | 只跑一次**循环门禁**（无 open high / 非 Request changes），适合快速探测 |
 | `/taiyi:review-loop` | **会话循环**：审查不过 → 修代码 → 再 review → 再查，**直到通过才停** |
 
 `review-loop` **不会**对旧 `REVIEW.md` 直接过关 — 每次先要求**新一轮** code review（基于 git diff），再由 `review-check` 跑机器门禁。
@@ -28,11 +28,12 @@ Codex：`$taiyi-review-loop` · `$taiyi-review-check`
 4. 通过 → 提示用户 `complete review --approver`
 5. 轮次记入 `.review-loop-state.json`（默认上限 `TAIYI_REVIEW_LOOP_MAX_ROUNDS=20`）
 
-## 机器门禁（引擎强制）
+## 两档门禁（勿混淆）
 
-- `## Verdict` 须 `[x] **Approve**`
-- 不得为 **Request changes**
-- Findings 中 **high** 须标 `✅` / fixed / 已修复 / 豁免
+| 命令 | 标准 |
+|------|------|
+| `review-check` / `review-loop` | 无 open high、非 Request changes、非 missing Verdict |
+| `complete review` | 还须 `[x] **Approve**`；Findings 中 **high** 须标 `✅` / fixed / 已修复 / 豁免 |
 
 ## 与 /taiyi:loop 的区别
 

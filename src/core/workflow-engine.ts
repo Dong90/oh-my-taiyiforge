@@ -399,7 +399,7 @@ export class WorkflowEngine {
     }
 
     if (workingState.autoHarness) {
-      runPostCompleteShellHooks(workspaceDir, slug, phaseId);
+      runPostCompleteShellHooks(workspaceDir, this.workspaceRoot, slug, phaseId);
     }
     return { ok: true };
   }

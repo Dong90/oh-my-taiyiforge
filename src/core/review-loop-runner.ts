@@ -159,6 +159,9 @@ export function runReviewMachineCheck(
   const loopStatus = evaluateReviewLoopStatus(content);
   let loopState: ReviewLoopStateFile;
   if (options?.bumpRound === false) {
+    if (loopStatus.canStop) {
+      clearReviewLoopState(changeDir);
+    }
     loopState = { slug, round: 0, updatedAt: new Date().toISOString() };
   } else if (loopStatus.canStop) {
     clearReviewLoopState(changeDir);

@@ -71,7 +71,7 @@ npx taiyi list
 | `/taiyi:token scan` | 扫描工件 Token |
 | `/taiyi:token compress` | 压缩 → CONTEXT-COMPACT.md |
 | `/taiyi:review-loop` | review 机器审查；不过则继续修再跑 |
-| `/taiyi:review-check` | 单次机器审查 REVIEW.md |
+| `/taiyi:review-check` | 单次 review 循环门禁（≠ `complete review` 的 Approve 勾选） |
 | `/taiyi:archive` | 九阶段完成后归档 |
 
 Codex 用 `$taiyi-new` 等；完整列表见 [`docs/taiyi/commands.yaml`](./taiyi/commands.yaml)。

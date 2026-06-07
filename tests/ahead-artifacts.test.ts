@@ -54,6 +54,29 @@ describe("ahead-artifacts", () => {
     expect(findings).toEqual([]);
   });
 
+  it("flags missing artifacts for incomplete earlier phases", () => {
+    fs.writeFileSync(
+      path.join(changeDir, "CHANGE.md"),
+      "# CHANGE\n\n## Motivation\nok\n\n## Scope\nin\n\n## Success Criteria\n- [x] done\n",
+      "utf8",
+    );
+    fs.writeFileSync(
+      path.join(changeDir, "TEST.md"),
+      "# TEST\n\n## Execution Log\n- ran tests\n",
+      "utf8",
+    );
+    const findings = detectAheadArtifacts(
+      changeDir,
+      baseState({
+        currentPhase: "test",
+        completedPhases: ["change"],
+      }),
+    );
+    expect(findings.some((f) => f.code === "artifacts.missing-for-incomplete")).toBe(
+      true,
+    );
+  });
+
   it("flags orphan artifacts on skipped phases", () => {
     fs.writeFileSync(
       path.join(changeDir, "UI-DESIGN.md"),
@@ -62,7 +85,7 @@ describe("ahead-artifacts", () => {
     );
     const findings = detectAheadArtifacts(
       changeDir,
-      baseState({ profile: "backend", skippedPhases: ["ui-design"] }),
+      baseState({ profile: "api", skippedPhases: ["ui-design"] }),
     );
     expect(findings.some((f) => f.code === "artifacts.orphan-skipped")).toBe(true);
   });

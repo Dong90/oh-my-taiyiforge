@@ -6,10 +6,7 @@ import type { ChangeState, PhaseId } from "./types.js";
 import { getHarnessContext, type HarnessHook } from "../integrations/harness-hooks.js";
 import { auxiliaryForPhase, pendingAuxiliary } from "./routing/auxiliary-hints.js";
 import { getPhase } from "./phase-registry.js";
-import {
-  auxiliaryArtifactSatisfied,
-  detectCompletedAuxiliary,
-} from "./auxiliary-artifacts.js";
+import { auxiliaryArtifactSatisfied } from "./auxiliary-artifacts.js";
 import { getOpenspecStatus } from "../integrations/openspec.js";
 import { syncTaiyiToOpenspec } from "../integrations/openspec-sync.js";
 import { pendingIronTriangleHooks } from "./harness-checkpoints.js";
@@ -89,16 +86,6 @@ function runShellCommand(
   });
   const detail = (r.stdout || r.stderr || "").slice(0, 300);
   return { ok: r.status === 0, detail: detail || `exit ${r.status ?? 1}` };
-}
-
-export function syncAuxiliaryFromArtifacts(
-  changeDir: string,
-  auxiliaryCompleted: string[],
-): string[] {
-  const detected = detectCompletedAuxiliary(changeDir);
-  const set = new Set(auxiliaryCompleted);
-  for (const s of detected) set.add(s);
-  return [...set];
 }
 
 export function buildHarnessPlan(
@@ -222,6 +209,7 @@ export function enforceAutoHarnessBeforeComplete(
 
 export function runPostCompleteShellHooks(
   workspaceDir: string,
+  taiyiRoot: string,
   slug: string,
   phaseId: PhaseId,
 ): HarnessStep[] {
@@ -233,7 +221,7 @@ export function runPostCompleteShellHooks(
     if (h.command.includes("archive") && phaseId === "integration") {
       const openspec = getOpenspecStatus(workspaceDir, slug);
       if (openspec.detected) {
-        const changeDir = path.join(workspaceDir, ".taiyi", "changes", slug);
+        const changeDir = path.join(taiyiRoot, "changes", slug);
         const sync = syncTaiyiToOpenspec(workspaceDir, slug, changeDir, { createChangeDir: true });
         results.push({
           kind: "shell",

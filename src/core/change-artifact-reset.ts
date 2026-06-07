@@ -6,6 +6,7 @@ import { AUXILIARY_ARTIFACTS } from "./auxiliary-artifacts.js";
 const RUNTIME_FILES = [
   ".dev-complete",
   ".harness-checkpoints.json",
+  ".loop-state.json",
   ".review-loop-state.json",
   ".token-usage.json",
 ];

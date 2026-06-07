@@ -427,7 +427,7 @@ switch (cmd) {
     break;
   }
   case "loop": {
-    const { positional, times } = parseRepeatCount(stripFlags(args));
+    const { positional, times, timesExplicit } = parseRepeatCount(stripFlags(args));
     const r = resolveActiveSlug(taiyiRoot, positional[0]);
     if (!r.ok) {
       console.error(r.error);
@@ -439,7 +439,7 @@ switch (cmd) {
       workspaceDir,
       taiyiRoot,
       slug,
-      times > 1 ? times : undefined,
+      timesExplicit ? times : undefined,
     );
     if (jsonMode) {
       console.log(JSON.stringify(result, null, 2));

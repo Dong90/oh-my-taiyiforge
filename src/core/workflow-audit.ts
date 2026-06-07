@@ -154,7 +154,11 @@ export function auditChange(
 
   for (const a of detectAheadArtifacts(changeDir, state)) {
     findings.push({
-      severity: a.code === "artifacts.ahead-of-phase" ? "medium" : "low",
+      severity:
+        a.code === "artifacts.ahead-of-phase" ||
+        a.code === "artifacts.missing-for-incomplete"
+          ? "medium"
+          : "low",
       code: a.code,
       message: a.message,
     });
@@ -165,6 +169,14 @@ export function auditChange(
   );
   findings.push(...openspecFindings(workspaceDir, slug, integrationDone));
 
+  if (!state.completedPhases.includes("integration") && guide.workflowCompleted) {
+    findings.push({
+      severity: "high",
+      code: "workflow.status-drift",
+      message: "workflowCompleted 为真但 integration 不在 completedPhases",
+    });
+  }
+
   if (deliveryGateEnabled(workspaceDir)) {
     const delivery = evaluateDeliveryGate(workspaceDir);
     if (integrationDone && !delivery.passed && !delivery.skipped) {
@@ -174,13 +186,6 @@ export function auditChange(
         message: options?.pretendIntegrationComplete
           ? `complete integration 前交付未闭环: ${delivery.reason}`
           : `integration 已过关但工程交付未闭环: ${delivery.reason}`,
-      });
-    }
-    if (!state.completedPhases.includes("integration") && guide.workflowCompleted) {
-      findings.push({
-        severity: "high",
-        code: "workflow.status-drift",
-        message: "workflowCompleted 为真但 integration 不在 completedPhases",
       });
     }
   }

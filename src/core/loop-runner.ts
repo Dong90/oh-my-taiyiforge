@@ -122,7 +122,7 @@ export function runContinueRepeat(
       return {
         ok: false,
         slug,
-        stopReason: i >= times ? "max" : "blocked",
+        stopReason: "blocked",
         attempts,
         timesRequested: times,
         guideText: r.message,

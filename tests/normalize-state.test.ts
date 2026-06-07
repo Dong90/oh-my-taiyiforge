@@ -40,6 +40,24 @@ describe("normalize-state", () => {
     expect(n.workflowStatus).toBe("completed");
   });
 
+  it("downgrades workflowStatus completed when integration missing", () => {
+    const raw = {
+      slug: "x",
+      currentPhase: "test",
+      completedPhases: ["change", "requirement"],
+      profile: "full",
+      skippedPhases: [],
+      strictDev: false,
+      auxiliaryCompleted: [],
+      workflowStatus: "completed",
+      createdAt: "",
+      updatedAt: "",
+    } as ChangeState;
+    const n = normalizeState(raw);
+    expect(n.workflowStatus).toBe("active");
+    expect(n.currentPhase).toBe("test");
+  });
+
   it("fills missing recommendedSkills array", () => {
     const raw = {
       slug: "x",

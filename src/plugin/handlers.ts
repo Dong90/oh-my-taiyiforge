@@ -462,7 +462,8 @@ export function taiyiHarnessRunShell(workspaceDir: string, slug: string) {
   const engine = createEngine(workspaceDir);
   const state = engine.getState(slug);
   if (!state) return { ok: false as const, error: `Change not found: ${slug}` };
-  const results = runPostCompleteShellHooks(workspaceDir, slug, state.currentPhase);
+  const taiyiRoot = resolveTaiyiRoot(workspaceDir);
+  const results = runPostCompleteShellHooks(workspaceDir, taiyiRoot, slug, state.currentPhase);
   return { ok: true as const, results, phase: state.currentPhase };
 }
 
