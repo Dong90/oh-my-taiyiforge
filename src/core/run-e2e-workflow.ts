@@ -56,6 +56,10 @@ export function runE2eWorkflow(
         "# Health Report\n\nE2E smoke — no blocking findings.\n",
         "utf8",
       );
+      const mark = engine.markAuxiliary(slug, "taiyi-health");
+      if (!mark.ok) {
+        return { ok: false, error: `review: ${mark.error}`, completed };
+      }
     }
 
     const result = engine.completePhase(slug, phaseId, PASSING_GATES, { allowAutoHuman: true });

@@ -4,12 +4,17 @@ import type { ChangeProfile, ChangeState, GateInput, PhaseId } from "./types.js"
 import { evaluateHumanGate } from "./gates/human-gate.js";
 import { rejectAutomatedHumanApproval, requiresHumanGate } from "./gates/human-gate-config.js";
 import { isKnownAuxiliarySkill, KNOWN_AUXILIARY_SKILLS } from "./routing/auxiliary-skills.js";
+import {
+  auxiliaryArtifactSatisfied,
+  AUXILIARY_ARTIFACTS,
+} from "./auxiliary-artifacts.js";
 import { assertValidSlug, validateSlug } from "./slug.js";
 import { evaluateQualityGate } from "./gates/quality-gate.js";
 import { canEnterPhase, getNextPhase, getPhase } from "./phase-registry.js";
 import { isPhaseSkipped, skippedPhasesForProfile } from "./profile.js";
 import { assessComplexity, type ComplexitySignals } from "./routing/complexity.js";
 import { inferComplexitySignals } from "./routing/infer-complexity.js";
+import { resetChangeArtifacts } from "./change-artifact-reset.js";
 import { seedChangeTemplates, seedPhaseTemplate } from "./template-seed.js";
 import {
   artifactPathForPhase,
@@ -18,7 +23,6 @@ import {
 import {
   enforceAutoHarnessBeforeComplete,
   runPostCompleteShellHooks,
-  syncAuxiliaryFromArtifacts,
 } from "./harness-runner.js";
 import { enforceTokenBudgetBeforeComplete } from "./token-runner.js";
 import { expectedPhaseCount, isWorkflowCompleted } from "./change-status.js";
@@ -70,6 +74,9 @@ export class WorkflowEngine {
       throw new Error(`Change already exists: ${slug}. Use --force to reinitialize.`);
     }
     fs.mkdirSync(dir, { recursive: true });
+    if (options?.force && fs.existsSync(dir)) {
+      resetChangeArtifacts(dir);
+    }
     const profile = options?.profile ?? "full";
     const skippedPhases = skippedPhasesForProfile(profile);
     const templatesDir = options?.templatesDir ?? this.templatesDir;
@@ -165,6 +172,16 @@ export class WorkflowEngine {
         error: `Unknown auxiliary skill: ${skillId} (known: ${[...KNOWN_AUXILIARY_SKILLS].join(", ")})`,
       };
     }
+    const changeDir = this.changeDir(slug);
+    if (!auxiliaryArtifactSatisfied(changeDir, skillId)) {
+      const spec = AUXILIARY_ARTIFACTS[skillId];
+      const expected =
+        spec?.files?.join(", ") ?? spec?.dirs?.map((d) => `${d}/*.md`).join(", ") ?? "artifact";
+      return {
+        ok: false,
+        error: `Auxiliary artifact not ready for ${skillId} (expected ${expected}, non-seed content)`,
+      };
+    }
     const auxiliaryCompleted = state.auxiliaryCompleted.includes(skillId)
       ? state.auxiliaryCompleted
       : [...state.auxiliaryCompleted, skillId];
@@ -220,11 +237,7 @@ export class WorkflowEngine {
     }
 
     const changeDir = this.changeDir(slug);
-    const syncedAux = syncAuxiliaryFromArtifacts(changeDir, state.auxiliaryCompleted);
-    let workingState = { ...state, auxiliaryCompleted: syncedAux };
-    if (syncedAux.length !== state.auxiliaryCompleted.length) {
-      this.writeState({ ...workingState, updatedAt: new Date().toISOString() });
-    }
+    const workingState = { ...state };
 
     if (
       phaseId === "review" &&
@@ -236,6 +249,13 @@ export class WorkflowEngine {
           ok: false,
           error:
             "Medium/high complexity: complete taiyi-health and run `taiyi mark-aux <slug> taiyi-health` before review",
+        };
+      }
+      if (!auxiliaryArtifactSatisfied(changeDir, "taiyi-health")) {
+        return {
+          ok: false,
+          error:
+            "Medium/high complexity: health-report.md 未就绪（非模板占位），先 /taiyi:health 再 mark-aux",
         };
       }
     }
@@ -280,16 +300,6 @@ export class WorkflowEngine {
     const tokenCheck = enforceTokenBudgetBeforeComplete(changeDir, slug, phaseId);
     if (!tokenCheck.ok) {
       return { ok: false, error: tokenCheck.error };
-    }
-
-    if (autoCheck.plan) {
-      workingState = {
-        ...workingState,
-        auxiliaryCompleted: syncAuxiliaryFromArtifacts(
-          changeDir,
-          workingState.auxiliaryCompleted,
-        ),
-      };
     }
 
     let qualityScores = { ...gates.quality };

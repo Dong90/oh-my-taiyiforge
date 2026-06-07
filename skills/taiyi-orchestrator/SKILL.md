@@ -54,7 +54,7 @@ scripts/taiyi-forge.sh harness-check <slug> gstack/review
 
 1. 读取 `~/.cursor/skills/<skill>/SKILL.md`（或项目 skills 目录）
 2. 产出对应工件（如 `CONTEXT.md`、`health-report.md`）
-3. 工件存在后引擎会自动 `mark-aux`；也可手动：
+3. 工件就绪后**必须**手动 `mark-aux`（引擎不自动标记）：
 
 ```bash
 scripts/taiyi-forge.sh mark-aux <slug> taiyi-intel-scan

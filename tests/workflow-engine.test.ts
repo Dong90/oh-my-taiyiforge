@@ -114,6 +114,13 @@ Demo motivation with enough detail for validation.
     expect(result.error).toMatch(/Unknown auxiliary skill/);
   });
 
+  it("rejects markAuxiliary without artifact", () => {
+    engine.initChange("aux-no-file");
+    const result = engine.markAuxiliary("aux-no-file", "taiyi-intel-scan");
+    expect(result.ok).toBe(false);
+    expect(result.error).toMatch(/artifact not ready/i);
+  });
+
   it("rejects invalid slug on init", () => {
     expect(() => engine.initChange("../bad")).toThrow(/invalid slug|slug must match/i);
   });
@@ -121,6 +128,32 @@ Demo motivation with enough detail for validation.
   it("rejects re-init without force", () => {
     engine.initChange("once");
     expect(() => engine.initChange("once")).toThrow(/already exists/);
+  });
+
+  it("force reinit clears artifacts and resets progress", () => {
+    engine.initChange("force-demo");
+    const dir = path.join(root, "changes", "force-demo");
+    fs.writeFileSync(path.join(dir, "REQUIREMENT.md"), "# REQ\n\nfuture artifact\n", "utf8");
+    fs.writeFileSync(path.join(dir, "CONTEXT.md"), "# CONTEXT\n\naux\n", "utf8");
+    fs.writeFileSync(
+      path.join(dir, "state.json"),
+      JSON.stringify(
+        {
+          ...engine.getState("force-demo"),
+          currentPhase: "requirement",
+          completedPhases: ["change"],
+        },
+        null,
+        2,
+      ),
+      "utf8",
+    );
+
+    engine.initChange("force-demo", { force: true });
+    expect(fs.existsSync(path.join(dir, "REQUIREMENT.md"))).toBe(false);
+    expect(fs.existsSync(path.join(dir, "CONTEXT.md"))).toBe(false);
+    expect(engine.getState("force-demo")?.currentPhase).toBe("change");
+    expect(engine.getState("force-demo")?.completedPhases).toEqual([]);
   });
 
   it("assesses complexity from artifact count", () => {

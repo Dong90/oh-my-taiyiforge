@@ -67,6 +67,8 @@ describe("auto harness", () => {
     writeChangeArtifact(dir, "auto3");
     fs.writeFileSync(path.join(dir, "CONTEXT.md"), "# CONTEXT\n\n## Scan\nok\n", "utf8");
     markHarnessCheckpoint(dir, "change", "superpowers/brainstorming");
+    const mark = engine.markAuxiliary("auto3", "taiyi-intel-scan");
+    expect(mark.ok, mark.error).toBe(true);
 
     const state = engine.getState("auto3")!;
     const check = enforceAutoHarnessBeforeComplete(workspace, root, state);
@@ -113,9 +115,12 @@ describe("auto harness", () => {
     engine.initChange("opt1", { autoHarness: true });
     const dir = engine.changeDir("opt1");
     writeChangeArtifact(dir, "opt1");
-    fs.writeFileSync(path.join(dir, "CONTEXT.md"), "# CONTEXT\n", "utf8");
+    fs.writeFileSync(path.join(dir, "CONTEXT.md"), "# CONTEXT\n\n## Scan\nok\n", "utf8");
     markHarnessCheckpoint(dir, "change", "superpowers/brainstorming");
-    engine.completePhase("opt1", "change", GATES);
+    const mark = engine.markAuxiliary("opt1", "taiyi-intel-scan");
+    expect(mark.ok, mark.error).toBe(true);
+    const done = engine.completePhase("opt1", "change", GATES);
+    expect(done.ok, done.error).toBe(true);
 
     const state = engine.getState("opt1")!;
     expect(state.currentPhase).toBe("requirement");

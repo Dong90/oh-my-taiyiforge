@@ -76,6 +76,11 @@ describe("profile-workflow", () => {
     expect(r.ok).toBe(false);
     expect(r.error).toMatch(/taiyi-health/);
 
+    fs.writeFileSync(
+      path.join(dir, "health-report.md"),
+      "# Health\n\nok for medium complexity review gate\n",
+      "utf8",
+    );
     engine.markAuxiliary("med", "taiyi-health");
     const r2 = engine.completePhase("med", "review", GATES);
     expect(r2.ok).toBe(true);
@@ -110,14 +115,30 @@ describe("profile-workflow", () => {
     expect(r.ok).toBe(false);
     expect(r.error).toMatch(/taiyi-health/);
 
-    engine.markAuxiliary("big", "taiyi-health");
+    fs.writeFileSync(
+      path.join(dir, "health-report.md"),
+      "# Health\n\nok for high complexity review gate\n",
+      "utf8",
+    );
+    const mark = engine.markAuxiliary("big", "taiyi-health");
+    expect(mark.ok, mark.error).toBe(true);
     const r2 = engine.completePhase("big", "review", GATES);
     expect(r2.ok).toBe(true);
   });
 
-  it("markAuxiliary records skill completion", () => {
+  it("markAuxiliary records skill completion when artifact exists", () => {
     engine.initChange("aux", { profile: "full" });
-    engine.markAuxiliary("aux", "taiyi-intel-scan");
+    const dir = path.join(root, "changes", "aux");
+    fs.writeFileSync(path.join(dir, "CONTEXT.md"), "# CONTEXT\n\n## Scan\nok\n", "utf8");
+    const mark = engine.markAuxiliary("aux", "taiyi-intel-scan");
+    expect(mark.ok, mark.error).toBe(true);
     expect(engine.getState("aux")?.auxiliaryCompleted).toContain("taiyi-intel-scan");
+  });
+
+  it("markAuxiliary rejects missing artifact", () => {
+    engine.initChange("aux2", { profile: "full" });
+    const mark = engine.markAuxiliary("aux2", "taiyi-intel-scan");
+    expect(mark.ok).toBe(false);
+    expect(mark.error).toMatch(/artifact not ready/i);
   });
 });

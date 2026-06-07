@@ -54,4 +54,36 @@ describe("workflow-audit", () => {
     expect(codes).toContain("state.legacy-complexity");
     expect(codes).toContain("ac.change-changelog-drift");
   });
+
+  it("flags ahead-of-phase artifacts", () => {
+    const changeDir = path.join(taiyiRoot, "changes", "ahead");
+    fs.mkdirSync(changeDir, { recursive: true });
+    fs.writeFileSync(
+      path.join(changeDir, "state.json"),
+      JSON.stringify(
+        {
+          slug: "ahead",
+          currentPhase: "change",
+          completedPhases: [],
+          profile: "full",
+          skippedPhases: [],
+          strictDev: false,
+          auxiliaryCompleted: [],
+          createdAt: "2026-01-01",
+          updatedAt: "2026-01-01",
+        },
+        null,
+        2,
+      ),
+    );
+    fs.writeFileSync(
+      path.join(changeDir, "REQUIREMENT.md"),
+      "# REQUIREMENT\n\n## User Stories\n- story\n",
+      "utf8",
+    );
+
+    const r = auditWorkspace(workspace, taiyiRoot, { slug: "ahead" });
+    const codes = r.changes[0]?.findings.map((f) => f.code) ?? [];
+    expect(codes).toContain("artifacts.ahead-of-phase");
+  });
 });

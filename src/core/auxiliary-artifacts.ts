@@ -25,9 +25,12 @@ export function auxiliaryArtifactSatisfied(changeDir: string, skillId: string): 
   }
   for (const d of spec.dirs ?? []) {
     const p = path.join(changeDir, d);
-    if (fs.existsSync(p) && fs.statSync(p).isDirectory()) {
-      const entries = fs.readdirSync(p).filter((e) => !e.startsWith("."));
-      if (entries.length > 0) return true;
+    if (!fs.existsSync(p) || !fs.statSync(p).isDirectory()) continue;
+    for (const name of fs.readdirSync(p).filter((e) => e.endsWith(".md") && !e.startsWith("."))) {
+      const text = fs.readFileSync(path.join(p, name), "utf8");
+      if (isSeedTemplate(text)) continue;
+      const body = text.replace(/<!--[\s\S]*?-->/g, "").trim();
+      if (body.length >= 40) return true;
     }
   }
   return false;

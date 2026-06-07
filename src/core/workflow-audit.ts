@@ -7,6 +7,7 @@ import { buildHarnessPlan } from "./harness-runner.js";
 import { normalizeState } from "./normalize-state.js";
 import { deliveryGateEnabled, evaluateDeliveryGate } from "./gates/delivery-gate.js";
 import { getOpenspecStatus } from "../integrations/openspec.js";
+import { detectAheadArtifacts } from "./ahead-artifacts.js";
 
 export type AuditFinding = {
   severity: "high" | "medium" | "low";
@@ -150,6 +151,14 @@ export function auditChange(
   const integrationDone =
     options?.pretendIntegrationComplete === true ||
     state.completedPhases.includes("integration");
+
+  for (const a of detectAheadArtifacts(changeDir, state)) {
+    findings.push({
+      severity: a.code === "artifacts.ahead-of-phase" ? "medium" : "low",
+      code: a.code,
+      message: a.message,
+    });
+  }
 
   findings.push(
     ...changeCheckboxDrift(changeDir, integrationDone, preIntegrationAudit),

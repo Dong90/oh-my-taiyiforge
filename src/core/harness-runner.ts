@@ -121,14 +121,16 @@ export function buildHarnessPlan(
   const blockers: string[] = [];
 
   const auxiliary: HarnessStep[] = pending.map((skill) => {
-    const satisfied = auxiliaryArtifactSatisfied(changeDir, skill);
+    const fileReady = auxiliaryArtifactSatisfied(changeDir, skill);
     return {
       kind: "agent" as const,
       tool: "taiyi",
       skill,
       when: `辅助 Skill（${skill}）`,
-      status: satisfied ? "done" : "pending",
-      detail: satisfied ? "工件已存在" : `需产出 ${skill} 对应文件后 mark-aux`,
+      status: "pending" as const,
+      detail: fileReady
+        ? `工件已就绪，须 scripts/taiyi-forge.sh mark-aux ${state.slug} ${skill}`
+        : `需产出 ${skill} 对应文件后 mark-aux`,
     };
   });
 
@@ -206,9 +208,7 @@ export function enforceAutoHarnessBeforeComplete(
   if (!state.autoHarness) return { ok: true };
 
   const changeDir = path.join(taiyiRoot, "changes", state.slug);
-  const synced = syncAuxiliaryFromArtifacts(changeDir, state.auxiliaryCompleted);
-  const withSync = { ...state, auxiliaryCompleted: synced };
-  const plan = buildHarnessPlan(workspaceDir, taiyiRoot, withSync);
+  const plan = buildHarnessPlan(workspaceDir, taiyiRoot, state);
 
   if (plan.blockers.length > 0) {
     return {
