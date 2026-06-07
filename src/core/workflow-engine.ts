@@ -10,7 +10,7 @@ import { canEnterPhase, getNextPhase, getPhase } from "./phase-registry.js";
 import { isPhaseSkipped, skippedPhasesForProfile } from "./profile.js";
 import { assessComplexity, type ComplexitySignals } from "./routing/complexity.js";
 import { inferComplexitySignals } from "./routing/infer-complexity.js";
-import { seedChangeTemplates } from "./template-seed.js";
+import { seedChangeTemplates, seedPhaseTemplate } from "./template-seed.js";
 import {
   artifactPathForPhase,
   validateArtifactFile,
@@ -80,18 +80,6 @@ export class WorkflowEngine {
             title: options?.title,
           })
         : [];
-
-    if (profile === "api") {
-      const uiPath = path.join(dir, "UI-DESIGN.md");
-      if (!fs.existsSync(uiPath)) {
-        fs.writeFileSync(
-          uiPath,
-          `# UI-DESIGN: ${options?.title ?? slug}\n\n## Scope\nN/A — 纯 API / 后端变更，无前端界面。\n\n## Links\n- DESIGN.md\n`,
-          "utf8",
-        );
-        seeded.push("UI-DESIGN.md");
-      }
-    }
 
     const now = new Date().toISOString();
     const signals = inferComplexitySignals(dir);
@@ -382,6 +370,19 @@ export class WorkflowEngine {
       workflowStatus: allDone ? "completed" : "active",
     };
     this.writeState(updated);
+
+    const templatesDir = this.templatesDir;
+    if (next && templatesDir && !isPhaseSkipped(next, workingState.skippedPhases)) {
+      let title: string | undefined;
+      try {
+        const changeMd = fs.readFileSync(path.join(changeDir, "CHANGE.md"), "utf8");
+        const m = changeMd.match(/^#\s*CHANGE:\s*(.+)$/m);
+        title = m?.[1]?.trim();
+      } catch {
+        title = undefined;
+      }
+      seedPhaseTemplate(changeDir, templatesDir, next, { slug, title });
+    }
 
     if (phaseId === "integration" && process.env.TAIYI_SKIP_ROOT_CHANGELOG !== "1") {
       syncRootChangelog(workspaceDir, slug);

@@ -10,6 +10,7 @@ scripts/taiyi-forge.sh apply $ARGUMENTS
 
 For dev/test phases: show implementation harness + next steps.
 
+**apply does NOT write code or complete the phase.** After implementation:
 - **dev**: load `taiyi-dev` + Superpowers `test-driven-development` (or `/taiyi:tdd dev`)
 - **test**: load `taiyi-test` + Superpowers `verification-before-completion`
-- After tests pass, write `.dev-complete` with `command:` + `exitCode: 0` before `complete dev`
+- After tests pass, write `.dev-complete` with `command:` + `exitCode: 0`, then `/taiyi:continue`

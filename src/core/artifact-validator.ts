@@ -4,6 +4,7 @@ import type { PhaseId, QualityScores } from "./types.js";
 import { getPhase } from "./phase-registry.js";
 import { evaluateMachineReview } from "./review-gate.js";
 import { isDevCompleteEvidence } from "./dev-complete.js";
+import { isSeedTemplate } from "./seed-marker.js";
 
 type SectionRule = { heading: string; minChars?: number };
 
@@ -113,6 +114,20 @@ export function validateArtifactContent(
   content: string,
 ): { scores: QualityScores; hints: string[] } {
   const hints: string[] = [];
+  if (isSeedTemplate(content)) {
+    hints.push("仍为引擎模板占位（含 taiyi:seed-template），请按当前阶段 Skill 填写后再 continue");
+    return {
+      scores: {
+        completeness: false,
+        consistency: false,
+        verifiability: false,
+        traceability: false,
+        engineering_quality: false,
+      },
+      hints,
+    };
+  }
+
   const text = stripComments(content);
 
   if (phaseId === "dev") {

@@ -104,7 +104,8 @@ export function formatWalkthroughPlain(r: WalkthroughResult): string {
     lines.push(`  npx taiyi next ${r.slug}`);
     lines.push("  npx taiyi list");
     lines.push(`  npx taiyi complete ${r.slug} change   # 填好 CHANGE.md 后`);
-    lines.push("\n完整九阶段: 见 docs/QUICKSTART.md 或 npm run dogfood（仓库内）");
+    lines.push("\n完整九阶段演示: oh-my-taiyiforge 仓库内 examples/minimal-project → npm run walkthrough");
+    lines.push("（注意: npx taiyi walkthrough 仅 init + 下一步指引，不跑完全流程）");
   } else if (r.error) {
     lines.push(`\n✗ ${r.error}`);
   }

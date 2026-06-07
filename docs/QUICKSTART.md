@@ -32,9 +32,9 @@ mkdir demo && cd demo
 npm init -y
 npm install oh-my-taiyiforge
 
-npx taiyi walkthrough       # 首次体验（自动 init 演示变更）
+npx taiyi walkthrough       # 首次体验：doctor + init + 打印下一步（不跑九阶段）
 # 或手动：
-npx taiyi init my-first --title "My First Change"
+npx taiyi init my-first --title "My First Change"   # 仅铺 CHANGE.md 模板
 npx taiyi next my-first     # 人类可读下一步（推荐）
 ```
 
@@ -60,7 +60,7 @@ npx taiyi list
 | `/taiyi:new 名称` | 新建变更 |
 | `/taiyi:status` | 阶段进度 + **Superpowers 推荐** + 工件就绪 |
 | `/taiyi:continue` | 规划阶段推进（写完工件后） |
-| `/taiyi:apply` | dev / test 实现 |
+| `/taiyi:apply` | dev / test **实现清单**（不写代码、不 complete；实现后须 continue） |
 | `/taiyi:check` | auto 模式 harness 清单 |
 | `/taiyi:explore` | change 头脑风暴（→ Superpowers brainstorming） |
 | `/taiyi:token status` | Token 用量 / 预算 / 压缩建议 |
@@ -115,7 +115,7 @@ npm install && npm run build && npm test
 
 cd examples/minimal-project
 npm install
-npm run walkthrough    # 九阶段 shell 全流程 + 铁三角
+npm run walkthrough    # 九阶段 shell 全流程 + 铁三角（≠ npx taiyi walkthrough）
 npm run chat-demo      # 聊天动词：new / status / check / continue
 ```
 

@@ -19,6 +19,7 @@ import { expectedPhaseCount, isWorkflowCompleted } from "./change-status.js";
 import { buildTokenBudgetSummary } from "./token-runner.js";
 import { normalizeState } from "./normalize-state.js";
 import { formatSkillFlowPlain } from "../integrations/skill-flow.js";
+import { isSeedTemplate } from "./seed-marker.js";
 
 export type PhaseGuide = {
   slug: string;
@@ -32,6 +33,7 @@ export type PhaseGuide = {
   artifact: string;
   artifactPath: string;
   artifactExists: boolean;
+  artifactIsSeed: boolean;
   qualityReady: boolean;
   qualityHints: string[];
   nextAction: string;
@@ -65,6 +67,14 @@ export function buildPhaseGuide(
   const artifactPath = artifactPathForPhase(changeDir, state.currentPhase);
   const artifactExists =
     fs.existsSync(artifactPath) && fs.statSync(artifactPath).size > 0;
+  let artifactIsSeed = false;
+  if (artifactExists && phase.kind === "markdown") {
+    try {
+      artifactIsSeed = isSeedTemplate(fs.readFileSync(artifactPath, "utf8"));
+    } catch {
+      artifactIsSeed = false;
+    }
+  }
 
   let qualityReady = false;
   let qualityHints: string[] = [];
@@ -132,6 +142,7 @@ export function buildPhaseGuide(
       artifact: phase.artifact,
       artifactPath,
       artifactExists,
+      artifactIsSeed: false,
       qualityReady: true,
       qualityHints: [],
       nextAction:
@@ -189,6 +200,7 @@ export function buildPhaseGuide(
     artifact: phase.artifact,
     artifactPath,
     artifactExists,
+    artifactIsSeed,
     qualityReady,
     qualityHints,
     nextAction,

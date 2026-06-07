@@ -1,7 +1,32 @@
 import { describe, expect, it } from "vitest";
 import { validateArtifactContent } from "../src/core/artifact-validator.js";
+import { TAIYI_SEED_MARKER } from "../src/core/seed-marker.js";
+import { auxiliaryArtifactSatisfied } from "../src/core/auxiliary-artifacts.js";
+import fs from "node:fs";
+import os from "node:os";
+import path from "node:path";
 
 describe("artifact-validator", () => {
+  it("rejects engine seed template marker", () => {
+    const r = validateArtifactContent(
+      "change",
+      `${TAIYI_SEED_MARKER}\n# CHANGE: Demo\n\n## Motivation\nfilled\n\n## Scope\nin\n\n## Success Criteria\n- [ ] x\n`,
+    );
+    expect(r.scores.completeness).toBe(false);
+    expect(r.hints.some((h) => /模板占位/i.test(h))).toBe(true);
+  });
+
+  it("seeded CONTEXT.md does not satisfy taiyi-intel-scan", () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), "taiyi-aux-"));
+    fs.writeFileSync(
+      path.join(dir, "CONTEXT.md"),
+      `${TAIYI_SEED_MARKER}\n# CONTEXT\n`,
+      "utf8",
+    );
+    expect(auxiliaryArtifactSatisfied(dir, "taiyi-intel-scan")).toBe(false);
+    fs.rmSync(dir, { recursive: true, force: true });
+  });
+
   it("rejects empty CHANGE template placeholders", () => {
     const r = validateArtifactContent(
       "change",

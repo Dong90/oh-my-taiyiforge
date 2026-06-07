@@ -411,8 +411,11 @@ switch (cmd) {
     for (let i = 1; i <= times; i++) {
       if (times > 1 && !jsonMode) {
         console.log(`=== /taiyi:apply 第 ${i}/${times} 次（${phase}）===\n`);
-      } else if (times === 1 && !jsonMode) {
+      } else       if (times === 1 && !jsonMode) {
         console.log(`=== /taiyi:apply（${phase}）===\n`);
+        console.log(
+          "说明: apply 只输出实现清单，不会写代码也不会 complete；实现并写 .dev-complete 后请 /taiyi:continue\n",
+        );
       }
       if (!jsonMode && "text" in h && h.text) {
         console.log(h.text);

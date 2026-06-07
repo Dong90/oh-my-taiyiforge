@@ -44,7 +44,12 @@ export function formatStatusPlain(guide: PhaseGuide): string {
     lines.push("九阶段已全部完成。归档: /taiyi:archive");
     return lines.join("\n");
   }
-  lines.push(`工件: ${guide.artifact} (${guide.qualityReady ? "就绪" : "未就绪"})`);
+  const artifactStatus = guide.qualityReady
+    ? "就绪"
+    : guide.artifactIsSeed
+      ? "模板占位（须按 Skill 填写）"
+      : "未就绪";
+  lines.push(`工件: ${guide.artifact} (${artifactStatus})`);
   if (guide.autoHarness) lines.push("模式: 全自动 (--auto)");
   if (guide.pendingAuxiliary.length) {
     lines.push(`待做辅助: ${guide.pendingAuxiliary.join(", ")}`);
@@ -76,14 +81,23 @@ export function formatGuidePlain(guide: PhaseGuide): string {
     lines.push(guide.skillFlowLine);
   }
   lines.push("");
-  if (guide.autoHarness) lines.push(`模式: 全自动 (--auto)`);
+  if (guide.autoHarness) {
+    lines.push("模式: 全自动 (--auto，过关前须 harness-check)");
+  }
+  if (guide.currentPhase === "change" && guide.completedCount === 0) {
+    lines.push(
+      "说明: new/init 仅创建当前阶段模板；后续阶段模板在上一阶段过关后生成",
+    );
+  }
   if (guide.profile) lines.push(`Profile: ${guide.profile}`);
   if (guide.skippedPhases?.length) {
     lines.push(`跳过: ${guide.skippedPhases.join(", ")}`);
   }
   lines.push(`Skill: ${guide.skill}`);
   lines.push(`工件: ${guide.artifactPath}`);
-  lines.push(`质量就绪: ${guide.qualityReady ? "是" : "否"}`);
+  lines.push(
+    `质量就绪: ${guide.qualityReady ? "是" : guide.artifactIsSeed ? "否（模板占位）" : "否"}`,
+  );
   if (guide.complexity) {
     lines.push(`复杂度: ${guide.complexity.level} (score ${guide.complexity.score})`);
   }

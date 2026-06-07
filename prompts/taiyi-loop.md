@@ -8,6 +8,6 @@ User invoked **$taiyi-loop** (= `/taiyi:loop`). Run:
 scripts/taiyi-forge.sh loop $ARGUMENTS
 ```
 
-Loops `continue` up to N times (default 20, or `xN` suffix). When blocked, load the current phase Skill, complete artifacts/implementation, then invoke `/taiyi:loop` again until `/taiyi:archive`.
+Loops `continue` up to N times (default 20, or `xN` suffix). **Does not write artifacts or code** — when blocked, load the current phase Skill, fill artifacts / implement, then invoke `/taiyi:loop` again. Human-gate phases (change/design/review) always block until `--approver`.
 
 Repeat suffix also works: `/taiyi:continue x3` · `/taiyi:apply x2` · `/taiyi:check x2`.

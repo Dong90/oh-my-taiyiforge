@@ -25,7 +25,7 @@
 | `/taiyi:new 功能名` | 开始新变更 |
 | `/taiyi:status` | 随时查看「当前第几阶段、该加载哪个 Skill」 |
 | `/taiyi:continue` | 规划/收尾阶段：写完工件后推进 |
-| `/taiyi:apply` | **仅 dev / test**：实现与验证 |
+| `/taiyi:apply` | **仅 dev / test**：打印实现 harness（不 complete；写完代码后 continue） |
 | `/taiyi:archive` | 九阶段全部完成后归档 |
 
 ### 辅助命令（按需）
@@ -48,6 +48,8 @@
 | `/taiyi:tdd plan\|dev` | task/dev：Superpowers TDD（计划切片测试 / 红绿重构） |
 
 写工件仍用 **taiyi-change … taiyi-integration** Skill，不走 `/taiyi:*`。
+
+**new/init 只铺当前阶段模板**（默认仅 `CHANGE.md`）；`CONTEXT.md` 由 `taiyi-intel-scan` 产出，不会预置。过关后引擎才为下一阶段生成模板文件。
 
 ## 可选层（架构图对齐）
 

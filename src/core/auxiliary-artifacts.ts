@@ -1,5 +1,6 @@
 import fs from "node:fs";
 import path from "node:path";
+import { isSeedTemplate } from "./seed-marker.js";
 
 /** 辅助 Skill 对应工件 — 用于自动检测与 auto 模式门禁 */
 export const AUXILIARY_ARTIFACTS: Record<string, { files?: string[]; dirs?: string[] }> = {
@@ -17,7 +18,10 @@ export function auxiliaryArtifactSatisfied(changeDir: string, skillId: string): 
 
   for (const f of spec.files ?? []) {
     const p = path.join(changeDir, f);
-    if (fs.existsSync(p) && fs.statSync(p).size > 0) return true;
+    if (!fs.existsSync(p) || fs.statSync(p).size === 0) continue;
+    const text = fs.readFileSync(p, "utf8");
+    if (isSeedTemplate(text)) continue;
+    return true;
   }
   for (const d of spec.dirs ?? []) {
     const p = path.join(changeDir, d);

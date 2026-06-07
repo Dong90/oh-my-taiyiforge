@@ -8,4 +8,4 @@ User invoked **$taiyi-new** (= `/taiyi:new`). Run from project root:
 scripts/taiyi-forge.sh new $ARGUMENTS
 ```
 
-Creates `.taiyi/changes/<slug>/` with `--auto`. Show stdout/stderr. Then load `taiyi-change` for artifacts.
+Creates `.taiyi/changes/<slug>/` with `--auto`. **Only seeds CHANGE.md** (not all nine phases). Show stdout/stderr. Then load `taiyi-change` to fill CHANGE.md before `/taiyi:continue`.
