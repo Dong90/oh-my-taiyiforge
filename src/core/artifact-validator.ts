@@ -3,6 +3,7 @@ import path from "node:path";
 import type { PhaseId, QualityScores } from "./types.js";
 import { getPhase } from "./phase-registry.js";
 import { evaluateMachineReview } from "./review-gate.js";
+import { isDevCompleteEvidence } from "./dev-complete.js";
 
 type SectionRule = { heading: string; minChars?: number };
 
@@ -24,7 +25,10 @@ const PHASE_SECTIONS: Partial<Record<PhaseId, SectionRule[]>> = {
     { heading: "## Scope", minChars: 4 },
     { heading: "## Links", minChars: 4 },
   ],
-  task: [{ heading: "## Slices", minChars: 8 }],
+  task: [
+    { heading: "## Slices", minChars: 8 },
+    { heading: "## Checklist per slice", minChars: 4 },
+  ],
   test: [{ heading: "## Test Plan", minChars: 8 }],
   review: [{ heading: "## Verdict", minChars: 4 }],
   integration: [{ heading: "## Added", minChars: 2 }],
@@ -88,6 +92,13 @@ function designHasRealDecision(content: string): boolean {
   );
 }
 
+function taskHasTddPlan(content: string): boolean {
+  const body = `${sectionBody(content, "## Slices")}\n${sectionBody(content, "## Checklist per slice")}`;
+  if (/测试先行|RED|先写.*测试|test[- ]first/i.test(body)) return true;
+  const rows = content.match(/^\|[^|\n]+\|[^|\n]+\|/gm) ?? [];
+  return rows.some((row) => /test|npm test|vitest|jest|pytest/i.test(row));
+}
+
 function sectionBody(content: string, heading: string): string {
   const idx = content.indexOf(heading);
   if (idx < 0) return "";
@@ -105,30 +116,28 @@ export function validateArtifactContent(
   const text = stripComments(content);
 
   if (phaseId === "dev") {
-    const trimmed = text.trim();
-    const hasMarker =
-      trimmed.length >= 8 &&
-      (/complete|done|dev/i.test(trimmed) || trimmed.split("\n").some((l) => l.trim().length >= 4));
-    if (!hasMarker) {
-      hints.push("创建 .dev-complete 标记（≥8 字符，含 complete/done/dev 或有效说明行）");
+    const ok = isDevCompleteEvidence(text);
+    if (!ok) {
+      if (!/command:\s*\S+/i.test(text)) {
+        hints.push(".dev-complete 需含 command: <npm test 等可验证命令>");
+      }
+      if (!/exit(?:Code)?:\s*0\b/i.test(text)) {
+        hints.push(".dev-complete 需含 exitCode: 0（测试通过证据）");
+      }
+      const trimmed = text.trim();
+      const hasMarker =
+        trimmed.length >= 8 &&
+        (/complete|done|dev/i.test(trimmed) ||
+          trimmed.split("\n").some((l) => l.trim().length >= 4));
+      if (!hasMarker) {
+        hints.push("创建 .dev-complete 标记（≥8 字符，含 complete/done/dev 或有效说明行）");
+      }
     }
-
-    const strict = /strict:\s*true/i.test(text);
-    let strictOk = true;
-    if (strict) {
-      const exitOk = /exit(?:Code)?:\s*0\b/i.test(text);
-      const cmdOk = /command:\s*\S+/i.test(text);
-      strictOk = exitOk && cmdOk;
-      if (!exitOk) hints.push("strict dev：.dev-complete 需含 exitCode: 0");
-      if (!cmdOk) hints.push("strict dev：.dev-complete 需含 command: <npm test 等>");
-    }
-
-    const ok = hasMarker && strictOk;
     return {
       scores: {
         completeness: ok,
         consistency: ok,
-        verifiability: strictOk,
+        verifiability: ok,
         traceability: ok,
         engineering_quality: ok,
       },
@@ -167,6 +176,12 @@ export function validateArtifactContent(
     if (!requirementHasFilledGwt(content)) {
       placeholderContent = true;
       hints.push("Acceptance Criteria 须含实质 Given/When/Then（各 ≥8 字符）");
+    }
+  }
+  if (phaseId === "task") {
+    if (!taskHasTddPlan(content)) {
+      placeholderContent = true;
+      hints.push("TASK 须注明测试先行（RED/测试文件/ Done when 含 test 命令）");
     }
   }
   if (phaseId === "design") {

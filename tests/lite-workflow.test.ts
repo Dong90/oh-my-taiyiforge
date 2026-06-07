@@ -3,6 +3,7 @@ import fs from "node:fs";
 import path from "node:path";
 import os from "node:os";
 import { WorkflowEngine } from "../src/core/workflow-engine.js";
+import { DEV_COMPLETE_EVIDENCE } from "../src/core/dev-complete.js";
 import { getNextPhase } from "../src/core/phase-registry.js";
 
 const GATES = {
@@ -54,7 +55,7 @@ describe("lite-workflow", () => {
     );
     expect(engine.completePhase("lite-fix", "requirement", GATES).ok).toBe(true);
 
-    fs.writeFileSync(path.join(dir, ".dev-complete"), "dev complete: lite workflow smoke\n");
+    fs.writeFileSync(path.join(dir, ".dev-complete"), DEV_COMPLETE_EVIDENCE);
     expect(engine.completePhase("lite-fix", "dev", GATES).ok).toBe(true);
 
     fs.writeFileSync(
@@ -66,6 +67,10 @@ describe("lite-workflow", () => {
     fs.writeFileSync(
       path.join(dir, "CHANGELOG.md"),
       `# CHANGELOG: lite-fix\n\n## Added\n- Fixed regression in export path (user-visible).\n\n## Rollback\nRevert commit abc.\n`,
+    );
+    fs.writeFileSync(
+      path.join(dir, "CHANGE.md"),
+      `# CHANGE\n\n## Motivation\nFix bug.\n\n## Scope\n- In: x\n\n## Success Criteria\n- [x] fixed\n`,
     );
     const last = engine.completePhase("lite-fix", "integration", GATES);
     expect(last.ok, last.error).toBe(true);

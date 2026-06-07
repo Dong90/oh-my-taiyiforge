@@ -10,6 +10,7 @@
 
 1. 相对 `origin/develop`（或 `origin/main`）须有 **已 commit 的新增 diff**
 2. 工作区须 **干净**（无 unstaged / staged / untracked）
+3. 可选：设置 `TAIYI_DELIVERY_VERIFY_CMD`（如 `npm test`）在过关前再跑一遍验证命令
 
 非 git 目录（单测 tmpdir）自动跳过。
 

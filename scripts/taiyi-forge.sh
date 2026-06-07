@@ -42,11 +42,17 @@ TaiyiForge（对齐 OpenSpec /opsx:<verb>）
   /taiyi:review-loop [slug] 会话内循环 review 直到机器审查通过
   /taiyi:review-check <slug>  单次机器探测（不计轮次）
   /taiyi:audit [slug]           流程/交付排查（漂移、未 commit）
+  /taiyi:health [slug]          review 前代码健康（taiyi-health Skill）
   /taiyi:verify [slug]          PR/CI 工件门禁（= ci verify 别名）
   /taiyi:token status       Token 用量 / 预算
   /taiyi:token compress     压缩 → CONTEXT-COMPACT.md
+  /taiyi:explore            change 头脑风暴（Superpowers brainstorming）
+  /taiyi:tdd plan|dev       task/dev TDD（Superpowers test-driven-development）
+  /taiyi:flow               Superpowers 主轴九阶段流程总览
 
-Codex: $taiyi-new / $taiyi-continue / $taiyi-apply / $taiyi-status / $taiyi-archive / $taiyi-review-loop / $taiyi-review-check / $taiyi-token-*
+Codex: $taiyi-new / $taiyi-continue / $taiyi-apply / $taiyi-tdd / $taiyi-flow / …
+
+Superpowers 流程: docs/taiyi/superpowers-flow.md · 真源: docs/taiyi/workflow-manifest.yaml
 
 引擎（Agent 代跑）:
   scripts/taiyi-forge.sh new <标题>
@@ -101,7 +107,7 @@ case "$cmd" in
   list)
     run_taiyi list
     ;;
-  audit|verify|doctor|init|next|harness|harness-check|complete|assess|mark-aux|status|guide|sync-openspec|walkthrough|ci|token|loop|review-check|review-loop)
+  audit|health|verify|doctor|init|next|harness|harness-check|complete|assess|mark-aux|status|guide|sync-openspec|walkthrough|ci|token|loop|review-check|review-loop)
     run_taiyi "$cmd" "$@"
     ;;
   help|--help|-h)

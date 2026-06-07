@@ -44,6 +44,8 @@
 | `/taiyi:sync` | 同步到 OpenSpec（≈ `opsx:sync`） |
 | `/taiyi:run` | 首次体验演示（≈ `omc.sh run`，非日常） |
 | `/taiyi:explore` | change 阶段：Superpowers brainstorming（≈ clarify/explore） |
+| `/taiyi:flow` | Superpowers 全技能 × 九阶段总览（onboarding 首选） |
+| `/taiyi:tdd plan\|dev` | task/dev：Superpowers TDD（计划切片测试 / 红绿重构） |
 
 写工件仍用 **taiyi-change … taiyi-integration** Skill，不走 `/taiyi:*`。
 
@@ -67,9 +69,8 @@
 ② requirement  → taiyi-requirement   → REQUIREMENT.md   → /taiyi:continue
 ③ design       → taiyi-design        → DESIGN.md        → /taiyi:continue
 ④ ui-design    → taiyi-ui-design     → UI-DESIGN.md     → /taiyi:continue
-⑤ task         → taiyi-task          → TASK.md          → /taiyi:continue
-
-⑥ dev          → taiyi-dev + TDD     → 代码              → /taiyi:apply
+⑤ task         → taiyi-task + TDD计划 → TASK.md          → /taiyi:tdd plan → continue
+⑥ dev          → taiyi-dev + TDD     → 代码              → /taiyi:tdd dev · /taiyi:apply
 ⑦ test         → taiyi-test          → TEST.md          → /taiyi:apply 或 continue
 ⑧ review       → taiyi-review        → REVIEW.md        → /taiyi:continue
 ⑨ integration  → taiyi-integration   → CHANGELOG.md     → /taiyi:continue

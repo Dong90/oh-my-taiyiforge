@@ -4,6 +4,7 @@ import { WorkflowEngine } from "./workflow-engine.js";
 import { E2E_ARTIFACTS, E2E_PHASE_ORDER } from "./e2e-fixtures.js";
 import { getPhase } from "./phase-registry.js";
 import { artifactPathForPhase } from "./artifact-validator.js";
+import { DEV_COMPLETE_EVIDENCE } from "./dev-complete.js";
 import type { PhaseId } from "./types.js";
 
 const PASSING_GATES = {
@@ -23,7 +24,7 @@ export function writeE2eArtifacts(changeDir: string): void {
     const file = path.join(changeDir, phase.artifact);
     fs.writeFileSync(file, body, "utf8");
   }
-  fs.writeFileSync(path.join(changeDir, ".dev-complete"), `done ${new Date().toISOString()}\n`, "utf8");
+  fs.writeFileSync(path.join(changeDir, ".dev-complete"), DEV_COMPLETE_EVIDENCE, "utf8");
 }
 
 export function runE2eWorkflow(
@@ -47,6 +48,14 @@ export function runE2eWorkflow(
         error: `Expected current phase ${phaseId}, got ${state?.currentPhase}`,
         completed,
       };
+    }
+
+    if (phaseId === "review") {
+      fs.writeFileSync(
+        path.join(changeDir, "health-report.md"),
+        "# Health Report\n\nE2E smoke — no blocking findings.\n",
+        "utf8",
+      );
     }
 
     const result = engine.completePhase(slug, phaseId, PASSING_GATES, { allowAutoHuman: true });

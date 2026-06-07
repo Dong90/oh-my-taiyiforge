@@ -9,6 +9,7 @@ import { formatChangeListPlain, formatGuidePlain, formatPhaseProgressLine, forma
 import { buildPhaseGuide } from "../core/phase-guide.js";
 import { isWorkflowCompleted } from "../core/change-status.js";
 import { resolveActiveSlug, slugifyTitle } from "../core/active-slug.js";
+import { resolveAutoHarness } from "../core/resolve-auto-harness.js";
 import type { ChangeProfile, PhaseId } from "../core/types.js";
 import {
   taiyiArchive,
@@ -25,6 +26,7 @@ import {
   taiyiHarness,
   taiyiHarnessCheck,
   taiyiAudit,
+  taiyiHealth,
   taiyiCiVerify,
   taiyiCiPlatform,
   taiyiCiPrompt,
@@ -76,6 +78,7 @@ function usage(): void {
   npm run taiyi -- archive <slug>
   npm run taiyi -- walkthrough [--slug name] [--profile api|lite]
   npm run taiyi -- audit [slug]              /taiyi:audit — 流程/交付排查（非 doctor）
+  npm run taiyi -- health [slug]            /taiyi:health — 加载 taiyi-health，写 health-report.md
   npm run taiyi -- verify [slug] [--require-complete]   /taiyi:verify — PR/CI 工件门禁
   npm run taiyi -- ci verify [--slug x] [--require-complete]   （verify 别名，供 GitHub Actions）
   npm run taiyi -- ci platform <opencode|claude|codex|cursor>
@@ -261,6 +264,17 @@ switch (cmd) {
     if (!r.ok) process.exit(1);
     break;
   }
+  case "health": {
+    const slug = args[0];
+    const r = taiyiHealth(workspaceDir, slug);
+    if (!r.ok) {
+      console.error("error" in r ? r.error : "health failed");
+      process.exit(1);
+    }
+    if (jsonMode) console.log(JSON.stringify(r, null, 2));
+    else if ("text" in r && r.text) console.log(r.text);
+    break;
+  }
   case "verify":
     runVerifyCommand(args);
     break;
@@ -285,7 +299,7 @@ switch (cmd) {
         templatesDir,
         profile: parseProfile(args) ?? "full",
         strictDev: args.includes("--strict-dev"),
-        autoHarness: args.includes("--auto"),
+        autoHarness: resolveAutoHarness(args, false),
         force: args.includes("--force"),
       });
       if (jsonMode) {
@@ -313,7 +327,7 @@ switch (cmd) {
         templatesDir,
         profile: parseProfile(args) ?? "full",
         strictDev: args.includes("--strict-dev"),
-        autoHarness: true,
+        autoHarness: resolveAutoHarness(args, true),
         force: args.includes("--force"),
       });
       if (jsonMode) {
@@ -599,7 +613,8 @@ switch (cmd) {
     break;
   }
   case "harness-check": {
-    const [slug, hookRef] = args;
+    const [slug, ...hookParts] = args;
+    const hookRef = hookParts.join(" ").trim();
     if (!slug || !hookRef) {
       console.error("用法: harness-check <slug> <hook-key>");
       process.exit(1);

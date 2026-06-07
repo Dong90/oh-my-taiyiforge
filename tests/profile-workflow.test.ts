@@ -47,6 +47,40 @@ describe("profile-workflow", () => {
     expect(guide.complexity?.level).toBeDefined();
   });
 
+  it("medium complexity review requires taiyi-health aux", () => {
+    engine.initChange("med", { profile: "full" });
+    const dir = path.join(root, "changes", "med");
+    fs.writeFileSync(path.join(dir, "state.json"), JSON.stringify({
+      ...engine.getState("med"),
+      complexity: {
+        level: "medium",
+        score: 10,
+        recommendedSkills: ["taiyi-health"],
+      },
+      currentPhase: "review",
+      completedPhases: [
+        "change",
+        "requirement",
+        "design",
+        "ui-design",
+        "task",
+        "dev",
+        "test",
+      ],
+    }, null, 2));
+    fs.writeFileSync(
+      path.join(dir, "REVIEW.md"),
+      `# REVIEW\n\n## Summary\nx\n\n## Findings\n| Severity | File | Issue | Suggestion |\n|---|---|---|---|\n\n## Verdict\n- [x] **Approve** — 可合并\n`,
+    );
+    const r = engine.completePhase("med", "review", GATES);
+    expect(r.ok).toBe(false);
+    expect(r.error).toMatch(/taiyi-health/);
+
+    engine.markAuxiliary("med", "taiyi-health");
+    const r2 = engine.completePhase("med", "review", GATES);
+    expect(r2.ok).toBe(true);
+  });
+
   it("high complexity review requires taiyi-health aux", () => {
     engine.initChange("big", { profile: "full" });
     const dir = path.join(root, "changes", "big");

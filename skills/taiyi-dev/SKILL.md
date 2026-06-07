@@ -21,7 +21,7 @@ description: TaiyiForge 第 6 阶段 — TDD 开发执行。四端通用。
 
 - `TASK.md` 当前未完成切片（full/api）
 - lite：`REQUIREMENT.md` AC
-- Superpowers `test-driven-development`（**推荐**）
+- Superpowers `test-driven-development`（**必加载**；`/taiyi:tdd dev`）
 - `CONTEXT.md` 命名与测试惯例
 
 ## 输出
@@ -55,17 +55,21 @@ description: TaiyiForge 第 6 阶段 — TDD 开发执行。四端通用。
 
 ### 4. 写 `.dev-complete`
 
-**`--strict-dev` 时必填：**
+**过关必填（引擎校验）：**
+
+```text
+command: npm test
+exitCode: 0
+dev complete
+```
+
+**`--strict-dev` 额外要求首行：**
 
 ```text
 strict: true
-command: npm test
-exitCode: 0
-timestamp: 2026-06-05T12:00:00Z
-slices: T1,T2
 ```
 
-**非 strict：** 简短 `done` 或上述格式均可。
+可选：`timestamp`、`slices: T1,T2` 便于 audit 追溯。
 
 ### 5. 完成
 

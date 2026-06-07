@@ -20,7 +20,8 @@ export function assessComplexity(
   const recommendedSkills = ["taiyi-intel-scan"];
   if (signals.hasUi) recommendedSkills.push("taiyi-restyle");
   if (level !== "low") recommendedSkills.push("taiyi-architect");
-  if (level === "high") recommendedSkills.push("taiyi-health", "taiyi-evolve");
+  if (level === "medium" || level === "high") recommendedSkills.push("taiyi-health");
+  if (level === "high") recommendedSkills.push("taiyi-evolve");
 
   return { level, score, recommendedSkills };
 }

@@ -35,6 +35,10 @@ export function formatStatusPlain(guide: PhaseGuide): string {
   const intent = formatIntentLine(guide);
   if (intent) lines.push(intent);
   if (guide.tokenBudgetLine) lines.push(guide.tokenBudgetLine);
+  if (guide.skillFlowLine) {
+    lines.push("");
+    lines.push(guide.skillFlowLine);
+  }
   lines.push("");
   if (guide.workflowCompleted) {
     lines.push("九阶段已全部完成。归档: /taiyi:archive");
@@ -67,6 +71,10 @@ export function formatGuidePlain(guide: PhaseGuide): string {
   const intent = formatIntentLine(guide);
   if (intent) lines.push(intent);
   if (guide.tokenBudgetLine) lines.push(guide.tokenBudgetLine);
+  if (guide.skillFlowLine) {
+    lines.push("");
+    lines.push(guide.skillFlowLine);
+  }
   lines.push("");
   if (guide.autoHarness) lines.push(`模式: 全自动 (--auto)`);
   if (guide.profile) lines.push(`Profile: ${guide.profile}`);

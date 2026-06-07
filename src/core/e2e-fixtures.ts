@@ -16,7 +16,7 @@ Validate TaiyiForge nine-phase workflow end-to-end in CI and dogfood runs.
 Low — docs and state only.
 
 ## Success Criteria
-- [ ] All nine phases complete with gates passing
+- [x] All nine phases complete with gates passing
 `,
   requirement: `# REQUIREMENT: E2E Demo
 

@@ -52,10 +52,13 @@ npx taiyi list
 
 ## 聊天命令（OpenSpec 风格）
 
+**完整开源流程（推荐）**：`/taiyi:full-flow` → [full-oss-flow.md](./taiyi/full-oss-flow.md)  
+**Superpowers 主轴摘要**：`/taiyi:flow` → [superpowers-flow.md](./taiyi/superpowers-flow.md)
+
 | 命令 | 用途 |
 |------|------|
 | `/taiyi:new 名称` | 新建变更 |
-| `/taiyi:status` | 阶段进度 + **意图分析** + **Token 预算** + 工件就绪 |
+| `/taiyi:status` | 阶段进度 + **Superpowers 推荐** + 工件就绪 |
 | `/taiyi:continue` | 规划阶段推进（写完工件后） |
 | `/taiyi:apply` | dev / test 实现 |
 | `/taiyi:check` | auto 模式 harness 清单 |

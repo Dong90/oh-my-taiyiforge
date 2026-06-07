@@ -94,10 +94,13 @@ describe("review fixes F11-F26", () => {
     }
   });
 
-  it("dev artifact validator requires meaningful marker", () => {
+  it("dev artifact validator requires command and exitCode evidence", () => {
     const weak = validateArtifactContent("dev", "ok");
     expect(weak.scores.completeness).toBe(false);
-    const strong = validateArtifactContent("dev", "dev complete: shipped feature X\n");
+    const strong = validateArtifactContent(
+      "dev",
+      "command: npm test\nexitCode: 0\ndev complete: shipped feature X\n",
+    );
     expect(strong.scores.completeness).toBe(true);
   });
 

@@ -2,6 +2,9 @@
 
 与《AI 驱动研发流程与工具选型指南》对齐：TaiyiForge 管**九阶段工件 + 双门禁**，下列工具管各自专长，**可并存**。
 
+**Superpowers 主轴流程**（九阶段 × 14 技能 + 可选外挂）：见 [superpowers-flow.md](./superpowers-flow.md)。  
+**TDD 专页**（Superpowers + 引擎 `.dev-complete`）：见 [tdd-workflow.md](./tdd-workflow.md)。
+
 ## 铁三角依赖（自动安装）
 
 `postinstall` / `taiyi-forge-install --all` 在默认情况下还会尝试安装：
@@ -31,7 +34,8 @@
 | TaiyiForge 阶段 | Superpowers Skill |
 |-----------------|-------------------|
 | change | `brainstorming` — 先澄清再写 CHANGE |
-| task / dev | `test-driven-development` — 与 `taiyi-dev` TDD 纪律一致 |
+| task | `test-driven-development` — 切片测试计划（`/taiyi:tdd plan`） |
+| dev | `test-driven-development` — 红绿重构实现（`/taiyi:tdd dev`） |
 | test | `verification-before-completion` — 证据先于「完成」声明 |
 
 在 OpenCode：`use skill tool to load superpowers/brainstorming`

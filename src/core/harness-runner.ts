@@ -13,6 +13,8 @@ import {
 import { getOpenspecStatus } from "../integrations/openspec.js";
 import { syncTaiyiToOpenspec } from "../integrations/openspec-sync.js";
 import { pendingIronTriangleHooks } from "./harness-checkpoints.js";
+import { loadTokenBudgetConfig } from "./token/budget-config.js";
+import { scanArtifactTokens } from "./token/scan-artifacts.js";
 
 export type HarnessStepKind = "agent" | "shell" | "taiyi-cli";
 
@@ -143,6 +145,26 @@ export function buildHarnessPlan(
   }));
 
   const openspec = getOpenspecStatus(workspaceDir, state.slug);
+
+  const tokenCfg = loadTokenBudgetConfig();
+  const artifactScan = scanArtifactTokens(changeDir);
+  if (artifactScan.total > tokenCfg.compressThreshold) {
+    const compactOk = auxiliaryArtifactSatisfied(changeDir, "taiyi-compress");
+    if (!compactOk) {
+      const compressMsg = `工件 token ${artifactScan.total.toLocaleString()} 超阈值 ${tokenCfg.compressThreshold.toLocaleString()}：先 /taiyi:token compress 或 taiyi-compress`;
+      auxiliary.push({
+        kind: "agent",
+        tool: "taiyi",
+        skill: "taiyi-compress",
+        when: "Token 超 compressThreshold",
+        status: "pending",
+        detail: compressMsg,
+      });
+      if (state.autoHarness) {
+        blockers.push(`auto 模式：${compressMsg}`);
+      }
+    }
+  }
 
   if (state.autoHarness) {
     for (const step of auxiliary) {

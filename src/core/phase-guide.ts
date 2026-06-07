@@ -18,6 +18,7 @@ import { requiresHumanGate } from "./gates/human-gate-config.js";
 import { expectedPhaseCount, isWorkflowCompleted } from "./change-status.js";
 import { buildTokenBudgetSummary } from "./token-runner.js";
 import { normalizeState } from "./normalize-state.js";
+import { formatSkillFlowPlain } from "../integrations/skill-flow.js";
 
 export type PhaseGuide = {
   slug: string;
@@ -48,6 +49,8 @@ export type PhaseGuide = {
   /** Token 预算摘要行（status/guide） */
   tokenBudgetLine?: string;
   tokenWarnings?: string[];
+  /** Superpowers + 可选外部 Skill（workflow-manifest.yaml） */
+  skillFlowLine?: string;
 };
 
 export function buildPhaseGuide(
@@ -73,7 +76,11 @@ export function buildPhaseGuide(
       qualityReady = Object.values(v.scores).every(Boolean);
     }
   } else if (artifactExists && phase.kind === "code") {
-    qualityReady = true;
+    const v = validateArtifactFile(artifactPath, state.currentPhase);
+    if (v) {
+      qualityHints = v.hints;
+      qualityReady = Object.values(v.scores).every(Boolean);
+    }
   } else {
     qualityHints = [`创建并填写工件: ${artifactPath}`];
   }
@@ -103,17 +110,19 @@ export function buildPhaseGuide(
     totalPhases,
   };
 
-  const attachToken = (guide: PhaseGuide): PhaseGuide => {
+  const attachMeta = (guide: PhaseGuide): PhaseGuide => {
     const token = buildTokenBudgetSummary(changeDir, slug, state.currentPhase);
+    const skillFlowLine = formatSkillFlowPlain(state.currentPhase) ?? undefined;
     return {
       ...guide,
       tokenBudgetLine: token.line,
       tokenWarnings: token.evalResult.warnings,
+      skillFlowLine,
     };
   };
 
   if (allDone) {
-    return attachToken({
+    return attachMeta({
       ...guideBase,
       slug,
       profile: state.profile,
@@ -156,12 +165,12 @@ export function buildPhaseGuide(
     nextAction = `工件就绪，执行 /taiyi:continue${auxNote}`;
   }
 
-  if (
+  const needsHealth =
     state.currentPhase === "review" &&
-    state.complexity?.level === "high" &&
-    !state.auxiliaryCompleted.includes("taiyi-health")
-  ) {
-    nextAction = `high 复杂度：先 taiyi-health → mark-aux，再 /taiyi:review-loop`;
+    (state.complexity?.level === "high" || state.complexity?.level === "medium") &&
+    !state.auxiliaryCompleted.includes("taiyi-health");
+  if (needsHealth) {
+    nextAction = `${state.complexity?.level} 复杂度：先 taiyi-health → mark-aux，再 /taiyi:review-loop`;
   } else if (state.currentPhase === "review") {
     nextAction = `/taiyi:review-loop（会话内循环 review 直到机器审查通过）→ 通过后 complete review --approver`;
   } else if (state.autoHarness) {
@@ -170,7 +179,7 @@ export function buildPhaseGuide(
     nextAction = `加载 ${phase.skill}，实现后 /taiyi:apply 或 /taiyi:continue`;
   }
 
-  return attachToken({
+  return attachMeta({
     ...guideBase,
     slug,
     profile: state.profile,

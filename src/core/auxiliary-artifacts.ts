@@ -8,6 +8,7 @@ export const AUXILIARY_ARTIFACTS: Record<string, { files?: string[]; dirs?: stri
   "taiyi-health": { files: ["health-report.md"] },
   "taiyi-evolve": { files: ["architecture-sync.md"] },
   "taiyi-restyle": { files: ["ui-restyle-tasks.md"] },
+  "taiyi-compress": { files: ["CONTEXT-COMPACT.md"] },
 };
 
 export function auxiliaryArtifactSatisfied(changeDir: string, skillId: string): boolean {

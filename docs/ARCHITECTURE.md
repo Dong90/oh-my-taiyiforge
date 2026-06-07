@@ -24,9 +24,11 @@
 
 ## 核心引擎能力（对齐架构图）
 
+架构图真源：[taiyiforge-architecture.svg](./taiyiforge-architecture.svg)（v0.22）
+
 | 能力 | 实现 |
 |------|------|
-| 统一入口 | `taiyi` CLI · `taiyi-forge.sh` · OpenCode `taiyi_*` · `/taiyi:*` |
+| 统一入口 | `taiyi` CLI · `taiyi-forge.sh` · 消费方 `scripts/taiyi-forge.sh`（install 写入）· OpenCode `taiyi_*` · `/taiyi:*` |
 | **意图分析** | `inferComplexitySignals` + `assessComplexity`；`/taiyi:status` 输出「意图分析: …」 |
 | **Token 预算** | `.token-usage.json` · 阶段上限 · 引擎 + **Superpowers/gstack 压缩** · 见 [token-budget.md](./taiyi/token-budget.md) · [token-compress.md](./taiyi/token-compress.md) |
 | 前置校验 | artifact 检测 · auto harness blockers · token enforce（可选） |
@@ -34,7 +36,11 @@
 | 复杂度评估 | `assess` · `state.complexity` |
 | Harness 编排 | `harness-runner` · `taiyi-orchestrator` |
 | 状态追踪 | `state.json` · status/list/guide |
-| CI 验证 | `ci verify`（无 LLM） |
+| **流程排查** | `workflow-audit` → `/taiyi:audit`（漂移、legacy state、交付未闭环） |
+| **CI 工件门禁** | `ci-verify` → `/taiyi:verify`（= `ci verify`，无 LLM） |
+| **健康基线** | `health-invoke` → `/taiyi:health`（对齐 taiyi-health Skill） |
+| **交付门** | `delivery-gate` · integration complete 前 `auditChange({ pretendIntegrationComplete })` |
+| **归档串联** | `taiyiArchive` 前 auto `sync-openspec` · integration 后 `syncRootChangelog` |
 
 ## 九阶段（taiyi-* Skill）
 
@@ -52,20 +58,22 @@
 
 辅助工件：`CONTEXT.md`（`templates/CONTEXT.md` + intel-scan）· `adr/` · `health-report.md` · `ui-restyle-tasks.md` · `architecture-sync.md`
 
-## 双门禁
+## 三门禁
 
 1. **Human Approval** — `gates/human-gate.ts`（默认 change / design / review）
 2. **Quality Gate（五维）** — `gates/quality-gate.ts`
+3. **Delivery Gate（0.22）** — `gates/delivery-gate.ts`（git 仓库 integration 前：有新 commit 且工作区干净；配合 integration 前 audit）
 
 铁三角 optional 钩子（ui-design plan-design-review、gstack/qa、OpenSpec）在 `--auto` 下**不阻塞** complete。
 
 ## 知识沉淀（架构图 footer）
 
-无独立自动化模块；沉淀载体为：
+沉淀载体为：
 
 - `adr/`、`CONTEXT.md` — 决策与代码库情报
-- `CHANGELOG.md`、integration — 交付记录
-- `sync-openspec` — 可选进主规格库
+- 变更 `CHANGELOG.md` + **根 `CHANGELOG.md` 合并**（integration complete）
+- `sync-openspec` + **archive 前自动 sync** — 可选进主规格库
+- `health-report.md`、`architecture-sync.md` — 质量与演进记录
 
 ## 四端支持
 

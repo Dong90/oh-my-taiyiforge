@@ -59,7 +59,11 @@ function legacyStateFindings(raw: ChangeState): AuditFinding[] {
   return out;
 }
 
-function changeCheckboxDrift(changeDir: string, integrationDone: boolean): AuditFinding[] {
+function changeCheckboxDrift(
+  changeDir: string,
+  integrationDone: boolean,
+  preIntegrationAudit = false,
+): AuditFinding[] {
   const changePath = path.join(changeDir, "CHANGE.md");
   const changelogPath = path.join(changeDir, "CHANGELOG.md");
   if (!fs.existsSync(changePath)) return [];
@@ -72,8 +76,10 @@ function changeCheckboxDrift(changeDir: string, integrationDone: boolean): Audit
   if (integrationDone) {
     out.push({
       severity: "high",
-      code: "ac.open-after-integration",
-      message: `integration 已完成但 CHANGE.md 仍有 ${openBoxes} 条 Success Criteria 未勾选`,
+      code: preIntegrationAudit ? "ac.open-before-integration" : "ac.open-after-integration",
+      message: preIntegrationAudit
+        ? `complete integration 前 CHANGE.md 仍有 ${openBoxes} 条 Success Criteria 未勾选`
+        : `integration 已完成但 CHANGE.md 仍有 ${openBoxes} 条 Success Criteria 未勾选`,
     });
   }
 
@@ -107,10 +113,16 @@ function openspecFindings(workspaceDir: string, slug: string, integrationDone: b
   return out;
 }
 
+export type AuditChangeOptions = {
+  /** integration complete 前的预检：按 integration 已完成评估交付/勾选/OpenSpec */
+  pretendIntegrationComplete?: boolean;
+};
+
 export function auditChange(
   workspaceDir: string,
   taiyiRoot: string,
   slug: string,
+  options?: AuditChangeOptions,
 ): ChangeAuditReport | null {
   const changeDir = path.join(taiyiRoot, "changes", slug);
   const raw = readRawState(changeDir);
@@ -121,27 +133,38 @@ export function auditChange(
   const guide = buildPhaseGuide(taiyiRoot, slug, state, workspaceDir);
   const plan = buildHarnessPlan(workspaceDir, taiyiRoot, state);
 
-  for (const b of plan.blockers) {
-    findings.push({ severity: "medium", code: "harness.blocker", message: b });
-  }
-  if (!guide.qualityReady && !guide.workflowCompleted) {
-    findings.push({
-      severity: "high",
-      code: "artifact.quality",
-      message: `阶段 ${guide.currentPhase} 工件未通过质量校验: ${guide.qualityHints.join("; ") || "见工件"}`,
-    });
+  const preIntegrationAudit = options?.pretendIntegrationComplete === true;
+  if (!preIntegrationAudit) {
+    for (const b of plan.blockers) {
+      findings.push({ severity: "medium", code: "harness.blocker", message: b });
+    }
+    if (!guide.qualityReady && !guide.workflowCompleted) {
+      findings.push({
+        severity: "high",
+        code: "artifact.quality",
+        message: `阶段 ${guide.currentPhase} 工件未通过质量校验: ${guide.qualityHints.join("; ") || "见工件"}`,
+      });
+    }
   }
 
-  findings.push(...changeCheckboxDrift(changeDir, state.completedPhases.includes("integration")));
-  findings.push(...openspecFindings(workspaceDir, slug, state.completedPhases.includes("integration")));
+  const integrationDone =
+    options?.pretendIntegrationComplete === true ||
+    state.completedPhases.includes("integration");
+
+  findings.push(
+    ...changeCheckboxDrift(changeDir, integrationDone, preIntegrationAudit),
+  );
+  findings.push(...openspecFindings(workspaceDir, slug, integrationDone));
 
   if (deliveryGateEnabled(workspaceDir)) {
     const delivery = evaluateDeliveryGate(workspaceDir);
-    if (state.completedPhases.includes("integration") && !delivery.passed && !delivery.skipped) {
+    if (integrationDone && !delivery.passed && !delivery.skipped) {
       findings.push({
         severity: "high",
         code: "delivery.not-closed",
-        message: `integration 已过关但工程交付未闭环: ${delivery.reason}`,
+        message: options?.pretendIntegrationComplete
+          ? `complete integration 前交付未闭环: ${delivery.reason}`
+          : `integration 已过关但工程交付未闭环: ${delivery.reason}`,
       });
     }
     if (!state.completedPhases.includes("integration") && guide.workflowCompleted) {

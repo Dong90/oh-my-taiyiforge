@@ -12,6 +12,8 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const workspace = path.resolve(__dirname, "..");
 const pkgRoot = path.resolve(workspace, "../..");
 const slug = "minimal-demo";
+const approver = "minimal-walkthrough-demo";
+const HUMAN_GATE_PHASES = new Set(["change", "design", "review"]);
 const forgeSh = path.join(pkgRoot, "scripts/taiyi-forge.sh");
 
 const taiyi = (args) => {
@@ -90,12 +92,12 @@ Demonstrate TaiyiForge nine-phase workflow in examples/minimal-project.
 Low — example only.
 
 ## Success Criteria
-- [ ] All nine phases complete
-- [ ] npm test passes
+- [x] All nine phases complete
+- [x] npm test passes
 `,
     "utf8",
   );
-  return taiyi(["complete", slug, "change"]);
+  return taiyi(["complete", slug, "change", "--approver", approver]);
 });
 
 const phases = [
@@ -216,7 +218,7 @@ N/A
 ## Non-goals
 Frontend.
 `,
-    hooks: [],
+    hooks: ["superpowers/writing-plans", "superpowers/test-driven-development"],
   },
   {
     id: "dev",
@@ -275,7 +277,8 @@ Minimal counter + full workflow demo.
 ## Verdict
 - [x] **Approve**
 `,
-    hooks: ["gstack/review"],
+    auxMark: "taiyi-health",
+    hooks: ["superpowers/requesting-code-review", "gstack/review"],
   },
   {
     id: "integration",
@@ -298,7 +301,11 @@ Minimal counter + full workflow demo.
 ## Rollback
 Delete slug directory.
 `,
-    hooks: ["gstack/document-release"],
+    hooks: [
+      "superpowers/finishing-a-development-branch",
+      "superpowers/verification-before-completion",
+      "gstack/document-release",
+    ],
   },
 ];
 
@@ -314,6 +321,10 @@ for (const p of phases) {
   }
   if (p.aux?.file && p.aux.content && !p.aux.dir) {
     fs.writeFileSync(path.join(changeDir, p.aux.file), p.aux.content, "utf8");
+  }
+
+  if (p.auxMark) {
+    step(stepNum++, `辅助 ${p.auxMark}`, () => taiyi(["mark-aux", slug, p.auxMark]));
   }
 
   for (const h of p.hooks ?? []) {
@@ -342,7 +353,11 @@ for (const p of phases) {
     fs.writeFileSync(path.join(changeDir, p.file), p.body, "utf8");
   }
 
-  step(stepNum++, `complete ${p.id}`, () => taiyi(["complete", slug, p.id]), `/taiyi:continue 或 /taiyi:apply（${p.id}）`);
+  step(stepNum++, `complete ${p.id}`, () => {
+    const completeArgs = ["complete", slug, p.id];
+    if (HUMAN_GATE_PHASES.has(p.id)) completeArgs.push("--approver", approver);
+    return taiyi(completeArgs);
+  }, `/taiyi:continue 或 /taiyi:apply（${p.id}）`);
 }
 
 step(stepNum++, "list 变更列表", () => taiyi(["list"]), "/taiyi:list");

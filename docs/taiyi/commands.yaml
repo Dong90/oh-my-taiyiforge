@@ -79,6 +79,14 @@ profiles:
           与 audit 分工：verify=工件过关 · audit=交付闭环与漂移。
         when: PR 检查、合并前；CI 可用等价命令 `taiyi ci verify`（别名）
 
+      - chat: "/taiyi:health [slug]"
+        codex: "$taiyi-health"
+        engine: "taiyi-forge.sh health [slug]"
+        meaning: |
+          review 前代码健康基线：加载 taiyi-health Skill，
+          写入 health-report.md，完成后 mark-aux taiyi-health。
+        when: review 前、harness 推荐、high complexity 必选
+
       - chat: "/taiyi:list"
         codex: "$taiyi-list"
         engine: "taiyi-forge.sh ls"
@@ -108,6 +116,30 @@ profiles:
         engine: "加载 Superpowers brainstorming + taiyi-change（无 shell 子命令）"
         meaning: change 阶段头脑风暴 → 加载 Superpowers brainstorming + taiyi-change
         when: 对标 opsx:explore / OMX clarify，无独立引擎子命令
+
+      - chat: "/taiyi:flow [slug]"
+        codex: "$taiyi-flow"
+        engine: "读 workflow-manifest.yaml + superpowers-flow.md（无 shell 子命令）"
+        meaning: |
+          Superpowers 全技能主轴九阶段流程；status/guide 按阶段输出建议/可选 Skill。
+          可选外挂：gstack · OpenSpec · web-quality-skills。
+        when: onboarding、确认当前阶段该加载哪些 Superpowers
+
+      - chat: "/taiyi:full-flow [slug]"
+        codex: "$taiyi-full-flow"
+        engine: "读 workflow-manifest.yaml + full-oss-flow.md + harness <slug>（无 shell 子命令）"
+        meaning: |
+          完整开源流程：Superpowers + gstack + OpenSpec + web-quality + Playwright +
+          Semgrep + Trivy + Changesets + taiyi 辅助 Skill，按阶段全部串联执行。
+        when: 要跑通全部开源 Skill/CLI 的端到端流程
+
+      - chat: "/taiyi:tdd [plan|dev] [slug]"
+        codex: "$taiyi-tdd"
+        engine: "加载 Superpowers test-driven-development + taiyi-task（plan）或 taiyi-dev（dev）"
+        meaning: |
+          TDD 纪律入口：task 阶段定切片测试计划（plan）；
+          dev 阶段红绿重构实现（dev）。完成后 harness-check superpowers/test-driven-development。
+        when: task/dev 阶段；Superpowers TDD 纪律入口
 
       - chat: "/taiyi:token status [slug]"
         codex: "$taiyi-token-status"

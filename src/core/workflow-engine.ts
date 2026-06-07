@@ -24,6 +24,8 @@ import { enforceTokenBudgetBeforeComplete } from "./token-runner.js";
 import { expectedPhaseCount, isWorkflowCompleted } from "./change-status.js";
 import { normalizeState } from "./normalize-state.js";
 import { deliveryGateEnabled, evaluateDeliveryGate } from "./gates/delivery-gate.js";
+import { auditChange } from "./workflow-audit.js";
+import { syncRootChangelog } from "./sync-root-changelog.js";
 
 export type InitChangeOptions = {
   title?: string;
@@ -236,17 +238,36 @@ export class WorkflowEngine {
       this.writeState({ ...workingState, updatedAt: new Date().toISOString() });
     }
 
-    if (phaseId === "review" && workingState.complexity?.level === "high") {
+    if (
+      phaseId === "review" &&
+      (workingState.complexity?.level === "high" ||
+        workingState.complexity?.level === "medium")
+    ) {
       if (!workingState.auxiliaryCompleted.includes("taiyi-health")) {
         return {
           ok: false,
           error:
-            "High complexity: complete taiyi-health and run `taiyi mark-aux <slug> taiyi-health` before review",
+            "Medium/high complexity: complete taiyi-health and run `taiyi mark-aux <slug> taiyi-health` before review",
         };
       }
     }
 
     const workspaceDir = path.dirname(this.workspaceRoot);
+
+    if (phaseId === "integration" && process.env.TAIYI_SKIP_INTEGRATION_AUDIT !== "1") {
+      const audit = auditChange(workspaceDir, this.workspaceRoot, slug, {
+        pretendIntegrationComplete: true,
+      });
+      if (audit && !audit.ok) {
+        const highs = audit.findings
+          .filter((f) => f.severity === "high")
+          .map((f) => `${f.code}: ${f.message}`);
+        return {
+          ok: false,
+          error: `Integration audit failed:\n${highs.join("\n")}`,
+        };
+      }
+    }
 
     if (phaseId === "integration" && deliveryGateEnabled(workspaceDir)) {
       const delivery = evaluateDeliveryGate(workspaceDir);
@@ -361,6 +382,10 @@ export class WorkflowEngine {
       workflowStatus: allDone ? "completed" : "active",
     };
     this.writeState(updated);
+
+    if (phaseId === "integration" && process.env.TAIYI_SKIP_ROOT_CHANGELOG !== "1") {
+      syncRootChangelog(workspaceDir, slug);
+    }
 
     if (workingState.autoHarness) {
       runPostCompleteShellHooks(workspaceDir, slug, phaseId);

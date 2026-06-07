@@ -1,5 +1,30 @@
 # Changelog
 
+## [0.22.0] - 2026-06-07
+
+### Added
+
+- **交付门**：`complete integration` 前自动 `audit`（git commit + 干净工作区）；`TAIYI_DELIVERY_VERIFY_CMD` 可选验证命令
+- **`/taiyi:health`** + `taiyi health` → `health-report.md`（review 前代码健康基线）
+- **`/taiyi:flow`**、**`/taiyi:full-flow`**：Superpowers 主轴 + `workflow-manifest.yaml` 真源
+- **`dev-complete`**：dev 阶段默认要求 `.dev-complete` 含 `command:` + `exitCode: 0`
+- **`resolve-auto-harness`**：`init` 默认关、`new` 默认开；`--no-auto` / `TAIYI_AUTO_HARNESS` 统一
+- **消费方 wrapper**：`taiyi-forge-install` 写入项目 `scripts/taiyi-forge.sh`（含 `node_modules` 检测）
+- **根 CHANGELOG 同步**：integration complete 后合并变更 `CHANGELOG.md` 到仓库根
+- **archive 自动 sync-openspec**：openspec change 目录缺失时先同步再归档
+- **compress harness**：auto 模式超阈值推荐/阻塞 `CONTEXT-COMPACT.md`
+- **示例**：`examples/full-oss-flow/`、`examples/skill-flow/`；架构图 SVG 真源 + PNG 重生成脚本
+- **文档**：`full-oss-flow.md`、`superpowers-flow.md`、`tdd-workflow.md`、`skill-flow.yaml`
+
+### Changed
+
+- **integration 前 audit**：`pretendIntegrationComplete` 不再跳过 open AC checkbox
+- **medium 复杂度**：须完成 `taiyi-health` 辅助 Skill
+- **dev phase-guide**：code 阶段走 `validateArtifactFile` 质量校验
+- **harness-hooks**：精简为读取 `workflow-manifest.yaml`；optional 铁三角见 manifest
+- **walkthrough**：人工门阶段传 `--approver`（change / design / review）
+- **README / GAP-CLOSURE / ARCHITECTURE**：0.22 三门禁、排查命令、对照表同步
+
 ## [0.21.0] - 2026-06-05
 
 ### Added

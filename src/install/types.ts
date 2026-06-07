@@ -18,7 +18,8 @@ export type InstallResult = {
     | "openspec"
     | "gstack"
     | "superpowers"
-    | "web-quality-skills";
+    | "web-quality-skills"
+    | "project-wrapper";
   path: string;
   action: "created" | "updated" | "skipped" | "failed";
   detail?: string;

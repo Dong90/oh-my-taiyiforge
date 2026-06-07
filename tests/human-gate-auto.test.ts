@@ -46,6 +46,13 @@ describe("automated human gate", () => {
       expect(r.ok, `${phase}: ${r.error}`).toBe(true);
     }
 
+    fs.writeFileSync(
+      path.join(changeDir, "health-report.md"),
+      "# Health\n\nok for human gate test\n",
+      "utf8",
+    );
+    engine.markAuxiliary("demo", "taiyi-health");
+
     const blocked = engine.completePhase("demo", "review", gates);
     expect(blocked.ok).toBe(false);
     expect(blocked.error).toMatch(/Human gate required/);

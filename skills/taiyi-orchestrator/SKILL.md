@@ -34,7 +34,7 @@ scripts/taiyi-forge.sh harness <slug>
 
 | 工具 | 加载方式 | 示例 |
 |------|----------|------|
-| superpowers | Cursor 插件 Skill | `brainstorming`、`test-driven-development`、`verification-before-completion`；Token 压缩见 **`subagent-driven-development`** / **`dispatching-parallel-agents`** |
+| superpowers | Cursor 插件 Skill | `brainstorming`；**task+dev** `test-driven-development`（`/taiyi:tdd`）；`verification-before-completion`；Token 压缩见 **`subagent-driven-development`** / **`dispatching-parallel-agents`** |
 | gstack | gstack Skill / 命令 | `plan-eng-review`、`plan-design-review`（ui 可选）、`qa`（test 可选）、`review`、`document-release`；Token 压缩见 **`checkpoint`** |
 | taiyi | 辅助 Skill | **`taiyi-compress`** + `/taiyi:token compress` |
 | openspec | shell（引擎可自动） | `openspec change show <slug>` |
@@ -73,15 +73,31 @@ scripts/taiyi-forge.sh harness <slug>   # 下一阶段重复 0–4
 
 integration 完成后，引擎在 auto 模式下自动尝试 `sync-openspec`（若检测到 OpenSpec）。
 
-## 与 Cursor / Superpowers
+## 完整开源流程（推荐）
 
-你已安装 **Superpowers** 时：
+按 **`docs/taiyi/full-oss-flow.md`** 每阶段加载全部 Skill：
+
+| 阶段 | 除主 Skill 外还应执行 |
+|------|----------------------|
+| change | brainstorming · taiyi-intel-scan |
+| requirement | writing-plans · openspec（可选） |
+| design | gstack plan-eng-review · taiyi-architect |
+| ui-design | gstack plan-design-review · web-quality * |
+| task | writing-plans + TDD plan |
+| dev | TDD dev · npm test |
+| test | verification · gstack qa · playwright · web-quality |
+| review | taiyi-health · requesting-code-review · gstack review · semgrep · trivy |
+| integration | finishing-a-development-branch · verification · document-release · audit |
+
+聊天入口：`/taiyi:full-flow`。optional 钩子建议全部打卡，未装 CLI 可跳过。
+
+## 与 Cursor / Superpowers
 
 - change → **必须**先 `brainstorming` 再写 CHANGE
 - dev → 配合 `test-driven-development`
-- test → 配合 `verification-before-completion` + `gstack qa`（有 web 面时）
+- test → 配合 `verification-before-completion` + 全部 test 阶段外挂
 
-加载方式：在对话中 invoke Superpowers 对应 Skill，完成后 `harness-check` 打卡。
+加载方式：在对话中 invoke 对应 Skill，完成后 `harness-check` 打卡。
 
 ## 禁止
 

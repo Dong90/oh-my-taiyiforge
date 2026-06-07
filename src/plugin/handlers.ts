@@ -1,3 +1,4 @@
+import fs from "node:fs";
 import path from "node:path";
 import type { ChangeProfile, GateInput, PhaseId, QualityScores } from "../core/types.js";
 import { WorkflowEngine } from "../core/workflow-engine.js";
@@ -42,6 +43,7 @@ import {
   formatCiVerifyPlain,
 } from "../core/ci-verify.js";
 import { auditWorkspace, formatAuditPlain } from "../core/workflow-audit.js";
+import { formatAgentHealthProtocol } from "../core/health-invoke.js";
 import {
   probePlatformCi,
   formatPlatformProbePlain,
@@ -241,7 +243,21 @@ export function taiyiArchive(
     }
   }
 
-  const openspec = getOpenspecStatus(workspaceDir, slug);
+  let openspec = getOpenspecStatus(workspaceDir, slug);
+  if (openspec.detected && !openspec.changeExists) {
+    const changeDir = path.join(resolveTaiyiRoot(workspaceDir), "changes", slug);
+    const sync = syncTaiyiToOpenspec(workspaceDir, slug, changeDir, { createChangeDir: true });
+    if (!sync.ok) {
+      return {
+        ok: false as const,
+        error: `auto sync-openspec before archive failed: ${sync.reason ?? "unknown"}`,
+        openspec,
+        state,
+      };
+    }
+    openspec = getOpenspecStatus(workspaceDir, slug);
+  }
+
   const result = runOpenspecArchive(workspaceDir, slug, {
     skipSpecs: options?.skipSpecs,
     yes: true,
@@ -370,6 +386,41 @@ export function taiyiAudit(
     return { ok: report.ok, text: formatAuditPlain(report), report };
   }
   return { ok: report.ok, report };
+}
+
+export function taiyiHealth(workspaceDir: string, slug?: string) {
+  const taiyiRoot = resolveTaiyiRoot(workspaceDir);
+  let resolved = slug?.trim();
+  if (!resolved) {
+    const changes = listChanges(taiyiRoot);
+    if (changes.length === 1) resolved = changes[0]!.slug;
+    else if (changes.length === 0) {
+      return { ok: false as const, error: "无活跃变更；先 taiyi init 或指定 slug" };
+    } else {
+      return {
+        ok: false as const,
+        error: `多变更并行，请指定 slug：${changes.map((c) => c.slug).join(", ")}`,
+      };
+    }
+  }
+  const invalid = rejectInvalidSlug(resolved);
+  if (invalid) return invalid;
+
+  const changeDir = path.join(taiyiRoot, "changes", resolved);
+  const engine = createEngine(workspaceDir);
+  const state = engine.getState(resolved);
+  if (!state) return { ok: false as const, error: `Change not found: ${resolved}` };
+
+  const reportPath = path.join(changeDir, "health-report.md");
+  const text = formatAgentHealthProtocol(workspaceDir, resolved, reportPath);
+  return {
+    ok: true as const,
+    slug: resolved,
+    reportPath,
+    hasReport: fs.existsSync(reportPath),
+    marked: state.auxiliaryCompleted.includes("taiyi-health"),
+    text,
+  };
 }
 
 export function taiyiCiVerify(

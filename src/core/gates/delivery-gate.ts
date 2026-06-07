@@ -95,5 +95,28 @@ export function evaluateDeliveryGate(workspaceDir: string): DeliveryGateResult {
     };
   }
 
+  const verifyCmd = process.env.TAIYI_DELIVERY_VERIFY_CMD?.trim();
+  if (verifyCmd) {
+    try {
+      execSync(verifyCmd, {
+        cwd: workspaceDir,
+        encoding: "utf8",
+        stdio: ["ignore", "pipe", "pipe"],
+      });
+    } catch (e) {
+      const detail =
+        e instanceof Error && "stderr" in e && typeof e.stderr === "string"
+          ? e.stderr.slice(0, 200)
+          : e instanceof Error
+            ? e.message
+            : String(e);
+      return {
+        passed: false,
+        reason: `TAIYI_DELIVERY_VERIFY_CMD 未通过: ${verifyCmd}`,
+        hints: [detail || "命令退出非 0"],
+      };
+    }
+  }
+
   return { passed: true };
 }

@@ -19,6 +19,7 @@ description: TaiyiForge 第 5 阶段 — 可独立 PR 的任务切片，产出 T
 
 ## 输入
 
+- Superpowers `test-driven-development`（**计划模式**；`/taiyi:tdd plan`）
 - `DESIGN.md`
 - `UI-DESIGN.md` 或 N/A 说明
 - `REQUIREMENT.md`（MVP AC）

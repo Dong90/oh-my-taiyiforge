@@ -55,6 +55,45 @@ describe("artifact-validator", () => {
     expect(r.scores.completeness).toBe(false);
   });
 
+  it("rejects TASK without TDD plan cues", () => {
+    const r = validateArtifactContent(
+      "task",
+      `# TASK: Demo
+
+## Slices (vertical, smallest shippable first)
+
+| # | Slice | Depends | Done when |
+|---|-------|---------|-----------|
+| 1 | add field | — | works |
+
+## Checklist per slice
+
+- [ ] ship it
+`,
+    );
+    expect(r.scores.completeness).toBe(false);
+    expect(r.hints.some((h) => /测试先行|TDD|test/i.test(h))).toBe(true);
+  });
+
+  it("accepts TASK with test-first plan", () => {
+    const r = validateArtifactContent(
+      "task",
+      `# TASK: Demo
+
+## Slices
+
+| # | Slice | Depends | Done when |
+|---|-------|---------|-----------|
+| 1 | api | — | npm test api green |
+
+## Checklist per slice
+
+- [ ] 测试先行（RED）
+`,
+    );
+    expect(r.scores.completeness).toBe(true);
+  });
+
   it("accepts filled CHANGE.md", () => {
     const r = validateArtifactContent(
       "change",

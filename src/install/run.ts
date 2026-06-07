@@ -17,6 +17,7 @@ import { installThirdPartyDeps, shouldInstallDeps } from "./third-party-deps.js"
 import { syncCodexPrompts } from "./sync-codex-prompts.js";
 import { defaultCursorCommandsDir, syncCursorCommands } from "./sync-cursor-commands.js";
 import { syncTaiyiSkills } from "./sync-skills.js";
+import { installProjectWrapper } from "./sync-project-wrapper.js";
 import type { InstallResult, InstallTarget } from "./types.js";
 import { ALL_INSTALL_TARGETS, PLUGIN_NAME } from "./types.js";
 
@@ -190,6 +191,10 @@ export async function runInstall(opts: RunInstallOptions = {}): Promise<InstallR
   const wantsDeps = opts.installDeps ?? shouldInstallDeps();
   if (wantsDeps) {
     results.push(...installThirdPartyDeps({ targets, silent }));
+  }
+
+  if (process.env.TAIYI_FORGE_SKIP_PROJECT_WRAPPER !== "1") {
+    results.push(installProjectWrapper(opts.cwd ?? process.cwd(), resolvedRoot));
   }
 
   for (const r of results) {
