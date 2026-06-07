@@ -8,4 +8,6 @@ User invoked **$taiyi-status** (= `/taiyi:status`). Run:
 scripts/taiyi-forge.sh status $ARGUMENTS
 ```
 
-Shows current phase, Skill, artifact readiness, and next action. Omit slug when only one active change.
+Shows current phase, Skill, artifact readiness, sync actions, and next action. **Trust this output** over chat memory. Omit slug when only one active change.
+
+{{TAIYI_STAGE_PROTOCOL}}

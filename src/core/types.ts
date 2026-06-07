@@ -38,7 +38,7 @@ export type GateInput = {
 
 export type ChangeProfile = "full" | "api" | "ui" | "lite";
 
-export type WorkflowStatus = "active" | "completed";
+export type WorkflowStatus = "active" | "completed" | "aborted";
 
 export type ChangeState = {
   slug: string;

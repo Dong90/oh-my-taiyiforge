@@ -9,6 +9,7 @@ import {
   taiyiDoctor,
   taiyiGuide,
   taiyiInit,
+  taiyiNew,
   taiyiList,
   taiyiMarkAux,
   taiyiNext,
@@ -27,6 +28,9 @@ import {
   taiyiReviewLoop,
   taiyiAudit,
   taiyiHealth,
+  taiyiHandoff,
+  taiyiCancel,
+  taiyiCommitTrailers,
 } from "./handlers.js";
 import { resolvePackageRoot } from "../core/package-root.js";
 
@@ -65,6 +69,37 @@ const TaiyiForgePlugin: Plugin = async () => {
             profile: args.profile,
             strictDev: args.strictDev,
             autoHarness: args.autoHarness,
+          });
+          return JSON.stringify(r, null, 2);
+        },
+      }),
+      taiyi_new: tool({
+        description:
+          "Create a change from a title (daily default — aligns with /taiyi:new). Auto-generates slug; use taiyi_init for fixed slug/CI.",
+        args: {
+          title: tool.schema.string().describe("Human-readable change title, e.g. User login"),
+          profile: tool.schema
+            .enum(["full", "api", "ui", "lite"])
+            .optional()
+            .describe("full=9 phases; api=skip ui-design; lite=5 phases"),
+          strictDev: tool.schema
+            .boolean()
+            .optional()
+            .describe("Require exitCode:0 evidence in .dev-complete"),
+          auto: tool.schema
+            .boolean()
+            .optional()
+            .describe("Enable full auto orchestration (iron triangle + auxiliary before complete)"),
+          noAuto: tool.schema.boolean().optional().describe("Force manual mode even if TAIYI_AUTO_HARNESS=1"),
+          force: tool.schema.boolean().optional().describe("Re-init if slug already exists"),
+        },
+        async execute(args, ctx) {
+          const r = taiyiNew(ctx.directory, args.title, {
+            profile: args.profile,
+            strictDev: args.strictDev,
+            auto: args.auto,
+            noAuto: args.noAuto,
+            force: args.force,
           });
           return JSON.stringify(r, null, 2);
         },
@@ -186,11 +221,16 @@ const TaiyiForgePlugin: Plugin = async () => {
         },
       }),
       taiyi_doctor: tool({
-        description: "Check TaiyiForge install: skills on 4 platforms, OpenCode plugin, templates.",
-        args: {},
-        async execute(_args, ctx) {
-          void ctx;
-          const r = taiyiDoctor();
+        description:
+          "Check TaiyiForge install (skills, plugin, templates) and optional workspace flow blockers.",
+        args: {
+          strict: tool.schema
+            .boolean()
+            .optional()
+            .describe("Strict workspace checks (multiple active changes, etc.) — aligns with doctor --strict-workspace"),
+        },
+        async execute(args, ctx) {
+          const r = taiyiDoctor(undefined, ctx.directory, { strictWorkspace: args.strict });
           return JSON.stringify(r, null, 2);
         },
       }),
@@ -416,6 +456,46 @@ const TaiyiForgePlugin: Plugin = async () => {
             plain: true,
           });
           return "text" in r && r.text ? r.text : JSON.stringify(r, null, 2);
+        },
+      }),
+      taiyi_handoff: tool({
+        description:
+          "Write HANDOFF.md for cross-session resume (aligns with /taiyi:handoff and MCP taiyi_state_handoff).",
+        args: {
+          slug: tool.schema.string().optional().describe("Change slug; inferred when only one active"),
+          note: tool.schema.string().optional().describe("Optional session note for HANDOFF.md"),
+        },
+        async execute(args, ctx) {
+          const r = taiyiHandoff(ctx.directory, args.slug, args.note);
+          return JSON.stringify(r, null, 2);
+        },
+      }),
+      taiyi_cancel: tool({
+        description:
+          "Abort active change without deleting .taiyi/changes/<slug>/ (aligns with /taiyi:cancel).",
+        args: {
+          slug: tool.schema.string().optional().describe("Change slug; inferred when only one active"),
+        },
+        async execute(args, ctx) {
+          const r = taiyiCancel(ctx.directory, args.slug);
+          return JSON.stringify(r, null, 2);
+        },
+      }),
+      taiyi_commit_trailers: tool({
+        description:
+          "Suggest git commit message with Taiyi-Change / Taiyi-Phase trailers before integration (aligns with taiyi commit-trailers).",
+        args: {
+          slug: tool.schema.string().optional().describe("Change slug; inferred when only one active"),
+          subject: tool.schema.string().optional().describe("Commit subject line, default feat: deliver change slice"),
+        },
+        async execute(args, ctx) {
+          const r = taiyiCommitTrailers(ctx.directory, args.slug, args.subject);
+          if (!r.ok) return JSON.stringify(r, null, 2);
+          const lines = [r.suggestion];
+          if (!r.check.skipped && !r.check.passed && r.check.reason) {
+            lines.push("", `⚠ ${r.check.reason}`);
+          }
+          return lines.join("\n");
         },
       }),
     },

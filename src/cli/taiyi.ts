@@ -6,8 +6,12 @@ import { resolvePackageRoot, resolveTemplatesDir } from "../core/package-root.js
 import { resolveHumanForComplete } from "../core/gates/human-gate-config.js";
 import { formatChangeListPlain, formatGuidePlain, formatPhaseProgressLine, formatStatusPlain } from "../core/format-guide.js";
 import { buildPhaseGuide } from "../core/phase-guide.js";
-import { isWorkflowCompleted } from "../core/change-status.js";
+import { isChangeAborted, isWorkflowCompleted } from "../core/change-status.js";
 import { resolveActiveSlug, slugifyTitle } from "../core/active-slug.js";
+import {
+  evaluateCommitTrailers,
+  suggestCommitMessage,
+} from "../core/gates/commit-trailer.js";
 import { resolveAutoHarness } from "../core/resolve-auto-harness.js";
 import type { ChangeProfile, PhaseId } from "../core/types.js";
 import {
@@ -15,6 +19,7 @@ import {
   taiyiAssess,
   taiyiComplete,
   taiyiDoctor,
+  taiyiHandoff,
   taiyiGuide,
   taiyiList,
   taiyiMarkAux,
@@ -51,12 +56,15 @@ function usage(): void {
   console.log(`TaiyiForge (oh-my-taiyiforge)
 
 用法:
-  npm run taiyi -- doctor                   检查四端安装与配置
+  npm run taiyi -- doctor [--strict-workspace]     检查四端安装；strict 时工作区 blocker 也 FAIL
   npm run taiyi -- list                     列出 .taiyi/changes/ 下所有变更
   npm run taiyi -- init <slug> [--profile api|lite|ui] [--strict-dev] [--auto] [--force] [--json]
   npm run taiyi -- harness <slug>              全自动编排清单（铁三角→辅助→主流程）
   npm run taiyi -- harness-check <slug> <key>  铁三角步骤打卡（auto 模式）
-  npm run taiyi -- new <标题>              /taiyi:new — 自动 slug + auto
+  npm run taiyi -- new <标题>              /taiyi:new — 自动 slug（默认手动；--auto 全自动）
+  npm run taiyi -- cancel [slug]           /taiyi:cancel — 取消进行中变更
+  npm run taiyi -- handoff [slug] [备注]   /taiyi:handoff — 写 HANDOFF.md（跨会话恢复）
+  npm run taiyi -- commit-trailers [slug] [subject]  建议含 Taiyi-Change trailer 的 commit message
   npm run taiyi -- status [slug]           /taiyi:status — 阶段进度（3/9）
   npm run taiyi -- continue [slug] [xN]   → /taiyi:continue [xN]
   npm run taiyi -- apply [slug] [xN]        → /taiyi:apply [xN]
@@ -232,19 +240,34 @@ function completeCurrentPhase(slug: string, phaseId: PhaseId, approver?: string)
 }
 
 function printDoctor(): void {
-  const r = taiyiDoctor();
+  const strictWorkspace = args.includes("--strict-workspace");
+  const r = taiyiDoctor(undefined, workspaceDir, { strictWorkspace });
   if (jsonMode) {
     console.log(JSON.stringify(r, null, 2));
     if (!r.ok) process.exit(1);
     return;
   }
   console.log(`TaiyiForge doctor v${r.report.version} — ${r.ok ? "PASS" : "FAIL"}\n`);
+  console.log("安装:");
   for (const c of r.report.checks) {
     console.log(`${c.ok ? "✓" : "✗"} ${c.id}: ${c.detail}`);
   }
+  if (r.report.workspaceChecks?.length) {
+    console.log("\n工作区流程:");
+    for (const c of r.report.workspaceChecks) {
+      console.log(`${c.ok ? "✓" : "✗"} ${c.id}: ${c.detail}`);
+    }
+  }
   if (!r.ok) {
-    console.log("\n修复: npx taiyi-forge-install --all");
+    if (!r.report.ok) {
+      console.log("\n修复: npx taiyi-forge-install --all");
+    } else if (strictWorkspace) {
+      console.log("\n--strict-workspace: 工作区 blocker 未通过");
+    }
     process.exit(1);
+  }
+  if (r.report.workspaceOk === false && !strictWorkspace) {
+    console.log("\n工作区提示: /taiyi:status · /taiyi:audit · /taiyi:handoff");
   }
 }
 
@@ -323,7 +346,7 @@ switch (cmd) {
         templatesDir,
         profile: parseProfile(args) ?? "full",
         strictDev: args.includes("--strict-dev"),
-        autoHarness: resolveAutoHarness(args, true),
+        autoHarness: resolveAutoHarness(args, false),
         force: args.includes("--force"),
       });
       if (jsonMode) {
@@ -336,6 +359,21 @@ switch (cmd) {
     } catch (e) {
       console.error(e instanceof Error ? e.message : String(e));
       process.exit(1);
+    }
+    break;
+  }
+  case "cancel": {
+    const slug = requireSlug(args);
+    const result = engine.abortChange(slug);
+    if (!result.ok) {
+      console.error(result.error);
+      process.exit(1);
+    }
+    if (jsonMode) {
+      console.log(JSON.stringify({ ok: true, slug, workflowStatus: "aborted" }, null, 2));
+    } else {
+      console.log(`已取消变更: ${slug}`);
+      console.log("目录仍保留于 .taiyi/changes/；可 /taiyi:new 创建新变更。");
     }
     break;
   }
@@ -359,6 +397,10 @@ switch (cmd) {
     if (isWorkflowCompleted(state)) {
       console.log(`变更 ${slug} 已完成 → /taiyi:archive`);
       break;
+    }
+    if (isChangeAborted(state)) {
+      console.error(`变更 ${slug} 已取消。请 /taiyi:new 或指定其他 slug。`);
+      process.exit(1);
     }
     const phaseId = state.currentPhase as PhaseId;
     const attempt = tryCompletePhase(slug, { approver });
@@ -391,6 +433,10 @@ switch (cmd) {
     if (isWorkflowCompleted(state)) {
       console.log(`变更 ${slug} 已完成 → /taiyi:archive`);
       break;
+    }
+    if (isChangeAborted(state)) {
+      console.error(`变更 ${slug} 已取消。请 /taiyi:new 或指定其他 slug。`);
+      process.exit(1);
     }
     const phase = state.currentPhase;
     if (phase !== "dev" && phase !== "test") {
@@ -467,9 +513,58 @@ switch (cmd) {
       process.exit(1);
     }
     if (jsonMode) {
-      console.log(JSON.stringify({ state: r.state, guide: r.guide, openspec: r.openspec }, null, 2));
+      console.log(
+        JSON.stringify(
+          { engineTruth: r.engineTruth, state: r.state, guide: r.guide, openspec: r.openspec },
+          null,
+          2,
+        ),
+      );
     } else {
       console.log(formatStatusPlain(r.guide));
+    }
+    break;
+  }
+  case "commit-trailers": {
+    const { positional } = parseRepeatCount(stripFlags(args));
+    const resolved = resolveActiveSlug(taiyiRoot, positional[0]);
+    if (!resolved.ok) {
+      console.error(resolved.error);
+      process.exit(1);
+    }
+    const state = engine.getState(resolved.slug);
+    const phase = state?.currentPhase ?? "dev";
+    const subject = positional.slice(1).join(" ").trim() || "feat: deliver change slice";
+    const suggestion = suggestCommitMessage(resolved.slug, phase, subject);
+    const check = evaluateCommitTrailers(workspaceDir, resolved.slug, phase);
+    if (jsonMode) {
+      console.log(JSON.stringify({ slug: resolved.slug, phase, suggestion, check }, null, 2));
+    } else {
+      console.log(suggestion);
+      if (!check.skipped && !check.passed) {
+        console.error(`\n⚠ ${check.reason}`);
+        if (check.hints?.length) console.error(check.hints.join("\n"));
+      } else if (!check.skipped && check.passed) {
+        console.error("\n✓ 当前分支已有匹配的 Taiyi-Change trailer");
+      }
+    }
+    break;
+  }
+  case "handoff":
+  case "pause": {
+    const { positional } = parseRepeatCount(stripFlags(args));
+    const slug = positional[0];
+    const note = positional.slice(1).join(" ").trim() || undefined;
+    const r = taiyiHandoff(workspaceDir, slug, note);
+    if (!r.ok) {
+      console.error(r.error);
+      process.exit(1);
+    }
+    if (jsonMode) {
+      console.log(JSON.stringify(r, null, 2));
+    } else {
+      console.log(`已写入: ${r.path}`);
+      console.log(`恢复: /taiyi:status ${r.slug}`);
     }
     break;
   }

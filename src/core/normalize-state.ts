@@ -53,9 +53,11 @@ export function normalizeState(raw: ChangeState): ChangeState {
   };
   const completed = isWorkflowCompleted(draft);
   const workflowStatus =
-    raw.workflowStatus === "completed" && !completed
-      ? "active"
-      : (raw.workflowStatus ?? (completed ? "completed" : "active"));
+    raw.workflowStatus === "aborted"
+      ? "aborted"
+      : raw.workflowStatus === "completed" && !completed
+        ? "active"
+        : (raw.workflowStatus ?? (completed ? "completed" : "active"));
 
   return {
     ...draft,

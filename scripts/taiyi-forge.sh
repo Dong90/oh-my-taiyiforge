@@ -33,7 +33,9 @@ usage() {
 TaiyiForge（对齐 OpenSpec /opsx:<verb>）
 
 聊天入口:
-  /taiyi:new 用户登录       Cursor / Claude
+  /taiyi:new 用户登录       Cursor / Claude（默认手动；--auto 全自动）
+  /taiyi:cancel [slug]      取消进行中变更
+  /taiyi:handoff [slug]     写 HANDOFF.md（跨会话恢复，≈ OMC notepad/checkpoint）
   /taiyi:continue           推进（每阶段写完工件后执行）
   /taiyi:apply              实现（dev/test）
   /taiyi:status             当前第几阶段、该用哪个 Skill
@@ -55,7 +57,8 @@ Codex: $taiyi-new / $taiyi-continue / $taiyi-apply / $taiyi-tdd / $taiyi-flow / 
 Superpowers 流程: docs/taiyi/superpowers-flow.md · 真源: docs/taiyi/workflow-manifest.yaml
 
 引擎（Agent 代跑）:
-  scripts/taiyi-forge.sh new <标题>   # 默认 --auto，仅 seed CHANGE.md
+  scripts/taiyi-forge.sh new <标题>   # 默认手动；--auto 全自动，仅 seed CHANGE.md
+  scripts/taiyi-forge.sh cancel [slug]
   scripts/taiyi-forge.sh continue [slug]
   scripts/taiyi-forge.sh apply [slug]
   scripts/taiyi-forge.sh archive [slug]
@@ -75,6 +78,12 @@ case "$cmd" in
     ;;
   continue)
     run_taiyi continue "$@"
+    ;;
+  cancel)
+    run_taiyi cancel "$@"
+    ;;
+  handoff|pause)
+    run_taiyi handoff "$@"
     ;;
   status)
     run_taiyi status "$@"
@@ -104,7 +113,7 @@ case "$cmd" in
   run)
     run_taiyi walkthrough "$@"
     ;;
-  audit|health|verify|doctor|init|next|harness|harness-check|complete|assess|mark-aux|status|guide|sync|sync-openspec|walkthrough|ci|token|loop|review-check|review-loop|phases)
+  audit|health|verify|doctor|init|next|harness|harness-check|complete|assess|mark-aux|status|guide|sync|sync-openspec|walkthrough|ci|token|loop|review-check|review-loop|phases|cancel|handoff|pause|commit-trailers)
     run_taiyi "$cmd" "$@"
     ;;
   help|--help|-h)

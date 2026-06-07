@@ -166,4 +166,28 @@ Demo motivation with enough detail for validation.
     expect(["low", "medium", "high"]).toContain(assessment.level);
     expect(assessment.recommendedSkills).toContain("taiyi-architect");
   });
+
+  it("abortChange marks workflowStatus aborted", () => {
+    engine.initChange("to-cancel");
+    const r = engine.abortChange("to-cancel");
+    expect(r.ok).toBe(true);
+    expect(engine.getState("to-cancel")?.workflowStatus).toBe("aborted");
+  });
+
+  it("completePhase rejects aborted change", () => {
+    engine.initChange("aborted");
+    engine.abortChange("aborted");
+    const result = engine.completePhase("aborted", "change", {
+      quality: {
+        completeness: true,
+        consistency: true,
+        verifiability: true,
+        traceability: true,
+        engineering_quality: true,
+      },
+      human: { approved: true, approver: "human" },
+    });
+    expect(result.ok).toBe(false);
+    expect(result.error).toMatch(/aborted/i);
+  });
 });

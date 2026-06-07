@@ -32,7 +32,9 @@
 
 | 命令 | 何时用 |
 |------|--------|
-| `/taiyi:doctor` | 安装/升级后自检（≈ `omx doctor`） |
+| `/taiyi:doctor` | 安装/升级后自检（≈ `omc doctor`）+ **工作区流程** |
+| `/taiyi:handoff` | 暂停前写 HANDOFF.md（≈ OMC notepad / gstack checkpoint） |
+| `/taiyi:cancel` | 取消进行中变更（aborted） |
 | `/taiyi:list` | **多个变更并行**时列 slug（否则 continue 报错） |
 | `/taiyi:check` | `--auto` 时每阶段看 harness 铁三角清单 |
 | `/taiyi:loop` | 循环 `continue` 直到完成或阻塞（人工门需 `--approver`） |
@@ -50,6 +52,8 @@
 写工件仍用 **taiyi-change … taiyi-integration** Skill，不走 `/taiyi:*`。
 
 **new/init 只铺当前阶段模板**（默认仅 `CHANGE.md`）；`CONTEXT.md` 由 `taiyi-intel-scan` 产出，不会预置。过关后引擎才为下一阶段生成模板文件。
+
+**状态同步（v0.22+）**：`status` / `continue` 会自动从磁盘同步 `auxiliaryCompleted`（如已有 `CONTEXT.md`）、去掉已填好内容的 `<!-- taiyi:seed-template -->`。若存在**超前阶段工件**（当前 change 但已有实质 `REQUIREMENT.md`），`continue` 会拦截并提示删除或按步推进。
 
 ## 可选层（架构图对齐）
 
@@ -76,21 +80,21 @@
 ⑦ test         → taiyi-test          → TEST.md          → /taiyi:apply 或 continue
 ⑧ review       → taiyi-review        → REVIEW.md        → /taiyi:health · /taiyi:review-loop → continue --approver
 ⑨ integration  → taiyi-integration   → CHANGELOG.md     → /taiyi:continue
-   ※ git 仓库默认启用**交付门**：须先 commit 实现代码且工作区干净（见 delivery-gate.md）
+   ※ git 仓库默认启用**交付门**：须先 commit 实现代码、工作区干净，且 commit 含 `Taiyi-Change` trailer（见 [delivery-gate.md](./delivery-gate.md)）
 
 /taiyi:archive
 ```
 
 `--auto` 时每阶段另有 harness 铁三角打卡 + **手动 mark-aux**（见 `taiyi-orchestrator`）。
 
-## init 与 new
+## init 与 new（推荐路径）
 
-| 命令 | auto 默认 | 模板 |
-|------|-----------|------|
-| `taiyi init <slug>` | 关（除非 `--auto` 或 `TAIYI_AUTO_HARNESS=1`） | 仅 CHANGE.md |
-| `taiyi new <标题>` | **开** | 仅 CHANGE.md |
+| 命令 | 用途 | auto 默认 |
+|------|------|-----------|
+| **`taiyi new <标题>`** | **日常推荐** — 自动 slug | **关**（须 `--auto` 才全自动） |
+| `taiyi init <slug>` | CI / 固定 slug / 脚本 | 关 |
 
-二者都**不会**自动跑九阶段；`new` 只是默认打开 auto 门禁模式。
+二者都只 seed **CHANGE.md**，不会自动跑九阶段。
 
 ## walkthrough 两套（勿混）
 

@@ -1,5 +1,6 @@
 import fs from "node:fs";
 import path from "node:path";
+import { renderTaiyiPrompt } from "./prompt-stage-protocol.js";
 import type { InstallResult } from "./types.js";
 
 const COMMAND_MARKER = "TAIYI-FORGE:CURSOR-COMMAND";
@@ -20,7 +21,7 @@ export function syncCursorCommands(promptsSrc: string, destDir: string): Install
   for (const ent of fs.readdirSync(promptsSrc, { withFileTypes: true })) {
     if (!ent.isFile() || !ent.name.startsWith("taiyi-") || !ent.name.endsWith(".md")) continue;
     const src = path.join(promptsSrc, ent.name);
-    const body = fs.readFileSync(src, "utf8");
+    const body = renderTaiyiPrompt(ent.name, fs.readFileSync(src, "utf8"), promptsSrc);
     const wrapped = `<!-- ${COMMAND_MARKER}:${ent.name} -->\n${body}`;
     fs.writeFileSync(path.join(destDir, ent.name), wrapped, "utf8");
     count++;

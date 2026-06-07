@@ -25,11 +25,16 @@ import {
   runPostCompleteShellHooks,
 } from "./harness-runner.js";
 import { enforceTokenBudgetBeforeComplete } from "./token-runner.js";
-import { expectedPhaseCount, isWorkflowCompleted } from "./change-status.js";
+import { expectedPhaseCount, isChangeAborted, isWorkflowCompleted } from "./change-status.js";
 import { normalizeState } from "./normalize-state.js";
 import { deliveryGateEnabled, evaluateDeliveryGate } from "./gates/delivery-gate.js";
 import { auditChange } from "./workflow-audit.js";
 import { syncRootChangelog } from "./sync-root-changelog.js";
+import { syncChangeState } from "./state-sync.js";
+import {
+  detectEarlyCodeChanges,
+  earlyCodeBlockOnContinue,
+} from "./dev-phase-guard.js";
 
 export type InitChangeOptions = {
   title?: string;
@@ -120,16 +125,25 @@ export class WorkflowEngine {
     const file = this.statePath(slug);
     if (!fs.existsSync(file)) return { status: "missing" };
     try {
-      return {
-        status: "ok",
-        state: normalizeState(JSON.parse(fs.readFileSync(file, "utf8")) as ChangeState),
-      };
+      const raw = normalizeState(JSON.parse(fs.readFileSync(file, "utf8")) as ChangeState);
+      const synced = this.applyStateSync(raw);
+      return { status: "ok", state: synced.state };
     } catch (e) {
       return {
         status: "corrupt",
         error: e instanceof Error ? e.message : String(e),
       };
     }
+  }
+
+  /** 对齐 auxiliary / seed 标记与 state.json（status / continue 前调用）。 */
+  applyStateSync(state: ChangeState): ReturnType<typeof syncChangeState> {
+    const changeDir = this.changeDir(state.slug);
+    const result = syncChangeState(changeDir, state);
+    if (result.changed) {
+      this.writeState(result.state);
+    }
+    return result;
   }
 
   getState(slug: string): ChangeState | null {
@@ -202,7 +216,13 @@ export class WorkflowEngine {
     slug: string,
     phaseId: PhaseId,
     gates: GateInput,
-    options?: { skipArtifactValidation?: boolean; forceHuman?: boolean; allowAutoHuman?: boolean },
+    options?: {
+      skipArtifactValidation?: boolean;
+      forceHuman?: boolean;
+      allowAutoHuman?: boolean;
+      /** 测试/E2E 批量预写工件时跳过「超前阶段」拦截 */
+      skipStepOrderCheck?: boolean;
+    },
   ): { ok: boolean; error?: string; qualityHints?: string[] } {
     const slugCheck = validateSlug(slug);
     if (!slugCheck.ok) return { ok: false, error: slugCheck.error };
@@ -210,6 +230,9 @@ export class WorkflowEngine {
     if (!state) return { ok: false, error: "Change not found" };
     if (isWorkflowCompleted(state)) {
       return { ok: false, error: "Workflow already completed (九阶段已完成)" };
+    }
+    if (isChangeAborted(state)) {
+      return { ok: false, error: "变更已取消 (aborted)。请 /taiyi:new 或指定其他 slug。" };
     }
     if (isPhaseSkipped(phaseId, state.skippedPhases)) {
       return { ok: false, error: `Phase ${phaseId} is skipped for profile ${state.profile}` };
@@ -237,7 +260,17 @@ export class WorkflowEngine {
     }
 
     const changeDir = this.changeDir(slug);
-    const workingState = { ...state };
+    const sync = syncChangeState(changeDir, state);
+    if (sync.changed) {
+      this.writeState(sync.state);
+    }
+    if (!options?.skipStepOrderCheck && sync.blockers.length > 0) {
+      return {
+        ok: false,
+        error: `阶段顺序冲突（须按步推进，勿跳步写后续工件）:\n${sync.blockers.map((b) => `- ${b.message}`).join("\n")}`,
+      };
+    }
+    const workingState = { ...sync.state };
 
     if (
       phaseId === "review" &&
@@ -262,6 +295,11 @@ export class WorkflowEngine {
 
     const workspaceDir = path.dirname(this.workspaceRoot);
 
+    const earlyCode = detectEarlyCodeChanges(workspaceDir, phaseId);
+    if (earlyCode && earlyCodeBlockOnContinue()) {
+      return { ok: false, error: earlyCode.message };
+    }
+
     if (phaseId === "integration" && process.env.TAIYI_SKIP_INTEGRATION_AUDIT !== "1") {
       const audit = auditChange(workspaceDir, this.workspaceRoot, slug, {
         pretendIntegrationComplete: true,
@@ -278,7 +316,7 @@ export class WorkflowEngine {
     }
 
     if (phaseId === "integration" && deliveryGateEnabled(workspaceDir)) {
-      const delivery = evaluateDeliveryGate(workspaceDir);
+      const delivery = evaluateDeliveryGate(workspaceDir, { slug, phase: "integration" });
       if (!delivery.passed) {
         const hintText = delivery.hints?.length ? ` — ${delivery.hints.join("; ")}` : "";
         return {
@@ -406,5 +444,23 @@ export class WorkflowEngine {
 
   assessComplexity(slug: string, signals?: ComplexitySignals) {
     return this.refreshComplexity(slug, signals);
+  }
+
+  /** 标记变更为 aborted（不删目录，不再计入 active slug） */
+  abortChange(slug: string): { ok: boolean; error?: string } {
+    const slugCheck = validateSlug(slug);
+    if (!slugCheck.ok) return { ok: false, error: slugCheck.error };
+    const state = this.getState(slug);
+    if (!state) return { ok: false, error: "Change not found" };
+    if (isWorkflowCompleted(state)) {
+      return { ok: false, error: "已完成变更不可 cancel，请 /taiyi:archive" };
+    }
+    if (isChangeAborted(state)) return { ok: true };
+    this.writeState({
+      ...state,
+      workflowStatus: "aborted",
+      updatedAt: new Date().toISOString(),
+    });
+    return { ok: true };
   }
 }

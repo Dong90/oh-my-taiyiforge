@@ -15,11 +15,17 @@ import {
 import { inferComplexitySignals } from "./routing/infer-complexity.js";
 import type { ComplexitySignals } from "./routing/complexity.js";
 import { requiresHumanGate } from "./gates/human-gate-config.js";
-import { expectedPhaseCount, isWorkflowCompleted } from "./change-status.js";
+import { expectedPhaseCount, isChangeAborted, isWorkflowCompleted } from "./change-status.js";
 import { buildTokenBudgetSummary } from "./token-runner.js";
 import { normalizeState } from "./normalize-state.js";
 import { formatSkillFlowPlain } from "../integrations/skill-flow.js";
 import { isSeedTemplate } from "./seed-marker.js";
+import {
+  formatStepBlockers,
+  formatSyncActions,
+  syncChangeState,
+} from "./state-sync.js";
+import { detectEarlyCodeChanges } from "./dev-phase-guard.js";
 
 export type PhaseGuide = {
   slug: string;
@@ -27,6 +33,7 @@ export type PhaseGuide = {
   skippedPhases: PhaseId[];
   currentPhase: ChangeState["currentPhase"];
   workflowCompleted: boolean;
+  workflowAborted?: boolean;
   completedCount: number;
   totalPhases: number;
   skill: string;
@@ -53,6 +60,14 @@ export type PhaseGuide = {
   tokenWarnings?: string[];
   /** Superpowers + 可选外部 Skill（workflow-manifest.yaml） */
   skillFlowLine?: string;
+  /** 本次 status 自动对齐 state 与磁盘工件 */
+  syncActions?: string[];
+  /** 须先解决的顺序冲突（超前工件等） */
+  stepBlockers?: string[];
+  /** dev 前检测到业务代码未提交改动 */
+  earlyCodeWarning?: string;
+  /** review 前 medium/high 须 taiyi-health */
+  healthGateLine?: string;
 };
 
 export function buildPhaseGuide(
@@ -61,9 +76,17 @@ export function buildPhaseGuide(
   rawState: ChangeState,
   workspaceDir?: string,
 ): PhaseGuide {
-  const state = normalizeState(rawState);
-  const phase = getPhase(state.currentPhase);
   const changeDir = path.join(taiyiRoot, "changes", slug);
+  const sync = syncChangeState(changeDir, normalizeState(rawState));
+  if (sync.changed) {
+    fs.writeFileSync(
+      path.join(changeDir, "state.json"),
+      JSON.stringify(sync.state, null, 2),
+      "utf8",
+    );
+  }
+  const state = sync.state;
+  const phase = getPhase(state.currentPhase);
   const artifactPath = artifactPathForPhase(changeDir, state.currentPhase);
   const artifactExists =
     fs.existsSync(artifactPath) && fs.statSync(artifactPath).size > 0;
@@ -116,6 +139,7 @@ export function buildPhaseGuide(
 
   const guideBase = {
     workflowCompleted: allDone,
+    workflowAborted: isChangeAborted(state),
     completedCount: state.completedPhases.length,
     totalPhases,
   };
@@ -123,13 +147,56 @@ export function buildPhaseGuide(
   const attachMeta = (guide: PhaseGuide): PhaseGuide => {
     const token = buildTokenBudgetSummary(changeDir, slug, state.currentPhase);
     const skillFlowLine = formatSkillFlowPlain(state.currentPhase) ?? undefined;
+    const syncActions = formatSyncActions(sync.actions);
+    const stepBlockers = formatStepBlockers(sync.blockers);
+    const earlyCode = workspaceDir
+      ? detectEarlyCodeChanges(workspaceDir, state.currentPhase)
+      : null;
+    let nextAction = guide.nextAction;
+    if (stepBlockers.length > 0) {
+      nextAction = `先解决顺序冲突（删除超前工件或勿跳步），再 /taiyi:continue`;
+    } else if (earlyCode) {
+      nextAction = `dev 前勿改业务代码；撤销或暂存改动后再推进。`;
+    }
     return {
       ...guide,
+      nextAction,
       tokenBudgetLine: token.line,
       tokenWarnings: token.evalResult.warnings,
       skillFlowLine,
+      syncActions: syncActions.length ? syncActions : undefined,
+      stepBlockers: stepBlockers.length ? stepBlockers : undefined,
+      earlyCodeWarning: earlyCode?.message,
     };
   };
+
+  if (isChangeAborted(state)) {
+    return attachMeta({
+      ...guideBase,
+      slug,
+      profile: state.profile,
+      skippedPhases: state.skippedPhases,
+      currentPhase: state.currentPhase,
+      skill: phase.skill,
+      artifact: phase.artifact,
+      artifactPath,
+      artifactExists,
+      artifactIsSeed: false,
+      qualityReady: false,
+      qualityHints: [],
+      nextAction: "变更已取消 → /taiyi:new 创建新变更",
+      nextPhase: null,
+      nextSkill: null,
+      requiresHumanGate: false,
+      complexity: state.complexity,
+      intentSignals,
+      recommendedAuxiliary: [],
+      pendingAuxiliary: [],
+      auxiliaryCompleted: state.auxiliaryCompleted,
+      autoHarness: state.autoHarness ?? false,
+      harness,
+    });
+  }
 
   if (allDone) {
     return attachMeta({
@@ -180,6 +247,9 @@ export function buildPhaseGuide(
     state.currentPhase === "review" &&
     (state.complexity?.level === "high" || state.complexity?.level === "medium") &&
     !state.auxiliaryCompleted.includes("taiyi-health");
+  const healthGateLine = needsHealth
+    ? `⚠ ${state.complexity?.level} 复杂度 review 门禁：须先 /taiyi:health → health-report.md → mark-aux taiyi-health`
+    : undefined;
   if (needsHealth) {
     nextAction = `${state.complexity?.level} 复杂度：先 taiyi-health → mark-aux，再 /taiyi:review-loop`;
   } else if (state.currentPhase === "review") {
@@ -214,5 +284,6 @@ export function buildPhaseGuide(
     auxiliaryCompleted: state.auxiliaryCompleted,
     autoHarness: state.autoHarness ?? false,
     harness,
+    healthGateLine,
   });
 }

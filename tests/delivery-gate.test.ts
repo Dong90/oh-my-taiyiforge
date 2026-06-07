@@ -35,4 +35,67 @@ describe("delivery-gate", () => {
     expect(deliveryGateEnabled(dir, { TAIYI_DELIVERY_GATE: "0" })).toBe(false);
     fs.rmSync(dir, { recursive: true, force: true });
   });
+
+  it("fails trailer check when slug given but commits lack Taiyi-Change", () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), "taiyi-trailer-gate-"));
+    execSync("git init -b main", { cwd: dir });
+    execSync("git config user.email t@test.com", { cwd: dir });
+    execSync("git config user.name test", { cwd: dir });
+    fs.writeFileSync(path.join(dir, "README.md"), "init\n");
+    execSync("git add README.md && git commit -m init", { cwd: dir, shell: "/bin/bash" });
+    fs.writeFileSync(path.join(dir, "feat.txt"), "x\n");
+    execSync("git add feat.txt && git commit -m 'feat: plain'", {
+      cwd: dir,
+      shell: "/bin/bash",
+    });
+    const r = evaluateDeliveryGate(dir, { slug: "my-slug", phase: "integration" });
+    expect(r.passed).toBe(false);
+    expect(r.reason).toMatch(/Taiyi-Change/);
+    fs.rmSync(dir, { recursive: true, force: true });
+  });
+
+  it("passes trailer check when commit has matching slug", () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), "taiyi-trailer-gate-ok-"));
+    execSync("git init -b main", { cwd: dir });
+    execSync("git config user.email t@test.com", { cwd: dir });
+    execSync("git config user.name test", { cwd: dir });
+    fs.writeFileSync(path.join(dir, "README.md"), "init\n");
+    execSync("git add README.md && git commit -m init", { cwd: dir, shell: "/bin/bash" });
+    fs.writeFileSync(path.join(dir, "feat.txt"), "x\n");
+    execSync("git add feat.txt", { cwd: dir });
+    execSync(
+      `git commit -m "$(cat <<'EOF'
+feat: ok
+
+Taiyi-Change: my-slug
+Taiyi-Phase: dev
+EOF
+)"`,
+      { cwd: dir, shell: "/bin/bash" },
+    );
+    const r = evaluateDeliveryGate(dir, { slug: "my-slug", phase: "integration" });
+    expect(r.passed).toBe(true);
+    fs.rmSync(dir, { recursive: true, force: true });
+  });
+
+  it("runs delivery verify from package.json taiyi.deliveryVerifyCmd", () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), "taiyi-verify-pkg-"));
+    execSync("git init -b main", { cwd: dir });
+    execSync("git config user.email t@test.com", { cwd: dir });
+    execSync("git config user.name test", { cwd: dir });
+    fs.writeFileSync(path.join(dir, "README.md"), "init\n");
+    execSync("git add README.md && git commit -m init", { cwd: dir, shell: "/bin/bash" });
+    fs.writeFileSync(
+      path.join(dir, "package.json"),
+      JSON.stringify({ taiyi: { deliveryVerifyCmd: "true" } }),
+    );
+    fs.writeFileSync(path.join(dir, "feat.txt"), "x\n");
+    execSync("git add feat.txt package.json && git commit -m 'feat: ok'", {
+      cwd: dir,
+      shell: "/bin/bash",
+    });
+    const r = evaluateDeliveryGate(dir);
+    expect(r.passed).toBe(true);
+    fs.rmSync(dir, { recursive: true, force: true });
+  });
 });

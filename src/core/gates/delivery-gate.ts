@@ -1,6 +1,11 @@
 import { execSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
+import {
+  commitTrailersEnabled,
+  evaluateCommitTrailers,
+} from "./commit-trailer.js";
+import { resolveDeliveryVerifyCmd } from "./consumer-config.js";
 
 export type DeliveryGateResult = {
   passed: boolean;
@@ -18,7 +23,15 @@ function runGit(workspaceDir: string, args: string): string {
 }
 
 function resolveBaseBranch(workspaceDir: string): string {
-  for (const candidate of ["origin/develop", "origin/main", "origin/master", "develop", "main"]) {
+  let current = "HEAD";
+  try {
+    current = runGit(workspaceDir, "rev-parse --abbrev-ref HEAD");
+  } catch {
+    /* keep HEAD */
+  }
+
+  for (const candidate of ["origin/develop", "origin/main", "origin/master", "develop", "main", "master"]) {
+    if (candidate === current) continue;
     try {
       runGit(workspaceDir, `rev-parse --verify ${candidate}`);
       return candidate;
@@ -26,7 +39,12 @@ function resolveBaseBranch(workspaceDir: string): string {
       /* try next */
     }
   }
-  return "HEAD~1";
+  try {
+    runGit(workspaceDir, "rev-parse --verify HEAD~1");
+    return "HEAD~1";
+  } catch {
+    return "HEAD";
+  }
 }
 
 function listUncommitted(workspaceDir: string): string[] {
@@ -58,7 +76,10 @@ export function deliveryGateEnabled(workspaceDir: string, env = process.env): bo
   return fs.existsSync(path.join(workspaceDir, ".git"));
 }
 
-export function evaluateDeliveryGate(workspaceDir: string): DeliveryGateResult {
+export function evaluateDeliveryGate(
+  workspaceDir: string,
+  options?: { slug?: string; phase?: string },
+): DeliveryGateResult {
   if (!fs.existsSync(path.join(workspaceDir, ".git"))) {
     return { passed: true, skipped: true };
   }
@@ -95,7 +116,7 @@ export function evaluateDeliveryGate(workspaceDir: string): DeliveryGateResult {
     };
   }
 
-  const verifyCmd = process.env.TAIYI_DELIVERY_VERIFY_CMD?.trim();
+  const verifyCmd = resolveDeliveryVerifyCmd(workspaceDir);
   if (verifyCmd) {
     try {
       execSync(verifyCmd, {
@@ -114,6 +135,24 @@ export function evaluateDeliveryGate(workspaceDir: string): DeliveryGateResult {
         passed: false,
         reason: `TAIYI_DELIVERY_VERIFY_CMD 未通过: ${verifyCmd}`,
         hints: [detail || "命令退出非 0"],
+      };
+    }
+  }
+
+  if (options?.slug && commitTrailersEnabled()) {
+    const trailers = evaluateCommitTrailers(
+      workspaceDir,
+      options.slug,
+      options.phase ?? "integration",
+    );
+    if (!trailers.skipped && !trailers.passed) {
+      return {
+        passed: false,
+        reason: trailers.reason ?? "Commit trailer check failed",
+        hints: [
+          ...(trailers.hints ?? []),
+          ...(trailers.suggestion ? [`建议 commit message:\n${trailers.suggestion}`] : []),
+        ],
       };
     }
   }

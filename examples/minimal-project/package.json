@@ -6,6 +6,8 @@
   "type": "module",
   "scripts": {
     "test": "node --test test/**/*.test.js",
+    "taiyi:doctor": "taiyi doctor --strict-workspace",
+    "taiyi:verify": "taiyi verify",
     "walkthrough": "node scripts/run-full-flow.mjs",
     "walkthrough-e2e": "node scripts/run-full-flow.mjs",
     "chat-demo": "node scripts/run-chat-demo.mjs"

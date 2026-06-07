@@ -64,4 +64,14 @@ describe("format-guide", () => {
     expect(text).toContain("无 UI");
     expect(text).toContain("复杂度 medium");
   });
+
+  it("formatStatusPlain surfaces review health gate", () => {
+    const text = formatStatusPlain(
+      baseGuide({
+        currentPhase: "review",
+        healthGateLine: "⚠ medium 复杂度 review 门禁",
+      }),
+    );
+    expect(text).toContain("review 门禁");
+  });
 });

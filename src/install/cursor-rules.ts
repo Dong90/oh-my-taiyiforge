@@ -2,6 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 import type { InstallResult } from "./types.js";
 import { homeDir } from "./paths.js";
+import { taiyiControlPlaneBody } from "./control-plane-markdown.js";
 
 const RULE_MARKER = "TAIYI-FORGE:CURSOR-RULE";
 
@@ -14,54 +15,7 @@ alwaysApply: true
 
 # TaiyiForge（Cursor 控制面）
 
-## 原则（对齐 oh-my-codex / omc.sh）
-
-1. **聊天里**：加载 \`taiyi-*\` 阶段 Skill、Superpowers、gstack 写工件与评审。
-2. **引擎过关**：用户说 **/taiyi:new**、**/taiyi:continue**、**/taiyi:apply**、**/taiyi:archive**（Codex：**$taiyi-new** 等），你用 **终端工具** 代跑 \`scripts/taiyi-forge.sh\`。
-3. **禁止**让用户手打长 shell 路径；**禁止**未执行过关就声称阶段已完成。
-
-## 聊天命令（OpenSpec 风格，见 docs/taiyi/commands.yaml）
-
-在 Cursor 输入 / 可选 taiyi-status 等（等同 /taiyi:status）；或直接打字 /taiyi:continue。
-
-- /taiyi:new 功能名
-- /taiyi:status
-- /taiyi:continue
-- /taiyi:apply
-- /taiyi:archive
-- /taiyi:loop [slug] [xN]
-- /taiyi:review-loop [slug] — 会话内循环 review 直到机器审查通过
-- /taiyi:review-check <slug> — 单次机器探测
-- /taiyi:token status · record · scan · compress
-
-九阶段路径见 docs/taiyi/workflow.md
-
-Codex：$taiyi-new、$taiyi-status、$taiyi-continue、$taiyi-apply、$taiyi-archive、$taiyi-review-loop、$taiyi-review-check、$taiyi-token-*
-
-## 引擎命令（Agent 内部代跑，非用户手打）
-
-\`\`\`bash
-./node_modules/oh-my-taiyiforge/scripts/taiyi-forge.sh init <slug> [--auto] --title "..."
-./node_modules/oh-my-taiyiforge/scripts/taiyi-forge.sh next <slug>
-./node_modules/oh-my-taiyiforge/scripts/taiyi-forge.sh harness <slug>
-./node_modules/oh-my-taiyiforge/scripts/taiyi-forge.sh harness-check <slug> <key>
-./node_modules/oh-my-taiyiforge/scripts/taiyi-forge.sh complete <slug> <phase>
-./node_modules/oh-my-taiyiforge/scripts/taiyi-forge.sh review-loop [slug]
-./node_modules/oh-my-taiyiforge/scripts/taiyi-forge.sh review-check <slug>
-./node_modules/oh-my-taiyiforge/scripts/taiyi-forge.sh list
-\`\`\`
-
-开发仓库内可用 \`scripts/taiyi-forge.sh\`；全局安装可用 \`taiyi-forge\`。
-
-## Skill 加载
-
-- 引擎：\`~/.cursor/skills/taiyi-forge/SKILL.md\`
-- 编排：\`taiyi-orchestrator\`（\`--auto\`）
-- 阶段：\`taiyi-change\` … \`taiyi-integration\`
-
-## 变更目录
-
-\`.taiyi/changes/<slug>/\` · 详见 \`docs/taiyi/control-plane.md\`
+${taiyiControlPlaneBody("cursor")}
 `;
 }
 

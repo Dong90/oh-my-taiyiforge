@@ -20,8 +20,10 @@ references:
 
 init_vs_new:
   note: |
-    init <slug> 默认非 auto（除非 --auto 或 TAIYI_AUTO_HARNESS=1）。
-    new <标题> 默认 autoHarness=true，但二者都只 seed CHANGE.md，不会自动跑九阶段。
+    **推荐日常只用 `new <标题>`**（聊天 /taiyi:new）。`init <slug>` 保留给 CI、固定 slug、脚本。
+    二者都只 seed CHANGE.md，不会自动跑九阶段。
+    `new` 默认 **手动** 九阶段；全自动须 `--auto` 或 `TAIYI_AUTO_HARNESS=1`。
+    `init` 默认同样非 auto（除非显式 --auto）。
 
 profiles:
   core:
@@ -31,7 +33,8 @@ profiles:
         codex: "$taiyi-new 用户登录"
         engine: "taiyi-forge.sh new 用户登录"
         meaning: |
-          创建变更目录、默认开启 autoHarness 门禁模式、仅铺 CHANGE.md 模板（对标 opsx:new）。
+          创建变更目录、**默认手动**九阶段、仅铺 CHANGE.md 模板（对标 opsx:new）。
+          全自动须 `--auto` 或 `TAIYI_AUTO_HARNESS=1`。
           不自动写工件、不自动跑九阶段；后续须 Skill 写工件 + continue/apply。
 
       - chat: "/taiyi:continue"
@@ -68,10 +71,24 @@ profiles:
   auxiliary:
     description: 辅助命令（对标 OMX doctor / omc run 配套；非主流程必经）
     commands:
+      - chat: "/taiyi:cancel [slug]"
+        codex: "$taiyi-cancel"
+        engine: "taiyi-forge.sh cancel [slug]"
+        meaning: 取消进行中变更（aborted，目录保留）
+        when: 走错路、想重新开始
+
+      - chat: "/taiyi:handoff [slug] [note]"
+        codex: "$taiyi-handoff"
+        engine: "taiyi-forge.sh handoff [slug] [note]"
+        meaning: |
+          写 HANDOFF.md 快照（对标 OMC notepad / gstack checkpoint）。
+          不 complete 任何阶段；下一会话先 /taiyi:status。
+        when: 暂停工作、换会话、上下文将满
+
       - chat: "/taiyi:doctor"
         codex: "$taiyi-doctor"
         engine: "taiyi-forge.sh doctor"
-        meaning: 四端 skills + 控制面安装自检（对标 omx doctor）
+        meaning: 四端 skills + 控制面安装自检 + **工作区流程**（active slug、顺序冲突、代码漂移）
         when: 首次安装、升级后、continue 异常时
 
       - chat: "/taiyi:audit [slug]"

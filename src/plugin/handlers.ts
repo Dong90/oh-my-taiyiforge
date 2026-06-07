@@ -6,7 +6,8 @@ import { listPhases, getPhase, tryGetPhase } from "../core/phase-registry.js";
 import { resolveTaiyiRoot } from "../core/paths.js";
 import { resolveTemplatesDir } from "../core/package-root.js";
 import { resolveHumanForComplete } from "../core/gates/human-gate-config.js";
-import { resolveActiveSlug } from "../core/active-slug.js";
+import { resolveActiveSlug, slugifyTitle } from "../core/active-slug.js";
+import { resolveAutoHarness } from "../core/resolve-auto-harness.js";
 import { isWorkflowCompleted } from "../core/change-status.js";
 import {
   formatAgentLoopProtocol,
@@ -27,8 +28,17 @@ import { buildPhaseGuide } from "../core/phase-guide.js";
 import { getOpenspecStatus, runOpenspecArchive } from "../integrations/openspec.js";
 import { syncTaiyiToOpenspec } from "../integrations/openspec-sync.js";
 import { runDoctor } from "../core/doctor.js";
+import { runDoctorWorkspace } from "../core/doctor-workspace.js";
 import { listChanges } from "../core/list-changes.js";
-import { formatGuidePlain } from "../core/format-guide.js";
+import { formatGuidePlain, formatPhaseProgressLine } from "../core/format-guide.js";
+import { buildEngineTruth } from "../core/engine-truth.js";
+import { writeHandoff, handoffExists } from "../core/handoff.js";
+import {
+  evaluateCommitTrailers,
+  suggestCommitMessage,
+} from "../core/gates/commit-trailer.js";
+import { scanArtifactTokens } from "../core/token/scan-artifacts.js";
+import { loadTokenBudgetConfig } from "../core/token/budget-config.js";
 import { resolvePackageRoot } from "../core/package-root.js";
 import { formatWalkthroughPlain, runWalkthrough } from "../core/walkthrough.js";
 import {
@@ -113,6 +123,35 @@ export function taiyiInit(
   }
 }
 
+/** 日常推荐入口 — 对齐 CLI `taiyi new <标题>`（自动 slug；auto 默认关，可传 auto/noAuto 或 TAIYI_AUTO_HARNESS） */
+export function taiyiNew(
+  workspaceDir: string,
+  title: string,
+  options?: {
+    profile?: ChangeProfile;
+    strictDev?: boolean;
+    auto?: boolean;
+    noAuto?: boolean;
+    force?: boolean;
+  },
+) {
+  const trimmed = title.trim();
+  if (!trimmed) {
+    return { ok: false as const, error: "title is required" };
+  }
+  const harnessArgs: string[] = [];
+  if (options?.auto) harnessArgs.push("--auto");
+  if (options?.noAuto) harnessArgs.push("--no-auto");
+  const slug = slugifyTitle(trimmed);
+  return taiyiInit(workspaceDir, slug, {
+    title: trimmed,
+    profile: options?.profile,
+    strictDev: options?.strictDev,
+    autoHarness: resolveAutoHarness(harnessArgs, false),
+    force: options?.force,
+  });
+}
+
 export function taiyiStatus(workspaceDir: string, slug: string) {
   const invalid = rejectInvalidSlug(slug);
   if (invalid) return invalid;
@@ -123,7 +162,11 @@ export function taiyiStatus(workspaceDir: string, slug: string) {
   const taiyiRoot = resolveTaiyiRoot(workspaceDir);
   const guide = buildPhaseGuide(taiyiRoot, slug, state, workspaceDir);
   const openspec = getOpenspecStatus(workspaceDir, slug);
-  return { ok: true as const, state, guide, openspec, taiyiRoot };
+  const changeDir = path.join(taiyiRoot, "changes", slug);
+  const engineTruth = buildEngineTruth(state, guide, {
+    handoffExists: handoffExists(changeDir),
+  });
+  return { ok: true as const, state, guide, openspec, taiyiRoot, engineTruth };
 }
 
 export function taiyiGuide(workspaceDir: string, slug: string) {
@@ -285,10 +328,97 @@ export function taiyiArchive(
   };
 }
 
-export function taiyiDoctor(pkgRoot?: string) {
+export function taiyiDoctor(
+  pkgRoot?: string,
+  workspaceDir?: string,
+  options?: { strictWorkspace?: boolean },
+) {
   const root = pkgRoot ?? resolvePackageRoot(import.meta.url);
   const report = runDoctor(root);
-  return { ok: report.ok, report };
+  if (workspaceDir) {
+    const taiyiRoot = resolveTaiyiRoot(workspaceDir);
+    const workspaceChecks = runDoctorWorkspace(workspaceDir, taiyiRoot, import.meta.url);
+    report.workspaceChecks = workspaceChecks;
+    report.workspaceOk = workspaceChecks.every((c) => c.ok);
+  }
+  const installOk = report.ok;
+  const workspaceOk = report.workspaceOk !== false;
+  const ok = installOk && (options?.strictWorkspace ? workspaceOk : true);
+  return { ok, report };
+}
+
+export function taiyiCancel(
+  workspaceDir: string,
+  slug?: string,
+): { ok: true; slug: string; workflowStatus: "aborted" } | { ok: false; error: string } {
+  const taiyiRoot = resolveTaiyiRoot(workspaceDir);
+  const resolved = resolveActiveSlug(taiyiRoot, slug);
+  if (!resolved.ok) return { ok: false, error: resolved.error };
+  const engine = createEngine(workspaceDir);
+  const result = engine.abortChange(resolved.slug);
+  if (!result.ok) return { ok: false, error: result.error ?? "abort failed" };
+  return { ok: true, slug: resolved.slug, workflowStatus: "aborted" };
+}
+
+export function taiyiCommitTrailers(
+  workspaceDir: string,
+  slug?: string,
+  subject?: string,
+):
+  | {
+      ok: true;
+      slug: string;
+      phase: string;
+      suggestion: string;
+      check: ReturnType<typeof evaluateCommitTrailers>;
+    }
+  | { ok: false; error: string } {
+  const taiyiRoot = resolveTaiyiRoot(workspaceDir);
+  const resolved = resolveActiveSlug(taiyiRoot, slug);
+  if (!resolved.ok) return { ok: false, error: resolved.error };
+  const engine = createEngine(workspaceDir);
+  const stateResult = requireChangeState(engine, resolved.slug);
+  if (!stateResult.ok) return stateResult;
+  const phase = stateResult.state.currentPhase;
+  const suggestion = suggestCommitMessage(
+    resolved.slug,
+    phase,
+    subject?.trim() || "feat: deliver change slice",
+  );
+  const check = evaluateCommitTrailers(workspaceDir, resolved.slug, phase);
+  return { ok: true, slug: resolved.slug, phase, suggestion, check };
+}
+
+export function taiyiHandoff(
+  workspaceDir: string,
+  slug?: string,
+  note?: string,
+): { ok: true; slug: string; path: string; engineTruth: ReturnType<typeof buildEngineTruth> } | { ok: false; error: string } {
+  const taiyiRoot = resolveTaiyiRoot(workspaceDir);
+  const resolved = resolveActiveSlug(taiyiRoot, slug);
+  if (!resolved.ok) return { ok: false, error: resolved.error };
+  const engine = createEngine(workspaceDir);
+  const stateResult = requireChangeState(engine, resolved.slug);
+  if (!stateResult.ok) return stateResult;
+  const state = stateResult.state;
+  const guide = buildPhaseGuide(taiyiRoot, resolved.slug, state, workspaceDir);
+  const statusLine = formatPhaseProgressLine(guide);
+  const changeDir = path.join(taiyiRoot, "changes", resolved.slug);
+  const tokenCfg = loadTokenBudgetConfig();
+  const artifactScan = scanArtifactTokens(changeDir);
+  const compressHint =
+    artifactScan.total > tokenCfg.compressThreshold
+      ? `工件约 ${artifactScan.total.toLocaleString()} tokens（阈值 ${tokenCfg.compressThreshold.toLocaleString()}）。恢复后先 /taiyi:token compress ${resolved.slug}`
+      : undefined;
+  const { path: filePath } = writeHandoff({
+    changeDir,
+    state,
+    note,
+    statusLine,
+    compressHint,
+  });
+  const engineTruth = buildEngineTruth(state, guide, { handoffExists: true });
+  return { ok: true, slug: resolved.slug, path: filePath, engineTruth };
 }
 
 export function taiyiList(workspaceDir: string) {

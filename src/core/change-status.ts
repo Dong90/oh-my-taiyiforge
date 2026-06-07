@@ -22,6 +22,17 @@ export function isWorkflowCompleted(state: ChangeState): boolean {
   return false;
 }
 
+export function isChangeAborted(state: ChangeState): boolean {
+  return state.workflowStatus === "aborted";
+}
+
+/** 可 continue / apply 的进行中变更 */
+export function isChangeActive(state: ChangeState): boolean {
+  return !isWorkflowCompleted(state) && !isChangeAborted(state);
+}
+
 export function displayPhase(state: ChangeState): string {
-  return isWorkflowCompleted(state) ? "completed" : state.currentPhase;
+  if (isChangeAborted(state)) return "aborted";
+  if (isWorkflowCompleted(state)) return "completed";
+  return state.currentPhase;
 }

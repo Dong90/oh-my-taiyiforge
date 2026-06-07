@@ -1,5 +1,6 @@
-version: 1
-description: TaiyiForge 双轨调用说明（对齐 oh-my-codex skills-catalog invoke 块）
+version: 2
+description: |
+  TaiyiForge 双轨调用说明（对齐 oh-my-codex skills-catalog invoke 块）
 
 # 聊天面 = Skill / $prompt / 铁三角；引擎面 = taiyi-forge.sh（Agent 代跑）
 
@@ -10,7 +11,7 @@ invoke:
     core: [new, continue, apply, status, archive]
     token: [token-status, token-record, token-scan, token-compress]
     codex: "$taiyi-<verb>   # prompts/taiyi-new.md …"
-    opencode: "插件工具 taiyi_init / taiyi_complete / taiyi_harness（无需 shell）"
+    opencode: "taiyi_new（日常）/ taiyi_init（固定 slug）/ taiyi_complete / taiyi_handoff / taiyi_cancel / taiyi_commit_trailers"
   engine_shell:
     unified: "./node_modules/oh-my-taiyiforge/scripts/taiyi-forge.sh <cmd> ..."
     global_bin: "taiyi-forge <cmd> ...   # npm i -g oh-my-taiyiforge"
@@ -23,10 +24,31 @@ invoke:
     gstack: "聊天内 /review、/plan-eng-review 等（非 shell 子命令）"
     openspec: "可选 shell；无 OpenSpec 时 harness 自动跳过"
 
+# 四端入口决策树 — Agent 选路用（人类可读版见 omc-reference.md §入口决策）
+entry_decision:
+  read_state:
+    cursor: "MCP taiyi_state_get_status / list_active（优先）→ 否则 /taiyi:status"
+    opencode: "taiyi_status / taiyi_list"
+    claude_codex: "/taiyi:status 或 scripts/taiyi-forge.sh status [--json]"
+  advance_phase:
+    all: "写当前阶段工件 → /taiyi:continue（OpenCode: taiyi_continue）"
+  implement_dev_test:
+    all: "/taiyi:apply → 实现 → /taiyi:continue（OpenCode: taiyi_apply / taiyi_continue）"
+  pause_session:
+    all: "/taiyi:handoff（OpenCode: taiyi_handoff · Cursor MCP: taiyi_state_handoff）"
+  abort_change:
+    all: "/taiyi:cancel（OpenCode: taiyi_cancel · Cursor MCP: taiyi_state_cancel）"
+  pre_integration_commit:
+    all: "git commit 带 Taiyi-Change trailer（taiyi commit-trailers · OpenCode: taiyi_commit_trailers）"
+  self_check:
+    all: "npm run taiyi:doctor 或 taiyi doctor --strict-workspace"
+
 commands:
   init: "scripts/taiyi-forge.sh init <slug> [--auto] [--profile api|lite]"
+  new: "scripts/taiyi-forge.sh new <标题> [--auto|--no-auto]"
   next: "scripts/taiyi-forge.sh next <slug>"
   harness: "scripts/taiyi-forge.sh harness <slug>"
   harness_check: "scripts/taiyi-forge.sh harness-check <slug> <key>"
   complete: "scripts/taiyi-forge.sh complete <slug> <phase>"
+  commit_trailers: "scripts/taiyi-forge.sh commit-trailers [slug] [subject]"
   list: "scripts/taiyi-forge.sh list"

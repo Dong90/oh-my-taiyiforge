@@ -17,6 +17,9 @@ export type DoctorReport = {
   ok: boolean;
   version: string;
   checks: DoctorCheck[];
+  /** 当前工作区 .taiyi 流程诊断（对标 omc-doctor active state） */
+  workspaceChecks?: DoctorCheck[];
+  workspaceOk?: boolean;
 };
 
 function countTaiyiSkills(dir: string): number {

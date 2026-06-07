@@ -21,7 +21,7 @@ npm install oh-my-taiyiforge
 { "plugin": ["oh-my-taiyiforge"] }
 ```
 
-使用工具 `taiyi_init` / `taiyi_complete` 等管理 `.taiyi/changes/<slug>/`。详见 `docs/opencode-setup.md`。
+日常用 **`taiyi_new`**（标题 → 自动 slug，对齐 `/taiyi:new`）；固定 slug / CI 用 `taiyi_init`。另有 `taiyi_complete` / `taiyi_continue` / `taiyi_handoff` / `taiyi_cancel` / `taiyi_commit_trailers` 等，聊天内可调，无需 shell。详见 `docs/opencode-setup.md`。
 
 ## Claude Code / Cursor / Codex（OMX 风格）
 
@@ -39,30 +39,17 @@ npx taiyi-forge-install --all
 | **聊天** | 写工件、铁三角评审 | 加载 `taiyi-change` … `taiyi-integration`、Superpowers、gstack |
 | **引擎** | init / harness / complete / 状态 | **Agent 代跑** `scripts/taiyi-forge.sh`（禁止让用户手打 `npx taiyi`） |
 
-- **Codex**：`$taiyi-forge next <slug>` 或加载 `~/.codex/prompts/taiyi-forge.md`
-- **Claude**：加载 `taiyi-forge` Skill，Bash 代跑脚本
-- **Cursor**：`taiyiforge.mdc` + `taiyi-forge` Skill + 终端工具
+- **Codex**：`$taiyi-forge next <slug>` 或加载 `~/.codex/prompts/taiyi-forge.md`；暂停/放弃用 **`$taiyi-handoff`** / **`$taiyi-cancel`**
+- **Claude**：加载 `taiyi-forge` Skill，Bash 代跑脚本（含 handoff / cancel / `doctor --strict-workspace`）
+- **Cursor**：`taiyiforge.mdc` + `taiyi-forge` Skill + 终端工具（可选 MCP `taiyi-mcp`；`install --cursor` 会写 `.cursor/mcp.json` 模板）
 
 可与 **oh-my-codex (OMX)** 并存：OMX 编排多 Agent，TaiyiForge 管阶段工件与门禁。
-
-## OpenCode
-
-```bash
-npm install oh-my-taiyiforge
-```
-
-在 `opencode.json` 中：
-
-```json
-{ "plugin": ["oh-my-taiyiforge"] }
-```
-
-使用工具 `taiyi_init` / `taiyi_complete` / `taiyi_harness` 等（聊天内可调，无需 shell）。
 
 ## 引擎 shell（CI / 脚本 / Agent 代跑）
 
 ```bash
 scripts/taiyi-forge.sh init <slug> [--auto] --title "..."
+scripts/taiyi-forge.sh new "标题"
 scripts/taiyi-forge.sh next <slug>
 scripts/taiyi-forge.sh harness <slug>
 scripts/taiyi-forge.sh complete <slug> <phase>

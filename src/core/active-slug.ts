@@ -10,7 +10,7 @@ export function resolveActiveSlug(taiyiRoot: string, explicit?: string): Resolve
     return { ok: true, slug: explicit.trim(), inferred: false };
   }
 
-  const active = listChanges(taiyiRoot).filter((c) => !c.workflowCompleted);
+  const active = listChanges(taiyiRoot).filter((c) => c.workflowActive);
   if (active.length === 0) {
     return {
       ok: false,

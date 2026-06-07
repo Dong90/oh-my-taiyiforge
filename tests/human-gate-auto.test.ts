@@ -42,7 +42,7 @@ describe("automated human gate", () => {
     };
 
     for (const phase of ["change", "requirement", "design", "ui-design", "task", "dev", "test"] as const) {
-      const r = engine.completePhase("demo", phase, gates, { allowAutoHuman: true });
+      const r = engine.completePhase("demo", phase, gates, { allowAutoHuman: true, skipStepOrderCheck: true });
       expect(r.ok, `${phase}: ${r.error}`).toBe(true);
     }
 
@@ -53,7 +53,7 @@ describe("automated human gate", () => {
     );
     engine.markAuxiliary("demo", "taiyi-health");
 
-    const blocked = engine.completePhase("demo", "review", gates);
+    const blocked = engine.completePhase("demo", "review", gates, { skipStepOrderCheck: true });
     expect(blocked.ok).toBe(false);
     expect(blocked.error).toMatch(/Human gate required/);
 

@@ -5,10 +5,19 @@ import path from "node:path";
 import { addPluginToConfigFile } from "../src/install/opencode-plugin.js";
 import { mergeCodexAgentsBlock } from "../src/install/codex-agents.js";
 import { mergeClaudeControlBlock, claudeControlBlock } from "../src/install/claude-control.js";
+import { installCursorMcpConfig } from "../src/install/sync-cursor-mcp.js";
+import { installConsumerPackageScripts } from "../src/install/sync-consumer-scripts.js";
+import { installCursorPhaseGuardHook } from "../src/install/sync-cursor-hooks.js";
+import { installClaudePhaseGuardHook } from "../src/install/sync-claude-hooks.js";
+import { installCodexMcpConfig } from "../src/install/sync-user-mcp.js";
 import { syncCodexPrompts } from "../src/install/sync-codex-prompts.js";
 import { syncTaiyiSkills } from "../src/install/sync-skills.js";
 import { parseInstallCli, parseInstallTargets } from "../src/install/run.js";
 import { PLUGIN_NAME } from "../src/install/types.js";
+import { fileURLToPath } from "node:url";
+
+const repoRoot = path.dirname(fileURLToPath(import.meta.url));
+const pkgRoot = path.join(repoRoot, "..");
 
 describe("install", () => {
   let tmp: string;
@@ -88,6 +97,61 @@ describe("install", () => {
     const raw = fs.readFileSync(claudeMd, "utf8");
     expect(raw).toContain("TAIYI-FORGE:CLAUDE:START");
     expect(raw).toContain("taiyi-forge");
+    expect(raw).toContain("/taiyi:handoff");
+    expect(raw).toContain("/taiyi:cancel");
+    expect(raw).toContain("doctor --strict-workspace");
+  });
+
+  it("writes cursor mcp.json template when missing", () => {
+    fs.writeFileSync(path.join(tmp, "package.json"), "{}");
+    const r = installCursorMcpConfig(tmp, tmp);
+    expect(r.action).toBe("created");
+    const cfg = JSON.parse(fs.readFileSync(path.join(tmp, ".cursor", "mcp.json"), "utf8"));
+    expect(cfg.mcpServers["taiyi-forge"].env.TAIYI_WORKSPACE).toBe("${workspaceFolder}");
+  });
+
+  it("skips cursor mcp when taiyi-forge already configured", () => {
+    fs.mkdirSync(path.join(tmp, ".cursor"), { recursive: true });
+    fs.writeFileSync(
+      path.join(tmp, ".cursor", "mcp.json"),
+      JSON.stringify({ mcpServers: { "taiyi-forge": { command: "node" } } }),
+    );
+    fs.writeFileSync(path.join(tmp, "package.json"), "{}");
+    const r = installCursorMcpConfig(tmp, tmp);
+    expect(r.action).toBe("skipped");
+  });
+
+  it("merges consumer package.json scripts", () => {
+    fs.writeFileSync(path.join(tmp, "package.json"), JSON.stringify({ name: "demo" }));
+    const r = installConsumerPackageScripts(tmp);
+    expect(r.action).toBe("updated");
+    const pkg = JSON.parse(fs.readFileSync(path.join(tmp, "package.json"), "utf8"));
+    expect(pkg.scripts["taiyi:doctor"]).toContain("strict-workspace");
+  });
+
+  it("adds taiyi.deliveryVerifyCmd when scripts.test exists", () => {
+    fs.writeFileSync(
+      path.join(tmp, "package.json"),
+      JSON.stringify({ scripts: { test: "vitest run" } }),
+    );
+    const r = installConsumerPackageScripts(tmp);
+    expect(r.action).toBe("updated");
+    const pkg = JSON.parse(fs.readFileSync(path.join(tmp, "package.json"), "utf8"));
+    expect(pkg.taiyi.deliveryVerifyCmd).toBe("npm test");
+  });
+
+  it("installs codex global mcp.json template", () => {
+    const home = path.join(tmp, "fake-home");
+    fs.mkdirSync(path.join(home, ".codex", "prompts"), { recursive: true });
+    const prev = process.env.HOME;
+    process.env.HOME = home;
+    try {
+      const r = installCodexMcpConfig();
+      expect(r.action).toBe("created");
+      expect(fs.existsSync(path.join(home, ".codex", "mcp.json"))).toBe(true);
+    } finally {
+      process.env.HOME = prev;
+    }
   });
 
   it("syncs taiyi-* skill folders", () => {
@@ -98,5 +162,25 @@ describe("install", () => {
     const r = syncTaiyiSkills(src, dest);
     expect(r.action).toBe("updated");
     expect(fs.existsSync(path.join(dest, "taiyi-demo", "SKILL.md"))).toBe(true);
+  });
+
+  it("installs cursor phase guard hook with shared lib", () => {
+    fs.writeFileSync(path.join(tmp, "package.json"), "{}");
+    const r = installCursorPhaseGuardHook(tmp, pkgRoot);
+    expect(r.action).toBe("updated");
+    expect(fs.existsSync(path.join(tmp, ".cursor", "hooks", "taiyi-phase-guard.mjs"))).toBe(true);
+    expect(fs.existsSync(path.join(tmp, ".cursor", "hooks", "phase-guard-lib.mjs"))).toBe(true);
+  });
+
+  it("installs claude phase guard hook and settings.json", () => {
+    fs.writeFileSync(path.join(tmp, "package.json"), "{}");
+    const r = installClaudePhaseGuardHook(tmp, pkgRoot);
+    expect(r.action).toBe("updated");
+    expect(fs.existsSync(path.join(tmp, ".claude", "hooks", "taiyi-phase-guard.mjs"))).toBe(true);
+    expect(fs.existsSync(path.join(tmp, ".claude", "hooks", "phase-guard-lib.mjs"))).toBe(true);
+    const settings = JSON.parse(fs.readFileSync(path.join(tmp, ".claude", "settings.json"), "utf8"));
+    expect(settings.hooks.PreToolUse.some((g: { hooks?: { command?: string }[] }) =>
+      g.hooks?.some((h) => h.command?.includes("taiyi-phase-guard")),
+    )).toBe(true);
   });
 });

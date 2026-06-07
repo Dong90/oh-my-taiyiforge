@@ -4,9 +4,13 @@ import path from "node:path";
 import os from "node:os";
 import {
   taiyiInit,
+  taiyiNew,
   taiyiComplete,
   taiyiPhases,
   taiyiStatus,
+  taiyiHandoff,
+  taiyiCancel,
+  taiyiCommitTrailers,
 } from "../src/plugin/handlers.js";
 
 describe("plugin-handlers", () => {
@@ -64,5 +68,40 @@ Need feature A for users.
     expect(done.ok).toBe(true);
     const status = taiyiStatus(workspace, "feat-a");
     expect(status.ok && status.state?.currentPhase).toBe("requirement");
+  });
+
+  it("new creates slug from title like CLI new", () => {
+    const r = taiyiNew(workspace, "User Login Feature");
+    expect(r.ok).toBe(true);
+    if (r.ok) {
+      expect(r.state.slug).toBe("user-login-feature");
+      expect(fs.existsSync(path.join(workspace, ".taiyi", "changes", "user-login-feature"))).toBe(true);
+    }
+  });
+
+  it("writes handoff and cancels active change", () => {
+    const init = taiyiInit(workspace, "feat-h", { title: "Handoff test" });
+    expect(init.ok).toBe(true);
+    const handoff = taiyiHandoff(workspace, "feat-h", "pause for lunch");
+    expect(handoff.ok).toBe(true);
+    if (handoff.ok) {
+      expect(fs.existsSync(handoff.path)).toBe(true);
+    }
+    const cancel = taiyiCancel(workspace, "feat-h");
+    expect(cancel.ok).toBe(true);
+    if (cancel.ok) {
+      expect(cancel.workflowStatus).toBe("aborted");
+    }
+  });
+
+  it("suggests commit trailers for active change", () => {
+    const init = taiyiInit(workspace, "feat-c", { title: "Commit trailers" });
+    expect(init.ok).toBe(true);
+    const r = taiyiCommitTrailers(workspace, "feat-c", "feat: my slice");
+    expect(r.ok).toBe(true);
+    if (r.ok) {
+      expect(r.suggestion).toContain("Taiyi-Change: feat-c");
+      expect(r.suggestion).toContain("Taiyi-Phase:");
+    }
   });
 });

@@ -58,4 +58,14 @@ describe("active-slug", () => {
     expect(r.ok).toBe(false);
     if (!r.ok) expect(r.error).toContain("a");
   });
+
+  it("resolveActiveSlug ignores aborted changes", () => {
+    writeChange("aborted-one", {
+      workflowStatus: "aborted",
+      updatedAt: "2026-06-05T09:00:00Z",
+    });
+    writeChange("still-active", { updatedAt: "2026-06-05T10:00:00Z" });
+    const r = resolveActiveSlug(taiyiRoot);
+    expect(r.ok && r.slug).toBe("still-active");
+  });
 });

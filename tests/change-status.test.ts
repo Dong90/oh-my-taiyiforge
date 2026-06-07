@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { isWorkflowCompleted } from "../src/core/change-status.js";
+import { displayPhase, isChangeAborted, isChangeActive, isWorkflowCompleted } from "../src/core/change-status.js";
 import type { ChangeState } from "../src/core/types.js";
 
 function base(overrides: Partial<ChangeState> = {}): ChangeState {
@@ -51,5 +51,12 @@ describe("change-status", () => {
         }),
       ),
     ).toBe(true);
+  });
+
+  it("isChangeAborted and displayPhase", () => {
+    const s = base({ workflowStatus: "aborted" });
+    expect(isChangeAborted(s)).toBe(true);
+    expect(isChangeActive(s)).toBe(false);
+    expect(displayPhase(s)).toBe("aborted");
   });
 });

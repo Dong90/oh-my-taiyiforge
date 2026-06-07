@@ -1,13 +1,15 @@
 import fs from "node:fs";
 import path from "node:path";
 import type { ChangeState } from "./types.js";
-import { displayPhase, isWorkflowCompleted } from "./change-status.js";
+import { displayPhase, isChangeAborted, isChangeActive, isWorkflowCompleted } from "./change-status.js";
 import { normalizeState } from "./normalize-state.js";
 
 export type ChangeSummary = {
   slug: string;
   currentPhase: string;
   workflowCompleted: boolean;
+  workflowAborted: boolean;
+  workflowActive: boolean;
   profile: string;
   completed: number;
   total: number;
@@ -29,10 +31,13 @@ export function listChanges(taiyiRoot: string): ChangeSummary[] {
       const state = normalizeState(raw);
       const skipped = state.skippedPhases ?? [];
       const workflowCompleted = isWorkflowCompleted(state);
+      const workflowAborted = isChangeAborted(state);
       out.push({
         slug: state.slug,
         currentPhase: displayPhase(state),
         workflowCompleted,
+        workflowAborted,
+        workflowActive: isChangeActive(state),
         profile: state.profile ?? "full",
         completed: state.completedPhases.length,
         total: 9 - skipped.length,

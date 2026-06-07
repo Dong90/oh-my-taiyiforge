@@ -30,6 +30,7 @@
   ],
   "bin": {
     "taiyi": "./dist/cli/taiyi.js",
+    "taiyi-mcp": "./dist/mcp/server.js",
     "taiyi-forge": "./scripts/taiyi-forge.mjs",
     "taiyi-forge-install": "./dist/cli/install-cli.js"
   },
@@ -65,7 +66,8 @@
     "node": ">=20"
   },
   "dependencies": {
-    "@opencode-ai/plugin": "^1.14.18"
+    "@modelcontextprotocol/sdk": "^1.29.0",
+    "@opencode-ai/plugin": ">=1.0.0"
   },
   "peerDependencies": {
     "@opencode-ai/plugin": ">=1.0.0"

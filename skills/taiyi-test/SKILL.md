@@ -46,6 +46,8 @@ description: TaiyiForge 第 7 阶段 — 测试计划与运行证据，产出 TE
 |------|--------|------|------|
 | `npm test` | 0 | 2026-06-05 | 见 CI #123 |
 
+**有 Web/UI 时**：加载 gstack **`/qa`** 或 **`qa-only`** 做站点冒烟（harness 可选打卡 `gstack/qa`）；纯 CLI/API 可跳过。
+
 附 CI URL 或终端摘要（非空口承诺）。
 
 ### 3. AC 映射

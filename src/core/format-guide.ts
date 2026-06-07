@@ -18,8 +18,15 @@ function formatIntentLine(guide: PhaseGuide): string | null {
 
 /** 单行阶段进度（continue / status 顶部） */
 export function formatPhaseProgressLine(guide: PhaseGuide): string {
+  if (guide.workflowAborted) {
+    return `阶段: 已取消 (aborted) → /taiyi:new`;
+  }
   if (guide.workflowCompleted) {
     return `阶段: 已完成 ✓ (${guide.completedCount}/${guide.totalPhases}) → /taiyi:archive`;
+  }
+  if (guide.earlyCodeWarning && guide.currentPhase !== "dev" && guide.currentPhase !== "test") {
+    const order = getPhase(guide.currentPhase).order;
+    return `当前: ${guide.currentPhase}（${order}/${guide.totalPhases}）| ⚠ dev 前有业务代码改动`;
   }
   const order = getPhase(guide.currentPhase).order;
   const impl = guide.currentPhase === "dev" || guide.currentPhase === "test";
@@ -35,6 +42,10 @@ export function formatStatusPlain(guide: PhaseGuide): string {
   const intent = formatIntentLine(guide);
   if (intent) lines.push(intent);
   if (guide.tokenBudgetLine) lines.push(guide.tokenBudgetLine);
+  if (guide.healthGateLine) {
+    lines.push("");
+    lines.push(guide.healthGateLine);
+  }
   if (guide.skillFlowLine) {
     lines.push("");
     lines.push(guide.skillFlowLine);
@@ -50,6 +61,20 @@ export function formatStatusPlain(guide: PhaseGuide): string {
       ? "模板占位（须按 Skill 填写）"
       : "未就绪";
   lines.push(`工件: ${guide.artifact} (${artifactStatus})`);
+  if (guide.syncActions?.length) {
+    lines.push("");
+    lines.push("已自动对齐:");
+    for (const a of guide.syncActions) lines.push(`  ${a}`);
+  }
+  if (guide.stepBlockers?.length) {
+    lines.push("");
+    lines.push("顺序冲突（须按步推进）:");
+    for (const b of guide.stepBlockers) lines.push(`  ${b}`);
+  }
+  if (guide.earlyCodeWarning) {
+    lines.push("");
+    lines.push(`⚠ 代码漂移: ${guide.earlyCodeWarning}`);
+  }
   if (guide.autoHarness) lines.push("模式: 全自动 (--auto)");
   if (guide.pendingAuxiliary.length) {
     lines.push(`待做辅助: ${guide.pendingAuxiliary.join(", ")}`);
@@ -98,6 +123,20 @@ export function formatGuidePlain(guide: PhaseGuide): string {
   lines.push(
     `质量就绪: ${guide.qualityReady ? "是" : guide.artifactIsSeed ? "否（模板占位）" : "否"}`,
   );
+  if (guide.syncActions?.length) {
+    lines.push("");
+    lines.push("已自动对齐:");
+    for (const a of guide.syncActions) lines.push(`  ${a}`);
+  }
+  if (guide.stepBlockers?.length) {
+    lines.push("");
+    lines.push("顺序冲突（须按步推进）:");
+    for (const b of guide.stepBlockers) lines.push(`  ${b}`);
+  }
+  if (guide.earlyCodeWarning) {
+    lines.push("");
+    lines.push(`⚠ 代码漂移: ${guide.earlyCodeWarning}`);
+  }
   if (guide.complexity) {
     lines.push(`复杂度: ${guide.complexity.level} (score ${guide.complexity.score})`);
   }
@@ -128,10 +167,10 @@ export function formatGuidePlain(guide: PhaseGuide): string {
 }
 
 export function formatChangeListPlain(changes: ChangeSummary[]): string {
-  if (changes.length === 0) return "（无进行中的变更 → /taiyi:new <名称>）";
+  if (changes.length === 0) return "（无变更 → /taiyi:new <名称>）";
   return changes
     .map((c) => {
-      const phase = c.workflowCompleted ? "completed" : c.currentPhase;
+      const phase = c.workflowCompleted ? "completed" : c.workflowAborted ? "aborted" : c.currentPhase;
       return `${c.slug}\t${phase}\t${c.completed}/${c.total}\t${c.profile}${c.complexity ? `\t${c.complexity}` : ""}`;
     })
     .join("\n");

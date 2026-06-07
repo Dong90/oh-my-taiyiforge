@@ -16,6 +16,11 @@ import { installCursorRules } from "./cursor-rules.js";
 import { installThirdPartyDeps, shouldInstallDeps } from "./third-party-deps.js";
 import { syncCodexPrompts } from "./sync-codex-prompts.js";
 import { defaultCursorCommandsDir, syncCursorCommands } from "./sync-cursor-commands.js";
+import { installCursorPhaseGuardHook } from "./sync-cursor-hooks.js";
+import { installClaudePhaseGuardHook } from "./sync-claude-hooks.js";
+import { installCursorMcpConfig } from "./sync-cursor-mcp.js";
+import { installCodexMcpConfig, installClaudeMcpConfig } from "./sync-user-mcp.js";
+import { installConsumerPackageScripts } from "./sync-consumer-scripts.js";
 import { syncTaiyiSkills } from "./sync-skills.js";
 import { installProjectWrapper } from "./sync-project-wrapper.js";
 import type { InstallResult, InstallTarget } from "./types.js";
@@ -129,23 +134,27 @@ function formatInstallSummary(targets: InstallTarget[], dirs: ReturnType<typeof 
     lines.push(`  OpenCode  → opencode.json: "plugin": ["${PLUGIN_NAME}"]`);
     lines.push(`  OpenCode  → ${dirs.opencode}/taiyi-*`);
   }
-  if (targets.includes("claude")) {
-    lines.push(`  Claude    → ${dirs.claude}/taiyi-* + CLAUDE.md 控制面`);
-  }
   if (targets.includes("codex")) {
-    lines.push(`  Codex     → ${dirs.codex}/taiyi-* + AGENTS.md + $taiyi-new/continue/apply/status/archive`);
+    lines.push(`  Codex     → ${dirs.codex}/taiyi-* + AGENTS.md + $taiyi-new … + ~/.codex/mcp.json`);
+  }
+  if (targets.includes("claude")) {
+    lines.push(`  Claude    → ${dirs.claude}/taiyi-* + CLAUDE.md + ~/.claude/mcp.json + .claude/settings.json hook`);
   }
   if (targets.includes("cursor")) {
     lines.push(`  Cursor    → ${dirs.cursor}/taiyi-*`);
     lines.push(`  Cursor    → ${path.dirname(dirs.cursor)}/rules/taiyiforge.mdc`);
     lines.push(`  Cursor    → ${defaultCursorCommandsDir()}/taiyi-*.md`);
+    lines.push(`  Cursor    → .cursor/hooks/taiyi-phase-guard.mjs（消费方项目，dev 前改代码 ask）`);
+    lines.push(`  Cursor    → .cursor/mcp.json（taiyi-forge MCP；跳过：TAIYI_FORGE_SKIP_MCP=1）`);
   }
   const footer = targets.includes("opencode")
-    ? "\n重启 OpenCode 后使用 taiyi_init / taiyi_status 等工具。"
+    ? "\n重启 OpenCode 后使用 taiyi_new / taiyi_init / taiyi_status 等工具。"
     : "\n聊天：taiyi-* Skill + 铁三角；引擎：Agent 代跑 taiyi-forge / scripts/taiyi-forge.sh（见 docs/taiyi/invoke.yaml）。";
   const depsNote =
     "\n铁三角依赖：默认自动安装 OpenSpec CLI、gstack、Superpowers（OpenCode/Codex/Cursor）、web-quality-skills；跳过：--skip-deps 或 TAIYI_FORGE_SKIP_DEPS=1。";
-  return `\n[${PLUGIN_NAME}] 已安装：\n${lines.join("\n")}${footer}${depsNote}\n`;
+  const scriptsNote =
+    "\n消费方项目：package.json 已合并 npm run taiyi:doctor / taiyi:verify（跳过：TAIYI_FORGE_SKIP_PKG_SCRIPTS=1）。";
+  return `\n[${PLUGIN_NAME}] 已安装：\n${lines.join("\n")}${footer}${depsNote}${scriptsNote}\n`;
 }
 
 export async function runInstall(opts: RunInstallOptions = {}): Promise<InstallResult[]> {
@@ -163,16 +172,21 @@ export async function runInstall(opts: RunInstallOptions = {}): Promise<InstallR
   if (targets.includes("claude")) {
     results.push({ ...syncTaiyiSkills(skillsSrc, dirs.claude), target: "claude" });
     results.push(installClaudeControlPlane(claudeConfigDir()));
+    results.push(installClaudeMcpConfig());
+    results.push(installClaudePhaseGuardHook(opts.cwd ?? process.cwd(), resolvedRoot));
   }
   if (targets.includes("codex")) {
     results.push({ ...syncTaiyiSkills(skillsSrc, dirs.codex), target: "codex" });
     results.push(installCodexAgents(resolvedRoot, path.dirname(dirs.codex)));
     results.push(syncCodexPrompts(path.join(resolvedRoot, "prompts"), codexPromptsDir()));
+    results.push(installCodexMcpConfig());
   }
   if (targets.includes("cursor")) {
     results.push({ ...syncTaiyiSkills(skillsSrc, dirs.cursor), target: "cursor" });
     results.push(installCursorRules(dirs.cursor));
     results.push(syncCursorCommands(path.join(resolvedRoot, "prompts"), defaultCursorCommandsDir()));
+    results.push(installCursorPhaseGuardHook(opts.cwd ?? process.cwd(), resolvedRoot));
+    results.push(installCursorMcpConfig(opts.cwd ?? process.cwd(), resolvedRoot));
   }
 
   const wantsOpencodeConfig =
@@ -194,7 +208,9 @@ export async function runInstall(opts: RunInstallOptions = {}): Promise<InstallR
   }
 
   if (process.env.TAIYI_FORGE_SKIP_PROJECT_WRAPPER !== "1") {
-    results.push(installProjectWrapper(opts.cwd ?? process.cwd(), resolvedRoot));
+    const cwd = opts.cwd ?? process.cwd();
+    results.push(installProjectWrapper(cwd, resolvedRoot));
+    results.push(installConsumerPackageScripts(cwd));
   }
 
   for (const r of results) {

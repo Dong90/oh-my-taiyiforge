@@ -59,6 +59,12 @@
 
 ---
 
+## 交付门示例（git 仓库）
+
+integration 前若已 init git，commit 须带 `Taiyi-Change` trailer，见 [`COMMIT-TRAILER-EXAMPLE.md`](./COMMIT-TRAILER-EXAMPLE.md) 与 [`docs/taiyi/delivery-gate.md`](../../docs/taiyi/delivery-gate.md)。
+
+---
+
 ## 审计对照
 
 架构缺口与验证命令见 [`docs/GAP-CLOSURE.md`](../../docs/GAP-CLOSURE.md)。

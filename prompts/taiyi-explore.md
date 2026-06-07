@@ -13,3 +13,5 @@ User invoked **$taiyi-explore** (= `/taiyi:explore`). No separate engine subcomm
 4. Then `/taiyi:continue` when CHANGE.md is quality-ready.
 
 If user gave topic text in $ARGUMENTS, use it as the change title or CHANGE scope hint.
+
+{{TAIYI_STAGE_PROTOCOL}}

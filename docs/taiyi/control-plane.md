@@ -19,9 +19,7 @@
 |----|----------|----------|
 | Codex | `$taiyi-new` … `$taiyi-archive`（`prompts/taiyi-*.md`） | Agent 跑 `taiyi-forge.sh` |
 | Claude | `/taiyi:new` … `/taiyi:archive` + Skill | Agent Bash |
-| Cursor | `/taiyi:new` … `/taiyi:status` + rules | Agent 终端 |
+| Cursor | `/taiyi:new` … `/taiyi:status` + rules | Agent 终端 / MCP 读状态 |
+| OpenCode | `taiyi_new` / `taiyi_*` tools | 同左（plugin，无需 shell） |
 
-完整九阶段路径：`docs/taiyi/workflow.md`
-| OpenCode | `taiyi_*` tools | 同左 |
-
-详见 `docs/taiyi/invoke.yaml`。
+完整九阶段路径：`docs/taiyi/workflow.md` · 详见 `docs/taiyi/invoke.yaml`。
