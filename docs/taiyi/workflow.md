@@ -49,6 +49,17 @@
 | `/taiyi:flow` | Superpowers 全技能 × 九阶段总览（onboarding 首选） |
 | `/taiyi:tdd plan\|dev` | task/dev：Superpowers TDD（计划切片测试 / 红绿重构） |
 
+### Git / PR / 部署（gstack · 见 [delivery-slash.md](./delivery-slash.md)）
+
+| 斜杠 | 何时用 |
+|------|--------|
+| `/taiyi:commit` | 实现完成后，带 Taiyi-Change trailer 的 git commit |
+| `/taiyi:ship` | 推分支、开 PR（gstack ship） |
+| `/taiyi:land` | 合并 PR、部署、canary（gstack land-and-deploy） |
+| `/taiyi:gstack review` | PR diff 结构审查（gstack review） |
+| `/taiyi:gstack qa` | 站点 QA（test 阶段 optional） |
+| `/taiyi:release` | 文档/CHANGELOG 发布同步（integration optional） |
+
 写工件仍用 **taiyi-change … taiyi-integration** Skill，不走 `/taiyi:*`。
 
 **new/init 只铺当前阶段模板**（默认仅 `CHANGE.md`）；`CONTEXT.md` 由 `taiyi-intel-scan` 产出，不会预置。过关后引擎才为下一阶段生成模板文件。
@@ -78,9 +89,10 @@
 ⑤ task         → taiyi-task + TDD计划 → TASK.md          → /taiyi:tdd plan → continue
 ⑥ dev          → taiyi-dev + TDD     → 代码              → /taiyi:tdd dev · /taiyi:apply
 ⑦ test         → taiyi-test          → TEST.md          → /taiyi:apply 或 continue
-⑧ review       → taiyi-review        → REVIEW.md        → /taiyi:health · /taiyi:review-loop → continue --approver
-⑨ integration  → taiyi-integration   → CHANGELOG.md     → /taiyi:continue
-   ※ git 仓库默认启用**交付门**：须先 commit 实现代码、工作区干净，且 commit 含 `Taiyi-Change` trailer（见 [delivery-gate.md](./delivery-gate.md)）
+⑧ review       → taiyi-review → REVIEW.md → /taiyi:health · /taiyi:gstack review · /taiyi:review-loop
+                 → /taiyi:commit → /taiyi:ship → continue --approver
+⑨ integration  → @taiyi-integration → /taiyi:land（可选）· /taiyi:release → /taiyi:continue
+   ※ 交付门：须 commit + 干净工作区 + Taiyi-Change trailer（见 delivery-gate.md）
 
 /taiyi:archive
 ```
@@ -118,9 +130,19 @@ high 复杂度会推荐 `taiyi-evolve`，其 home 阶段为 **test**（`architec
 
 `audit` 会报告 `artifacts.ahead-of-phase`：当前阶段未到但未来阶段工件已存在（常见于旧版全量 seed 或手误），易误判进度。
 
-## 仅 CLI（无聊天别名）
+## 100% 斜杠（v0.23+）
 
-`phases`、`guide`（JSON）、`complete`、`init`、`done`（legacy）、`next`（legacy）、`mark-aux`、`assess` — 见 `commands.yaml` → `engine_only`。
+所有 `taiyi` CLI 子命令均有 `/taiyi:*` 别名，见 `commands.yaml` → `slash_catalog`。用户只说斜杠；Agent 代跑 `taiyi-forge.sh`。
+
+| 原仅 CLI | 现斜杠 |
+|----------|--------|
+| `init` / `complete` / `mark-aux` / `assess` / `harness-check` | 同名斜杠 |
+| `phases` / `guide` / `next` / `done` | 同名斜杠 |
+| `commit-trailers` | `/taiyi:commit-trailers` |
+| MCP 读状态 | `/taiyi:state` · `/taiyi:state-read` |
+| `ci platform` / `ci prompt` | `/taiyi:ci platform` · `/taiyi:ci prompt` |
+
+写工件仍用 **taiyi-change … taiyi-integration** Skill（@Skill，不是斜杠）。
 
 ## 和 OpenSpec 对照
 

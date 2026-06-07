@@ -220,24 +220,87 @@ profiles:
         when: 自动推进非人工门阶段；不能替代人工审批
 
   engine_only:
-    description: 无聊天别名，CLI / OpenCode / CI 使用
+    description: 已废弃 — 全部引擎动词均有 /taiyi:* 斜杠（见 slash_catalog）
+    note: Agent 代跑 taiyi-forge.sh；用户只说斜杠
+
+  slash_catalog:
+    description: 100% 斜杠面 — 每个 taiyi CLI 子命令均有聊天别名（prompts/taiyi-*.md）
+    core:
+      - /taiyi:new
+      - /taiyi:status
+      - /taiyi:continue
+      - /taiyi:apply
+      - /taiyi:archive
+    auxiliary:
+      - /taiyi:doctor
+      - /taiyi:audit
+      - /taiyi:verify
+      - /taiyi:health
+      - /taiyi:list
+      - /taiyi:check
+      - /taiyi:sync
+      - /taiyi:run
+      - /taiyi:handoff
+      - /taiyi:pause
+      - /taiyi:cancel
+      - /taiyi:loop
+      - /taiyi:review-loop
+      - /taiyi:review-check
+      - /taiyi:token status|record|scan|compress
+      - /taiyi:explore
+      - /taiyi:flow
+      - /taiyi:full-flow
+      - /taiyi:tdd plan|dev
+    engine_slash:
+      - chat: "/taiyi:init <slug>"
+        engine: "taiyi-forge.sh init"
+      - chat: "/taiyi:complete <slug> <phase>"
+        engine: "taiyi-forge.sh complete"
+      - chat: "/taiyi:phases"
+        engine: "taiyi-forge.sh phases"
+      - chat: "/taiyi:guide <slug>"
+        engine: "taiyi-forge.sh guide --json"
+      - chat: "/taiyi:next [slug]"
+        engine: "taiyi-forge.sh next"
+      - chat: "/taiyi:done [slug]"
+        engine: "taiyi-forge.sh done"
+      - chat: "/taiyi:mark-aux <slug> <skill>"
+        engine: "taiyi-forge.sh mark-aux"
+      - chat: "/taiyi:assess <slug>"
+        engine: "taiyi-forge.sh assess"
+      - chat: "/taiyi:harness-check <slug> <key>"
+        engine: "taiyi-forge.sh harness-check"
+      - chat: "/taiyi:commit-trailers [slug]"
+        engine: "taiyi-forge.sh commit-trailers"
+      - chat: "/taiyi:state [slug]"
+        engine: "taiyi-forge.sh status --json"
+        note: MCP taiyi_state_get_status 人类斜杠等价
+      - chat: "/taiyi:state-read [slug]"
+        engine: "read state.json or MCP taiyi_state_read"
+      - chat: "/taiyi:ci platform <端>"
+        engine: "taiyi-forge.sh ci platform"
+      - chat: "/taiyi:ci prompt <slug>"
+        engine: "taiyi-forge.sh ci prompt"
+    opencode_tools:
+      note: OpenCode 无斜杠菜单，用 taiyi_* 插件工具；与 slash 一一对应
+
+  delivery_gstack:
+    description: git / PR / 部署 — 加载 gstack Skill（见 docs/taiyi/delivery-slash.md）
+    chain: [commit, verify, gstack-review, ship, land, release, continue-integration, archive]
     commands:
-      - cli: "taiyi init <slug>"
-        meaning: 同 new 但默认非 auto；支持 --profile --force --strict-dev
-      - cli: "taiyi complete <slug> <phase> [--approver]"
-        meaning: 指定阶段过关（与 continue 等价，phase 更明确）
-      - cli: "taiyi phases"
-        meaning: 列出九阶段定义（Skill、工件、依赖）
-      - cli: "taiyi guide <slug>"
-        meaning: JSON 版详细 guide；日常人类阅读用 status 或 next
-      - cli: "taiyi done [slug] [--approver]"
-        meaning: legacy，过当前阶段；推荐 continue
-      - cli: "taiyi next [slug]"
-        meaning: legacy，只读下一步，不过关
-      - cli: "taiyi mark-aux <slug> <skill>"
-        meaning: 辅助 Skill 完成标记（须对应工件就绪）
-      - cli: "taiyi assess <slug>"
-        meaning: 重算复杂度写入 state（不 mark-aux）
+      - chat: "/taiyi:commit [slug] [subject]"
+        gstack: "(Taiyi commit-trailers + git commit)"
+      - chat: "/taiyi:ship"
+        gstack: ship
+      - chat: "/taiyi:land"
+        gstack: land-and-deploy
+      - chat: "/taiyi:gstack review"
+        gstack: review
+      - chat: "/taiyi:gstack qa"
+        gstack: qa
+      - chat: "/taiyi:release"
+        gstack: document-release
+        alias: "/taiyi:gstack release"
 
   repeat_suffix:
     description: 多数引擎命令可后缀 xN；complete/mark-aux/harness-check 等须显式参数，不支持 xN

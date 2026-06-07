@@ -334,7 +334,7 @@ phases:
     superpowers_optional: [receiving-code-review]
     external_optional: [gstack/review, semgrep, trivy]
     auxiliary: [taiyi-health]
-    slash: ["/taiyi:review-loop", "/taiyi:health", "/taiyi:continue"]
+    slash: ["/taiyi:review-loop", "/taiyi:health", "/taiyi:gstack review", "/taiyi:commit", "/taiyi:ship", "/taiyi:continue"]
     human_gate: true
     harness:
       - tool: superpowers
@@ -366,7 +366,7 @@ phases:
     superpowers_optional: []
     external_optional: [gstack/document-release, openspec/archive, changesets]
     auxiliary: []
-    slash: ["/taiyi:audit", "/taiyi:continue", "/taiyi:archive"]
+    slash: ["/taiyi:audit", "/taiyi:land", "/taiyi:release", "/taiyi:continue", "/taiyi:archive"]
     human_gate: false
     engine_gate: delivery-gate + audit + AC 勾选
     harness:

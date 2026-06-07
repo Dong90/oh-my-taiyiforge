@@ -127,10 +127,14 @@ Monorepo / 本地开发：
 
 ## 与 shell 的关系
 
-| 场景 | 优先 |
-|------|------|
-| 读状态 / 列变更 / handoff / cancel | MCP |
-| `continue` / `complete` / 门禁 | **仍用** `scripts/taiyi-forge.sh`（MCP 不代过关） |
+| 场景 | 用户说 | Agent 代跑 |
+|------|--------|------------|
+| 读状态 | `/taiyi:status` · `/taiyi:state` | `taiyi-forge.sh status` |
+| handoff / cancel | `/taiyi:handoff` · `/taiyi:cancel` | 同左映射 |
+| 过关 / 门禁 | `/taiyi:continue` · `/taiyi:complete` | `taiyi-forge.sh …` |
+| CI（无聊天） | — | `taiyi ci verify` |
+
+MCP 工具与斜杠等价：用户不必记 MCP 名；Cursor Agent 可选用 MCP 或斜杠。
 
 ## 调试
 

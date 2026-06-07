@@ -27,52 +27,39 @@ export function taiyiControlPlaneBody(platform: "cursor" | "claude"): string {
 2. **引擎过关**：用户说 **/taiyi:new**、**/taiyi:continue**、**/taiyi:apply**、**/taiyi:archive**、**/taiyi:cancel**、**/taiyi:handoff**（Codex：**$taiyi-new** 等），你用 **终端工具** 代跑 \`scripts/taiyi-forge.sh\`。
 3. **禁止**让用户手打长 shell 路径；**禁止**未执行过关就声称阶段已完成。
 4. **一步一 continue**：只写当前阶段工件；**禁止**跳步创建后续阶段 md 或改业务代码（dev 前）。
-5. **以 \`status\` 为准**：文件写了但 status 未就绪 → 跑 status 看「已自动对齐 / 顺序冲突」提示，勿重复劳动。
-6. **跨会话**：暂停前 \`/taiyi:handoff\` 写 HANDOFF.md；恢复先 \`/taiyi:status\`。
+5. **以 /taiyi:status 为准**：文件写了但 status 未就绪 → 跑 /taiyi:status 看「已自动对齐 / 顺序冲突」提示，勿重复劳动。
+6. **跨会话**：暂停前 /taiyi:handoff；恢复先 /taiyi:status。
+7. **100% 斜杠**：用户只说 /taiyi:*；你代跑 \`scripts/taiyi-forge.sh\`。完整列表见 \`docs/taiyi/commands.yaml\` → \`slash_catalog\`。
 ${hookLine}
 
 ## 状态同步（v0.22+）
 
-- \`status\` / \`continue\` 会自动：从磁盘同步 mark-aux（如已有 CONTEXT.md）、去掉已填好内容的 seed 标记。
+- /taiyi:status / /taiyi:continue 会自动：从磁盘同步 mark-aux（如已有 CONTEXT.md）、去掉已填好内容的 seed 标记。
 - 若出现「顺序冲突 / 超前工件」：删除未来阶段 md，或先 complete 当前阶段，**不可跳步**。
 
-## 聊天命令（OpenSpec 风格，见 docs/taiyi/commands.yaml）
+## 聊天命令（用户只说斜杠，见 docs/taiyi/commands.yaml）
 
 ${chatIntro}
 
-- /taiyi:new 功能名（默认手动；须 --auto 才全自动）
-- /taiyi:status
-- /taiyi:continue
-- /taiyi:apply
-- /taiyi:cancel
-- /taiyi:handoff
-- /taiyi:archive
-- /taiyi:loop [slug] [xN]
-- /taiyi:review-loop [slug] — 会话内循环 review 直到机器审查通过
-- /taiyi:review-check <slug> — 单次机器探测
-- /taiyi:token status · record · scan · compress
+**主流程：** /taiyi:new · /taiyi:status · /taiyi:continue · /taiyi:apply · /taiyi:archive
 
-九阶段路径见 docs/taiyi/workflow.md
+**常用辅助：** /taiyi:doctor · /taiyi:audit · /taiyi:verify · /taiyi:list · /taiyi:check · /taiyi:sync · /taiyi:handoff · /taiyi:cancel · /taiyi:loop · /taiyi:review-loop · /taiyi:review-check · /taiyi:token * · /taiyi:commit-trailers
 
-Codex：$taiyi-new、$taiyi-status、$taiyi-continue、$taiyi-apply、$taiyi-archive、$taiyi-cancel、$taiyi-handoff、$taiyi-review-loop、$taiyi-review-check、$taiyi-token-*
+**引擎斜杠（原 engine-only）：** /taiyi:init · /taiyi:complete · … · /taiyi:ci platform · /taiyi:ci prompt
 
-## 引擎命令（Agent 内部代跑，非用户手打）
+**交付链（gstack）：** /taiyi:commit · /taiyi:ship · /taiyi:land · /taiyi:gstack review · /taiyi:gstack qa · /taiyi:release
+
+九阶段写工件仍用 \`taiyi-change\` … \`taiyi-integration\` Skill，见 docs/taiyi/workflow.md
+
+Codex：$taiyi-* prompts（与 /taiyi:* 一一对应）
+
+## Agent 代跑（禁止用户手打）
 
 \`\`\`bash
-./node_modules/oh-my-taiyiforge/scripts/taiyi-forge.sh init <slug> [--auto] --title "..."
-./node_modules/oh-my-taiyiforge/scripts/taiyi-forge.sh next <slug>
-./node_modules/oh-my-taiyiforge/scripts/taiyi-forge.sh harness <slug>
-./node_modules/oh-my-taiyiforge/scripts/taiyi-forge.sh harness-check <slug> <key>
-./node_modules/oh-my-taiyiforge/scripts/taiyi-forge.sh complete <slug> <phase>
-./node_modules/oh-my-taiyiforge/scripts/taiyi-forge.sh handoff [slug] [note]
-./node_modules/oh-my-taiyiforge/scripts/taiyi-forge.sh cancel [slug]
-./node_modules/oh-my-taiyiforge/scripts/taiyi-forge.sh review-loop [slug]
-./node_modules/oh-my-taiyiforge/scripts/taiyi-forge.sh review-check <slug>
-./node_modules/oh-my-taiyiforge/scripts/taiyi-forge.sh list
-./node_modules/oh-my-taiyiforge/scripts/taiyi-forge.sh doctor --strict-workspace
+./node_modules/oh-my-taiyiforge/scripts/taiyi-forge.sh <cmd> ...
 \`\`\`
 
-开发仓库内可用 \`scripts/taiyi-forge.sh\`；全局安装可用 \`taiyi-forge\`。
+映射：用户说 \`/taiyi:continue\` → 你跑 \`taiyi-forge.sh continue\`。开发仓库内 \`scripts/taiyi-forge.sh\`；全局 \`taiyi-forge\`。
 
 ## Skill 加载
 

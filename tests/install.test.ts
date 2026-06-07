@@ -99,7 +99,7 @@ describe("install", () => {
     expect(raw).toContain("taiyi-forge");
     expect(raw).toContain("/taiyi:handoff");
     expect(raw).toContain("/taiyi:cancel");
-    expect(raw).toContain("doctor --strict-workspace");
+    expect(raw).toContain("100% 斜杠");
   });
 
   it("writes cursor mcp.json template when missing", () => {

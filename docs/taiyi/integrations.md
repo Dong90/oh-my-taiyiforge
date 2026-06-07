@@ -73,8 +73,12 @@
 taiyi_init → taiyi_guide（每步）
   → taiyi-change … taiyi-integration
   → （可选）taiyi_sync_openspec → taiyi_archive
-  → test 阶段：verification + gstack qa → review → gstack review → integration → gstack document-release
+  → test：/taiyi:gstack qa（optional）
+  → review：/taiyi:gstack review · /taiyi:review-loop
+  → /taiyi:commit → /taiyi:ship → /taiyi:land → /taiyi:release（optional）
 ```
+
+**交付斜杠专页**：[delivery-slash.md](./delivery-slash.md)
 
 ## OpenCode 工具一览
 

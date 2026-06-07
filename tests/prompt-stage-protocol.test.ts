@@ -35,12 +35,22 @@ describe("prompt-stage-protocol", () => {
       promptsDir,
     );
     expect(out).not.toContain("1. old rule");
-    expect(out).toContain("以 `status` 引擎输出为准");
+    expect(out).toContain("以 `/taiyi:status` 引擎输出为准");
   });
 
   it("appends to taiyi prompts without protocol", () => {
     const out = renderTaiyiPrompt("taiyi-archive.md", "archive body\n", promptsDir);
     expect(out).toContain("archive body");
     expect(out).toContain("## Agent 协议");
+  });
+
+  it("replaces gstack invoke placeholder", () => {
+    const out = renderTaiyiPrompt(
+      "taiyi-ship.md",
+      `ship\n\n{{GSTACK_INVOKE}}\n`,
+      promptsDir,
+    );
+    expect(out).not.toContain("{{GSTACK_INVOKE}}");
+    expect(out).toContain("gstack Skill");
   });
 });
