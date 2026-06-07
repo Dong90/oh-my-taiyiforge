@@ -7,6 +7,7 @@
   "scripts": {
     "test": "node --test test/**/*.test.js",
     "walkthrough": "node scripts/run-full-flow.mjs",
+    "walkthrough-e2e": "node scripts/run-full-flow.mjs",
     "chat-demo": "node scripts/run-chat-demo.mjs"
   },
   "dependencies": {

@@ -18,6 +18,11 @@ references:
     - "/opsx:verify"
     - "/opsx:sync"
 
+init_vs_new:
+  note: |
+    init <slug> 默认非 auto（除非 --auto 或 TAIYI_AUTO_HARNESS=1）。
+    new <标题> 默认 autoHarness=true，但二者都只 seed CHANGE.md，不会自动跑九阶段。
+
 profiles:
   core:
     description: 四动词 + status（九阶段见 workflow.md）
@@ -25,20 +30,27 @@ profiles:
       - chat: "/taiyi:new 用户登录"
         codex: "$taiyi-new 用户登录"
         engine: "taiyi-forge.sh new 用户登录"
-        meaning: 创建变更目录 + auto 编排（对标 opsx:new / propose）
+        meaning: |
+          创建变更目录、默认开启 autoHarness 门禁模式、仅铺 CHANGE.md 模板（对标 opsx:new）。
+          不自动写工件、不自动跑九阶段；后续须 Skill 写工件 + continue/apply。
 
       - chat: "/taiyi:continue"
         codex: "$taiyi-continue"
-        engine: "taiyi-forge.sh continue [slug]"
+        engine: "taiyi-forge.sh continue [slug] [--approver 名]"
         meaning: |
-          推进工作流：工件就绪则过关当前阶段，否则输出 next 指引（对标 opsx:continue）。
+          尝试 complete 当前阶段；失败则输出 next 指引（对标 opsx:continue）。
+          前置：当前阶段工件就绪（非 seed 模板）。
+          auto 模式另须：铁三角 harness-check + 辅助 mark-aux。
+          change/design/review 须 --approver。
+          review 前 medium/high 复杂度须 health-report + mark-aux taiyi-health。
           单变更可省略 slug。
 
       - chat: "/taiyi:apply"
         codex: "$taiyi-apply"
         engine: "taiyi-forge.sh apply [slug]"
         meaning: |
-          进入/继续实现（dev、test 阶段）；对标 opsx:apply。
+          仅 dev/test：打印实现 harness 清单（对标 opsx:apply）。
+          不写代码、不 complete；实现并写 .dev-complete 后须 /taiyi:continue。
           规划阶段会提示先 /taiyi:continue。
 
       - chat: "/taiyi:status"
@@ -46,12 +58,12 @@ profiles:
         engine: "taiyi-forge.sh status [slug]"
         meaning: |
           阶段进度（如 design 3/9）、当前 Skill、工件是否就绪、下一步动作。
-          随时可打，解决「不知道在第几阶段」。
+          人类可读首选；guide 命令默认 JSON，日常用 status/next。
 
       - chat: "/taiyi:archive"
         codex: "$taiyi-archive"
         engine: "taiyi-forge.sh archive [slug]"
-        meaning: 九阶段完成后归档（对标 opsx:archive）
+        meaning: integration 阶段完成后归档（对标 opsx:archive）
 
   auxiliary:
     description: 辅助命令（对标 OMX doctor / omc run 配套；非主流程必经）
@@ -66,8 +78,8 @@ profiles:
         codex: "$taiyi-audit"
         engine: "taiyi-forge.sh audit [slug]"
         meaning: |
-          流程/交付排查：legacy state、工件漂移、CHANGE↔CHANGELOG、
-          integration 与 git 交付未闭环、OpenSpec 目录缺失。
+          流程/交付排查：legacy state、工件漂移、超前阶段工件（artifacts.ahead-of-phase）、
+          profile 跳过阶段的遗留文件、CHANGE↔CHANGELOG、integration 与 git 交付未闭环。
           非 doctor（安装）也非 review-check（仅 REVIEW.md）。
         when: 九阶段标完成但代码未入库、status 异常、合并前自检
 
@@ -83,9 +95,9 @@ profiles:
         codex: "$taiyi-health"
         engine: "taiyi-forge.sh health [slug]"
         meaning: |
-          review 前代码健康基线：加载 taiyi-health Skill，
-          写入 health-report.md，完成后 mark-aux taiyi-health。
-        when: review 前、harness 推荐、high complexity 必选
+          CLI 仅输出 Agent 协议（不跑 lint/测试、不写 health-report）。
+          Agent 须加载 taiyi-health Skill → 写 health-report.md → mark-aux taiyi-health。
+        when: review 前、harness 推荐、medium/high complexity 在 review 过关前必选
 
       - chat: "/taiyi:list"
         codex: "$taiyi-list"
@@ -96,8 +108,8 @@ profiles:
       - chat: "/taiyi:check"
         codex: "$taiyi-check"
         engine: "taiyi-forge.sh check [slug]"
-        meaning: auto 模式 harness 清单（铁三角 → 辅助 → 主 Skill）
-        when: init --auto 后每阶段过关前；对标 OMX run 的分阶段执行
+        meaning: auto 模式 harness 清单（铁三角 → 辅助须 mark-aux → 主 Skill）
+        when: init --auto 或 new 后每阶段过关前
 
       - chat: "/taiyi:sync"
         codex: "$taiyi-sync"
@@ -108,7 +120,9 @@ profiles:
       - chat: "/taiyi:run"
         codex: "$taiyi-run"
         engine: "taiyi-forge.sh run [--slug name]"
-        meaning: 首次体验 / 演示全流程（对标 omc.sh run 的「一键跑通」）
+        meaning: |
+          首次体验：doctor + init demo + 打印下一步（≈ npx taiyi walkthrough）。
+          不跑九阶段。完整 E2E 见 examples/minimal-project → npm run walkthrough-e2e。
         when: onboarding、CI 冒烟，非日常主流程
 
       - chat: "/taiyi:explore"
@@ -162,17 +176,16 @@ profiles:
       - chat: "/taiyi:token compress <slug>"
         codex: "$taiyi-token-compress"
         engine: "taiyi-forge.sh token compress <slug>"
-        meaning: 引擎零 LLM 压缩 → CONTEXT-COMPACT.md + 第三方 Skill 提示
+        meaning: 引擎零 LLM 压缩 → CONTEXT-COMPACT.md；auto 超阈值还须 mark-aux taiyi-compress
         when: 超 compressThreshold 或 status 建议压缩时
 
       - chat: "/taiyi:review-loop [slug]"
         codex: "$taiyi-review-loop"
         engine: "taiyi-forge.sh review-loop [slug]"
         meaning: |
-          启动 review 会话循环：Agent 在同一会话内重复 taiyi-review → 修代码 → review-check，
-          直到机器门禁通过才停止（对齐 /taiyi:loop 的「直到完成」语义）。
-          通过后用户再 complete review --approver。
-        when: 任意阶段可直接启动 review 循环；审查不过继续直到可合并
+          review 机器审查循环：修代码 → 新 REVIEW.md → review-check，直到机器门禁通过。
+          不 complete review；通过后须 continue/complete review --approver。
+        when: review 阶段或提前准备 REVIEW.md
 
       - chat: "/taiyi:review-check <slug>"
         codex: "$taiyi-review-check"
@@ -184,9 +197,30 @@ profiles:
         codex: "$taiyi-loop"
         engine: "taiyi-forge.sh loop [slug] [xN]"
         meaning: |
-          循环 continue 直到九阶段完成或当前阶段阻塞（默认每轮最多 20 次）。
-          阻塞后 Agent 写工件/实现，再调用 loop，直到 /taiyi:archive。
-        when: 自动推进多阶段、直到功能完成
+          循环 continue（默认每轮最多 20 次），不写工件/代码。
+          change/design/review 人工门会硬阻塞，须单独 continue --approver，loop 无法一路跑到 archive。
+          其余阶段阻塞后补工件/实现，再调 loop。
+        when: 自动推进非人工门阶段；不能替代人工审批
+
+  engine_only:
+    description: 无聊天别名，CLI / OpenCode / CI 使用
+    commands:
+      - cli: "taiyi init <slug>"
+        meaning: 同 new 但默认非 auto；支持 --profile --force --strict-dev
+      - cli: "taiyi complete <slug> <phase> [--approver]"
+        meaning: 指定阶段过关（与 continue 等价，phase 更明确）
+      - cli: "taiyi phases"
+        meaning: 列出九阶段定义（Skill、工件、依赖）
+      - cli: "taiyi guide <slug>"
+        meaning: JSON 版详细 guide；日常人类阅读用 status 或 next
+      - cli: "taiyi done [slug] [--approver]"
+        meaning: legacy，过当前阶段；推荐 continue
+      - cli: "taiyi next [slug]"
+        meaning: legacy，只读下一步，不过关
+      - cli: "taiyi mark-aux <slug> <skill>"
+        meaning: 辅助 Skill 完成标记（须对应工件就绪）
+      - cli: "taiyi assess <slug>"
+        meaning: 重算复杂度写入 state（不 mark-aux）
 
   repeat_suffix:
     description: 任意上述引擎命令可后缀 xN，单轮重复执行
@@ -213,3 +247,11 @@ legacy_aliases:
 
 phase_skills:
   note: "写 CHANGE/DESIGN 等工件：taiyi-change … taiyi-integration（@skill），不走 /taiyi:*"
+
+profile_notes:
+  ui: "与 full 相同九阶段，仅命名强调 UI 项目"
+  lite: "五阶段，跳过 design/ui-design/task/review，无 REVIEW.md 与 review-loop 路径"
+  api: "跳过 ui-design"
+
+auxiliary_notes:
+  taiyi_evolve: "high 复杂度会推荐；home 阶段为 test，产出 architecture-sync.md；review 仅强制 taiyi-health"

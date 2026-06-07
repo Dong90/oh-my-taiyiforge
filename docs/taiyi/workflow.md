@@ -74,14 +74,49 @@
 ⑤ task         → taiyi-task + TDD计划 → TASK.md          → /taiyi:tdd plan → continue
 ⑥ dev          → taiyi-dev + TDD     → 代码              → /taiyi:tdd dev · /taiyi:apply
 ⑦ test         → taiyi-test          → TEST.md          → /taiyi:apply 或 continue
-⑧ review       → taiyi-review        → REVIEW.md        → /taiyi:continue
+⑧ review       → taiyi-review        → REVIEW.md        → /taiyi:health · /taiyi:review-loop → continue --approver
 ⑨ integration  → taiyi-integration   → CHANGELOG.md     → /taiyi:continue
    ※ git 仓库默认启用**交付门**：须先 commit 实现代码且工作区干净（见 delivery-gate.md）
 
 /taiyi:archive
 ```
 
-`--auto` 时每阶段另有 harness 铁三角打卡（见 `taiyi-orchestrator`）。
+`--auto` 时每阶段另有 harness 铁三角打卡 + **手动 mark-aux**（见 `taiyi-orchestrator`）。
+
+## init 与 new
+
+| 命令 | auto 默认 | 模板 |
+|------|-----------|------|
+| `taiyi init <slug>` | 关（除非 `--auto` 或 `TAIYI_AUTO_HARNESS=1`） | 仅 CHANGE.md |
+| `taiyi new <标题>` | **开** | 仅 CHANGE.md |
+
+二者都**不会**自动跑九阶段；`new` 只是默认打开 auto 门禁模式。
+
+## walkthrough 两套（勿混）
+
+| 命令 | 作用 |
+|------|------|
+| `npx taiyi walkthrough` / `/taiyi:run` | doctor + init demo + 下一步指引 |
+| `examples/minimal-project` 的 `npm run walkthrough-e2e` | 真·九阶段 shell E2E（`walkthrough` 为别名） |
+
+## Profile 说明
+
+| Profile | 说明 |
+|---------|------|
+| `full` | 九阶段 |
+| `ui` | 与 `full` 相同 |
+| `api` | 跳过 ui-design |
+| `lite` | change → requirement → dev → test → integration；**无 review / REVIEW.md** |
+
+high 复杂度会推荐 `taiyi-evolve`，其 home 阶段为 **test**（`architecture-sync.md`）；**review 过关仅强制** `taiyi-health`。
+
+## audit 超前工件
+
+`audit` 会报告 `artifacts.ahead-of-phase`：当前阶段未到但未来阶段工件已存在（常见于旧版全量 seed 或手误），易误判进度。
+
+## 仅 CLI（无聊天别名）
+
+`phases`、`guide`（JSON）、`complete`、`init`、`done`（legacy）、`next`（legacy）、`mark-aux`、`assess` — 见 `commands.yaml` → `engine_only`。
 
 ## 和 OpenSpec 对照
 

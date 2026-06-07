@@ -17,8 +17,8 @@ description: TaiyiForge 引擎控制面 — 在对话中代跑 scripts/taiyi-for
 |------|------|
 | `/taiyi:new 功能名` | 新建变更 |
 | `/taiyi:status` | **当前阶段（如 3/9）、Skill、工件状态** |
-| `/taiyi:continue` | 规划/收尾阶段推进（**每阶段写完工件后各一次**；人工门需 `--approver`） |
-| `/taiyi:apply` | dev/test 实现 |
+| `/taiyi:continue` | 尝试过关当前阶段（工件 + auto 时 harness-check/mark-aux；人工门需 `--approver`） |
+| `/taiyi:apply` | **仅 dev/test**：打印实现 harness，**不写代码、不 complete** |
 | `/taiyi:archive` | 归档 |
 
 Codex：`$taiyi-new` … `$taiyi-status` …
@@ -35,7 +35,7 @@ Codex：`$taiyi-new` … `$taiyi-status` …
 | `/taiyi:list` | 多变更时列 slug |
 | `/taiyi:check` | auto 模式 harness 清单 |
 | `/taiyi:sync` | OpenSpec 同步 |
-| `/taiyi:run` | 演示 walkthrough |
+| `/taiyi:run` | 体验演示（≠ minimal-project 的 `npm run walkthrough-e2e`） |
 | `/taiyi:loop [xN]` | 循环 continue 直到完成或阻塞 |
 | `/taiyi:review-loop` | review 机器审查；不过则修完再跑，通过后再 complete |
 | `/taiyi:token status` | Token 用量 / 预算 |

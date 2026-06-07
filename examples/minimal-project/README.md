@@ -62,7 +62,7 @@ taiyi-forge doctor
 
 ```bash
 npm test                        # 先确认 counter 模块
-npm run walkthrough             # 九阶段 + 铁三角 + CI verify（步骤含 💬 聊天等价）
+npm run walkthrough-e2e         # 九阶段 + 铁三角 + CI verify（walkthrough 为别名）
 npm run chat-demo               # 仅演示 /taiyi:new · status · continue · check
 ```
 

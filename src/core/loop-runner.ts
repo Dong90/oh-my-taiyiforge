@@ -47,7 +47,7 @@ function attemptContinueOnce(
     return {
       advanced: false,
       phase: phaseId,
-      message: `阶段 ${phaseId} 需人工审批，loop 不能自动过关。请填好工件后 /taiyi:continue 并显式 complete。\n${hint}`,
+      message: `阶段 ${phaseId} 为人工门，/taiyi:loop 不能自动过关。工件就绪后请: scripts/taiyi-forge.sh continue ${slug} --approver "你的名字"\n${hint}`,
     };
   }
 

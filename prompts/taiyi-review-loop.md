@@ -21,7 +21,9 @@ Stay in this session and repeat until `✓ 机器审查通过`:
 1. **Fresh review** — load **taiyi-review** (or gstack `review`), read **git diff**, write **new** `REVIEW.md`
 2. `scripts/taiyi-forge.sh review-check <slug>` — machine gate on that REVIEW.md
 3. **If blocked** → fix code / `TEST.md` → **new review** (step 1) → review-check again (**do not wait for user**)
-4. **If passed** → stop loop; tell user to `complete <slug> review --approver "…"`
+4. **If passed** → stop loop; **review-loop does NOT complete the phase**. Run:
+   `scripts/taiyi-forge.sh continue <slug> --approver "你的名字"`
+   (or `complete <slug> review --approver "…"`)
 
 Machine gate: `[x] **Approve**`, not Request changes; all **high** findings resolved (✅/fixed/已修复/豁免).
 

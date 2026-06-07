@@ -34,7 +34,8 @@ npm install oh-my-taiyiforge
 
 npx taiyi walkthrough       # 首次体验：doctor + init + 打印下一步（不跑九阶段）
 # 或手动：
-npx taiyi init my-first --title "My First Change"   # 仅铺 CHANGE.md 模板
+npx taiyi init my-first --title "My First Change"   # 仅铺 CHANGE.md；默认非 --auto
+npx taiyi new "My Feature"                          # 同 init 但默认 --auto
 npx taiyi next my-first     # 人类可读下一步（推荐）
 ```
 
@@ -59,8 +60,10 @@ npx taiyi list
 |------|------|
 | `/taiyi:new 名称` | 新建变更 |
 | `/taiyi:status` | 阶段进度 + **Superpowers 推荐** + 工件就绪 |
-| `/taiyi:continue` | 规划阶段推进（写完工件后） |
+| `/taiyi:continue` | 尝试过关（工件 + auto 时 harness-check/mark-aux；人工门 `--approver`） |
 | `/taiyi:apply` | dev / test **实现清单**（不写代码、不 complete；实现后须 continue） |
+| `/taiyi:health` | **仅输出协议**；须 Agent 跑 taiyi-health 写 report + mark-aux |
+| `/taiyi:loop` | 循环 continue；**人工门会阻塞**，不能一路跑到 archive |
 | `/taiyi:check` | auto 模式 harness 清单 |
 | `/taiyi:explore` | change 头脑风暴（→ Superpowers brainstorming） |
 | `/taiyi:token status` | Token 用量 / 预算 / 压缩建议 |
@@ -115,7 +118,7 @@ npm install && npm run build && npm test
 
 cd examples/minimal-project
 npm install
-npm run walkthrough    # 九阶段 shell 全流程 + 铁三角（≠ npx taiyi walkthrough）
+npm run walkthrough-e2e   # 九阶段 shell E2E + 铁三角（walkthrough 为别名；≠ npx taiyi walkthrough）
 npm run chat-demo      # 聊天动词：new / status / check / continue
 ```
 
@@ -127,8 +130,8 @@ npm run chat-demo      # 聊天动词：new / status / check / continue
 |---------|------|
 | `full` | 九阶段（默认） |
 | `api` | 跳过 `ui-design`（纯后端/API） |
-| `ui` | 与 `full` 相同（显式 UI 项目命名） |
-| `lite` | 五阶段：change → requirement → dev → test → integration |
+| `ui` | 与 `full` 相同九阶段（仅命名区别） |
+| `lite` | 五阶段：change → requirement → dev → test → integration（**无 review**） |
 
 ```bash
 npx taiyi init fix-bug --profile lite
@@ -159,10 +162,15 @@ Agent 代跑 `scripts/taiyi-forge.sh token …`。`export TAIYI_TOKEN_ENFORCE=1`
 
 ```
 taiyi_init slug=demo-feature title="Demo" profile=full
-taiyi_guide slug=demo-feature
+taiyi_status slug=demo-feature
 taiyi_complete slug=demo-feature phase=change approver=you
 taiyi_mark_aux slug=demo-feature skill=taiyi-health
+taiyi_audit slug=demo-feature
+taiyi_health slug=demo-feature
+taiyi_ci_verify slug=demo-feature
 ```
+
+日常人类可读进度用 `taiyi_status`；`taiyi_guide` 为 JSON。`taiyi_health` 与 CLI 相同，只输出协议，不代跑检查。
 
 ## 人工门（可配置）
 

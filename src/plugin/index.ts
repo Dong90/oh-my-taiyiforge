@@ -24,6 +24,8 @@ import {
   taiyiToken,
   taiyiReviewCheck,
   taiyiReviewLoop,
+  taiyiAudit,
+  taiyiHealth,
 } from "./handlers.js";
 import { resolvePackageRoot } from "../core/package-root.js";
 
@@ -350,9 +352,48 @@ const TaiyiForgePlugin: Plugin = async () => {
           return "text" in r && r.text ? r.text : JSON.stringify(r, null, 2);
         },
       }),
+      taiyi_audit: tool({
+        description:
+          "Workflow/delivery audit: legacy state, artifact drift, ahead-of-phase files, CHANGE↔CHANGELOG, git delivery gaps.",
+        args: {
+          slug: tool.schema.string().optional().describe("Change slug; omit to audit all changes"),
+        },
+        async execute(args, ctx) {
+          const r = taiyiAudit(ctx.directory, { slug: args.slug, plain: true });
+          return "text" in r && r.text ? r.text : JSON.stringify(r.report ?? r, null, 2);
+        },
+      }),
+      taiyi_health: tool({
+        description:
+          "Print Agent protocol for taiyi-health before review. Does NOT run checks or write health-report.md — load taiyi-health Skill in chat, then mark-aux.",
+        args: {
+          slug: tool.schema.string().optional().describe("Change slug; inferred when only one active change"),
+        },
+        async execute(args, ctx) {
+          const r = taiyiHealth(ctx.directory, args.slug);
+          if (!r.ok) return JSON.stringify(r, null, 2);
+          return "text" in r && r.text ? r.text : JSON.stringify(r, null, 2);
+        },
+      }),
+      taiyi_verify: tool({
+        description:
+          "CI/PR artifact gate: quality + harness blockers without LLM (alias of ci verify).",
+        args: {
+          slug: tool.schema.string().optional(),
+          requireComplete: tool.schema.boolean().optional(),
+        },
+        async execute(args, ctx) {
+          const r = taiyiCiVerify(ctx.directory, {
+            slug: args.slug,
+            requireComplete: args.requireComplete,
+            plain: true,
+          });
+          return "text" in r && r.text ? r.text : JSON.stringify(r.report ?? r, null, 2);
+        },
+      }),
       taiyi_walkthrough: tool({
         description:
-          "First-run walkthrough in the current workspace: doctor, init demo change, show next step.",
+          "Onboarding demo only: doctor, init demo change, show next step. Not the nine-phase E2E (see examples/minimal-project walkthrough-e2e).",
         args: {
           slug: tool.schema
             .string()

@@ -4,7 +4,7 @@
 
 | 命令 | 说明 |
 |------|------|
-| `npm run walkthrough` | 九阶段 + Token/Loop 演示（35 步，含铁三角打卡） |
+| `npm run walkthrough-e2e` | 九阶段 + Token/Loop 演示（35 步，含铁三角打卡；`walkthrough` 为别名） |
 | `npm run chat-demo` | 聊天动词 + Token + Loop：`/taiyi:new` · `token` · `check` · `continue` · `loop` |
 
 前置：在仓库根目录 `npm run build`（链本地 `TAIYI_FORGE_ROOT` 时必需）。
@@ -55,7 +55,7 @@
 3. **`/taiyi:check`** → harness 清单（brainstorming 未打卡 → 阻塞）
 4. **`/taiyi:continue`** → 因铁三角未打卡，输出指引而非过关
 
-完整九阶段请运行 `npm run walkthrough`。
+完整九阶段请运行 `npm run walkthrough-e2e`（或 `npm run walkthrough`）。
 
 ---
 

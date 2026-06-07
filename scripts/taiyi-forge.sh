@@ -38,11 +38,11 @@ TaiyiForge（对齐 OpenSpec /opsx:<verb>）
   /taiyi:apply              实现（dev/test）
   /taiyi:status             当前第几阶段、该用哪个 Skill
   /taiyi:archive            归档
-  /taiyi:loop [slug] [xN]   循环 continue 直到完成或阻塞
+  /taiyi:loop [slug] [xN]   循环 continue（人工门 change/design/review 会阻塞，须单独 continue --approver）
   /taiyi:review-loop [slug] 会话内循环 review 直到机器审查通过
   /taiyi:review-check <slug>  单次机器探测（不计轮次）
   /taiyi:audit [slug]           流程/交付排查（漂移、未 commit）
-  /taiyi:health [slug]          review 前代码健康（taiyi-health Skill）
+  /taiyi:health [slug]          输出 health 协议（须 Agent 加载 Skill 写 health-report + mark-aux）
   /taiyi:verify [slug]          PR/CI 工件门禁（= ci verify 别名）
   /taiyi:token status       Token 用量 / 预算
   /taiyi:token compress     压缩 → CONTEXT-COMPACT.md
@@ -55,7 +55,7 @@ Codex: $taiyi-new / $taiyi-continue / $taiyi-apply / $taiyi-tdd / $taiyi-flow / 
 Superpowers 流程: docs/taiyi/superpowers-flow.md · 真源: docs/taiyi/workflow-manifest.yaml
 
 引擎（Agent 代跑）:
-  scripts/taiyi-forge.sh new <标题>
+  scripts/taiyi-forge.sh new <标题>   # 默认 --auto，仅 seed CHANGE.md
   scripts/taiyi-forge.sh continue [slug]
   scripts/taiyi-forge.sh apply [slug]
   scripts/taiyi-forge.sh archive [slug]

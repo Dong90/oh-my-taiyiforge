@@ -237,7 +237,7 @@ export function taiyiArchive(
     if (!state.completedPhases.includes("integration")) {
       return {
         ok: false as const,
-        error: "Complete taiyi integration phase before OpenSpec archive",
+        error: "请先完成 integration 阶段再归档（complete integration 或 continue 过关）",
         state,
       };
     }
@@ -250,7 +250,7 @@ export function taiyiArchive(
     if (!sync.ok) {
       return {
         ok: false as const,
-        error: `auto sync-openspec before archive failed: ${sync.reason ?? "unknown"}`,
+        error: `归档前自动 sync-openspec 失败: ${sync.reason ?? "unknown"}`,
         openspec,
         state,
       };
