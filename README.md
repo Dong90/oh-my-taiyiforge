@@ -14,13 +14,13 @@
 
 <p align="center">
   <img
-    src="./docs/taiyiforge-architecture.png"
-    alt="TaiyiForge 架构图 — 六大标准 × 中心引擎 × 九阶段 × OMC 原生控制面 × 三重门禁"
+    src="./docs/diagrams/visual/taiyiforge-architecture-ai-4k.png"
+    alt="TaiyiForge 架构图 — 六大标准 × 中心引擎 × 九阶段 × Skill 全景 × 三重门禁"
     width="1200"
   />
 </p>
 
-> 可编辑真源：[docs/taiyiforge-architecture.svg](./docs/taiyiforge-architecture.svg)（v0.22）。README 展示用 **4×** 高清位图（7200×8400）：[taiyiforge-architecture.png](./docs/taiyiforge-architecture.png)。重生成：`python3 scripts/generate-architecture-svg.py`
+> README 展示用 **4K** 视觉海报：[taiyiforge-architecture-ai-4k.png](./docs/diagrams/visual/taiyiforge-architecture-ai-4k.png)（非真源）。可编辑真源：[taiyiforge-architecture.svg](./docs/taiyiforge-architecture.svg) · C4：[c4/containers.md](./docs/c4/containers.md)。重生成海报：`python3 scripts/generate-architecture-svg.py`
 
 上图分区说明：
 

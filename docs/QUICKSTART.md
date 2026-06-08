@@ -168,7 +168,7 @@ npx taiyi assess my-first          # 自动读 CHANGE 推断复杂度
 npx taiyi mark-aux my-first taiyi-intel-scan   # 标记辅助 Skill 已完成
 ```
 
-`CONTEXT.md` 可从 [`templates/CONTEXT.md`](../templates/CONTEXT.md) 起步，由 **taiyi-intel-scan** 填写。上下文过大时用 **`/taiyi:token compress <slug>`** 生成 `CONTEXT-COMPACT.md`；**handoff** 时若超阈值会在 HANDOFF.md 提示。
+`CONTEXT.md` 可从 [`templates/CONTEXT.md`](../templates/CONTEXT.md) 起步，由 **taiyi-intel-scan** 填写。设计阶段可用 **`/taiyi:diagram-pipeline`**（C4 真源 → 工程图 → PNG 一条链）或分步 **`/taiyi:diagram-c4`** → **`/taiyi:diagram-arch`** → **`/taiyi:diagram-render`**；流程图用 **`/taiyi:diagram-flow`**。详见 [`docs/diagrams/pipeline.md`](diagrams/pipeline.md)。上下文过大时用 **`/taiyi:token compress <slug>`** 生成 `CONTEXT-COMPACT.md`；**handoff** 时若超阈值会在 HANDOFF.md 提示。
 
 ## Token 预算（可选）
 

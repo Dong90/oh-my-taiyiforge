@@ -50,6 +50,9 @@ description: TaiyiForge 第 3 阶段 — 技术设计（≥2 方案），产出 
 ### 3. Architecture
 
 - 组件边界、数据流（ASCII / mermaid 均可）
+- **推荐（一条链）**：`/taiyi:diagram-pipeline`（c4 真源 → architecture → PNG）
+- **分步**：`/taiyi:diagram-c4` → `/taiyi:diagram-arch` → `/taiyi:diagram-render`
+- **多分支流程**：`/taiyi:diagram-flow` 写 `diagrams/flows.md`（不替代 pipeline）
 - 错误处理、幂等、回滚策略
 - 与现有模块的集成点（文件路径级）
 

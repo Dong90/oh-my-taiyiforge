@@ -116,6 +116,46 @@ profiles:
           Agent 须加载 taiyi-health Skill → 写 health-report.md → mark-aux taiyi-health。
         when: review 前、harness 推荐、medium/high complexity 在 review 过关前必选
 
+      - chat: "/taiyi:diagram-pipeline [slug] [--repo] [--scope path] [--skip-render] [--review]"
+        codex: "$taiyi-diagram-pipeline"
+        engine: "（聊天 Skill）加载 taiyi-diagram-pipeline"
+        meaning: |
+          架构图三步流水线编排：① diagram-c4（C4 真源）→ ② diagram-arch（工程补充）→ ③ diagram-render（SVG）。
+          一条真源顺序执行，避免三套不一致的图。详见 `docs/diagrams/pipeline.md`。
+        when: design 阶段、仓库文档维护、从代码到可评审架构图
+
+      - chat: "/taiyi:diagram-c4 [slug] [--repo] [--scope path]"
+        codex: "$taiyi-diagram-c4"
+        engine: "（聊天 Skill）加载 taiyi-diagram-c4"
+        meaning: |
+          流水线第 1 步：扫代码写 C4 真源（Observed/Inferred + Mermaid）。
+          产出 `diagrams/c4/` 或 `docs/c4/`；可选增强 c4-codebase-architecture skill。
+        when: 陌生代码库、大重构、pipeline Step 1
+
+      - chat: "/taiyi:diagram-arch [slug] [topic]"
+        codex: "$taiyi-diagram-arch"
+        engine: "（聊天 Skill）加载 taiyi-diagram-arch"
+        meaning: |
+          流水线第 2 步：以 `diagrams/c4/containers.md` 为真源同步 `diagrams/architecture.md`（勿重划模块）。
+          产品海报仍用 `scripts/generate-architecture-svg.py`。
+        when: design 阶段、pipeline Step 2、有模块边界/部署视图
+
+      - chat: "/taiyi:diagram-render [slug] [--repo] [--review]"
+        codex: "$taiyi-diagram-render"
+        engine: "（聊天 Skill）加载 taiyi-diagram-render"
+        meaning: |
+          流水线第 3 步：Mermaid → SVG（`render-mermaid.mjs` 或 diagramming-architecture 视觉审查）。
+          产出 `diagrams/c4/png/*.svg`；可选 `diagrams/png/`（architecture）；禁止重新扫代码。
+        when: 要评审用预览图、pipeline Step 3
+
+      - chat: "/taiyi:diagram-flow [slug] [flow-name]"
+        codex: "$taiyi-diagram-flow"
+        engine: "（聊天 Skill）加载 taiyi-diagram-flow"
+        meaning: |
+          业务流程图 / 状态机 / 九阶段 flowchart；AC 追溯表；TASK 切片对齐。
+          产出 `diagrams/flows.md` 或 `diagrams/flow-<name>.md`；mark-aux taiyi-diagram-flow。
+        when: 多分支 AC、task 切片前、harness/门禁可视化
+
       - chat: "/taiyi:list"
         codex: "$taiyi-list"
         engine: "taiyi-forge.sh ls"
@@ -401,6 +441,9 @@ profiles:
       - /taiyi:audit
       - /taiyi:verify
       - /taiyi:health
+      - /taiyi:diagram-pipeline
+      - /taiyi:diagram-c4
+      - /taiyi:diagram-render
       - /taiyi:list
       - /taiyi:check
       - /taiyi:sync

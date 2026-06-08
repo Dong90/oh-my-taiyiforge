@@ -35,10 +35,22 @@ export const PHASE_WRITE_HINTS: Record<PhaseId, PhaseWriteHint> = {
   design: {
     superpowers: [],
     superpowersOptional: ["writing-plans"],
-    auxiliary: ["taiyi-architect"],
+    auxiliary: [
+      "taiyi-architect",
+      "taiyi-diagram-c4",
+      "taiyi-diagram-arch",
+      "taiyi-diagram-flow",
+      "taiyi-diagram-render",
+    ],
     external: ["/taiyi:gstack plan-eng-review"],
-    slashExtras: [],
-    notes: ["≥2 方案 + 推荐方案；人工门"],
+    slashExtras: [
+      "/taiyi:diagram-pipeline",
+      "/taiyi:diagram-c4",
+      "/taiyi:diagram-arch",
+      "/taiyi:diagram-render",
+      "/taiyi:diagram-flow",
+    ],
+    notes: ["≥2 方案 + 推荐方案；人工门；架构图流水线见 /taiyi:diagram-pipeline"],
   },
   "ui-design": {
     superpowers: [],
@@ -51,10 +63,10 @@ export const PHASE_WRITE_HINTS: Record<PhaseId, PhaseWriteHint> = {
   task: {
     superpowers: ["writing-plans", "test-driven-development"],
     superpowersOptional: ["executing-plans", "using-git-worktrees"],
-    auxiliary: [],
+    auxiliary: ["taiyi-diagram-flow"],
     external: [],
-    slashExtras: ["/taiyi:tdd plan"],
-    notes: ["独立可 PR 切片；每切片测试策略"],
+    slashExtras: ["/taiyi:tdd plan", "/taiyi:diagram-flow"],
+    notes: ["独立可 PR 切片；每切片测试策略；可选 flows 追溯"],
   },
   dev: {
     superpowers: ["test-driven-development"],

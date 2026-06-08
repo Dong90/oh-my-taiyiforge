@@ -137,6 +137,26 @@ auxiliary_skills:
     phases: [change, requirement, design, task, dev, test, review, integration]
     artifact: CONTEXT-COMPACT.md
     when: token 超 compressThreshold
+  - id: taiyi-diagram-pipeline
+    phases: [design]
+    artifact: diagrams/c4/containers.md
+    when: /taiyi:diagram-pipeline 三步流水线（c4 → arch → render）
+  - id: taiyi-diagram-c4
+    phases: [design]
+    artifact: diagrams/c4/containers.md
+    when: C4 真源 / 代码反推（流水线第 1 步）
+  - id: taiyi-diagram-arch
+    phases: [design]
+    artifact: diagrams/architecture.md
+    when: 同步工程图（流水线第 2 步）/ 产品海报
+  - id: taiyi-diagram-render
+    phases: [design]
+    artifact: diagrams/c4/png/context.svg
+    when: Mermaid → SVG（流水线第 3 步）
+  - id: taiyi-diagram-flow
+    phases: [design, task]
+    artifact: diagrams/flows.md
+    when: 多分支 AC、状态机、九阶段/harness 可视化
 
 token_compress:
   engine:
@@ -211,7 +231,7 @@ phases:
     superpowers: []
     superpowers_optional: [writing-plans]
     external_optional: [gstack/plan-eng-review]
-    auxiliary: [taiyi-architect]
+    auxiliary: [taiyi-architect, taiyi-diagram-pipeline, taiyi-diagram-c4, taiyi-diagram-arch, taiyi-diagram-flow, taiyi-diagram-render]
     slash: ["/taiyi:continue"]
     human_gate: true
     harness:
@@ -253,7 +273,7 @@ phases:
     superpowers: [writing-plans, test-driven-development]
     superpowers_optional: [executing-plans, using-git-worktrees]
     external_optional: []
-    auxiliary: []
+    auxiliary: [taiyi-diagram-flow]
     slash: ["/taiyi:tdd plan", "/taiyi:continue"]
     human_gate: false
     harness:

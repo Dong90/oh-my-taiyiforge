@@ -12,7 +12,7 @@ scripts/taiyi-forge.sh design $ARGUMENTS
 
 1. Run engine command — confirm slug + phase match (fix with `/taiyi:status` if mismatch).
 2. Load **`taiyi-design`** Skill (`@taiyi-design`).
-3. ≥2 options · `@taiyi-architect` · `/taiyi:gstack plan-eng-review`
+3. ≥2 options · `@taiyi-architect` · `/taiyi:diagram-pipeline`（或分步 c4→arch→render）· `/taiyi:diagram-flow` · `/taiyi:gstack plan-eng-review`
 4. Only edit `.taiyi/changes/<slug>/DESIGN.md` — **no business code** before dev.
 5. `scripts/taiyi-forge.sh status <slug>` — quality ready → `/taiyi:continue --approver "名字"`
 

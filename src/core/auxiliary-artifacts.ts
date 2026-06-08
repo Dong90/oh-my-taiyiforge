@@ -10,6 +10,10 @@ export const AUXILIARY_ARTIFACTS: Record<string, { files?: string[]; dirs?: stri
   "taiyi-evolve": { files: ["architecture-sync.md"] },
   "taiyi-restyle": { files: ["ui-restyle-tasks.md"] },
   "taiyi-compress": { files: ["CONTEXT-COMPACT.md"] },
+  "taiyi-diagram-arch": { files: ["diagrams/architecture.md"] },
+  "taiyi-diagram-flow": { files: ["diagrams/flows.md"] },
+  "taiyi-diagram-c4": { files: ["diagrams/c4/containers.md"] },
+  "taiyi-diagram-render": { files: ["diagrams/c4/png/context.svg"] },
 };
 
 export function auxiliaryArtifactSatisfied(changeDir: string, skillId: string): boolean {

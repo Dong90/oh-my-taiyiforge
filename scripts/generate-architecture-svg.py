@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
-"""Generate TaiyiForge architecture diagram SVG (Flow-X style, layered layout)."""
+"""
+Generate TaiyiForge architecture diagram — layout aligned with Flow-X reference.
+Regenerate: python3 scripts/generate-architecture-svg.py
+"""
 from __future__ import annotations
 
 import subprocess
@@ -9,445 +12,428 @@ from pathlib import Path
 OUT = Path(__file__).resolve().parent.parent / "docs" / "taiyiforge-architecture.svg"
 PNG = OUT.with_suffix(".png")
 
-# Native canvas — no nested scale(); sharpness comes from PNG export zoom
-W, H = 1800, 2100
-PNG_ZOOM = 4
+# Native canvas (Flow-X proportions: wide poster)
+W, H = 2800, 1880
+PNG_ZOOM = 6  # 16800 × 11280 px export
 PNG_DPI = 300
+VERSION = "v0.22"
 
-FONT = "PingFang SC, Microsoft YaHei, system-ui, sans-serif"
+FONT = "PingFang SC, Microsoft YaHei, SF Pro Display, system-ui, sans-serif"
 FONT_CANDIDATES = [
     "/System/Library/Fonts/PingFang.ttc",
     "/System/Library/Fonts/STHeiti Light.ttc",
     "/Library/Fonts/Arial Unicode.ttf",
 ]
 
-# ── Data ─────────────────────────────────────────────────────────────────────
+# Flow-X–style palette
+BG = "#060b16"
+PANEL = "#0d1528"
+PANEL2 = "#111d35"
+LINE = "#243049"
+TEXT = "#eef2ff"
+SUB = "#94a3b8"
+DIM = "#64748b"
 
 PILLARS = [
-    ("#0ea5e9", "Harness", "流水线治理 · 不达标不进"),
-    ("#8b5cf6", "OpenSpec", "规格驱动 · 可选镜像"),
-    ("#14b8a6", "GStack", "Options + Reason + Cost"),
-    ("#f59e0b", "Superpowers", "有界 Skill · 可验证 I/O"),
-    ("#ec4899", "OMO", "AI 执行 · 人审批"),
-    ("#6366f1", "Spec-Kit", "templates + 质量五维"),
+    ("#0ea5e9", "Harness Engineering", "流水线治理 · 不达标不进"),
+    ("#22c55e", "OpenSpec", "规格驱动 · 可选镜像"),
+    ("#a855f7", "GStack", "Options + Reason + Cost"),
+    ("#14b8a6", "Superpowers", "有界 Skill · 可验证 I/O"),
+    ("#3b82f6", "OMO", "AI 执行 · 人审批"),
+    ("#ec4899", "Spec-Kit", "templates · 质量五维"),
 ]
 
-PHASE_ARTIFACTS = [
-    ("CHANGE.md", "变更提案"),
-    ("REQUIREMENT.md", "需求 + AC"),
-    ("DESIGN.md", "技术设计 / ADR"),
-    ("UI-DESIGN.md", "UI 契约"),
-    ("TASK.md", "任务切片"),
-    ("代码 + 测试", "TDD 产出"),
-    ("TEST.md", "测试报告"),
-    ("REVIEW.md", "审查报告"),
-    ("CHANGELOG.md", "集成交付"),
+ARTIFACTS = [
+    ("#38bdf8", "CHANGE.md"),
+    ("#38bdf8", "REQUIREMENT.md"),
+    ("#38bdf8", "DESIGN.md"),
+    ("#38bdf8", "UI-DESIGN.md"),
+    ("#38bdf8", "TASK.md"),
+    ("#34d399", "代码 + 测试"),
+    ("#34d399", "TEST.md"),
+    ("#fbbf24", "REVIEW.md"),
+    ("#fb923c", "CHANGELOG.md"),
+    ("#22d3ee", "CONTEXT.md · adr/"),
 ]
 
-RUNTIME_ARTIFACTS = [
-    ("HANDOFF.md", "跨会话恢复"),
-    ("project-memory.json", "跨变更记忆"),
-    (".taiyi/runtime/*", "模式状态"),
-    ("adr/ · CONTEXT.md", "决策 · 情报"),
+PHASES = [
+    ("1", "#38bdf8", "变更提案", "taiyi-change", "CHANGE.md"),
+    ("2", "#60a5fa", "需求分析", "taiyi-requirement", "REQUIREMENT.md"),
+    ("3", "#818cf8", "技术设计", "taiyi-design", "DESIGN.md"),
+    ("4", "#a78bfa", "UI 设计", "taiyi-ui-design", "UI-DESIGN.md"),
+    ("5", "#c084fc", "任务拆分", "taiyi-task", "TASK.md"),
+    ("6", "#34d399", "开发执行", "taiyi-dev", "代码 + TDD"),
+    ("7", "#2dd4bf", "测试执行", "taiyi-test", "TEST.md"),
+    ("8", "#fbbf24", "代码审查", "taiyi-review", "REVIEW.md"),
+    ("9", "#fb923c", "集成交付", "taiyi-integration", "CHANGELOG.md"),
 ]
 
-STAGES = [
-    ("1", "变更", "taiyi-change", "CHANGE.md", "#38bdf8"),
-    ("2", "需求", "taiyi-requirement", "REQ.md", "#60a5fa"),
-    ("3", "设计", "taiyi-design", "DESIGN.md", "#818cf8"),
-    ("4", "UI", "taiyi-ui-design", "UI-DESIGN", "#a78bfa"),
-    ("5", "任务", "taiyi-task", "TASK.md", "#c084fc"),
-    ("6", "开发", "taiyi-dev", "代码+TDD", "#34d399"),
-    ("7", "测试", "taiyi-test", "TEST.md", "#2dd4bf"),
-    ("8", "审查", "taiyi-review", "REVIEW.md", "#fbbf24"),
-    ("9", "交付", "taiyi-integration", "CHANGELOG", "#fb923c"),
+MAIN_SKILLS = [
+    ("#38bdf8", "taiyi-change"),
+    ("#60a5fa", "taiyi-requirement"),
+    ("#818cf8", "taiyi-design"),
+    ("#a78bfa", "taiyi-ui-design"),
+    ("#c084fc", "taiyi-task"),
+    ("#34d399", "taiyi-dev"),
+    ("#2dd4bf", "taiyi-test"),
+    ("#fbbf24", "taiyi-review"),
+    ("#fb923c", "taiyi-integration"),
 ]
 
-OMC_RUNTIME = [
-    ("ralph", "验证循环", "ralplan-first · step hook", "#f472b6"),
-    ("autopilot", "九阶段全自动", "--auto harness", "#fb923c"),
-    ("team", "team 流水线", "plan→prd→exec→fix", "#38bdf8"),
-    ("ultrawork", "高吞吐并行", "≤6 路 spawn", "#a78bfa"),
+AUX_SKILLS = [
+    ("#22d3ee", "taiyi-intel-scan", "技术扫描"),
+    ("#818cf8", "taiyi-architect", "架构维护"),
+    ("#34d399", "taiyi-health", "健康检查"),
+    ("#a78bfa", "taiyi-evolve", "架构演进"),
+    ("#f472b6", "taiyi-restyle", "UI 改版"),
+    ("#fcd34d", "taiyi-compress", "Token 压缩"),
+    ("#38bdf8", "taiyi-diagram-arch", "架构图"),
+    ("#2dd4bf", "taiyi-diagram-flow", "流程图"),
 ]
 
-OMC_WORKFLOW_ROW1 = ["plan", "ralplan", "ultraqa", "ccg", "sciomc"]
-OMC_WORKFLOW_ROW2 = ["deepinit", "visual-verdict", "deep-interview", "ai-slop-cleaner", "external-context"]
-
-OMC_CONTROLS = [
-    ("29 Agent", "/taiyi:agent · agent-roles.yaml"),
-    ("记忆", "/taiyi:remember"),
-    ("停止", "stop-mode · stopomc"),
-    ("调度", "modes · step · keyword hook"),
-    ("MCP", "state_get_status / read / list"),
+ORCH_SKILLS = [
+    ("#38bdf8", "taiyi-forge", "引擎控制面"),
+    ("#f472b6", "taiyi-orchestrator", "全自动编排"),
+    ("#a78bfa", "taiyi-ultrawork", "高吞吐并行"),
 ]
 
 VALUES = [
     ("标准化", "减少不确定性"),
     ("可追溯", "文档逐层审计"),
     ("可控执行", "AI 执行 · 人把关"),
-    ("高质量交付", "三门禁持续改进"),
+    ("高质量交付", "三重门禁"),
     ("知识沉淀", "经验归档演进"),
 ]
 
 
-# ── SVG helpers ──────────────────────────────────────────────────────────────
-
-def layer_label(y: int, num: str, title: str, color: str = "#475569") -> str:
-    return f"""
-  <g transform="translate(24,{y})">
-    <rect x="0" y="0" width="4" height="28" rx="2" fill="{color}"/>
-    <text x="14" y="14" fill="{color}" font-size="13" font-weight="700">{num}</text>
-    <text x="14" y="28" fill="#94a3b8" font-size="12">{title}</text>
-  </g>"""
+def esc(s: str) -> str:
+    return s.replace("&", "&amp;").replace("<", "&lt;")
 
 
-def section_box(x: int, y: int, w: int, h: int, stroke: str, title: str, subtitle: str = "") -> str:
-    sub = f'<text x="16" y="52" fill="#64748b" font-size="11">{subtitle}</text>' if subtitle else ""
-    return f"""
-  <g transform="translate({x},{y})">
-    <rect x="0" y="0" width="{w}" height="{h}" rx="12" fill="#0f172a" stroke="{stroke}" stroke-width="1.8" filter="url(#cardGlow)"/>
-    <text x="16" y="32" fill="{stroke}" font-size="16" font-weight="700">{title}</text>
-    {sub}
-  </g>"""
-
-
-def stage_card(x: int, y: int, num: str, title: str, skill: str, output: str, color: str) -> str:
-    return f"""
-  <g transform="translate({x},{y})">
-    <rect x="0" y="0" width="148" height="112" rx="10" fill="#1e293b" stroke="{color}" stroke-width="1.6" filter="url(#cardGlow)"/>
-    <circle cx="22" cy="22" r="14" fill="{color}" opacity="0.25"/>
-    <text x="22" y="27" text-anchor="middle" fill="{color}" font-size="13" font-weight="800">{num}</text>
-    <text x="44" y="26" fill="#f1f5f9" font-size="14" font-weight="700">{title}</text>
-    <text x="12" y="52" fill="#cbd5e1" font-size="12">{skill}</text>
-    <text x="12" y="72" fill="#94a3b8" font-size="11">→ {output}</text>
-    <rect x="12" y="84" width="124" height="18" rx="4" fill="{color}" opacity="0.15"/>
-    <text x="74" y="97" text-anchor="middle" fill="{color}" font-size="10">Skill 驱动</text>
-  </g>"""
-
-
-def pillar(x: int, y: int, color: str, title: str, desc: str) -> str:
-    return f"""
-  <g transform="translate({x},{y})">
-    <rect x="0" y="0" width="268" height="78" rx="10" fill="#1e293b" stroke="{color}" stroke-width="1.4" filter="url(#cardGlow)"/>
-    <text x="14" y="28" fill="#f8fafc" font-size="15" font-weight="700">{title}</text>
-    <text x="14" y="50" fill="{color}" font-size="12">{desc}</text>
-  </g>"""
-
-
-def omc_card(x: int, y: int, name: str, title: str, desc: str, color: str) -> str:
-    return f"""
-  <g transform="translate({x},{y})">
-    <rect x="0" y="0" width="320" height="88" rx="10" fill="#1e293b" stroke="{color}" stroke-width="1.5" filter="url(#cardGlow)"/>
-    <text x="14" y="28" fill="{color}" font-size="15" font-weight="700">/taiyi:{name}</text>
-    <text x="14" y="50" fill="#e2e8f0" font-size="13">{title}</text>
-    <text x="14" y="72" fill="#94a3b8" font-size="11">{desc}</text>
-  </g>"""
-
-
-def chip_row(items: list[str], x: int, y: int, color: str, gap: int = 10) -> tuple[str, int]:
-    parts: list[str] = []
-    cx = x
-    for label in items:
-        w = max(52, len(label) * 8 + 24)
-        parts.append(f"""
-  <g transform="translate({cx},{y})">
-    <rect x="0" y="0" width="{w}" height="26" rx="6" fill="#1e293b" stroke="{color}" stroke-width="1"/>
-    <text x="{w/2}" y="18" text-anchor="middle" fill="#e2e8f0" font-size="12">{label}</text>
-  </g>""")
-        cx += w + gap
-    return "".join(parts), cx
-
-
-def artifact_list(items: list[tuple[str, str]], x: int, y: int, name_color: str = "#38bdf8") -> str:
-    parts: list[str] = []
-    cy = y
-    for name, desc in items:
-        parts.append(f"""
-    <rect x="{x}" y="{cy}" width="248" height="36" rx="6" fill="#172554" stroke="#334155"/>
-    <text x="{x+10}" y="{cy+16}" fill="{name_color}" font-size="12" font-weight="600">{name}</text>
-    <text x="{x+10}" y="{cy+30}" fill="#94a3b8" font-size="10">{desc}</text>""")
-        cy += 40
-    return "\n".join(parts)
-
-
-# ── Build SVG ────────────────────────────────────────────────────────────────
-
-parts: list[str] = [
-    '<?xml version="1.0" encoding="UTF-8"?>',
-    f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {W} {H}" width="{W}" height="{H}" font-family="{FONT}">',
-    """  <defs>
-    <linearGradient id="bgGrad" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0%" stop-color="#050a14"/>
-      <stop offset="100%" stop-color="#0c1525"/>
+def defs() -> str:
+    return f"""  <defs>
+    <linearGradient id="bgG" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#0a1224"/>
+      <stop offset="100%" stop-color="{BG}"/>
     </linearGradient>
-    <radialGradient id="hubGlow" cx="50%" cy="50%" r="50%">
-      <stop offset="0%" stop-color="#38bdf8" stop-opacity="0.45"/>
+    <radialGradient id="hubG" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#38bdf8" stop-opacity="0.55"/>
+      <stop offset="70%" stop-color="#1d4ed8" stop-opacity="0.15"/>
       <stop offset="100%" stop-color="#0f172a" stop-opacity="0"/>
     </radialGradient>
-    <filter id="cardGlow" x="-8%" y="-8%" width="116%" height="116%">
-      <feDropShadow dx="0" dy="2" stdDeviation="3" flood-color="#38bdf8" flood-opacity="0.15"/>
+    <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="4" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
     </filter>
-    <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="4" orient="auto">
-      <path d="M0,0 L8,4 L0,8 Z" fill="#38bdf8" opacity="0.85"/>
+    <filter id="cardSh" x="-6%" y="-6%" width="112%" height="115%">
+      <feDropShadow dx="0" dy="3" stdDeviation="6" flood-color="#000" flood-opacity="0.45"/>
+    </filter>
+    <marker id="arr" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto">
+      <path d="M0,0 L10,5 L0,10 Z" fill="#64748b"/>
     </marker>
-    <pattern id="grid" width="48" height="48" patternUnits="userSpaceOnUse">
-      <path d="M 48 0 L 0 0 0 48" fill="none" stroke="#1e293b" stroke-width="0.6" opacity="0.35"/>
-    </pattern>
-  </defs>""",
-    f'  <rect width="{W}" height="{H}" fill="url(#bgGrad)"/>',
-    f'  <rect width="{W}" height="{H}" fill="url(#grid)"/>',
-    # Title
-    '  <text x="900" y="52" text-anchor="middle" fill="#f8fafc" font-size="42" font-weight="800">TaiyiForge</text>',
-    '  <text x="900" y="86" text-anchor="middle" fill="#94a3b8" font-size="17">六大工程规范 → 九阶段文档驱动 → OMC 原生控制面 · 四端统一 · v0.22</text>',
-    '  <line x1="120" y1="100" x2="1680" y2="100" stroke="#334155" stroke-width="1"/>',
-]
+    <marker id="arrB" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto">
+      <path d="M0,0 L10,5 L0,10 Z" fill="#38bdf8"/>
+    </marker>
+  </defs>"""
 
-# L1 — Standards
-parts.append(layer_label(112, "L1", "工程标准层", "#60a5fa"))
-for i, (color, title, desc) in enumerate(PILLARS):
-    parts.append(pillar(120 + i * 280, 108, color, title, desc))
 
-# L2 — Three columns: Artifacts | Engine | Gates
-parts.append(layer_label(208, "L2", "引擎控制层", "#38bdf8"))
+def T(x, y, s, size=14, fill=TEXT, weight=400, anchor="start") -> str:
+    return (
+        f'<text x="{x}" y="{y}" fill="{fill}" font-size="{size}" font-weight="{weight}" '
+        f'text-anchor="{anchor}" font-family="{FONT}">{esc(s)}</text>'
+    )
 
-# Left — Artifacts
-parts.append(section_box(120, 200, 280, 540, "#3b82f6", "ARTIFACT 文档体系", ".taiyi/changes/&lt;slug&gt;/ 真源 · 分层依赖"))
-parts.append('  <text x="136" y="268" fill="#64748b" font-size="11" font-weight="600">九阶段工件</text>')
-parts.append(artifact_list(PHASE_ARTIFACTS, 136, 278))
-parts.append('  <text x="136" y="658" fill="#64748b" font-size="11" font-weight="600">运行时 / 辅助</text>')
-parts.append(artifact_list(RUNTIME_ARTIFACTS, 136, 668, "#22d3ee"))
 
-# Right — Gates
-parts.append(section_box(1400, 200, 280, 540, "#f43f5e", "三重门禁", "complete 前全部通过方可 advance"))
-parts.append("""
-  <g transform="translate(1416,268)">
-    <rect x="0" y="0" width="248" height="108" rx="8" fill="#3f0d1a" stroke="#fb7185" stroke-width="1.2"/>
-    <text x="12" y="28" fill="#fecdd3" font-size="14" font-weight="700">① Human Approval</text>
-    <text x="12" y="50" fill="#fda4af" font-size="12">人工审批 · OMO 人把关</text>
-    <text x="12" y="72" fill="#fecdd3" font-size="11">change / design / review</text>
-    <text x="12" y="92" fill="#94a3b8" font-size="10">gates/human-gate.ts</text>
-  </g>
-  <g transform="translate(1416,388)">
-    <rect x="0" y="0" width="248" height="118" rx="8" fill="#1a2e1a" stroke="#4ade80" stroke-width="1.2"/>
-    <text x="12" y="28" fill="#86efac" font-size="14" font-weight="700">② Quality Gate</text>
-    <text x="12" y="50" fill="#bbf7d0" font-size="12">完整性 · 一致性 · 可验证性</text>
-    <text x="12" y="72" fill="#dcfce7" font-size="11">可追溯性 · 工程质量</text>
-    <text x="12" y="96" fill="#94a3b8" font-size="10">quality-gate.yaml 五维</text>
-  </g>
-  <g transform="translate(1416,518)">
-    <rect x="0" y="0" width="248" height="108" rx="8" fill="#1a1a3a" stroke="#818cf8" stroke-width="1.2"/>
-    <text x="12" y="28" fill="#a5b4fc" font-size="14" font-weight="700">③ Delivery Gate</text>
-    <text x="12" y="50" fill="#c7d2fe" font-size="12">integration 前 · git 干净</text>
-    <text x="12" y="72" fill="#e0e7ff" font-size="11">有新 commit · audit/verify</text>
-    <text x="12" y="96" fill="#94a3b8" font-size="10">archive 前 sync-openspec</text>
-  </g>
-""")
+def box(x, y, w, h, fill=PANEL, stroke=LINE, rx=14, sw=1.5) -> str:
+    return f'<rect x="{x}" y="{y}" width="{w}" height="{h}" rx="{rx}" fill="{fill}" stroke="{stroke}" stroke-width="{sw}"/>'
 
-# Center — Engine (INPUT | HUB | OUTPUT)
-parts.append("""
-  <g transform="translate(430,200)">
-    <rect x="0" y="0" width="940" height="540" rx="14" fill="none" stroke="#334155" stroke-width="1" stroke-dasharray="6 4"/>
-    <text x="470" y="28" text-anchor="middle" fill="#64748b" font-size="13" font-weight="600">TAIYIFORGE CORE ENGINE</text>
-  </g>
-""")
 
-parts.append("""
-  <g transform="translate(450,250)">
-    <rect x="0" y="0" width="240" height="460" rx="10" fill="#0f1d3a" stroke="#2563eb" stroke-width="1.4"/>
-    <text x="16" y="32" fill="#60a5fa" font-size="15" font-weight="700">INPUT 输入</text>
-    <text x="16" y="58" fill="#94a3b8" font-size="12">统一入口</text>
-    <text x="16" y="82" fill="#cbd5e1" font-size="12">· taiyi CLI / forge.sh</text>
-    <text x="16" y="104" fill="#cbd5e1" font-size="12">· OpenCode taiyi_* 工具</text>
-    <text x="16" y="126" fill="#cbd5e1" font-size="12">· /taiyi:* 四端斜杠</text>
-    <text x="16" y="158" fill="#94a3b8" font-size="12">分析与路由</text>
-    <text x="16" y="182" fill="#cbd5e1" font-size="12">· 意图分析 · 复杂度</text>
-    <text x="16" y="204" fill="#cbd5e1" font-size="12">· profile full/api/lite</text>
-    <text x="16" y="226" fill="#cbd5e1" font-size="12">· Token 预算 · 压缩</text>
-    <text x="16" y="258" fill="#94a3b8" font-size="12">状态与校验</text>
-    <text x="16" y="282" fill="#cbd5e1" font-size="12">· state.json 追踪</text>
-    <text x="16" y="304" fill="#cbd5e1" font-size="12">· artifact 前置检测</text>
-    <text x="16" y="326" fill="#cbd5e1" font-size="12">· harness blockers</text>
-    <text x="16" y="358" fill="#94a3b8" font-size="12">模式编排</text>
-    <text x="16" y="382" fill="#f472b6" font-size="12">· mode-orchestrator</text>
-    <text x="16" y="404" fill="#f472b6" font-size="12">· keyword-modes · step</text>
-  </g>
-""")
+def pillar_icon(x, y, color, kind: str) -> str:
+    """Minimal line icons per pillar."""
+    g = f'<g transform="translate({x},{y})" stroke="{color}" fill="none" stroke-width="2">'
+    if kind == "harness":
+        g += '<rect x="4" y="8" width="28" height="20" rx="3"/><path d="M10 8V4h16v4"/>'
+    elif kind == "openspec":
+        g += '<path d="M6 6h20v22H6z"/><path d="M10 12h12M10 17h8"/>'
+    elif kind == "gstack":
+        g += '<path d="M18 4L32 14 18 24 4 14z"/><circle cx="18" cy="14" r="3" fill="' + color + '"/>'
+    elif kind == "super":
+        g += '<path d="M18 6l3 9h9l-7 5 3 9-8-6-8 6 3-9-7-5h9z"/>'
+    elif kind == "omo":
+        g += '<circle cx="18" cy="12" r="7"/><path d="M8 28c2-6 7-9 10-9s8 3 10 9"/>'
+    else:
+        g += '<rect x="6" y="6" width="24" height="24" rx="4"/><path d="M12 14h12M12 19h8"/>'
+    return g + "</g>"
 
-parts.append("""
-  <circle cx="900" cy="460" r="130" fill="url(#hubGlow)" opacity="0.8"/>
-  <circle cx="900" cy="460" r="95" fill="#0f172a" stroke="#38bdf8" stroke-width="3" filter="url(#cardGlow)"/>
-  <text x="900" y="440" text-anchor="middle" fill="#38bdf8" font-size="18" font-weight="800">CORE</text>
-  <text x="900" y="464" text-anchor="middle" fill="#a5b4fc" font-size="14" font-weight="600">ENGINE</text>
-  <text x="900" y="488" text-anchor="middle" fill="#94a3b8" font-size="12">workflow-engine</text>
-  <path d="M 690 460 L 800 460" stroke="#3b82f6" stroke-width="2" marker-end="url(#arrow)"/>
-  <path d="M 1000 460 L 1110 460" stroke="#10b981" stroke-width="2" marker-end="url(#arrow)"/>
-""")
 
-parts.append("""
-  <g transform="translate(1110,250)">
-    <rect x="0" y="0" width="240" height="460" rx="10" fill="#0f1f1a" stroke="#059669" stroke-width="1.4"/>
-    <text x="16" y="32" fill="#34d399" font-size="15" font-weight="700">OUTPUT 输出</text>
-    <text x="16" y="58" fill="#94a3b8" font-size="12">阶段推进</text>
-    <text x="16" y="82" fill="#cbd5e1" font-size="12">· complete / advance</text>
-    <text x="16" y="104" fill="#cbd5e1" font-size="12">· continue / apply</text>
-    <text x="16" y="126" fill="#cbd5e1" font-size="12">· harness 编排</text>
-    <text x="16" y="158" fill="#94a3b8" font-size="12">门禁与交付</text>
-    <text x="16" y="182" fill="#cbd5e1" font-size="12">· 三门禁校验</text>
-    <text x="16" y="204" fill="#cbd5e1" font-size="12">· delivery-gate</text>
-    <text x="16" y="226" fill="#cbd5e1" font-size="12">· commit-trailers</text>
-    <text x="16" y="258" fill="#94a3b8" font-size="12">排查与归档</text>
-    <text x="16" y="282" fill="#cbd5e1" font-size="12">· audit · verify · health</text>
-    <text x="16" y="304" fill="#cbd5e1" font-size="12">· sync-openspec</text>
-    <text x="16" y="326" fill="#cbd5e1" font-size="12">· 根 CHANGELOG 合并</text>
-    <text x="16" y="358" fill="#94a3b8" font-size="12">OMC 运行时</text>
-    <text x="16" y="382" fill="#f472b6" font-size="12">· ralph / autopilot</text>
-    <text x="16" y="404" fill="#f472b6" font-size="12">· team / ultrawork</text>
-  </g>
-""")
+def robot(x, y, color, size=36) -> str:
+    s = size / 36
+    return f"""<g transform="translate({x},{y}) scale({s})" filter="url(#cardSh)">
+  <rect x="4" y="10" width="28" height="22" rx="6" fill="{PANEL2}" stroke="{color}" stroke-width="1.8"/>
+  <circle cx="12" cy="20" r="3" fill="{color}"/>
+  <circle cx="24" cy="20" r="3" fill="{color}"/>
+  <rect x="14" y="26" width="8" height="3" rx="1" fill="{color}" opacity="0.7"/>
+  <rect x="16" y="4" width="4" height="8" rx="2" fill="{color}"/>
+</g>"""
 
-# L3 — Nine phases (single horizontal pipeline)
-parts.append(layer_label(752, "L3", "九阶段主流程", "#34d399"))
-parts.append('  <text x="900" y="792" text-anchor="middle" fill="#64748b" font-size="13">profile: full·9 · api·8 · lite·5 · continue 每轮推进一阶段 · 左→右严格依赖</text>')
 
-sx, sy = 132, 806
-card_w, gap = 148, 12
-for i, stage in enumerate(STAGES):
-    parts.append(stage_card(sx + i * (card_w + gap), sy, *stage))
-    if i < 8:
-        x1 = sx + i * (card_w + gap) + card_w
-        x2 = x1 + gap
-        parts.append(f'  <line x1="{x1}" y1="{sy+56}" x2="{x2}" y2="{sy+56}" stroke="#475569" stroke-width="2" marker-end="url(#arrow)" opacity="0.7"/>')
+def phase_icon(x, y, color, n: str) -> str:
+    icons = {
+        "1": '<path d="M8 20h16M12 12h8M12 28h8"/>',
+        "2": '<path d="M6 10h20v4H6zM6 18h14v4H6zM6 26h18v4H6z"/>',
+        "3": '<path d="M8 8h16v20H8zM12 14h8M12 20h8"/>',
+        "4": '<rect x="6" y="10" width="20" height="14" rx="2"/><path d="M6 16h20"/>',
+        "5": '<path d="M8 8v20M16 12v16M24 10v18"/>',
+        "6": '<path d="M8 26l8-16 8 16"/>',
+        "7": '<circle cx="16" cy="16" r="10"/><path d="M12 16l3 3 6-7"/>',
+        "8": '<circle cx="16" cy="16" r="10"/><path d="M11 16h10M16 11v10"/>',
+        "9": '<path d="M8 12h16v14H8zM12 8h8v4H12z"/>',
+    }
+    p = icons.get(n, icons["1"])
+    return f"""<g transform="translate({x},{y})">
+  <rect x="0" y="0" width="32" height="32" rx="8" fill="{color}" opacity="0.18"/>
+  <g transform="translate(0,0)" stroke="{color}" fill="none" stroke-width="1.8" stroke-linecap="round">{p}</g>
+</g>"""
 
-parts.append('  <path d="M 900 918 L 900 948" stroke="#38bdf8" stroke-width="2" marker-end="url(#arrow)" opacity="0.6"/>')
 
-# L4 — Iron triangle
-parts.append(layer_label(958, "L4", "铁三角增强", "#a78bfa"))
-parts.append("""
-  <g transform="translate(120,950)">
-    <rect x="0" y="0" width="1560" height="96" rx="12" fill="#1e1b4b" stroke="#6366f1" stroke-width="1.4"/>
-    <text x="20" y="34" fill="#a5b4fc" font-size="15" font-weight="700">分阶段 optional 打卡 · --auto 下不阻塞 complete</text>
-    <text x="20" y="60" fill="#c7d2fe" font-size="13">Superpowers: brainstorming · TDD · verification · subagent</text>
-    <text x="20" y="82" fill="#c7d2fe" font-size="13">GStack: plan-eng-review · plan-design-review · qa · document-release</text>
-    <text x="820" y="60" fill="#c7d2fe" font-size="13">OpenSpec: sync-openspec · archive 前自动 sync</text>
-    <text x="820" y="82" fill="#94a3b8" font-size="12">四端: OpenCode · Claude · Codex · Cursor · 可与 OMX 并存</text>
-  </g>
-""")
+def build() -> str:
+    p: list[str] = [
+        '<?xml version="1.0" encoding="UTF-8"?>',
+        f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {W} {H}" width="{W}" height="{H}">',
+        defs(),
+        f'<rect width="{W}" height="{H}" fill="url(#bgG)"/>',
+        # ── Header (Flow-X style) ──
+        T(W // 2, 72, "TaiyiForge", 52, TEXT, 800, "middle"),
+        T(
+            W // 2,
+            118,
+            "把六大工程规范变成 AI 可执行工作流",
+            22,
+            SUB,
+            500,
+            "middle",
+        ),
+        T(
+            W // 2,
+            152,
+            "6 大工程规范融合  ×  20 Skill 协同执行  ×  四端统一  ×  OMC 原生控制面",
+            16,
+            DIM,
+            400,
+            "middle",
+        ),
+        T(W - 80, 56, VERSION, 16, "#38bdf8", 600, "end"),
+        T(W - 80, 80, "oh-my-taiyiforge", 13, DIM, 400, "end"),
+        f'<line x1="100" y1="175" x2="{W - 100}" y2="175" stroke="{LINE}" stroke-width="1"/>',
+    ]
 
-# L5 — OMC (3 clear columns)
-parts.append(layer_label(1078, "L5", "OMC 原生控制面", "#f472b6"))
-parts.append("""
-  <g transform="translate(120,1070)">
-    <rect x="0" y="0" width="1560" height="320" rx="14" fill="#1a0f2e" stroke="#ec4899" stroke-width="1.6" filter="url(#cardGlow)"/>
-    <text x="20" y="36" fill="#f472b6" font-size="18" font-weight="700">自 OMC 迁移 · 不依赖 oh-my-claudecode · docs/taiyi/omc-reference.md</text>
-    <text x="20" y="60" fill="#94a3b8" font-size="12">运行时模式（.taiyi/runtime/*-mode.json）· step/stop hook 防 Agent 早停</text>
-  </g>
-""")
+    # ── Six pillars ──
+    pw, ph, px0, py = 420, 108, 100, 195
+    kinds = ["harness", "openspec", "gstack", "super", "omo", "speckit"]
+    for i, ((col, title, desc), kind) in enumerate(zip(PILLARS, kinds)):
+        x = px0 + i * (pw + 16)
+        p.append(box(x, py, pw, ph, PANEL2, col, 12, 1.8))
+        p.append(pillar_icon(x + 18, py + 18, col, kind))
+        p.append(T(x + 68, py + 38, title, 17, TEXT, 700))
+        p.append(T(x + 68, py + 62, desc, 13, col))
+        # connector to engine
+        cx = x + pw // 2
+        p.append(
+            f'<path d="M {cx} {py + ph} C {cx} {py + ph + 40} {W // 2} {320} {W // 2} {360}" '
+            f'stroke="{col}" stroke-width="1" opacity="0.35" fill="none"/>'
+        )
 
-for i, (name, title, desc, color) in enumerate(OMC_RUNTIME):
-    parts.append(omc_card(140 + i * 380, 1098, name, title, desc, color))
+    # ── Main triptych frame ──
+    my, mh = 330, 680
+    lx, lw = 100, 340
+    rx, rw = W - 440, 340
+    cx, cw = 460, W - 920
+    p.append(box(lx, my, lw, mh, PANEL, "#3b82f6", 16, 2))
+    p.append(box(cx, my, cw, mh, PANEL, "#334155", 16, 1.5))
+    p.append(box(rx, my, rw, mh, PANEL, "#f43f5e", 16, 2))
 
-parts.append('  <text x="140" y="1210" fill="#fcd34d" font-size="14" font-weight="600">Workflow 斜杠</text>')
-row1, _ = chip_row(OMC_WORKFLOW_ROW1, 140, 1220, "#f59e0b", 12)
-parts.append(row1)
-row2, _ = chip_row(OMC_WORKFLOW_ROW2, 140, 1258, "#f59e0b", 12)
-parts.append(row2)
+    # Left — ARTIFACT
+    p.append(T(lx + 24, my + 36, "ARTIFACT 文档体系", 18, "#60a5fa", 700))
+    p.append(T(lx + 24, my + 62, ".taiyi/changes/<slug>/ 真源 · 分层依赖", 12, DIM))
+    for i, (col, name) in enumerate(ARTIFACTS):
+        ay = my + 88 + i * 58
+        p.append(f'<rect x="{lx + 20}" y="{ay}" width="8" height="40" rx="3" fill="{col}"/>')
+        p.append(box(lx + 36, ay, lw - 56, 40, PANEL2, LINE, 8, 1))
+        p.append(T(lx + 52, ay + 26, name, 14, TEXT, 600))
+    p.append(T(lx + 24, my + mh - 36, "文档驱动 · 逐层依赖 · 下一阶段基于上一阶段工件", 11, DIM))
 
-parts.append('  <text x="140" y="1310" fill="#86efac" font-size="14" font-weight="600">控制 &amp; MCP 对齐</text>')
-for i, (label, desc) in enumerate(OMC_CONTROLS):
-    parts.append(f"""
-  <g transform="translate({140 + i * 300},1320)">
-    <rect x="0" y="0" width="280" height="52" rx="8" fill="#1e293b" stroke="#4ade80" stroke-width="1.2"/>
-    <text x="14" y="24" fill="#86efac" font-size="13" font-weight="700">{label}</text>
-    <text x="14" y="42" fill="#94a3b8" font-size="11">{desc}</text>
-  </g>""")
+    # Right — Gates (Flow-X 双重 + TaiyiForge 交付门)
+    p.append(T(rx + 24, my + 36, "三重门禁机制", 18, "#fb7185", 700))
+    p.append(T(rx + 24, my + 62, "complete 前须全部通过", 12, DIM))
+    gates = [
+        ("#fecdd3", "#fb7185", "#3f0d1a", "① Human Approval", "人工审批 · OMO 人把关", "change / design / review"),
+        ("#bbf7d0", "#4ade80", "#1a2e1a", "② Quality Gate", "完整性 · 一致性 · 可验证性", "可追溯 · 工程质量"),
+        ("#c7d2fe", "#818cf8", "#1a1a3a", "③ Delivery Gate", "integration 前 · git 干净", "audit · archive · openspec"),
+    ]
+    for i, (tc, bc, bg, title, l1, l2) in enumerate(gates):
+        gy = my + 88 + i * 200
+        p.append(box(rx + 20, gy, rw - 40, 168, bg, "#eab308", 12, 2))
+        p.append(box(rx + 24, gy + 4, rw - 48, 160, bg, bc, 10, 1.2))
+        p.append(T(rx + 40, gy + 36, title, 16, tc, 700))
+        p.append(T(rx + 40, gy + 68, l1, 13, SUB))
+        p.append(T(rx + 40, gy + 94, l2, 12, DIM))
+        if i < 2:
+            p.append(
+                f'<line x1="{rx + rw // 2}" y1="{gy + 168}" x2="{rx + rw // 2}" y2="{gy + 188}" '
+                f'stroke="{bc}" stroke-width="2" marker-end="url(#arr)"/>'
+            )
 
-parts.append("""
-  <g transform="translate(1280,1220)">
-    <rect x="0" y="0" width="380" height="140" rx="10" fill="#1e293b" stroke="#c084fc" stroke-width="1.2"/>
-    <text x="16" y="32" fill="#c4b5fd" font-size="14" font-weight="700">ralph ↔ review-loop</text>
-    <text x="16" y="56" fill="#e9d5ff" font-size="12">ralph: 验证命令循环（测试/build）</text>
-    <text x="16" y="78" fill="#e9d5ff" font-size="12">review-loop: REVIEW.md 机器门禁</text>
-    <text x="16" y="108" fill="#94a3b8" font-size="11">review 阶段通常两者联用</text>
-  </g>
-""")
+    # Center — Engine hub (upper)
+    hub_x, hub_y = cx + cw // 2, my + 200
+    p.append(T(cx + cw // 2, my + 32, "TAIYIFORGE CORE ENGINE", 16, DIM, 600, "middle"))
+    p.append(f'<circle cx="{hub_x}" cy="{hub_y}" r="120" fill="url(#hubG)"/>')
+    p.append(
+        f'<circle cx="{hub_x}" cy="{hub_y}" r="78" fill="{PANEL2}" stroke="#38bdf8" '
+        f'stroke-width="3" filter="url(#glow)"/>'
+    )
+    p.append(T(hub_x, hub_y - 14, "AI 工作流引擎", 15, "#38bdf8", 700, "middle"))
+    p.append(T(hub_x, hub_y + 10, "workflow-engine", 12, SUB, 400, "middle"))
 
-# L6 — Skill ecosystem (category boxes, not cramped robots)
-parts.append(layer_label(1422, "L6", "Skill 生态", "#4ade80"))
-skill_cats = [
-    ("主流程 ×9", "taiyi-change → … → taiyi-integration", "#38bdf8", 120),
-    ("辅助 ×6", "intel-scan · architect · health · evolve · restyle · compress", "#2dd4bf", 420),
-    ("编排 ×3", "orchestrator · forge · ultrawork", "#fcd34d", 720),
-    ("斜杠 ×40+", "status · continue · handoff · doctor · audit · verify …", "#fb923c", 1020),
-    ("OMC workflow", "ralph · autopilot · team · plan · ccg · sciomc …", "#f472b6", 1320),
-]
-for title, desc, color, x in skill_cats:
-    parts.append(f"""
-  <g transform="translate({x},1414)">
-    <rect x="0" y="0" width="280" height="72" rx="10" fill="#1e293b" stroke="{color}" stroke-width="1.4"/>
-    <text x="14" y="28" fill="{color}" font-size="14" font-weight="700">{title}</text>
-    <text x="14" y="50" fill="#94a3b8" font-size="11">{desc}</text>
-  </g>""")
+    engine_labels = [
+        (hub_x - 280, hub_y - 60, "统一入口", "taiyi CLI · forge.sh · /taiyi:*"),
+        (hub_x - 280, hub_y + 20, "意图分析", "复杂度 · profile · token"),
+        (hub_x - 280, hub_y + 100, "前置校验", "artifact · harness"),
+        (hub_x + 180, hub_y - 60, "路由决策", "phase · skill · gate"),
+        (hub_x + 180, hub_y + 20, "状态追踪", "state.json · runtime"),
+        (hub_x + 180, hub_y + 100, "模式编排", "ralph · autopilot · step"),
+    ]
+    for lx2, ly2, title, desc in engine_labels:
+        p.append(box(lx2, ly2, 200, 52, PANEL2, LINE, 8, 1))
+        p.append(T(lx2 + 12, ly2 + 22, title, 13, "#38bdf8", 700))
+        p.append(T(lx2 + 12, ly2 + 40, desc, 10, DIM))
 
-# L7 — Commands
-parts.append(layer_label(1514, "L7", "入口命令", "#fbbf24"))
-parts.append("""
-  <g transform="translate(120,1506)">
-    <rect x="0" y="0" width="760" height="88" rx="12" fill="#422006" stroke="#f59e0b" stroke-width="1.4"/>
-    <text x="20" y="32" fill="#fcd34d" font-size="15" font-weight="700">主流程斜杠</text>
-    <text x="20" y="58" fill="#fde68a" font-size="13">/taiyi:new · status · continue · apply · archive</text>
-    <text x="20" y="78" fill="#fef3c7" font-size="13">handoff · cancel · commit-trailers</text>
-  </g>
-  <g transform="translate(920,1506)">
-    <rect x="0" y="0" width="760" height="88" rx="12" fill="#2a0f2e" stroke="#ec4899" stroke-width="1.4"/>
-    <text x="20" y="32" fill="#f472b6" font-size="15" font-weight="700">OMC / 排查斜杠</text>
-    <text x="20" y="58" fill="#fbcfe8" font-size="13">ralph · autopilot · team · ultrawork · agent · stop-mode</text>
-    <text x="20" y="78" fill="#fce7f3" font-size="13">remember · modes · step · doctor · audit · verify · health</text>
-  </g>
-""")
+    # Arrows hub ↔ sides
+    p.append(
+        f'<path d="M {lx + lw} {my + mh // 2} L {cx} {hub_y}" stroke="#3b82f6" stroke-width="2" '
+        f'marker-end="url(#arrB)" opacity="0.7" fill="none"/>'
+    )
+    p.append(
+        f'<path d="M {hub_x + 80} {hub_y} L {rx} {my + mh // 2}" stroke="#4ade80" stroke-width="2" '
+        f'marker-end="url(#arrB)" opacity="0.7" fill="none"/>'
+    )
 
-# L8 — Values
-parts.append(layer_label(1622, "L8", "核心价值", "#38bdf8"))
-for i, (title, desc) in enumerate(VALUES):
-    vx = 120 + i * 330
-    parts.append(f"""
-  <g transform="translate({vx},1614)">
-    <rect x="0" y="0" width="300" height="88" rx="12" fill="#1e293b" stroke="#38bdf8" stroke-width="1.4" filter="url(#cardGlow)"/>
-    <text x="150" y="36" text-anchor="middle" fill="#38bdf8" font-size="16" font-weight="700">{title}</text>
-    <text x="150" y="60" text-anchor="middle" fill="#94a3b8" font-size="12">{desc}</text>
-  </g>""")
+    # Center — 9 phases (Flow-X single row)
+    p.append(T(cx + 24, my + 340, "9 主流程阶段", 18, TEXT, 700))
+    p.append(T(cx + 24, my + 366, "Skill 驱动 · continue 推进 · profile: full·9 / api·8 / lite·5", 12, DIM))
 
-parts.append("""
-  <rect x="120" y="1720" width="1560" height="44" rx="8" fill="#0f172a" stroke="#334155"/>
-  <text x="900" y="1748" text-anchor="middle" fill="#64748b" font-size="13">L1 标准 → L2 引擎+工件+门禁 → L3 九阶段 → L4 铁三角 → L5 OMC → L6 Skill → L7 斜杠 · 4× PNG · MIT</text>
-  <text x="900" y="1768" text-anchor="middle" fill="#475569" font-size="11">docs/taiyiforge-architecture.svg · TaiyiForge v0.22</text>
-""")
+    sw, sg, sy = 168, 12, my + 400
+    total_w = 9 * sw + 8 * sg
+    px0 = cx + (cw - total_w) // 2
+    for i, (n, col, title, skill, out) in enumerate(PHASES):
+        px = px0 + i * (sw + sg)
+        py = sy
+        p.append(box(px, py, sw, 148, PANEL2, col, 12, 1.8))
+        p.append(f'<circle cx="{px + 28}" cy="{py + 28}" r="18" fill="{col}" opacity="0.22"/>')
+        p.append(T(px + 28, py + 34, n, 16, col, 800, "middle"))
+        p.append(phase_icon(px + 52, py + 12, col, n))
+        p.append(T(px + 14, py + 58, title, 15, TEXT, 700))
+        p.append(T(px + 14, py + 82, skill, 12, col))
+        p.append(T(px + 14, py + 104, f"→ {out}", 12, DIM))
+        p.append(box(px + 14, py + 118, sw - 28, 20, col, col, 4, 0.8))
+        p.append(T(px + sw // 2, py + 132, "Skill 驱动", 10, TEXT, 600, "middle"))
+        if i < 8:
+            p.append(
+                f'<line x1="{px + sw}" y1="{py + 74}" x2="{px + sw + sg}" y2="{py + 74}" '
+                f'stroke="{LINE}" stroke-width="2" marker-end="url(#arr)"/>'
+            )
 
-parts.append("</svg>")
+    # ── Skill panorama ──
+    sy2 = 1040
+    p.append(box(100, sy2, W - 200, 520, PANEL, "#6366f1", 16, 1.8))
+    p.append(T(W // 2, sy2 + 40, "20 个 Skill 全景图", 22, TEXT, 700, "middle"))
+    p.append(T(W // 2, sy2 + 68, "主流程 ×9  ·  辅助 ×8  ·  编排 ×3（taiyi-forge / orchestrator / ultrawork）", 14, DIM, 400, "middle"))
 
-svg = "\n".join(parts)
-OUT.write_text(svg, encoding="utf-8")
-print(f"Wrote {OUT} ({len(svg)} bytes, {W}x{H})")
+    p.append(T(140, sy2 + 110, "主流程 Skill（9）", 15, "#60a5fa", 700))
+    for i, (col, name) in enumerate(MAIN_SKILLS):
+        sx = 140 + i * 288
+        p.append(robot(sx, sy2 + 130, col, 40))
+        p.append(T(sx + 8, sy2 + 188, name, 13, col, 600))
+
+    p.append(T(140, sy2 + 230, "辅助 Skill（8）", 15, "#22d3ee", 700))
+    for i, (col, name, label) in enumerate(AUX_SKILLS):
+        sx = 140 + i * 320
+        p.append(robot(sx, sy2 + 250, col, 36))
+        p.append(T(sx + 4, sy2 + 302, name, 12, col, 600))
+        p.append(T(sx + 4, sy2 + 320, label, 11, DIM))
+
+    p.append(T(140, sy2 + 360, "编排 Skill（3）", 15, "#f472b6", 700))
+    for i, (col, name, label) in enumerate(ORCH_SKILLS):
+        sx = 140 + i * 880
+        p.append(robot(sx, sy2 + 380, col, 40))
+        p.append(T(sx + 8, sy2 + 438, name, 13, col, 600))
+        p.append(T(sx + 8, sy2 + 458, label, 11, DIM))
+
+    # Four platforms strip
+    p.append(T(140, sy2 + 490, "四端", 13, SUB, 700))
+    for i, (name, col) in enumerate(
+        [("OpenCode", "#3b82f6"), ("Claude", "#f59e0b"), ("Codex", "#22c55e"), ("Cursor", "#06b6d4")]
+    ):
+        px = 200 + i * 620
+        p.append(box(px, sy2 + 472, 580, 36, PANEL2, col, 8, 1.2))
+        p.append(T(px + 290, sy2 + 496, name, 14, col, 600, "middle"))
+
+    # ── Core values footer ──
+    vy = 1600
+    p.append(f'<line x1="100" y1="{vy - 20}" x2="{W - 100}" y2="{vy - 20}" stroke="{LINE}"/>')
+    p.append(T(W // 2, vy + 10, "核心价值", 18, DIM, 600, "middle"))
+    vw = 500
+    for i, (title, desc) in enumerate(VALUES):
+        vx = 100 + i * (vw + 25)
+        p.append(box(vx, vy + 30, vw, 100, PANEL2, "#38bdf8", 12, 1.2))
+        p.append(f'<circle cx="{vx + 50}" cy="{vy + 80}" r="22" fill="#1e3a5f" stroke="#38bdf8" stroke-width="1.5"/>')
+        p.append(T(vx + 50, vy + 86, title[0], 18, "#38bdf8", 700, "middle"))
+        p.append(T(vx + 90, vy + 72, title, 17, TEXT, 700))
+        p.append(T(vx + 90, vy + 98, desc, 13, SUB))
+
+    p.append(
+        T(
+            W // 2,
+            H - 28,
+            "docs/taiyiforge-architecture.svg · MIT · python3 scripts/generate-architecture-svg.py",
+            12,
+            DIM,
+            400,
+            "middle",
+        )
+    )
+
+    p.append("</svg>")
+    return "\n".join(p)
 
 
 def export_png() -> None:
     font = next((p for p in FONT_CANDIDATES if Path(p).exists()), None)
     cmd = [
-        "npx", "--yes", "@resvg/resvg-js-cli",
-        "--fit-zoom", str(PNG_ZOOM),
-        "--text-rendering", "1",
-        "--shape-rendering", "2",
-        "--dpi", str(PNG_DPI),
-        str(OUT), str(PNG),
+        "npx",
+        "--yes",
+        "@resvg/resvg-js-cli",
+        "--fit-zoom",
+        str(PNG_ZOOM),
+        "--text-rendering",
+        "1",
+        "--shape-rendering",
+        "2",
+        "--dpi",
+        str(PNG_DPI),
+        str(OUT),
+        str(PNG),
     ]
     if font:
         cmd.extend(["--font-file", font, "--font-sans-serif-family", "PingFang SC"])
     print("Export:", " ".join(cmd))
     subprocess.run(cmd, check=True)
-    info = PNG.stat()
-    print(f"Wrote {PNG} ({info.st_size // 1024} KB)")
+    print(f"Wrote {PNG} ({PNG.stat().st_size // 1024} KB, ~{W * PNG_ZOOM}×{H * PNG_ZOOM} px)")
 
 
 if __name__ == "__main__":
+    svg = build()
+    OUT.write_text(svg, encoding="utf-8")
+    print(f"Wrote {OUT} ({len(svg)} bytes, {W}×{H})")
     try:
         export_png()
     except subprocess.CalledProcessError as exc:
