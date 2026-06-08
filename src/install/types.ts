@@ -12,6 +12,7 @@ export type InstallResult = {
     | InstallTarget
     | "opencode-config"
     | "codex-agents"
+    | "codex-config"
     | "codex-prompts"
     | "cursor-commands"
     | "cursor-hooks"

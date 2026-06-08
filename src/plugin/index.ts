@@ -26,11 +26,22 @@ import {
   taiyiToken,
   taiyiReviewCheck,
   taiyiReviewLoop,
+  taiyiRalph,
+  taiyiAutopilot,
+  taiyiTeam,
+  taiyiUltrawork,
+  taiyiAgent,
   taiyiAudit,
   taiyiHealth,
   taiyiHandoff,
   taiyiCancel,
   taiyiCommitTrailers,
+  taiyiStep,
+  taiyiStopMode,
+  taiyiModes,
+  taiyiKeyword,
+  taiyiRemember,
+  taiyiWorkflowSkill,
 } from "./handlers.js";
 import { resolvePackageRoot } from "../core/package-root.js";
 
@@ -397,6 +408,52 @@ const TaiyiForgePlugin: Plugin = async () => {
           return "text" in r && r.text ? r.text : JSON.stringify(r, null, 2);
         },
       }),
+      taiyi_ralph: tool({
+        description:
+          "Ralph verify loop: run delivery/test command; on fail bump .ralph-state.json and stay until green.",
+        args: {
+          slug: tool.schema.string(),
+        },
+        async execute(args, ctx) {
+          const r = taiyiRalph(ctx.directory, args.slug, true);
+          return "text" in r && r.text ? r.text : JSON.stringify(r, null, 2);
+        },
+      }),
+      taiyi_autopilot: tool({
+        description: "Nine-phase autopilot guide (native; requires autoHarness).",
+        args: { slug: tool.schema.string() },
+        async execute(args, ctx) {
+          const r = taiyiAutopilot(ctx.directory, args.slug, true);
+          return "text" in r && r.text ? r.text : JSON.stringify(r, null, 2);
+        },
+      }),
+      taiyi_team: tool({
+        description: "Native team pipeline: plan → exec → verify → fix lane for current phase.",
+        args: { slug: tool.schema.string() },
+        async execute(args, ctx) {
+          const r = taiyiTeam(ctx.directory, args.slug, true);
+          return "text" in r && r.text ? r.text : JSON.stringify(r, null, 2);
+        },
+      }),
+      taiyi_ultrawork: tool({
+        description: "High-throughput parallel TASK.md slices (task/dev only).",
+        args: { slug: tool.schema.string() },
+        async execute(args, ctx) {
+          const r = taiyiUltrawork(ctx.directory, args.slug, true);
+          return "text" in r && r.text ? r.text : JSON.stringify(r, null, 2);
+        },
+      }),
+      taiyi_agent: tool({
+        description: "Load native specialist agent role protocol (29 roles; agent list for catalog).",
+        args: {
+          role: tool.schema.string().describe("Role id or list"),
+          slug: tool.schema.string().optional(),
+        },
+        async execute(args, ctx) {
+          const r = taiyiAgent(ctx.directory, args.role, args.slug, true);
+          return "text" in r && r.text ? r.text : JSON.stringify(r, null, 2);
+        },
+      }),
       taiyi_audit: tool({
         description:
           "Workflow/delivery audit: legacy state, artifact drift, ahead-of-phase files, CHANGE↔CHANGELOG, git delivery gaps.",
@@ -496,6 +553,77 @@ const TaiyiForgePlugin: Plugin = async () => {
             lines.push("", `⚠ ${r.check.reason}`);
           }
           return lines.join("\n");
+        },
+      }),
+      taiyi_step: tool({
+        description:
+          "OMC-style single mode step: ralph verify, autopilot continue, harness blockers. Agent runs one iteration; Cursor stop hook may follow up.",
+        args: {
+          slug: tool.schema.string().optional().describe("Change slug; inferred when only one active"),
+          mode: tool.schema
+            .string()
+            .optional()
+            .describe("Force mode: ralph | autopilot | ultraqa | ultrawork | team | ralplan | plan"),
+        },
+        async execute(args, ctx) {
+          const r = taiyiStep(ctx.directory, args.slug, { mode: args.mode }, true);
+          if (!("text" in r) || !r.text) return JSON.stringify(r, null, 2);
+          return r.text;
+        },
+      }),
+      taiyi_stop_mode: tool({
+        description:
+          "Cancel active runtime modes (ralph/autopilot/ultrawork/team). Aligns with /taiyi:stop-mode and OMC stopomc.",
+        args: {
+          slug: tool.schema.string().optional().describe("Clear modes for this slug only"),
+          force: tool.schema.boolean().optional().describe("Force clear even when verify still failing"),
+        },
+        async execute(args, ctx) {
+          const r = taiyiStopMode(ctx.directory, { slug: args.slug, force: args.force }, true);
+          return "text" in r && r.text ? r.text : JSON.stringify(r, null, 2);
+        },
+      }),
+      taiyi_modes: tool({
+        description: "List active Taiyi runtime modes (.taiyi/runtime/*-mode.json). Aligns with /taiyi:modes.",
+        args: {},
+        async execute(_args, ctx) {
+          const r = taiyiModes(ctx.directory, true);
+          return "text" in r && r.text ? r.text : JSON.stringify(r, null, 2);
+        },
+      }),
+      taiyi_keyword: tool({
+        description:
+          "Detect OMC-compatible keywords in user text (ralph, autopilot, team, ccg, deslop, stopomc). Aligns with keyword hooks.",
+        args: {
+          prompt: tool.schema.string().describe("User message to scan for keywords"),
+        },
+        async execute(args, ctx) {
+          const r = taiyiKeyword(ctx.directory, args.prompt, true);
+          return "text" in r && r.text ? r.text : JSON.stringify(r, null, 2);
+        },
+      }),
+      taiyi_remember: tool({
+        description:
+          "Read/write .taiyi/project-memory.json (OMC project-memory parity). Optional note appends a fact.",
+        args: {
+          note: tool.schema.string().optional().describe("Optional note to remember"),
+        },
+        async execute(args, ctx) {
+          const r = taiyiRemember(ctx.directory, args.note, true);
+          return "text" in r && r.text ? r.text : JSON.stringify(r, null, 2);
+        },
+      }),
+      taiyi_workflow: tool({
+        description:
+          "Run a workflow skill guide: plan, ralplan, ultraqa, ccg, sciomc, deepinit, ai-slop-cleaner, ecomode, etc.",
+        args: {
+          skill: tool.schema.string().describe("Workflow skill id (plan, ralplan, ccg, sciomc, deepinit, …)"),
+          slug: tool.schema.string().optional().describe("Change slug; inferred when only one active"),
+        },
+        async execute(args, ctx) {
+          const r = taiyiWorkflowSkill(ctx.directory, args.skill, args.slug, true);
+          if (!r.ok) return JSON.stringify(r, null, 2);
+          return "text" in r && r.text ? r.text : JSON.stringify(r, null, 2);
         },
       }),
     },

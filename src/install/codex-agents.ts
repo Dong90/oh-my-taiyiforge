@@ -1,6 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import type { InstallResult } from "./types.js";
+import { codexOmcLoopBlock } from "./control-plane-markdown.js";
 
 const MARKER_START = "<!-- TAIYI-FORGE:AGENTS:START -->";
 const MARKER_END = "<!-- TAIYI-FORGE:AGENTS:END -->";
@@ -34,9 +35,10 @@ function escapeRegExp(s: string): string {
 
 export function installCodexAgents(pkgRoot: string, codexDir: string): InstallResult {
   const source = path.join(pkgRoot, "AGENTS.md");
-  const block = fs.existsSync(source)
+  const base = fs.existsSync(source)
     ? fs.readFileSync(source, "utf8")
     : "Load taiyi-* skills from ~/.codex/skills for the nine-phase TaiyiForge workflow.";
+  const block = `${base.trim()}\n\n${codexOmcLoopBlock()}`;
   const dest = path.join(codexDir, "AGENTS.md");
   return mergeCodexAgentsBlock(dest, block);
 }

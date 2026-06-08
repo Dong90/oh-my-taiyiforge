@@ -1,551 +1,573 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 2025 2727" width="2025" height="2727" font-family="PingFang SC, Microsoft YaHei, system-ui, sans-serif">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1800 2100" width="1800" height="2100" font-family="PingFang SC, Microsoft YaHei, system-ui, sans-serif">
   <defs>
-    <linearGradient id="bgGrad" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0%" stop-color="#060b18"/>
-      <stop offset="50%" stop-color="#0c1228"/>
-      <stop offset="100%" stop-color="#0a1020"/>
+    <linearGradient id="bgGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#050a14"/>
+      <stop offset="100%" stop-color="#0c1525"/>
     </linearGradient>
     <radialGradient id="hubGlow" cx="50%" cy="50%" r="50%">
-      <stop offset="0%" stop-color="#38bdf8" stop-opacity="0.55"/>
-      <stop offset="60%" stop-color="#6366f1" stop-opacity="0.2"/>
+      <stop offset="0%" stop-color="#38bdf8" stop-opacity="0.45"/>
       <stop offset="100%" stop-color="#0f172a" stop-opacity="0"/>
     </radialGradient>
-    <filter id="cardGlow" x="-10%" y="-10%" width="120%" height="120%">
-      <feDropShadow dx="0" dy="1" stdDeviation="2" flood-color="#38bdf8" flood-opacity="0.18"/>
+    <filter id="cardGlow" x="-8%" y="-8%" width="116%" height="116%">
+      <feDropShadow dx="0" dy="2" stdDeviation="3" flood-color="#38bdf8" flood-opacity="0.15"/>
     </filter>
-    <marker id="arrow" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
-      <path d="M0,0 L6,3 L0,6 Z" fill="#38bdf8" opacity="0.7"/>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="4" orient="auto">
+      <path d="M0,0 L8,4 L0,8 Z" fill="#38bdf8" opacity="0.85"/>
     </marker>
-    <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
-      <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#1e293b" stroke-width="0.5" opacity="0.4"/>
+    <pattern id="grid" width="48" height="48" patternUnits="userSpaceOnUse">
+      <path d="M 48 0 L 0 0 0 48" fill="none" stroke="#1e293b" stroke-width="0.6" opacity="0.35"/>
     </pattern>
   </defs>
-  <rect width="2025" height="2727" fill="url(#bgGrad)"/>
-  <rect width="2025" height="2727" fill="url(#grid)" opacity="0.35"/>
-  <g transform="scale(1.35)">
-  <text x="750" y="58" text-anchor="middle" fill="#f8fafc" font-size="38" font-weight="800">TaiyiForge</text>
-  <text x="750" y="92" text-anchor="middle" fill="#94a3b8" font-size="18">把六大工程规范变成 AI 可执行工作流 · v0.22</text>
+  <rect width="1800" height="2100" fill="url(#bgGrad)"/>
+  <rect width="1800" height="2100" fill="url(#grid)"/>
+  <text x="900" y="52" text-anchor="middle" fill="#f8fafc" font-size="42" font-weight="800">TaiyiForge</text>
+  <text x="900" y="86" text-anchor="middle" fill="#94a3b8" font-size="17">六大工程规范 → 九阶段文档驱动 → OMC 原生控制面 · 四端统一 · v0.22</text>
+  <line x1="120" y1="100" x2="1680" y2="100" stroke="#334155" stroke-width="1"/>
 
-  <g transform="translate(40,108)">
-    <rect x="0" y="0" width="228" height="108" rx="10" fill="url(#p_40)" stroke="#0ea5e9" stroke-width="1.2" filter="url(#cardGlow)"/>
-    <text x="14" y="28" fill="#f8fafc" font-size="14" font-weight="700">Harness Engineering</text>
-    <text x="14" y="48" fill="#0ea5e9" font-size="12">流水线治理</text>
-    <text x="14" y="70" fill="#cbd5e1" font-size="11">不达标不进、无产出不出</text>
-  </g>
-  <linearGradient id="p_40" x1="0" y1="0" x2="0" y2="1">
-    <stop offset="0%" stop-color="#0ea5e9" stop-opacity="0.35"/>
-    <stop offset="100%" stop-color="#0369a1" stop-opacity="0.15"/>
-  </linearGradient>
-
-  <g transform="translate(278,108)">
-    <rect x="0" y="0" width="228" height="108" rx="10" fill="url(#p_278)" stroke="#8b5cf6" stroke-width="1.2" filter="url(#cardGlow)"/>
-    <text x="14" y="28" fill="#f8fafc" font-size="14" font-weight="700">OpenSpec</text>
-    <text x="14" y="48" fill="#8b5cf6" font-size="12">规格驱动开发</text>
-    <text x="14" y="70" fill="#cbd5e1" font-size="11">先文档后实现 · 可选镜像/归档</text>
-  </g>
-  <linearGradient id="p_278" x1="0" y1="0" x2="0" y2="1">
-    <stop offset="0%" stop-color="#8b5cf6" stop-opacity="0.35"/>
-    <stop offset="100%" stop-color="#5b21b6" stop-opacity="0.15"/>
-  </linearGradient>
-
-  <g transform="translate(516,108)">
-    <rect x="0" y="0" width="228" height="108" rx="10" fill="url(#p_516)" stroke="#14b8a6" stroke-width="1.2" filter="url(#cardGlow)"/>
-    <text x="14" y="28" fill="#f8fafc" font-size="14" font-weight="700">GStack</text>
-    <text x="14" y="48" fill="#14b8a6" font-size="12">架构决策系统</text>
-    <text x="14" y="70" fill="#cbd5e1" font-size="11">Options + Reason + Cost</text>
-  </g>
-  <linearGradient id="p_516" x1="0" y1="0" x2="0" y2="1">
-    <stop offset="0%" stop-color="#14b8a6" stop-opacity="0.35"/>
-    <stop offset="100%" stop-color="#0f766e" stop-opacity="0.15"/>
-  </linearGradient>
-
-  <g transform="translate(754,108)">
-    <rect x="0" y="0" width="228" height="108" rx="10" fill="url(#p_754)" stroke="#f59e0b" stroke-width="1.2" filter="url(#cardGlow)"/>
-    <text x="14" y="28" fill="#f8fafc" font-size="14" font-weight="700">Superpowers</text>
-    <text x="14" y="48" fill="#f59e0b" font-size="12">AI 能力封装</text>
-    <text x="14" y="70" fill="#cbd5e1" font-size="11">有界 Skill · 可验证输出</text>
-  </g>
-  <linearGradient id="p_754" x1="0" y1="0" x2="0" y2="1">
-    <stop offset="0%" stop-color="#f59e0b" stop-opacity="0.35"/>
-    <stop offset="100%" stop-color="#b45309" stop-opacity="0.15"/>
-  </linearGradient>
-
-  <g transform="translate(992,108)">
-    <rect x="0" y="0" width="228" height="108" rx="10" fill="url(#p_992)" stroke="#ec4899" stroke-width="1.2" filter="url(#cardGlow)"/>
-    <text x="14" y="28" fill="#f8fafc" font-size="14" font-weight="700">OMO</text>
-    <text x="14" y="48" fill="#ec4899" font-size="12">人机协同节奏</text>
-    <text x="14" y="70" fill="#cbd5e1" font-size="11">AI 执行 · 关键节点人审批</text>
-  </g>
-  <linearGradient id="p_992" x1="0" y1="0" x2="0" y2="1">
-    <stop offset="0%" stop-color="#ec4899" stop-opacity="0.35"/>
-    <stop offset="100%" stop-color="#be185d" stop-opacity="0.15"/>
-  </linearGradient>
-
-  <g transform="translate(1230,108)">
-    <rect x="0" y="0" width="228" height="108" rx="10" fill="url(#p_1230)" stroke="#6366f1" stroke-width="1.2" filter="url(#cardGlow)"/>
-    <text x="14" y="28" fill="#f8fafc" font-size="14" font-weight="700">Spec-Kit</text>
-    <text x="14" y="48" fill="#6366f1" font-size="12">规范执行工具集</text>
-    <text x="14" y="70" fill="#cbd5e1" font-size="11">templates + quality-gate 五维</text>
-  </g>
-  <linearGradient id="p_1230" x1="0" y1="0" x2="0" y2="1">
-    <stop offset="0%" stop-color="#6366f1" stop-opacity="0.35"/>
-    <stop offset="100%" stop-color="#4338ca" stop-opacity="0.15"/>
-  </linearGradient>
-
-  <g transform="translate(40,250)">
-    <rect x="0" y="0" width="240" height="520" rx="12" fill="#0f1d3a" stroke="#3b82f6" stroke-width="1.5" filter="url(#cardGlow)"/>
-    <text x="16" y="34" fill="#60a5fa" font-size="16" font-weight="700">ARTIFACT 文档体系</text>
-    <text x="16" y="56" fill="#94a3b8" font-size="11">.taiyi/changes/&lt;slug&gt;/ 真源</text>
-    <text x="16" y="74" fill="#64748b" font-size="10">下一阶段必须基于上一阶段文档</text>
-
-    <rect x="12" y="88" width="216" height="34" rx="6" fill="#172554" stroke="#334155"/>
-    <text x="22" y="104" fill="#38bdf8" font-size="12" font-weight="600">CHANGE.md</text>
-    <text x="22" y="118" fill="#94a3b8" font-size="10">变更提案</text>
-    <rect x="12" y="126" width="216" height="34" rx="6" fill="#172554" stroke="#334155"/>
-    <text x="22" y="142" fill="#38bdf8" font-size="12" font-weight="600">REQUIREMENT.md</text>
-    <text x="22" y="156" fill="#94a3b8" font-size="10">用户故事 + AC</text>
-    <rect x="12" y="164" width="216" height="34" rx="6" fill="#172554" stroke="#334155"/>
-    <text x="22" y="180" fill="#38bdf8" font-size="12" font-weight="600">DESIGN.md</text>
-    <text x="22" y="194" fill="#94a3b8" font-size="10">技术设计 / ADR</text>
-    <rect x="12" y="202" width="216" height="34" rx="6" fill="#172554" stroke="#334155"/>
-    <text x="22" y="218" fill="#38bdf8" font-size="12" font-weight="600">UI-DESIGN.md</text>
-    <text x="22" y="232" fill="#94a3b8" font-size="10">前端专项</text>
-    <rect x="12" y="240" width="216" height="34" rx="6" fill="#172554" stroke="#334155"/>
-    <text x="22" y="256" fill="#38bdf8" font-size="12" font-weight="600">TASK.md</text>
-    <text x="22" y="270" fill="#94a3b8" font-size="10">任务拆解</text>
-    <rect x="12" y="278" width="216" height="34" rx="6" fill="#172554" stroke="#334155"/>
-    <text x="22" y="294" fill="#38bdf8" font-size="12" font-weight="600">TEST.md</text>
-    <text x="22" y="308" fill="#94a3b8" font-size="10">测试报告</text>
-    <rect x="12" y="316" width="216" height="34" rx="6" fill="#172554" stroke="#334155"/>
-    <text x="22" y="332" fill="#38bdf8" font-size="12" font-weight="600">REVIEW.md</text>
-    <text x="22" y="346" fill="#94a3b8" font-size="10">审查报告</text>
-    <rect x="12" y="354" width="216" height="34" rx="6" fill="#172554" stroke="#334155"/>
-    <text x="22" y="370" fill="#38bdf8" font-size="12" font-weight="600">CHANGELOG.md</text>
-    <text x="22" y="384" fill="#94a3b8" font-size="10">集成交付</text>
-    <rect x="12" y="392" width="216" height="34" rx="6" fill="#172554" stroke="#334155"/>
-    <text x="22" y="408" fill="#38bdf8" font-size="12" font-weight="600">CONTEXT.md</text>
-    <text x="22" y="422" fill="#94a3b8" font-size="10">上下文与术语</text>
-    <rect x="12" y="430" width="216" height="34" rx="6" fill="#172554" stroke="#334155"/>
-    <text x="22" y="446" fill="#38bdf8" font-size="12" font-weight="600">architecture-sync.md</text>
-    <text x="22" y="460" fill="#94a3b8" font-size="10">架构同步</text>
-    <rect x="12" y="468" width="216" height="34" rx="6" fill="#172554" stroke="#334155"/>
-    <text x="22" y="484" fill="#38bdf8" font-size="12" font-weight="600">adr/ · health-report.md</text>
-    <text x="22" y="498" fill="#94a3b8" font-size="10">决策与健康</text>
+  <g transform="translate(24,112)">
+    <rect x="0" y="0" width="4" height="28" rx="2" fill="#60a5fa"/>
+    <text x="14" y="14" fill="#60a5fa" font-size="13" font-weight="700">L1</text>
+    <text x="14" y="28" fill="#94a3b8" font-size="12">工程标准层</text>
   </g>
 
-  <g transform="translate(1220,250)">
-    <rect x="0" y="0" width="240" height="520" rx="12" fill="#2a0f1a" stroke="#f43f5e" stroke-width="1.5" filter="url(#cardGlow)"/>
-    <text x="16" y="34" fill="#fb7185" font-size="16" font-weight="700">三重门禁机制</text>
-    <text x="16" y="56" fill="#94a3b8" font-size="11">每阶段过关前必须通过</text>
-
-    <rect x="12" y="72" width="216" height="118" rx="8" fill="#3f0d1a" stroke="#fb7185" stroke-width="1"/>
-    <text x="22" y="98" fill="#fecdd3" font-size="12" font-weight="700">HUMAN APPROVAL GATE</text>
-    <text x="22" y="118" fill="#fda4af" font-size="11">人工审批门</text>
-    <text x="22" y="136" fill="#fecdd3" font-size="10">默认: change / design / review</text>
-    <text x="22" y="154" fill="#fecdd3" font-size="10">--approver 可记录审批人</text>
-    <text x="22" y="176" fill="#94a3b8" font-size="10">OMO: AI 执行 · 人把关</text>
-
-    <rect x="12" y="204" width="216" height="130" rx="8" fill="#1a2e1a" stroke="#4ade80" stroke-width="1"/>
-    <text x="22" y="230" fill="#86efac" font-size="12" font-weight="700">QUALITY GATE</text>
-    <text x="22" y="250" fill="#bbf7d0" font-size="11">质量五维检查</text>
-    <text x="22" y="268" fill="#dcfce7" font-size="10">完整性 · 一致性 · 可验证性</text>
-    <text x="22" y="284" fill="#dcfce7" font-size="10">可追溯性 · 工程质量</text>
-    <text x="22" y="306" fill="#94a3b8" font-size="10">Spec-Kit templates + quality-gate</text>
-
-    <rect x="12" y="348" width="216" height="118" rx="8" fill="#1a1a3a" stroke="#818cf8" stroke-width="1"/>
-    <text x="22" y="374" fill="#a5b4fc" font-size="12" font-weight="700">DELIVERY GATE (0.22)</text>
-    <text x="22" y="394" fill="#c7d2fe" font-size="11">交付门 · integration 前</text>
-    <text x="22" y="412" fill="#e0e7ff" font-size="10">git 有新 commit · 工作区干净</text>
-    <text x="22" y="428" fill="#e0e7ff" font-size="10">workflow-audit 自动审计</text>
-    <text x="22" y="450" fill="#94a3b8" font-size="10">audit · verify · health 排查</text>
-
-    <text x="16" y="492" fill="#64748b" font-size="10">archive 前 auto sync-openspec</text>
+  <g transform="translate(120,108)">
+    <rect x="0" y="0" width="268" height="78" rx="10" fill="#1e293b" stroke="#0ea5e9" stroke-width="1.4" filter="url(#cardGlow)"/>
+    <text x="14" y="28" fill="#f8fafc" font-size="15" font-weight="700">Harness</text>
+    <text x="14" y="50" fill="#0ea5e9" font-size="12">流水线治理 · 不达标不进</text>
   </g>
 
-
-  <circle cx="750" cy="480" r="160" fill="url(#hubGlow)" opacity="0.75"/>
-  <circle cx="750" cy="480" r="118" fill="#0f172a" stroke="#38bdf8" stroke-width="3" filter="url(#cardGlow)"/>
-  <circle cx="750" cy="480" r="100" fill="none" stroke="#6366f1" stroke-width="1" stroke-dasharray="4 4" opacity="0.6"/>
-  <text x="750" y="452" text-anchor="middle" fill="#38bdf8" font-size="15" font-weight="800">TAIYIFORGE</text>
-  <text x="750" y="474" text-anchor="middle" fill="#a5b4fc" font-size="13" font-weight="600">CORE ENGINE</text>
-  <text x="750" y="494" text-anchor="middle" fill="#94a3b8" font-size="11">AI 工作流引擎</text>
-  <text x="750" y="516" text-anchor="middle" fill="#cbd5e1" font-size="10">统一入口 · 意图分析 · 路由决策</text>
-  <text x="750" y="534" text-anchor="middle" fill="#cbd5e1" font-size="10">复杂度评估 · 状态追踪 · Harness 编排</text>
-  <text x="750" y="556" text-anchor="middle" fill="#4ade80" font-size="10">0.22: audit / verify / health / 根 CHANGELOG</text>
-
-
-  <path d="M 280 400 Q 500 400 620 460" fill="none" stroke="#3b82f6" stroke-width="1.5" marker-end="url(#arrow)" opacity="0.6"/>
-  <path d="M 1220 400 Q 1000 400 880 460" fill="none" stroke="#f43f5e" stroke-width="1.5" marker-end="url(#arrow)" opacity="0.6"/>
-  <path d="M 750 600 L 750 680" fill="none" stroke="#38bdf8" stroke-width="2" marker-end="url(#arrow)" opacity="0.7"/>
-
-
-  <text x="750" y="700" text-anchor="middle" fill="#38bdf8" font-size="20" font-weight="700">九阶段主流程</text>
-  <text x="750" y="724" text-anchor="middle" fill="#64748b" font-size="12">profile: full 9 · api 8（跳过 ui-design）· lite 5 · continue 每轮推进一阶段</text>
-
-
-  <g transform="translate(310,740)">
-    <rect x="0" y="0" width="138" height="108" rx="8" fill="#1e293b" stroke="#38bdf8" stroke-width="1.5" filter="url(#cardGlow)"/>
-    <rect x="0" y="0" width="138" height="28" rx="8" fill="#38bdf8" opacity="0.2"/>
-    <text x="12" y="20" fill="#38bdf8" font-size="13" font-weight="700">1. 变更提案</text>
-    <text x="12" y="48" fill="#cbd5e1" font-size="11">taiyi-change</text>
-    <text x="12" y="68" fill="#94a3b8" font-size="10">产出 → CHANGE.md</text>
-    <polygon points="124,54 134,54 129,62" fill="#38bdf8" opacity="0.8"/>
+  <g transform="translate(400,108)">
+    <rect x="0" y="0" width="268" height="78" rx="10" fill="#1e293b" stroke="#8b5cf6" stroke-width="1.4" filter="url(#cardGlow)"/>
+    <text x="14" y="28" fill="#f8fafc" font-size="15" font-weight="700">OpenSpec</text>
+    <text x="14" y="50" fill="#8b5cf6" font-size="12">规格驱动 · 可选镜像</text>
   </g>
 
-  <g transform="translate(610,740)">
-    <rect x="0" y="0" width="138" height="108" rx="8" fill="#1e293b" stroke="#60a5fa" stroke-width="1.5" filter="url(#cardGlow)"/>
-    <rect x="0" y="0" width="138" height="28" rx="8" fill="#60a5fa" opacity="0.2"/>
-    <text x="12" y="20" fill="#60a5fa" font-size="13" font-weight="700">2. 需求分析</text>
-    <text x="12" y="48" fill="#cbd5e1" font-size="11">taiyi-requirement</text>
-    <text x="12" y="68" fill="#94a3b8" font-size="10">产出 → REQUIREMENT.md</text>
-    <polygon points="124,54 134,54 129,62" fill="#60a5fa" opacity="0.8"/>
+  <g transform="translate(680,108)">
+    <rect x="0" y="0" width="268" height="78" rx="10" fill="#1e293b" stroke="#14b8a6" stroke-width="1.4" filter="url(#cardGlow)"/>
+    <text x="14" y="28" fill="#f8fafc" font-size="15" font-weight="700">GStack</text>
+    <text x="14" y="50" fill="#14b8a6" font-size="12">Options + Reason + Cost</text>
   </g>
 
-  <g transform="translate(910,740)">
-    <rect x="0" y="0" width="138" height="108" rx="8" fill="#1e293b" stroke="#818cf8" stroke-width="1.5" filter="url(#cardGlow)"/>
-    <rect x="0" y="0" width="138" height="28" rx="8" fill="#818cf8" opacity="0.2"/>
-    <text x="12" y="20" fill="#818cf8" font-size="13" font-weight="700">3. 技术设计</text>
-    <text x="12" y="48" fill="#cbd5e1" font-size="11">taiyi-design</text>
-    <text x="12" y="68" fill="#94a3b8" font-size="10">产出 → DESIGN.md</text>
-    <polygon points="124,54 134,54 129,62" fill="#818cf8" opacity="0.8"/>
+  <g transform="translate(960,108)">
+    <rect x="0" y="0" width="268" height="78" rx="10" fill="#1e293b" stroke="#f59e0b" stroke-width="1.4" filter="url(#cardGlow)"/>
+    <text x="14" y="28" fill="#f8fafc" font-size="15" font-weight="700">Superpowers</text>
+    <text x="14" y="50" fill="#f59e0b" font-size="12">有界 Skill · 可验证 I/O</text>
   </g>
 
-  <g transform="translate(310,868)">
-    <rect x="0" y="0" width="138" height="108" rx="8" fill="#1e293b" stroke="#a78bfa" stroke-width="1.5" filter="url(#cardGlow)"/>
-    <rect x="0" y="0" width="138" height="28" rx="8" fill="#a78bfa" opacity="0.2"/>
-    <text x="12" y="20" fill="#a78bfa" font-size="13" font-weight="700">4. UI 设计</text>
-    <text x="12" y="48" fill="#cbd5e1" font-size="11">taiyi-ui-design</text>
-    <text x="12" y="68" fill="#94a3b8" font-size="10">产出 → UI-DESIGN.md</text>
-    <polygon points="124,54 134,54 129,62" fill="#a78bfa" opacity="0.8"/>
+  <g transform="translate(1240,108)">
+    <rect x="0" y="0" width="268" height="78" rx="10" fill="#1e293b" stroke="#ec4899" stroke-width="1.4" filter="url(#cardGlow)"/>
+    <text x="14" y="28" fill="#f8fafc" font-size="15" font-weight="700">OMO</text>
+    <text x="14" y="50" fill="#ec4899" font-size="12">AI 执行 · 人审批</text>
   </g>
 
-  <g transform="translate(610,868)">
-    <rect x="0" y="0" width="138" height="108" rx="8" fill="#1e293b" stroke="#c084fc" stroke-width="1.5" filter="url(#cardGlow)"/>
-    <rect x="0" y="0" width="138" height="28" rx="8" fill="#c084fc" opacity="0.2"/>
-    <text x="12" y="20" fill="#c084fc" font-size="13" font-weight="700">5. 任务拆解</text>
-    <text x="12" y="48" fill="#cbd5e1" font-size="11">taiyi-task</text>
-    <text x="12" y="68" fill="#94a3b8" font-size="10">产出 → TASK.md</text>
-    <polygon points="124,54 134,54 129,62" fill="#c084fc" opacity="0.8"/>
+  <g transform="translate(1520,108)">
+    <rect x="0" y="0" width="268" height="78" rx="10" fill="#1e293b" stroke="#6366f1" stroke-width="1.4" filter="url(#cardGlow)"/>
+    <text x="14" y="28" fill="#f8fafc" font-size="15" font-weight="700">Spec-Kit</text>
+    <text x="14" y="50" fill="#6366f1" font-size="12">templates + 质量五维</text>
   </g>
 
-  <g transform="translate(910,868)">
-    <rect x="0" y="0" width="138" height="108" rx="8" fill="#1e293b" stroke="#34d399" stroke-width="1.5" filter="url(#cardGlow)"/>
-    <rect x="0" y="0" width="138" height="28" rx="8" fill="#34d399" opacity="0.2"/>
-    <text x="12" y="20" fill="#34d399" font-size="13" font-weight="700">6. 开发执行</text>
-    <text x="12" y="48" fill="#cbd5e1" font-size="11">taiyi-dev</text>
-    <text x="12" y="68" fill="#94a3b8" font-size="10">产出 → 代码 + TDD</text>
-    <polygon points="124,54 134,54 129,62" fill="#34d399" opacity="0.8"/>
+  <g transform="translate(24,208)">
+    <rect x="0" y="0" width="4" height="28" rx="2" fill="#38bdf8"/>
+    <text x="14" y="14" fill="#38bdf8" font-size="13" font-weight="700">L2</text>
+    <text x="14" y="28" fill="#94a3b8" font-size="12">引擎控制层</text>
   </g>
 
-  <g transform="translate(310,996)">
-    <rect x="0" y="0" width="138" height="108" rx="8" fill="#1e293b" stroke="#2dd4bf" stroke-width="1.5" filter="url(#cardGlow)"/>
-    <rect x="0" y="0" width="138" height="28" rx="8" fill="#2dd4bf" opacity="0.2"/>
-    <text x="12" y="20" fill="#2dd4bf" font-size="13" font-weight="700">7. 测试执行</text>
-    <text x="12" y="48" fill="#cbd5e1" font-size="11">taiyi-test</text>
-    <text x="12" y="68" fill="#94a3b8" font-size="10">产出 → TEST.md</text>
-    <polygon points="124,54 134,54 129,62" fill="#2dd4bf" opacity="0.8"/>
+  <g transform="translate(120,200)">
+    <rect x="0" y="0" width="280" height="540" rx="12" fill="#0f172a" stroke="#3b82f6" stroke-width="1.8" filter="url(#cardGlow)"/>
+    <text x="16" y="32" fill="#3b82f6" font-size="16" font-weight="700">ARTIFACT 文档体系</text>
+    <text x="16" y="52" fill="#64748b" font-size="11">.taiyi/changes/&lt;slug&gt;/ 真源 · 分层依赖</text>
+  </g>
+  <text x="136" y="268" fill="#64748b" font-size="11" font-weight="600">九阶段工件</text>
+
+    <rect x="136" y="278" width="248" height="36" rx="6" fill="#172554" stroke="#334155"/>
+    <text x="146" y="294" fill="#38bdf8" font-size="12" font-weight="600">CHANGE.md</text>
+    <text x="146" y="308" fill="#94a3b8" font-size="10">变更提案</text>
+
+    <rect x="136" y="318" width="248" height="36" rx="6" fill="#172554" stroke="#334155"/>
+    <text x="146" y="334" fill="#38bdf8" font-size="12" font-weight="600">REQUIREMENT.md</text>
+    <text x="146" y="348" fill="#94a3b8" font-size="10">需求 + AC</text>
+
+    <rect x="136" y="358" width="248" height="36" rx="6" fill="#172554" stroke="#334155"/>
+    <text x="146" y="374" fill="#38bdf8" font-size="12" font-weight="600">DESIGN.md</text>
+    <text x="146" y="388" fill="#94a3b8" font-size="10">技术设计 / ADR</text>
+
+    <rect x="136" y="398" width="248" height="36" rx="6" fill="#172554" stroke="#334155"/>
+    <text x="146" y="414" fill="#38bdf8" font-size="12" font-weight="600">UI-DESIGN.md</text>
+    <text x="146" y="428" fill="#94a3b8" font-size="10">UI 契约</text>
+
+    <rect x="136" y="438" width="248" height="36" rx="6" fill="#172554" stroke="#334155"/>
+    <text x="146" y="454" fill="#38bdf8" font-size="12" font-weight="600">TASK.md</text>
+    <text x="146" y="468" fill="#94a3b8" font-size="10">任务切片</text>
+
+    <rect x="136" y="478" width="248" height="36" rx="6" fill="#172554" stroke="#334155"/>
+    <text x="146" y="494" fill="#38bdf8" font-size="12" font-weight="600">代码 + 测试</text>
+    <text x="146" y="508" fill="#94a3b8" font-size="10">TDD 产出</text>
+
+    <rect x="136" y="518" width="248" height="36" rx="6" fill="#172554" stroke="#334155"/>
+    <text x="146" y="534" fill="#38bdf8" font-size="12" font-weight="600">TEST.md</text>
+    <text x="146" y="548" fill="#94a3b8" font-size="10">测试报告</text>
+
+    <rect x="136" y="558" width="248" height="36" rx="6" fill="#172554" stroke="#334155"/>
+    <text x="146" y="574" fill="#38bdf8" font-size="12" font-weight="600">REVIEW.md</text>
+    <text x="146" y="588" fill="#94a3b8" font-size="10">审查报告</text>
+
+    <rect x="136" y="598" width="248" height="36" rx="6" fill="#172554" stroke="#334155"/>
+    <text x="146" y="614" fill="#38bdf8" font-size="12" font-weight="600">CHANGELOG.md</text>
+    <text x="146" y="628" fill="#94a3b8" font-size="10">集成交付</text>
+  <text x="136" y="658" fill="#64748b" font-size="11" font-weight="600">运行时 / 辅助</text>
+
+    <rect x="136" y="668" width="248" height="36" rx="6" fill="#172554" stroke="#334155"/>
+    <text x="146" y="684" fill="#22d3ee" font-size="12" font-weight="600">HANDOFF.md</text>
+    <text x="146" y="698" fill="#94a3b8" font-size="10">跨会话恢复</text>
+
+    <rect x="136" y="708" width="248" height="36" rx="6" fill="#172554" stroke="#334155"/>
+    <text x="146" y="724" fill="#22d3ee" font-size="12" font-weight="600">project-memory.json</text>
+    <text x="146" y="738" fill="#94a3b8" font-size="10">跨变更记忆</text>
+
+    <rect x="136" y="748" width="248" height="36" rx="6" fill="#172554" stroke="#334155"/>
+    <text x="146" y="764" fill="#22d3ee" font-size="12" font-weight="600">.taiyi/runtime/*</text>
+    <text x="146" y="778" fill="#94a3b8" font-size="10">模式状态</text>
+
+    <rect x="136" y="788" width="248" height="36" rx="6" fill="#172554" stroke="#334155"/>
+    <text x="146" y="804" fill="#22d3ee" font-size="12" font-weight="600">adr/ · CONTEXT.md</text>
+    <text x="146" y="818" fill="#94a3b8" font-size="10">决策 · 情报</text>
+
+  <g transform="translate(1400,200)">
+    <rect x="0" y="0" width="280" height="540" rx="12" fill="#0f172a" stroke="#f43f5e" stroke-width="1.8" filter="url(#cardGlow)"/>
+    <text x="16" y="32" fill="#f43f5e" font-size="16" font-weight="700">三重门禁</text>
+    <text x="16" y="52" fill="#64748b" font-size="11">complete 前全部通过方可 advance</text>
   </g>
 
-  <g transform="translate(610,996)">
-    <rect x="0" y="0" width="138" height="108" rx="8" fill="#1e293b" stroke="#fbbf24" stroke-width="1.5" filter="url(#cardGlow)"/>
-    <rect x="0" y="0" width="138" height="28" rx="8" fill="#fbbf24" opacity="0.2"/>
-    <text x="12" y="20" fill="#fbbf24" font-size="13" font-weight="700">8. 代码审查</text>
-    <text x="12" y="48" fill="#cbd5e1" font-size="11">taiyi-review</text>
-    <text x="12" y="68" fill="#94a3b8" font-size="10">产出 → REVIEW.md</text>
-    <polygon points="124,54 134,54 129,62" fill="#fbbf24" opacity="0.8"/>
+  <g transform="translate(1416,268)">
+    <rect x="0" y="0" width="248" height="108" rx="8" fill="#3f0d1a" stroke="#fb7185" stroke-width="1.2"/>
+    <text x="12" y="28" fill="#fecdd3" font-size="14" font-weight="700">① Human Approval</text>
+    <text x="12" y="50" fill="#fda4af" font-size="12">人工审批 · OMO 人把关</text>
+    <text x="12" y="72" fill="#fecdd3" font-size="11">change / design / review</text>
+    <text x="12" y="92" fill="#94a3b8" font-size="10">gates/human-gate.ts</text>
   </g>
-
-  <g transform="translate(910,996)">
-    <rect x="0" y="0" width="138" height="108" rx="8" fill="#1e293b" stroke="#fb923c" stroke-width="1.5" filter="url(#cardGlow)"/>
-    <rect x="0" y="0" width="138" height="28" rx="8" fill="#fb923c" opacity="0.2"/>
-    <text x="12" y="20" fill="#fb923c" font-size="13" font-weight="700">9. 集成交付</text>
-    <text x="12" y="48" fill="#cbd5e1" font-size="11">taiyi-integration</text>
-    <text x="12" y="68" fill="#94a3b8" font-size="10">产出 → CHANGELOG.md</text>
-    <polygon points="124,54 134,54 129,62" fill="#fb923c" opacity="0.8"/>
+  <g transform="translate(1416,388)">
+    <rect x="0" y="0" width="248" height="118" rx="8" fill="#1a2e1a" stroke="#4ade80" stroke-width="1.2"/>
+    <text x="12" y="28" fill="#86efac" font-size="14" font-weight="700">② Quality Gate</text>
+    <text x="12" y="50" fill="#bbf7d0" font-size="12">完整性 · 一致性 · 可验证性</text>
+    <text x="12" y="72" fill="#dcfce7" font-size="11">可追溯性 · 工程质量</text>
+    <text x="12" y="96" fill="#94a3b8" font-size="10">quality-gate.yaml 五维</text>
   </g>
-  <line x1="448" y1="794" x2="610" y2="794" stroke="#475569" stroke-width="1" marker-end="url(#arrow)" opacity="0.5"/>
-  <line x1="748" y1="794" x2="910" y2="794" stroke="#475569" stroke-width="1" marker-end="url(#arrow)" opacity="0.5"/>
-  <line x1="448" y1="922" x2="610" y2="922" stroke="#475569" stroke-width="1" marker-end="url(#arrow)" opacity="0.5"/>
-  <line x1="748" y1="922" x2="910" y2="922" stroke="#475569" stroke-width="1" marker-end="url(#arrow)" opacity="0.5"/>
-  <line x1="448" y1="1050" x2="610" y2="1050" stroke="#475569" stroke-width="1" marker-end="url(#arrow)" opacity="0.5"/>
-  <line x1="748" y1="1050" x2="910" y2="1050" stroke="#475569" stroke-width="1" marker-end="url(#arrow)" opacity="0.5"/>
-
-  <g transform="translate(40,1160)">
-    <rect x="0" y="0" width="1420" height="88" rx="10" fill="#1e1b4b" stroke="#6366f1" stroke-width="1.2"/>
-    <text x="20" y="30" fill="#a5b4fc" font-size="15" font-weight="700">铁三角（分阶段 optional 打卡 · --auto 下不阻塞 complete）</text>
-    <text x="20" y="52" fill="#c7d2fe" font-size="12">Superpowers: brainstorming · TDD · verification · subagent</text>
-    <text x="20" y="70" fill="#c7d2fe" font-size="12">GStack: plan-eng-review · plan-design-review(可选) · qa(可选) · review · document-release</text>
-    <text x="720" y="52" fill="#c7d2fe" font-size="12">OpenSpec: change show(可选) · sync-openspec · archive 前自动 sync</text>
-    <text x="720" y="70" fill="#94a3b8" font-size="11">四端: OpenCode · Claude · Codex · Cursor</text>
+  <g transform="translate(1416,518)">
+    <rect x="0" y="0" width="248" height="108" rx="8" fill="#1a1a3a" stroke="#818cf8" stroke-width="1.2"/>
+    <text x="12" y="28" fill="#a5b4fc" font-size="14" font-weight="700">③ Delivery Gate</text>
+    <text x="12" y="50" fill="#c7d2fe" font-size="12">integration 前 · git 干净</text>
+    <text x="12" y="72" fill="#e0e7ff" font-size="11">有新 commit · audit/verify</text>
+    <text x="12" y="96" fill="#94a3b8" font-size="10">archive 前 sync-openspec</text>
   </g>
 
 
-  <text x="750" y="1290" text-anchor="middle" fill="#4ade80" font-size="22" font-weight="700">17 Skills 全景</text>
-  <text x="750" y="1316" text-anchor="middle" fill="#64748b" font-size="12">9 主流程 Skill 驱动单次交付 · 6 辅助 + 编排 + 控制面按需触发</text>
-  <text x="120" y="1344" fill="#86efac" font-size="13" font-weight="600">主流程 (9)</text>
-
-
-  <g transform="translate(120,1350)">
-    <rect x="0" y="0" width="88" height="100" rx="8" fill="#1e293b" stroke="#38bdf8" stroke-width="1.5" opacity="0.95"/>
-    <rect x="22" y="10" width="44" height="36" rx="6" fill="#38bdf8" opacity="0.25"/>
-    <circle cx="34" cy="26" r="4" fill="#38bdf8"/>
-    <circle cx="54" cy="26" r="4" fill="#38bdf8"/>
-    <rect x="30" y="36" width="28" height="4" rx="2" fill="#38bdf8" opacity="0.6"/>
-    <line x1="44" y1="4" x2="44" y2="10" stroke="#38bdf8" stroke-width="2"/>
-    <circle cx="44" cy="3" r="2" fill="#38bdf8"/>
-    <text x="44" y="62" text-anchor="middle" fill="#e2e8f0" font-size="11" font-weight="600">change</text>
-    <text x="44" y="78" text-anchor="middle" fill="#94a3b8" font-size="9">主流程</text>
-  </g>
-
-  <g transform="translate(268,1350)">
-    <rect x="0" y="0" width="88" height="100" rx="8" fill="#1e293b" stroke="#38bdf8" stroke-width="1.5" opacity="0.95"/>
-    <rect x="22" y="10" width="44" height="36" rx="6" fill="#38bdf8" opacity="0.25"/>
-    <circle cx="34" cy="26" r="4" fill="#38bdf8"/>
-    <circle cx="54" cy="26" r="4" fill="#38bdf8"/>
-    <rect x="30" y="36" width="28" height="4" rx="2" fill="#38bdf8" opacity="0.6"/>
-    <line x1="44" y1="4" x2="44" y2="10" stroke="#38bdf8" stroke-width="2"/>
-    <circle cx="44" cy="3" r="2" fill="#38bdf8"/>
-    <text x="44" y="62" text-anchor="middle" fill="#e2e8f0" font-size="11" font-weight="600">requirement</text>
-    <text x="44" y="78" text-anchor="middle" fill="#94a3b8" font-size="9">主流程</text>
-  </g>
-
-  <g transform="translate(416,1350)">
-    <rect x="0" y="0" width="88" height="100" rx="8" fill="#1e293b" stroke="#38bdf8" stroke-width="1.5" opacity="0.95"/>
-    <rect x="22" y="10" width="44" height="36" rx="6" fill="#38bdf8" opacity="0.25"/>
-    <circle cx="34" cy="26" r="4" fill="#38bdf8"/>
-    <circle cx="54" cy="26" r="4" fill="#38bdf8"/>
-    <rect x="30" y="36" width="28" height="4" rx="2" fill="#38bdf8" opacity="0.6"/>
-    <line x1="44" y1="4" x2="44" y2="10" stroke="#38bdf8" stroke-width="2"/>
-    <circle cx="44" cy="3" r="2" fill="#38bdf8"/>
-    <text x="44" y="62" text-anchor="middle" fill="#e2e8f0" font-size="11" font-weight="600">design</text>
-    <text x="44" y="78" text-anchor="middle" fill="#94a3b8" font-size="9">主流程</text>
-  </g>
-
-  <g transform="translate(564,1350)">
-    <rect x="0" y="0" width="88" height="100" rx="8" fill="#1e293b" stroke="#38bdf8" stroke-width="1.5" opacity="0.95"/>
-    <rect x="22" y="10" width="44" height="36" rx="6" fill="#38bdf8" opacity="0.25"/>
-    <circle cx="34" cy="26" r="4" fill="#38bdf8"/>
-    <circle cx="54" cy="26" r="4" fill="#38bdf8"/>
-    <rect x="30" y="36" width="28" height="4" rx="2" fill="#38bdf8" opacity="0.6"/>
-    <line x1="44" y1="4" x2="44" y2="10" stroke="#38bdf8" stroke-width="2"/>
-    <circle cx="44" cy="3" r="2" fill="#38bdf8"/>
-    <text x="44" y="62" text-anchor="middle" fill="#e2e8f0" font-size="11" font-weight="600">ui-design</text>
-    <text x="44" y="78" text-anchor="middle" fill="#94a3b8" font-size="9">主流程</text>
-  </g>
-
-  <g transform="translate(712,1350)">
-    <rect x="0" y="0" width="88" height="100" rx="8" fill="#1e293b" stroke="#38bdf8" stroke-width="1.5" opacity="0.95"/>
-    <rect x="22" y="10" width="44" height="36" rx="6" fill="#38bdf8" opacity="0.25"/>
-    <circle cx="34" cy="26" r="4" fill="#38bdf8"/>
-    <circle cx="54" cy="26" r="4" fill="#38bdf8"/>
-    <rect x="30" y="36" width="28" height="4" rx="2" fill="#38bdf8" opacity="0.6"/>
-    <line x1="44" y1="4" x2="44" y2="10" stroke="#38bdf8" stroke-width="2"/>
-    <circle cx="44" cy="3" r="2" fill="#38bdf8"/>
-    <text x="44" y="62" text-anchor="middle" fill="#e2e8f0" font-size="11" font-weight="600">task</text>
-    <text x="44" y="78" text-anchor="middle" fill="#94a3b8" font-size="9">主流程</text>
-  </g>
-
-  <g transform="translate(860,1350)">
-    <rect x="0" y="0" width="88" height="100" rx="8" fill="#1e293b" stroke="#38bdf8" stroke-width="1.5" opacity="0.95"/>
-    <rect x="22" y="10" width="44" height="36" rx="6" fill="#38bdf8" opacity="0.25"/>
-    <circle cx="34" cy="26" r="4" fill="#38bdf8"/>
-    <circle cx="54" cy="26" r="4" fill="#38bdf8"/>
-    <rect x="30" y="36" width="28" height="4" rx="2" fill="#38bdf8" opacity="0.6"/>
-    <line x1="44" y1="4" x2="44" y2="10" stroke="#38bdf8" stroke-width="2"/>
-    <circle cx="44" cy="3" r="2" fill="#38bdf8"/>
-    <text x="44" y="62" text-anchor="middle" fill="#e2e8f0" font-size="11" font-weight="600">dev</text>
-    <text x="44" y="78" text-anchor="middle" fill="#94a3b8" font-size="9">主流程</text>
-  </g>
-
-  <g transform="translate(1008,1350)">
-    <rect x="0" y="0" width="88" height="100" rx="8" fill="#1e293b" stroke="#38bdf8" stroke-width="1.5" opacity="0.95"/>
-    <rect x="22" y="10" width="44" height="36" rx="6" fill="#38bdf8" opacity="0.25"/>
-    <circle cx="34" cy="26" r="4" fill="#38bdf8"/>
-    <circle cx="54" cy="26" r="4" fill="#38bdf8"/>
-    <rect x="30" y="36" width="28" height="4" rx="2" fill="#38bdf8" opacity="0.6"/>
-    <line x1="44" y1="4" x2="44" y2="10" stroke="#38bdf8" stroke-width="2"/>
-    <circle cx="44" cy="3" r="2" fill="#38bdf8"/>
-    <text x="44" y="62" text-anchor="middle" fill="#e2e8f0" font-size="11" font-weight="600">test</text>
-    <text x="44" y="78" text-anchor="middle" fill="#94a3b8" font-size="9">主流程</text>
-  </g>
-
-  <g transform="translate(1156,1350)">
-    <rect x="0" y="0" width="88" height="100" rx="8" fill="#1e293b" stroke="#38bdf8" stroke-width="1.5" opacity="0.95"/>
-    <rect x="22" y="10" width="44" height="36" rx="6" fill="#38bdf8" opacity="0.25"/>
-    <circle cx="34" cy="26" r="4" fill="#38bdf8"/>
-    <circle cx="54" cy="26" r="4" fill="#38bdf8"/>
-    <rect x="30" y="36" width="28" height="4" rx="2" fill="#38bdf8" opacity="0.6"/>
-    <line x1="44" y1="4" x2="44" y2="10" stroke="#38bdf8" stroke-width="2"/>
-    <circle cx="44" cy="3" r="2" fill="#38bdf8"/>
-    <text x="44" y="62" text-anchor="middle" fill="#e2e8f0" font-size="11" font-weight="600">review</text>
-    <text x="44" y="78" text-anchor="middle" fill="#94a3b8" font-size="9">主流程</text>
-  </g>
-
-  <g transform="translate(1304,1350)">
-    <rect x="0" y="0" width="88" height="100" rx="8" fill="#1e293b" stroke="#38bdf8" stroke-width="1.5" opacity="0.95"/>
-    <rect x="22" y="10" width="44" height="36" rx="6" fill="#38bdf8" opacity="0.25"/>
-    <circle cx="34" cy="26" r="4" fill="#38bdf8"/>
-    <circle cx="54" cy="26" r="4" fill="#38bdf8"/>
-    <rect x="30" y="36" width="28" height="4" rx="2" fill="#38bdf8" opacity="0.6"/>
-    <line x1="44" y1="4" x2="44" y2="10" stroke="#38bdf8" stroke-width="2"/>
-    <circle cx="44" cy="3" r="2" fill="#38bdf8"/>
-    <text x="44" y="62" text-anchor="middle" fill="#e2e8f0" font-size="11" font-weight="600">integration</text>
-    <text x="44" y="78" text-anchor="middle" fill="#94a3b8" font-size="9">主流程</text>
-  </g>
-  <text x="120" y="1484" fill="#fbbf24" font-size="13" font-weight="600">辅助 (6) + 编排 + 控制面</text>
-
-  <g transform="translate(120,1495)">
-    <rect x="0" y="0" width="88" height="100" rx="8" fill="#1e293b" stroke="#2dd4bf" stroke-width="1.5" opacity="0.95"/>
-    <rect x="22" y="10" width="44" height="36" rx="6" fill="#2dd4bf" opacity="0.25"/>
-    <circle cx="34" cy="26" r="4" fill="#2dd4bf"/>
-    <circle cx="54" cy="26" r="4" fill="#2dd4bf"/>
-    <rect x="30" y="36" width="28" height="4" rx="2" fill="#2dd4bf" opacity="0.6"/>
-    <line x1="44" y1="4" x2="44" y2="10" stroke="#2dd4bf" stroke-width="2"/>
-    <circle cx="44" cy="3" r="2" fill="#2dd4bf"/>
-    <text x="44" y="62" text-anchor="middle" fill="#e2e8f0" font-size="11" font-weight="600">intel-scan</text>
-    <text x="44" y="78" text-anchor="middle" fill="#94a3b8" font-size="9">入口扫描</text>
-  </g>
-
-  <g transform="translate(268,1495)">
-    <rect x="0" y="0" width="88" height="100" rx="8" fill="#1e293b" stroke="#34d399" stroke-width="1.5" opacity="0.95"/>
-    <rect x="22" y="10" width="44" height="36" rx="6" fill="#34d399" opacity="0.25"/>
-    <circle cx="34" cy="26" r="4" fill="#34d399"/>
-    <circle cx="54" cy="26" r="4" fill="#34d399"/>
-    <rect x="30" y="36" width="28" height="4" rx="2" fill="#34d399" opacity="0.6"/>
-    <line x1="44" y1="4" x2="44" y2="10" stroke="#34d399" stroke-width="2"/>
-    <circle cx="44" cy="3" r="2" fill="#34d399"/>
-    <text x="44" y="62" text-anchor="middle" fill="#e2e8f0" font-size="11" font-weight="600">architect</text>
-    <text x="44" y="78" text-anchor="middle" fill="#94a3b8" font-size="9">架构维护</text>
-  </g>
-
-  <g transform="translate(416,1495)">
-    <rect x="0" y="0" width="88" height="100" rx="8" fill="#1e293b" stroke="#f472b6" stroke-width="1.5" opacity="0.95"/>
-    <rect x="22" y="10" width="44" height="36" rx="6" fill="#f472b6" opacity="0.25"/>
-    <circle cx="34" cy="26" r="4" fill="#f472b6"/>
-    <circle cx="54" cy="26" r="4" fill="#f472b6"/>
-    <rect x="30" y="36" width="28" height="4" rx="2" fill="#f472b6" opacity="0.6"/>
-    <line x1="44" y1="4" x2="44" y2="10" stroke="#f472b6" stroke-width="2"/>
-    <circle cx="44" cy="3" r="2" fill="#f472b6"/>
-    <text x="44" y="62" text-anchor="middle" fill="#e2e8f0" font-size="11" font-weight="600">health</text>
-    <text x="44" y="78" text-anchor="middle" fill="#94a3b8" font-size="9">健康基线</text>
-  </g>
-
-  <g transform="translate(564,1495)">
-    <rect x="0" y="0" width="88" height="100" rx="8" fill="#1e293b" stroke="#a78bfa" stroke-width="1.5" opacity="0.95"/>
-    <rect x="22" y="10" width="44" height="36" rx="6" fill="#a78bfa" opacity="0.25"/>
-    <circle cx="34" cy="26" r="4" fill="#a78bfa"/>
-    <circle cx="54" cy="26" r="4" fill="#a78bfa"/>
-    <rect x="30" y="36" width="28" height="4" rx="2" fill="#a78bfa" opacity="0.6"/>
-    <line x1="44" y1="4" x2="44" y2="10" stroke="#a78bfa" stroke-width="2"/>
-    <circle cx="44" cy="3" r="2" fill="#a78bfa"/>
-    <text x="44" y="62" text-anchor="middle" fill="#e2e8f0" font-size="11" font-weight="600">evolve</text>
-    <text x="44" y="78" text-anchor="middle" fill="#94a3b8" font-size="9">架构演进</text>
-  </g>
-
-  <g transform="translate(712,1495)">
-    <rect x="0" y="0" width="88" height="100" rx="8" fill="#1e293b" stroke="#fb923c" stroke-width="1.5" opacity="0.95"/>
-    <rect x="22" y="10" width="44" height="36" rx="6" fill="#fb923c" opacity="0.25"/>
-    <circle cx="34" cy="26" r="4" fill="#fb923c"/>
-    <circle cx="54" cy="26" r="4" fill="#fb923c"/>
-    <rect x="30" y="36" width="28" height="4" rx="2" fill="#fb923c" opacity="0.6"/>
-    <line x1="44" y1="4" x2="44" y2="10" stroke="#fb923c" stroke-width="2"/>
-    <circle cx="44" cy="3" r="2" fill="#fb923c"/>
-    <text x="44" y="62" text-anchor="middle" fill="#e2e8f0" font-size="11" font-weight="600">restyle</text>
-    <text x="44" y="78" text-anchor="middle" fill="#94a3b8" font-size="9">UI 换肤</text>
-  </g>
-
-  <g transform="translate(860,1495)">
-    <rect x="0" y="0" width="88" height="100" rx="8" fill="#1e293b" stroke="#94a3b8" stroke-width="1.5" opacity="0.95"/>
-    <rect x="22" y="10" width="44" height="36" rx="6" fill="#94a3b8" opacity="0.25"/>
-    <circle cx="34" cy="26" r="4" fill="#94a3b8"/>
-    <circle cx="54" cy="26" r="4" fill="#94a3b8"/>
-    <rect x="30" y="36" width="28" height="4" rx="2" fill="#94a3b8" opacity="0.6"/>
-    <line x1="44" y1="4" x2="44" y2="10" stroke="#94a3b8" stroke-width="2"/>
-    <circle cx="44" cy="3" r="2" fill="#94a3b8"/>
-    <text x="44" y="62" text-anchor="middle" fill="#e2e8f0" font-size="11" font-weight="600">compress</text>
-    <text x="44" y="78" text-anchor="middle" fill="#94a3b8" font-size="9">Token 压缩</text>
-  </g>
-
-  <g transform="translate(1008,1495)">
-    <rect x="0" y="0" width="88" height="100" rx="8" fill="#1e293b" stroke="#fcd34d" stroke-width="1.5" opacity="0.95"/>
-    <rect x="22" y="10" width="44" height="36" rx="6" fill="#fcd34d" opacity="0.25"/>
-    <circle cx="34" cy="26" r="4" fill="#fcd34d"/>
-    <circle cx="54" cy="26" r="4" fill="#fcd34d"/>
-    <rect x="30" y="36" width="28" height="4" rx="2" fill="#fcd34d" opacity="0.6"/>
-    <line x1="44" y1="4" x2="44" y2="10" stroke="#fcd34d" stroke-width="2"/>
-    <circle cx="44" cy="3" r="2" fill="#fcd34d"/>
-    <text x="44" y="62" text-anchor="middle" fill="#e2e8f0" font-size="11" font-weight="600">orchestrator</text>
-    <text x="44" y="78" text-anchor="middle" fill="#94a3b8" font-size="9">全自动编排</text>
-  </g>
-
-  <g transform="translate(1156,1495)">
-    <rect x="0" y="0" width="88" height="100" rx="8" fill="#1e293b" stroke="#6366f1" stroke-width="1.5" opacity="0.95"/>
-    <rect x="22" y="10" width="44" height="36" rx="6" fill="#6366f1" opacity="0.25"/>
-    <circle cx="34" cy="26" r="4" fill="#6366f1"/>
-    <circle cx="54" cy="26" r="4" fill="#6366f1"/>
-    <rect x="30" y="36" width="28" height="4" rx="2" fill="#6366f1" opacity="0.6"/>
-    <line x1="44" y1="4" x2="44" y2="10" stroke="#6366f1" stroke-width="2"/>
-    <circle cx="44" cy="3" r="2" fill="#6366f1"/>
-    <text x="44" y="62" text-anchor="middle" fill="#e2e8f0" font-size="11" font-weight="600">forge</text>
-    <text x="44" y="78" text-anchor="middle" fill="#94a3b8" font-size="9">控制面引擎</text>
-  </g>
-
-  <g transform="translate(40,1640)">
-    <rect x="0" y="0" width="1420" height="72" rx="10" fill="#422006" stroke="#f59e0b" stroke-width="1.2"/>
-    <text x="20" y="28" fill="#fcd34d" font-size="14" font-weight="700">聊天 / CLI 命令</text>
-    <text x="20" y="52" fill="#fde68a" font-size="12">/taiyi:new · status · continue · apply · archive</text>
-    <text x="520" y="52" fill="#fef3c7" font-size="12">doctor · audit · verify · health · review-loop</text>
-    <text x="980" y="52" fill="#94a3b8" font-size="11">scripts/taiyi-forge.sh · taiyi CLI · 145 tests</text>
+  <g transform="translate(430,200)">
+    <rect x="0" y="0" width="940" height="540" rx="14" fill="none" stroke="#334155" stroke-width="1" stroke-dasharray="6 4"/>
+    <text x="470" y="28" text-anchor="middle" fill="#64748b" font-size="13" font-weight="600">TAIYIFORGE CORE ENGINE</text>
   </g>
 
 
-  <text x="750" y="1760" text-anchor="middle" fill="#38bdf8" font-size="18" font-weight="700">核心价值</text>
-
-
-  <g transform="translate(120,1780)">
-    <circle cx="40" cy="40" r="36" fill="#1e293b" stroke="#38bdf8" stroke-width="1.5" filter="url(#cardGlow)"/>
-    <circle cx="40" cy="40" r="28" fill="#38bdf8" opacity="0.15"/>
-    <text x="40" y="36" text-anchor="middle" fill="#38bdf8" font-size="18">★</text>
-    <text x="40" y="94" text-anchor="middle" fill="#f8fafc" font-size="13" font-weight="600">标准化</text>
-    <text x="40" y="112" text-anchor="middle" fill="#94a3b8" font-size="10">减少不确定性</text>
+  <g transform="translate(450,250)">
+    <rect x="0" y="0" width="240" height="460" rx="10" fill="#0f1d3a" stroke="#2563eb" stroke-width="1.4"/>
+    <text x="16" y="32" fill="#60a5fa" font-size="15" font-weight="700">INPUT 输入</text>
+    <text x="16" y="58" fill="#94a3b8" font-size="12">统一入口</text>
+    <text x="16" y="82" fill="#cbd5e1" font-size="12">· taiyi CLI / forge.sh</text>
+    <text x="16" y="104" fill="#cbd5e1" font-size="12">· OpenCode taiyi_* 工具</text>
+    <text x="16" y="126" fill="#cbd5e1" font-size="12">· /taiyi:* 四端斜杠</text>
+    <text x="16" y="158" fill="#94a3b8" font-size="12">分析与路由</text>
+    <text x="16" y="182" fill="#cbd5e1" font-size="12">· 意图分析 · 复杂度</text>
+    <text x="16" y="204" fill="#cbd5e1" font-size="12">· profile full/api/lite</text>
+    <text x="16" y="226" fill="#cbd5e1" font-size="12">· Token 预算 · 压缩</text>
+    <text x="16" y="258" fill="#94a3b8" font-size="12">状态与校验</text>
+    <text x="16" y="282" fill="#cbd5e1" font-size="12">· state.json 追踪</text>
+    <text x="16" y="304" fill="#cbd5e1" font-size="12">· artifact 前置检测</text>
+    <text x="16" y="326" fill="#cbd5e1" font-size="12">· harness blockers</text>
+    <text x="16" y="358" fill="#94a3b8" font-size="12">模式编排</text>
+    <text x="16" y="382" fill="#f472b6" font-size="12">· mode-orchestrator</text>
+    <text x="16" y="404" fill="#f472b6" font-size="12">· keyword-modes · step</text>
   </g>
 
-  <g transform="translate(390,1780)">
-    <circle cx="40" cy="40" r="36" fill="#1e293b" stroke="#38bdf8" stroke-width="1.5" filter="url(#cardGlow)"/>
-    <circle cx="40" cy="40" r="28" fill="#38bdf8" opacity="0.15"/>
-    <text x="40" y="36" text-anchor="middle" fill="#38bdf8" font-size="18">☆</text>
-    <text x="40" y="94" text-anchor="middle" fill="#f8fafc" font-size="13" font-weight="600">可追溯</text>
-    <text x="40" y="112" text-anchor="middle" fill="#94a3b8" font-size="10">文档驱动逐层审计</text>
+
+  <circle cx="900" cy="460" r="130" fill="url(#hubGlow)" opacity="0.8"/>
+  <circle cx="900" cy="460" r="95" fill="#0f172a" stroke="#38bdf8" stroke-width="3" filter="url(#cardGlow)"/>
+  <text x="900" y="440" text-anchor="middle" fill="#38bdf8" font-size="18" font-weight="800">CORE</text>
+  <text x="900" y="464" text-anchor="middle" fill="#a5b4fc" font-size="14" font-weight="600">ENGINE</text>
+  <text x="900" y="488" text-anchor="middle" fill="#94a3b8" font-size="12">workflow-engine</text>
+  <path d="M 690 460 L 800 460" stroke="#3b82f6" stroke-width="2" marker-end="url(#arrow)"/>
+  <path d="M 1000 460 L 1110 460" stroke="#10b981" stroke-width="2" marker-end="url(#arrow)"/>
+
+
+  <g transform="translate(1110,250)">
+    <rect x="0" y="0" width="240" height="460" rx="10" fill="#0f1f1a" stroke="#059669" stroke-width="1.4"/>
+    <text x="16" y="32" fill="#34d399" font-size="15" font-weight="700">OUTPUT 输出</text>
+    <text x="16" y="58" fill="#94a3b8" font-size="12">阶段推进</text>
+    <text x="16" y="82" fill="#cbd5e1" font-size="12">· complete / advance</text>
+    <text x="16" y="104" fill="#cbd5e1" font-size="12">· continue / apply</text>
+    <text x="16" y="126" fill="#cbd5e1" font-size="12">· harness 编排</text>
+    <text x="16" y="158" fill="#94a3b8" font-size="12">门禁与交付</text>
+    <text x="16" y="182" fill="#cbd5e1" font-size="12">· 三门禁校验</text>
+    <text x="16" y="204" fill="#cbd5e1" font-size="12">· delivery-gate</text>
+    <text x="16" y="226" fill="#cbd5e1" font-size="12">· commit-trailers</text>
+    <text x="16" y="258" fill="#94a3b8" font-size="12">排查与归档</text>
+    <text x="16" y="282" fill="#cbd5e1" font-size="12">· audit · verify · health</text>
+    <text x="16" y="304" fill="#cbd5e1" font-size="12">· sync-openspec</text>
+    <text x="16" y="326" fill="#cbd5e1" font-size="12">· 根 CHANGELOG 合并</text>
+    <text x="16" y="358" fill="#94a3b8" font-size="12">OMC 运行时</text>
+    <text x="16" y="382" fill="#f472b6" font-size="12">· ralph / autopilot</text>
+    <text x="16" y="404" fill="#f472b6" font-size="12">· team / ultrawork</text>
   </g>
 
-  <g transform="translate(660,1780)">
-    <circle cx="40" cy="40" r="36" fill="#1e293b" stroke="#38bdf8" stroke-width="1.5" filter="url(#cardGlow)"/>
-    <circle cx="40" cy="40" r="28" fill="#38bdf8" opacity="0.15"/>
-    <text x="40" y="36" text-anchor="middle" fill="#38bdf8" font-size="18">◎</text>
-    <text x="40" y="94" text-anchor="middle" fill="#f8fafc" font-size="13" font-weight="600">可控执行</text>
-    <text x="40" y="112" text-anchor="middle" fill="#94a3b8" font-size="10">AI 执行 · 人把关</text>
+
+  <g transform="translate(24,752)">
+    <rect x="0" y="0" width="4" height="28" rx="2" fill="#34d399"/>
+    <text x="14" y="14" fill="#34d399" font-size="13" font-weight="700">L3</text>
+    <text x="14" y="28" fill="#94a3b8" font-size="12">九阶段主流程</text>
+  </g>
+  <text x="900" y="792" text-anchor="middle" fill="#64748b" font-size="13">profile: full·9 · api·8 · lite·5 · continue 每轮推进一阶段 · 左→右严格依赖</text>
+
+  <g transform="translate(132,806)">
+    <rect x="0" y="0" width="148" height="112" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="1.6" filter="url(#cardGlow)"/>
+    <circle cx="22" cy="22" r="14" fill="#38bdf8" opacity="0.25"/>
+    <text x="22" y="27" text-anchor="middle" fill="#38bdf8" font-size="13" font-weight="800">1</text>
+    <text x="44" y="26" fill="#f1f5f9" font-size="14" font-weight="700">变更</text>
+    <text x="12" y="52" fill="#cbd5e1" font-size="12">taiyi-change</text>
+    <text x="12" y="72" fill="#94a3b8" font-size="11">→ CHANGE.md</text>
+    <rect x="12" y="84" width="124" height="18" rx="4" fill="#38bdf8" opacity="0.15"/>
+    <text x="74" y="97" text-anchor="middle" fill="#38bdf8" font-size="10">Skill 驱动</text>
+  </g>
+  <line x1="280" y1="862" x2="292" y2="862" stroke="#475569" stroke-width="2" marker-end="url(#arrow)" opacity="0.7"/>
+
+  <g transform="translate(292,806)">
+    <rect x="0" y="0" width="148" height="112" rx="10" fill="#1e293b" stroke="#60a5fa" stroke-width="1.6" filter="url(#cardGlow)"/>
+    <circle cx="22" cy="22" r="14" fill="#60a5fa" opacity="0.25"/>
+    <text x="22" y="27" text-anchor="middle" fill="#60a5fa" font-size="13" font-weight="800">2</text>
+    <text x="44" y="26" fill="#f1f5f9" font-size="14" font-weight="700">需求</text>
+    <text x="12" y="52" fill="#cbd5e1" font-size="12">taiyi-requirement</text>
+    <text x="12" y="72" fill="#94a3b8" font-size="11">→ REQ.md</text>
+    <rect x="12" y="84" width="124" height="18" rx="4" fill="#60a5fa" opacity="0.15"/>
+    <text x="74" y="97" text-anchor="middle" fill="#60a5fa" font-size="10">Skill 驱动</text>
+  </g>
+  <line x1="440" y1="862" x2="452" y2="862" stroke="#475569" stroke-width="2" marker-end="url(#arrow)" opacity="0.7"/>
+
+  <g transform="translate(452,806)">
+    <rect x="0" y="0" width="148" height="112" rx="10" fill="#1e293b" stroke="#818cf8" stroke-width="1.6" filter="url(#cardGlow)"/>
+    <circle cx="22" cy="22" r="14" fill="#818cf8" opacity="0.25"/>
+    <text x="22" y="27" text-anchor="middle" fill="#818cf8" font-size="13" font-weight="800">3</text>
+    <text x="44" y="26" fill="#f1f5f9" font-size="14" font-weight="700">设计</text>
+    <text x="12" y="52" fill="#cbd5e1" font-size="12">taiyi-design</text>
+    <text x="12" y="72" fill="#94a3b8" font-size="11">→ DESIGN.md</text>
+    <rect x="12" y="84" width="124" height="18" rx="4" fill="#818cf8" opacity="0.15"/>
+    <text x="74" y="97" text-anchor="middle" fill="#818cf8" font-size="10">Skill 驱动</text>
+  </g>
+  <line x1="600" y1="862" x2="612" y2="862" stroke="#475569" stroke-width="2" marker-end="url(#arrow)" opacity="0.7"/>
+
+  <g transform="translate(612,806)">
+    <rect x="0" y="0" width="148" height="112" rx="10" fill="#1e293b" stroke="#a78bfa" stroke-width="1.6" filter="url(#cardGlow)"/>
+    <circle cx="22" cy="22" r="14" fill="#a78bfa" opacity="0.25"/>
+    <text x="22" y="27" text-anchor="middle" fill="#a78bfa" font-size="13" font-weight="800">4</text>
+    <text x="44" y="26" fill="#f1f5f9" font-size="14" font-weight="700">UI</text>
+    <text x="12" y="52" fill="#cbd5e1" font-size="12">taiyi-ui-design</text>
+    <text x="12" y="72" fill="#94a3b8" font-size="11">→ UI-DESIGN</text>
+    <rect x="12" y="84" width="124" height="18" rx="4" fill="#a78bfa" opacity="0.15"/>
+    <text x="74" y="97" text-anchor="middle" fill="#a78bfa" font-size="10">Skill 驱动</text>
+  </g>
+  <line x1="760" y1="862" x2="772" y2="862" stroke="#475569" stroke-width="2" marker-end="url(#arrow)" opacity="0.7"/>
+
+  <g transform="translate(772,806)">
+    <rect x="0" y="0" width="148" height="112" rx="10" fill="#1e293b" stroke="#c084fc" stroke-width="1.6" filter="url(#cardGlow)"/>
+    <circle cx="22" cy="22" r="14" fill="#c084fc" opacity="0.25"/>
+    <text x="22" y="27" text-anchor="middle" fill="#c084fc" font-size="13" font-weight="800">5</text>
+    <text x="44" y="26" fill="#f1f5f9" font-size="14" font-weight="700">任务</text>
+    <text x="12" y="52" fill="#cbd5e1" font-size="12">taiyi-task</text>
+    <text x="12" y="72" fill="#94a3b8" font-size="11">→ TASK.md</text>
+    <rect x="12" y="84" width="124" height="18" rx="4" fill="#c084fc" opacity="0.15"/>
+    <text x="74" y="97" text-anchor="middle" fill="#c084fc" font-size="10">Skill 驱动</text>
+  </g>
+  <line x1="920" y1="862" x2="932" y2="862" stroke="#475569" stroke-width="2" marker-end="url(#arrow)" opacity="0.7"/>
+
+  <g transform="translate(932,806)">
+    <rect x="0" y="0" width="148" height="112" rx="10" fill="#1e293b" stroke="#34d399" stroke-width="1.6" filter="url(#cardGlow)"/>
+    <circle cx="22" cy="22" r="14" fill="#34d399" opacity="0.25"/>
+    <text x="22" y="27" text-anchor="middle" fill="#34d399" font-size="13" font-weight="800">6</text>
+    <text x="44" y="26" fill="#f1f5f9" font-size="14" font-weight="700">开发</text>
+    <text x="12" y="52" fill="#cbd5e1" font-size="12">taiyi-dev</text>
+    <text x="12" y="72" fill="#94a3b8" font-size="11">→ 代码+TDD</text>
+    <rect x="12" y="84" width="124" height="18" rx="4" fill="#34d399" opacity="0.15"/>
+    <text x="74" y="97" text-anchor="middle" fill="#34d399" font-size="10">Skill 驱动</text>
+  </g>
+  <line x1="1080" y1="862" x2="1092" y2="862" stroke="#475569" stroke-width="2" marker-end="url(#arrow)" opacity="0.7"/>
+
+  <g transform="translate(1092,806)">
+    <rect x="0" y="0" width="148" height="112" rx="10" fill="#1e293b" stroke="#2dd4bf" stroke-width="1.6" filter="url(#cardGlow)"/>
+    <circle cx="22" cy="22" r="14" fill="#2dd4bf" opacity="0.25"/>
+    <text x="22" y="27" text-anchor="middle" fill="#2dd4bf" font-size="13" font-weight="800">7</text>
+    <text x="44" y="26" fill="#f1f5f9" font-size="14" font-weight="700">测试</text>
+    <text x="12" y="52" fill="#cbd5e1" font-size="12">taiyi-test</text>
+    <text x="12" y="72" fill="#94a3b8" font-size="11">→ TEST.md</text>
+    <rect x="12" y="84" width="124" height="18" rx="4" fill="#2dd4bf" opacity="0.15"/>
+    <text x="74" y="97" text-anchor="middle" fill="#2dd4bf" font-size="10">Skill 驱动</text>
+  </g>
+  <line x1="1240" y1="862" x2="1252" y2="862" stroke="#475569" stroke-width="2" marker-end="url(#arrow)" opacity="0.7"/>
+
+  <g transform="translate(1252,806)">
+    <rect x="0" y="0" width="148" height="112" rx="10" fill="#1e293b" stroke="#fbbf24" stroke-width="1.6" filter="url(#cardGlow)"/>
+    <circle cx="22" cy="22" r="14" fill="#fbbf24" opacity="0.25"/>
+    <text x="22" y="27" text-anchor="middle" fill="#fbbf24" font-size="13" font-weight="800">8</text>
+    <text x="44" y="26" fill="#f1f5f9" font-size="14" font-weight="700">审查</text>
+    <text x="12" y="52" fill="#cbd5e1" font-size="12">taiyi-review</text>
+    <text x="12" y="72" fill="#94a3b8" font-size="11">→ REVIEW.md</text>
+    <rect x="12" y="84" width="124" height="18" rx="4" fill="#fbbf24" opacity="0.15"/>
+    <text x="74" y="97" text-anchor="middle" fill="#fbbf24" font-size="10">Skill 驱动</text>
+  </g>
+  <line x1="1400" y1="862" x2="1412" y2="862" stroke="#475569" stroke-width="2" marker-end="url(#arrow)" opacity="0.7"/>
+
+  <g transform="translate(1412,806)">
+    <rect x="0" y="0" width="148" height="112" rx="10" fill="#1e293b" stroke="#fb923c" stroke-width="1.6" filter="url(#cardGlow)"/>
+    <circle cx="22" cy="22" r="14" fill="#fb923c" opacity="0.25"/>
+    <text x="22" y="27" text-anchor="middle" fill="#fb923c" font-size="13" font-weight="800">9</text>
+    <text x="44" y="26" fill="#f1f5f9" font-size="14" font-weight="700">交付</text>
+    <text x="12" y="52" fill="#cbd5e1" font-size="12">taiyi-integration</text>
+    <text x="12" y="72" fill="#94a3b8" font-size="11">→ CHANGELOG</text>
+    <rect x="12" y="84" width="124" height="18" rx="4" fill="#fb923c" opacity="0.15"/>
+    <text x="74" y="97" text-anchor="middle" fill="#fb923c" font-size="10">Skill 驱动</text>
+  </g>
+  <path d="M 900 918 L 900 948" stroke="#38bdf8" stroke-width="2" marker-end="url(#arrow)" opacity="0.6"/>
+
+  <g transform="translate(24,958)">
+    <rect x="0" y="0" width="4" height="28" rx="2" fill="#a78bfa"/>
+    <text x="14" y="14" fill="#a78bfa" font-size="13" font-weight="700">L4</text>
+    <text x="14" y="28" fill="#94a3b8" font-size="12">铁三角增强</text>
   </g>
 
-  <g transform="translate(930,1780)">
-    <circle cx="40" cy="40" r="36" fill="#1e293b" stroke="#38bdf8" stroke-width="1.5" filter="url(#cardGlow)"/>
-    <circle cx="40" cy="40" r="28" fill="#38bdf8" opacity="0.15"/>
-    <text x="40" y="36" text-anchor="middle" fill="#38bdf8" font-size="18">◆</text>
-    <text x="40" y="94" text-anchor="middle" fill="#f8fafc" font-size="13" font-weight="600">高质量交付</text>
-    <text x="40" y="112" text-anchor="middle" fill="#94a3b8" font-size="10">门禁持续改进</text>
+  <g transform="translate(120,950)">
+    <rect x="0" y="0" width="1560" height="96" rx="12" fill="#1e1b4b" stroke="#6366f1" stroke-width="1.4"/>
+    <text x="20" y="34" fill="#a5b4fc" font-size="15" font-weight="700">分阶段 optional 打卡 · --auto 下不阻塞 complete</text>
+    <text x="20" y="60" fill="#c7d2fe" font-size="13">Superpowers: brainstorming · TDD · verification · subagent</text>
+    <text x="20" y="82" fill="#c7d2fe" font-size="13">GStack: plan-eng-review · plan-design-review · qa · document-release</text>
+    <text x="820" y="60" fill="#c7d2fe" font-size="13">OpenSpec: sync-openspec · archive 前自动 sync</text>
+    <text x="820" y="82" fill="#94a3b8" font-size="12">四端: OpenCode · Claude · Codex · Cursor · 可与 OMX 并存</text>
   </g>
 
-  <g transform="translate(1200,1780)">
-    <circle cx="40" cy="40" r="36" fill="#1e293b" stroke="#38bdf8" stroke-width="1.5" filter="url(#cardGlow)"/>
-    <circle cx="40" cy="40" r="28" fill="#38bdf8" opacity="0.15"/>
-    <text x="40" y="36" text-anchor="middle" fill="#38bdf8" font-size="18">●</text>
-    <text x="40" y="94" text-anchor="middle" fill="#f8fafc" font-size="13" font-weight="600">知识沉淀</text>
-    <text x="40" y="112" text-anchor="middle" fill="#94a3b8" font-size="10">经验归档与演进</text>
+
+  <g transform="translate(24,1078)">
+    <rect x="0" y="0" width="4" height="28" rx="2" fill="#f472b6"/>
+    <text x="14" y="14" fill="#f472b6" font-size="13" font-weight="700">L5</text>
+    <text x="14" y="28" fill="#94a3b8" font-size="12">OMC 原生控制面</text>
   </g>
 
-  <rect x="40" y="1920" width="1420" height="48" rx="8" fill="#0f172a" stroke="#334155"/>
-  <text x="750" y="1950" text-anchor="middle" fill="#64748b" font-size="12">左: 文档真源 · 中: 引擎调度九阶段 · 右: 三重门禁 · 底: 17 Skill + 铁三角 + 排查命令 · 开源 MIT</text>
-  <text x="750" y="1998" text-anchor="middle" fill="#475569" font-size="11">docs/taiyiforge-architecture.svg · TaiyiForge v0.22</text>
-
+  <g transform="translate(120,1070)">
+    <rect x="0" y="0" width="1560" height="320" rx="14" fill="#1a0f2e" stroke="#ec4899" stroke-width="1.6" filter="url(#cardGlow)"/>
+    <text x="20" y="36" fill="#f472b6" font-size="18" font-weight="700">自 OMC 迁移 · 不依赖 oh-my-claudecode · docs/taiyi/omc-reference.md</text>
+    <text x="20" y="60" fill="#94a3b8" font-size="12">运行时模式（.taiyi/runtime/*-mode.json）· step/stop hook 防 Agent 早停</text>
   </g>
+
+
+  <g transform="translate(140,1098)">
+    <rect x="0" y="0" width="320" height="88" rx="10" fill="#1e293b" stroke="#f472b6" stroke-width="1.5" filter="url(#cardGlow)"/>
+    <text x="14" y="28" fill="#f472b6" font-size="15" font-weight="700">/taiyi:ralph</text>
+    <text x="14" y="50" fill="#e2e8f0" font-size="13">验证循环</text>
+    <text x="14" y="72" fill="#94a3b8" font-size="11">ralplan-first · step hook</text>
+  </g>
+
+  <g transform="translate(520,1098)">
+    <rect x="0" y="0" width="320" height="88" rx="10" fill="#1e293b" stroke="#fb923c" stroke-width="1.5" filter="url(#cardGlow)"/>
+    <text x="14" y="28" fill="#fb923c" font-size="15" font-weight="700">/taiyi:autopilot</text>
+    <text x="14" y="50" fill="#e2e8f0" font-size="13">九阶段全自动</text>
+    <text x="14" y="72" fill="#94a3b8" font-size="11">--auto harness</text>
+  </g>
+
+  <g transform="translate(900,1098)">
+    <rect x="0" y="0" width="320" height="88" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="1.5" filter="url(#cardGlow)"/>
+    <text x="14" y="28" fill="#38bdf8" font-size="15" font-weight="700">/taiyi:team</text>
+    <text x="14" y="50" fill="#e2e8f0" font-size="13">team 流水线</text>
+    <text x="14" y="72" fill="#94a3b8" font-size="11">plan→prd→exec→fix</text>
+  </g>
+
+  <g transform="translate(1280,1098)">
+    <rect x="0" y="0" width="320" height="88" rx="10" fill="#1e293b" stroke="#a78bfa" stroke-width="1.5" filter="url(#cardGlow)"/>
+    <text x="14" y="28" fill="#a78bfa" font-size="15" font-weight="700">/taiyi:ultrawork</text>
+    <text x="14" y="50" fill="#e2e8f0" font-size="13">高吞吐并行</text>
+    <text x="14" y="72" fill="#94a3b8" font-size="11">≤6 路 spawn</text>
+  </g>
+  <text x="140" y="1210" fill="#fcd34d" font-size="14" font-weight="600">Workflow 斜杠</text>
+
+  <g transform="translate(140,1220)">
+    <rect x="0" y="0" width="56" height="26" rx="6" fill="#1e293b" stroke="#f59e0b" stroke-width="1"/>
+    <text x="28.0" y="18" text-anchor="middle" fill="#e2e8f0" font-size="12">plan</text>
+  </g>
+  <g transform="translate(208,1220)">
+    <rect x="0" y="0" width="80" height="26" rx="6" fill="#1e293b" stroke="#f59e0b" stroke-width="1"/>
+    <text x="40.0" y="18" text-anchor="middle" fill="#e2e8f0" font-size="12">ralplan</text>
+  </g>
+  <g transform="translate(300,1220)">
+    <rect x="0" y="0" width="80" height="26" rx="6" fill="#1e293b" stroke="#f59e0b" stroke-width="1"/>
+    <text x="40.0" y="18" text-anchor="middle" fill="#e2e8f0" font-size="12">ultraqa</text>
+  </g>
+  <g transform="translate(392,1220)">
+    <rect x="0" y="0" width="52" height="26" rx="6" fill="#1e293b" stroke="#f59e0b" stroke-width="1"/>
+    <text x="26.0" y="18" text-anchor="middle" fill="#e2e8f0" font-size="12">ccg</text>
+  </g>
+  <g transform="translate(456,1220)">
+    <rect x="0" y="0" width="72" height="26" rx="6" fill="#1e293b" stroke="#f59e0b" stroke-width="1"/>
+    <text x="36.0" y="18" text-anchor="middle" fill="#e2e8f0" font-size="12">sciomc</text>
+  </g>
+
+  <g transform="translate(140,1258)">
+    <rect x="0" y="0" width="88" height="26" rx="6" fill="#1e293b" stroke="#f59e0b" stroke-width="1"/>
+    <text x="44.0" y="18" text-anchor="middle" fill="#e2e8f0" font-size="12">deepinit</text>
+  </g>
+  <g transform="translate(240,1258)">
+    <rect x="0" y="0" width="136" height="26" rx="6" fill="#1e293b" stroke="#f59e0b" stroke-width="1"/>
+    <text x="68.0" y="18" text-anchor="middle" fill="#e2e8f0" font-size="12">visual-verdict</text>
+  </g>
+  <g transform="translate(388,1258)">
+    <rect x="0" y="0" width="136" height="26" rx="6" fill="#1e293b" stroke="#f59e0b" stroke-width="1"/>
+    <text x="68.0" y="18" text-anchor="middle" fill="#e2e8f0" font-size="12">deep-interview</text>
+  </g>
+  <g transform="translate(536,1258)">
+    <rect x="0" y="0" width="144" height="26" rx="6" fill="#1e293b" stroke="#f59e0b" stroke-width="1"/>
+    <text x="72.0" y="18" text-anchor="middle" fill="#e2e8f0" font-size="12">ai-slop-cleaner</text>
+  </g>
+  <g transform="translate(692,1258)">
+    <rect x="0" y="0" width="152" height="26" rx="6" fill="#1e293b" stroke="#f59e0b" stroke-width="1"/>
+    <text x="76.0" y="18" text-anchor="middle" fill="#e2e8f0" font-size="12">external-context</text>
+  </g>
+  <text x="140" y="1310" fill="#86efac" font-size="14" font-weight="600">控制 &amp; MCP 对齐</text>
+
+  <g transform="translate(140,1320)">
+    <rect x="0" y="0" width="280" height="52" rx="8" fill="#1e293b" stroke="#4ade80" stroke-width="1.2"/>
+    <text x="14" y="24" fill="#86efac" font-size="13" font-weight="700">29 Agent</text>
+    <text x="14" y="42" fill="#94a3b8" font-size="11">/taiyi:agent · agent-roles.yaml</text>
+  </g>
+
+  <g transform="translate(440,1320)">
+    <rect x="0" y="0" width="280" height="52" rx="8" fill="#1e293b" stroke="#4ade80" stroke-width="1.2"/>
+    <text x="14" y="24" fill="#86efac" font-size="13" font-weight="700">记忆</text>
+    <text x="14" y="42" fill="#94a3b8" font-size="11">/taiyi:remember</text>
+  </g>
+
+  <g transform="translate(740,1320)">
+    <rect x="0" y="0" width="280" height="52" rx="8" fill="#1e293b" stroke="#4ade80" stroke-width="1.2"/>
+    <text x="14" y="24" fill="#86efac" font-size="13" font-weight="700">停止</text>
+    <text x="14" y="42" fill="#94a3b8" font-size="11">stop-mode · stopomc</text>
+  </g>
+
+  <g transform="translate(1040,1320)">
+    <rect x="0" y="0" width="280" height="52" rx="8" fill="#1e293b" stroke="#4ade80" stroke-width="1.2"/>
+    <text x="14" y="24" fill="#86efac" font-size="13" font-weight="700">调度</text>
+    <text x="14" y="42" fill="#94a3b8" font-size="11">modes · step · keyword hook</text>
+  </g>
+
+  <g transform="translate(1340,1320)">
+    <rect x="0" y="0" width="280" height="52" rx="8" fill="#1e293b" stroke="#4ade80" stroke-width="1.2"/>
+    <text x="14" y="24" fill="#86efac" font-size="13" font-weight="700">MCP</text>
+    <text x="14" y="42" fill="#94a3b8" font-size="11">state_get_status / read / list</text>
+  </g>
+
+  <g transform="translate(1280,1220)">
+    <rect x="0" y="0" width="380" height="140" rx="10" fill="#1e293b" stroke="#c084fc" stroke-width="1.2"/>
+    <text x="16" y="32" fill="#c4b5fd" font-size="14" font-weight="700">ralph ↔ review-loop</text>
+    <text x="16" y="56" fill="#e9d5ff" font-size="12">ralph: 验证命令循环（测试/build）</text>
+    <text x="16" y="78" fill="#e9d5ff" font-size="12">review-loop: REVIEW.md 机器门禁</text>
+    <text x="16" y="108" fill="#94a3b8" font-size="11">review 阶段通常两者联用</text>
+  </g>
+
+
+  <g transform="translate(24,1422)">
+    <rect x="0" y="0" width="4" height="28" rx="2" fill="#4ade80"/>
+    <text x="14" y="14" fill="#4ade80" font-size="13" font-weight="700">L6</text>
+    <text x="14" y="28" fill="#94a3b8" font-size="12">Skill 生态</text>
+  </g>
+
+  <g transform="translate(120,1414)">
+    <rect x="0" y="0" width="280" height="72" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="1.4"/>
+    <text x="14" y="28" fill="#38bdf8" font-size="14" font-weight="700">主流程 ×9</text>
+    <text x="14" y="50" fill="#94a3b8" font-size="11">taiyi-change → … → taiyi-integration</text>
+  </g>
+
+  <g transform="translate(420,1414)">
+    <rect x="0" y="0" width="280" height="72" rx="10" fill="#1e293b" stroke="#2dd4bf" stroke-width="1.4"/>
+    <text x="14" y="28" fill="#2dd4bf" font-size="14" font-weight="700">辅助 ×6</text>
+    <text x="14" y="50" fill="#94a3b8" font-size="11">intel-scan · architect · health · evolve · restyle · compress</text>
+  </g>
+
+  <g transform="translate(720,1414)">
+    <rect x="0" y="0" width="280" height="72" rx="10" fill="#1e293b" stroke="#fcd34d" stroke-width="1.4"/>
+    <text x="14" y="28" fill="#fcd34d" font-size="14" font-weight="700">编排 ×3</text>
+    <text x="14" y="50" fill="#94a3b8" font-size="11">orchestrator · forge · ultrawork</text>
+  </g>
+
+  <g transform="translate(1020,1414)">
+    <rect x="0" y="0" width="280" height="72" rx="10" fill="#1e293b" stroke="#fb923c" stroke-width="1.4"/>
+    <text x="14" y="28" fill="#fb923c" font-size="14" font-weight="700">斜杠 ×40+</text>
+    <text x="14" y="50" fill="#94a3b8" font-size="11">status · continue · handoff · doctor · audit · verify …</text>
+  </g>
+
+  <g transform="translate(1320,1414)">
+    <rect x="0" y="0" width="280" height="72" rx="10" fill="#1e293b" stroke="#f472b6" stroke-width="1.4"/>
+    <text x="14" y="28" fill="#f472b6" font-size="14" font-weight="700">OMC workflow</text>
+    <text x="14" y="50" fill="#94a3b8" font-size="11">ralph · autopilot · team · plan · ccg · sciomc …</text>
+  </g>
+
+  <g transform="translate(24,1514)">
+    <rect x="0" y="0" width="4" height="28" rx="2" fill="#fbbf24"/>
+    <text x="14" y="14" fill="#fbbf24" font-size="13" font-weight="700">L7</text>
+    <text x="14" y="28" fill="#94a3b8" font-size="12">入口命令</text>
+  </g>
+
+  <g transform="translate(120,1506)">
+    <rect x="0" y="0" width="760" height="88" rx="12" fill="#422006" stroke="#f59e0b" stroke-width="1.4"/>
+    <text x="20" y="32" fill="#fcd34d" font-size="15" font-weight="700">主流程斜杠</text>
+    <text x="20" y="58" fill="#fde68a" font-size="13">/taiyi:new · status · continue · apply · archive</text>
+    <text x="20" y="78" fill="#fef3c7" font-size="13">handoff · cancel · commit-trailers</text>
+  </g>
+  <g transform="translate(920,1506)">
+    <rect x="0" y="0" width="760" height="88" rx="12" fill="#2a0f2e" stroke="#ec4899" stroke-width="1.4"/>
+    <text x="20" y="32" fill="#f472b6" font-size="15" font-weight="700">OMC / 排查斜杠</text>
+    <text x="20" y="58" fill="#fbcfe8" font-size="13">ralph · autopilot · team · ultrawork · agent · stop-mode</text>
+    <text x="20" y="78" fill="#fce7f3" font-size="13">remember · modes · step · doctor · audit · verify · health</text>
+  </g>
+
+
+  <g transform="translate(24,1622)">
+    <rect x="0" y="0" width="4" height="28" rx="2" fill="#38bdf8"/>
+    <text x="14" y="14" fill="#38bdf8" font-size="13" font-weight="700">L8</text>
+    <text x="14" y="28" fill="#94a3b8" font-size="12">核心价值</text>
+  </g>
+
+  <g transform="translate(120,1614)">
+    <rect x="0" y="0" width="300" height="88" rx="12" fill="#1e293b" stroke="#38bdf8" stroke-width="1.4" filter="url(#cardGlow)"/>
+    <text x="150" y="36" text-anchor="middle" fill="#38bdf8" font-size="16" font-weight="700">标准化</text>
+    <text x="150" y="60" text-anchor="middle" fill="#94a3b8" font-size="12">减少不确定性</text>
+  </g>
+
+  <g transform="translate(450,1614)">
+    <rect x="0" y="0" width="300" height="88" rx="12" fill="#1e293b" stroke="#38bdf8" stroke-width="1.4" filter="url(#cardGlow)"/>
+    <text x="150" y="36" text-anchor="middle" fill="#38bdf8" font-size="16" font-weight="700">可追溯</text>
+    <text x="150" y="60" text-anchor="middle" fill="#94a3b8" font-size="12">文档逐层审计</text>
+  </g>
+
+  <g transform="translate(780,1614)">
+    <rect x="0" y="0" width="300" height="88" rx="12" fill="#1e293b" stroke="#38bdf8" stroke-width="1.4" filter="url(#cardGlow)"/>
+    <text x="150" y="36" text-anchor="middle" fill="#38bdf8" font-size="16" font-weight="700">可控执行</text>
+    <text x="150" y="60" text-anchor="middle" fill="#94a3b8" font-size="12">AI 执行 · 人把关</text>
+  </g>
+
+  <g transform="translate(1110,1614)">
+    <rect x="0" y="0" width="300" height="88" rx="12" fill="#1e293b" stroke="#38bdf8" stroke-width="1.4" filter="url(#cardGlow)"/>
+    <text x="150" y="36" text-anchor="middle" fill="#38bdf8" font-size="16" font-weight="700">高质量交付</text>
+    <text x="150" y="60" text-anchor="middle" fill="#94a3b8" font-size="12">三门禁持续改进</text>
+  </g>
+
+  <g transform="translate(1440,1614)">
+    <rect x="0" y="0" width="300" height="88" rx="12" fill="#1e293b" stroke="#38bdf8" stroke-width="1.4" filter="url(#cardGlow)"/>
+    <text x="150" y="36" text-anchor="middle" fill="#38bdf8" font-size="16" font-weight="700">知识沉淀</text>
+    <text x="150" y="60" text-anchor="middle" fill="#94a3b8" font-size="12">经验归档演进</text>
+  </g>
+
+  <rect x="120" y="1720" width="1560" height="44" rx="8" fill="#0f172a" stroke="#334155"/>
+  <text x="900" y="1748" text-anchor="middle" fill="#64748b" font-size="13">L1 标准 → L2 引擎+工件+门禁 → L3 九阶段 → L4 铁三角 → L5 OMC → L6 Skill → L7 斜杠 · 4× PNG · MIT</text>
+  <text x="900" y="1768" text-anchor="middle" fill="#475569" font-size="11">docs/taiyiforge-architecture.svg · TaiyiForge v0.22</text>
+
 </svg>

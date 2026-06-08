@@ -64,6 +64,7 @@ export function getHarnessContext(
   }
   if (phase === "task" || phase === "dev") {
     notes.push("Superpowers test-driven-development：task=测试计划 · dev=红绿重构；/taiyi:tdd plan|dev");
+    notes.push("多切片并行：/taiyi:ultrawork · harness optional taiyi/taiyi-ultrawork · TAIYI_ULW_AUTO_TASK=1");
   }
   if (tokenCompressHarnessHooks(phase, slug).length > 0) {
     notes.push("Token 压缩：见 workflow-manifest token_compress");

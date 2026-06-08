@@ -1,7 +1,0 @@
-{
-  "name": "full-oss-workspace",
-  "type": "module",
-  "scripts": {
-    "test": "node --test"
-  }
-}

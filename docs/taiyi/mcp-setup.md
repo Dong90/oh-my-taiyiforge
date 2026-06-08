@@ -97,11 +97,47 @@ Monorepo / 本地开发：
 }
 ```
 
-重启 Cursor 后，Agent 应能看到五个工具。
+重启 Cursor 后，Agent 应能看到 **14 个** MCP 工具（状态 5 + 模式 3 + remember/keyword/workflow + LSP 3）。
 
 ## 工具
 
-### `taiyi_state_get_status`
+### 状态（5）
+
+| MCP | 说明 |
+|-----|------|
+| `taiyi_state_get_status` | `{ slug? }` → engineTruth + statusLine |
+| `taiyi_state_read` | 原始 `state.json` |
+| `taiyi_state_list_active` | 全部变更 + active |
+| `taiyi_state_handoff` | 写 HANDOFF.md |
+| `taiyi_state_cancel` | 中止变更 |
+
+### 模式（3）— 与 OpenCode `taiyi_step` / `taiyi_stop_mode` / `taiyi_modes` 对齐
+
+| MCP | OpenCode | 说明 |
+|-----|----------|------|
+| `taiyi_mode_step` | `taiyi_step` | ralph/autopilot/ultrawork/team 单步 |
+| `taiyi_mode_stop` | `taiyi_stop_mode` | 取消活跃模式 |
+| `taiyi_mode_list` | `taiyi_modes` | 列出 `.taiyi/runtime/*-mode.json` |
+
+### OMC 对齐（3）
+
+| MCP | OpenCode | 说明 |
+|-----|----------|------|
+| `taiyi_remember` | `taiyi_remember` | `.taiyi/project-memory.json` |
+| `taiyi_keyword` | `taiyi_keyword` | ralph/autopilot/team/ccg/deslop/**ultrathink**/**deepsearch** 等口头触发 |
+| `taiyi_workflow` | `taiyi_workflow` | plan/ralplan/ultraqa/ccg/sciomc/deepinit/**external-context** |
+
+### LSP 轻量封装（3）
+
+非真 LSP Server；`TAIYI_LSP=off` 跳过 diagnostics。无 IDE LSP 时用 grep 回退。
+
+| MCP | 说明 |
+|-----|------|
+| `taiyi_lsp_diagnostics` | `npm run typecheck/lint` 或 `tsc --noEmit` |
+| `taiyi_lsp_goto_definition` | 符号 grep 候选定义 |
+| `taiyi_lsp_find_references` | 同 goto（文本匹配） |
+
+### `taiyi_state_get_status`（详情）
 
 - **输入：** `{ "slug": "optional" }`
 - **输出：** `{ engineTruth, statusLine }` — 与 `taiyi status --json` 的 `engineTruth` 一致

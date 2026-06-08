@@ -53,4 +53,14 @@ describe("prompt-stage-protocol", () => {
     expect(out).not.toContain("{{GSTACK_INVOKE}}");
     expect(out).toContain("gstack Skill");
   });
+
+  it("replaces superpowers invoke placeholder", () => {
+    const out = renderTaiyiPrompt(
+      "taiyi-sp.md",
+      `sp\n\n{{SUPERPOWERS_INVOKE}}\n`,
+      promptsDir,
+    );
+    expect(out).not.toContain("{{SUPERPOWERS_INVOKE}}");
+    expect(out).toContain("Superpowers Skill");
+  });
 });

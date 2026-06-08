@@ -60,6 +60,42 @@ import {
   writeCiAgentPrompt,
   type CiPlatformId,
 } from "../core/ci-platform.js";
+import { runAutopilotGuide } from "../core/autopilot-runner.js";
+import { runTeamGuide } from "../core/team-runner.js";
+import { runUltraworkGuide } from "../core/ultrawork-runner.js";
+import {
+  formatAgentRoleProtocol,
+  getAgentRole,
+  listAgentRoleIds,
+} from "../core/agent-roles.js";
+import {
+  phaseIdFromSlashVerb,
+  runPhaseWriteGuide,
+  formatWriteCurrentPhasePlain,
+  PHASE_SLASH_VERB,
+} from "../core/phase-write.js";
+import { runBugScenario, runFeatureScenario } from "../core/scenario-shortcuts.js";
+import { cancelRuntimeModes, formatCancelModePlain } from "../core/runtime/cancel-mode.js";
+import {
+  formatProjectMemoryPlain,
+  rememberFact,
+  readProjectMemory,
+} from "../core/runtime/project-memory.js";
+import {
+  formatKeywordHint,
+  resolveKeywordActivation,
+} from "../core/runtime/keyword-modes.js";
+import { activateMode, listActiveModes, type TaiyiModeId } from "../core/runtime/mode-state.js";
+import {
+  runModeStep,
+  formatActiveModesBanner,
+  type ModeStepResult,
+} from "../core/runtime/mode-orchestrator.js";
+import {
+  listWorkflowSkills,
+  runWorkflowSkill,
+  type WorkflowSkillId,
+} from "../core/runtime/workflow-skills.js";
 
 const TEMPLATES_DIR = resolveTemplatesDir(import.meta.url);
 
@@ -165,6 +201,7 @@ export function taiyiStatus(workspaceDir: string, slug: string) {
   const changeDir = path.join(taiyiRoot, "changes", slug);
   const engineTruth = buildEngineTruth(state, guide, {
     handoffExists: handoffExists(changeDir),
+    taiyiRoot,
   });
   return { ok: true as const, state, guide, openspec, taiyiRoot, engineTruth };
 }
@@ -417,7 +454,7 @@ export function taiyiHandoff(
     statusLine,
     compressHint,
   });
-  const engineTruth = buildEngineTruth(state, guide, { handoffExists: true });
+  const engineTruth = buildEngineTruth(state, guide, { handoffExists: true, taiyiRoot });
   return { ok: true, slug: resolved.slug, path: filePath, engineTruth };
 }
 
@@ -790,4 +827,271 @@ export function taiyiReviewLoop(workspaceDir: string, slug: string, plain = true
     return { ok: result.ok, text, result };
   }
   return { ok: result.ok, result: { ...result, text } };
+}
+
+export function taiyiRalph(workspaceDir: string, slug: string, plain = true) {
+  const invalid = rejectInvalidSlug(slug);
+  if (invalid) return invalid;
+  const engine = createEngine(workspaceDir);
+  const taiyiRoot = resolveTaiyiRoot(workspaceDir);
+  activateMode(taiyiRoot, "ralph", slug, { linkedModes: ["ultrawork"] });
+  const step = runModeStep(engine, workspaceDir, taiyiRoot, slug, "ralph");
+  const text = step.text;
+  if (plain) {
+    return { ok: step.ok, text, result: step };
+  }
+  return { ok: step.ok, result: step };
+}
+
+export function taiyiAutopilot(workspaceDir: string, slug: string, plain = true) {
+  const invalid = rejectInvalidSlug(slug);
+  if (invalid) return invalid;
+  const engine = createEngine(workspaceDir);
+  const taiyiRoot = resolveTaiyiRoot(workspaceDir);
+  const guide = runAutopilotGuide(engine, workspaceDir, taiyiRoot, slug);
+  const step = runModeStep(engine, workspaceDir, taiyiRoot, slug, "autopilot");
+  const text = [guide.text, "", "── 本步 ──", step.text].join("\n");
+  // autopilot 命令 = 激活模式 + 指引；人工门/harness 阻塞由 step 子命令报告，不算 autopilot 失败
+  if (plain) {
+    return { ok: guide.ok, text, guide, step };
+  }
+  return { ok: guide.ok, guide, step };
+}
+
+export function taiyiTeam(workspaceDir: string, slug: string, plain = true) {
+  const invalid = rejectInvalidSlug(slug);
+  if (invalid) return invalid;
+  const engine = createEngine(workspaceDir);
+  const taiyiRoot = resolveTaiyiRoot(workspaceDir);
+  const result = runTeamGuide(engine, slug, taiyiRoot);
+  if (plain) {
+    return { ok: result.ok, text: result.text, result };
+  }
+  return { ok: result.ok, result };
+}
+
+export function taiyiUltrawork(workspaceDir: string, slug: string, plain = true) {
+  const invalid = rejectInvalidSlug(slug);
+  if (invalid) return invalid;
+  const engine = createEngine(workspaceDir);
+  const taiyiRoot = resolveTaiyiRoot(workspaceDir);
+  const result = runUltraworkGuide(engine, slug, taiyiRoot);
+  if (plain) {
+    return { ok: result.ok, text: result.text, result };
+  }
+  return { ok: result.ok, result };
+}
+
+export function taiyiAgent(
+  workspaceDir: string,
+  roleId: string,
+  slug?: string,
+  plain = true,
+) {
+  if (roleId === "list" || roleId === "--list") {
+    const text = [
+      "Taiyi 专 Agent 角色（原生 · 自 OMC 能力迁移）:",
+      ...listAgentRoleIds().map((id) => `  · ${id}`),
+      "",
+      "用法: /taiyi:agent <role> [slug]",
+    ].join("\n");
+    return { ok: true as const, text };
+  }
+
+  const taiyiRoot = resolveTaiyiRoot(workspaceDir);
+  const resolved = resolveActiveSlug(taiyiRoot, slug);
+  if (!resolved.ok) return resolved;
+
+  const invalid = rejectInvalidSlug(resolved.slug);
+  if (invalid) return invalid;
+
+  const engine = createEngine(workspaceDir);
+  const state = engine.getState(resolved.slug);
+  if (!state) {
+    return { ok: false as const, error: `Change not found: ${resolved.slug}` };
+  }
+
+  const phase = state.currentPhase as PhaseId;
+  const role = getAgentRole(roleId);
+  const strictBlocked =
+    Boolean(role) &&
+    process.env.TAIYI_AGENT_STRICT_PHASE === "1" &&
+    !role!.phases.includes(phase);
+  const text = formatAgentRoleProtocol(roleId, resolved.slug, phase);
+  if (plain) {
+    return { ok: Boolean(role) && !strictBlocked, text };
+  }
+  return { ok: Boolean(role) && !strictBlocked, role: role?.id, phase, slug: resolved.slug, text };
+}
+
+export function taiyiWrite(workspaceDir: string, slug?: string, plain = true) {
+  const taiyiRoot = resolveTaiyiRoot(workspaceDir);
+  const resolved = resolveActiveSlug(taiyiRoot, slug);
+  if (!resolved.ok) return resolved;
+  const invalid = rejectInvalidSlug(resolved.slug);
+  if (invalid) return invalid;
+  const engine = createEngine(workspaceDir);
+  const text = formatWriteCurrentPhasePlain(engine, workspaceDir, resolved.slug);
+  const state = engine.getState(resolved.slug);
+  const ok = Boolean(state);
+  if (plain) return { ok, text, slug: resolved.slug, phase: state?.currentPhase };
+  return { ok, slug: resolved.slug, phase: state?.currentPhase, text };
+}
+
+export function taiyiPhaseWrite(
+  workspaceDir: string,
+  phaseVerb: string,
+  slug?: string,
+  plain = true,
+) {
+  const phaseId = phaseIdFromSlashVerb(phaseVerb);
+  if (!phaseId) {
+    return {
+      ok: false as const,
+      error: `未知阶段: ${phaseVerb}。可用: ${Object.values(PHASE_SLASH_VERB).join(", ")}`,
+    };
+  }
+  const taiyiRoot = resolveTaiyiRoot(workspaceDir);
+  const resolved = resolveActiveSlug(taiyiRoot, slug);
+  if (!resolved.ok) return resolved;
+  const invalid = rejectInvalidSlug(resolved.slug);
+  if (invalid) return invalid;
+  const engine = createEngine(workspaceDir);
+  const result = runPhaseWriteGuide(engine, workspaceDir, taiyiRoot, resolved.slug, phaseId);
+  if (plain) return { ok: result.ok, text: result.text, result };
+  return { ok: result.ok, result };
+}
+
+export function taiyiFeature(workspaceDir: string, args?: string, plain = true) {
+  const taiyiRoot = resolveTaiyiRoot(workspaceDir);
+  const engine = createEngine(workspaceDir);
+  const result = runFeatureScenario(engine, taiyiRoot, args?.trim());
+  if (plain) return { ok: result.ok, text: result.text, result };
+  return { ok: result.ok, result };
+}
+
+export function taiyiBug(workspaceDir: string, args?: string, plain = true) {
+  const taiyiRoot = resolveTaiyiRoot(workspaceDir);
+  const engine = createEngine(workspaceDir);
+  const result = runBugScenario(engine, taiyiRoot, args?.trim());
+  if (plain) return { ok: result.ok, text: result.text, result };
+  return { ok: result.ok, result };
+}
+
+export function taiyiStopMode(
+  workspaceDir: string,
+  options?: { force?: boolean; slug?: string },
+  plain = true,
+) {
+  const taiyiRoot = resolveTaiyiRoot(workspaceDir);
+  const result = cancelRuntimeModes(taiyiRoot, options);
+  const text = formatCancelModePlain(result);
+  if (plain) return { ok: result.ok, text, result };
+  return { ok: result.ok, result: { ...result, text } };
+}
+
+export function taiyiModes(workspaceDir: string, plain = true) {
+  const taiyiRoot = resolveTaiyiRoot(workspaceDir);
+  const active = listActiveModes(taiyiRoot);
+  const lines = ["══ Taiyi 运行时模式 ══"];
+  if (active.length === 0) {
+    lines.push("  （无活跃模式）");
+  } else {
+    for (const a of active) {
+      lines.push(`  · ${a.mode} → ${a.slug ?? "?"}`);
+    }
+  }
+  lines.push("", "停止: /taiyi:stop-mode [--force]");
+  const text = lines.join("\n");
+  if (plain) return { ok: true, text, active };
+  return { ok: true, active, text };
+}
+
+export function taiyiRemember(workspaceDir: string, note?: string, plain = true) {
+  const taiyiRoot = resolveTaiyiRoot(workspaceDir);
+  try {
+    if (note?.trim()) {
+      rememberFact(taiyiRoot, { category: "note", text: note.trim(), source: "hand" });
+    }
+    const text = formatProjectMemoryPlain(taiyiRoot);
+    const memory = readProjectMemory(taiyiRoot);
+    if (plain) return { ok: true as const, text, memory };
+    return { ok: true as const, memory, text };
+  } catch (e) {
+    const error = e instanceof Error ? e.message : String(e);
+    const text = `remember 失败: ${error}`;
+    if (plain) return { ok: false as const, text, error };
+    return { ok: false as const, error, text };
+  }
+}
+
+export function taiyiKeyword(workspaceDir: string, prompt: string, plain = true) {
+  const detected = resolveKeywordActivation(prompt);
+  if (!detected) {
+    const text = "未检测到 OMC 兼容关键词。可用: ralph, autopilot, ultrawork, ralplan, ultraqa, stopomc";
+    return { ok: false, text };
+  }
+  const text = formatKeywordHint(detected);
+  if (plain) return { ok: true, text, detected };
+  return { ok: true, detected, text };
+}
+
+export function taiyiWorkflowSkill(
+  workspaceDir: string,
+  skill: string,
+  slug?: string,
+  plain = true,
+) {
+  const skillId = skill.toLowerCase() as WorkflowSkillId;
+  if (!listWorkflowSkills().includes(skillId)) {
+    return {
+      ok: false as const,
+      error: `未知 workflow skill: ${skill}。可用: ${listWorkflowSkills().join(", ")}`,
+    };
+  }
+  const taiyiRoot = resolveTaiyiRoot(workspaceDir);
+  const resolved = resolveActiveSlug(taiyiRoot, slug);
+  if (!resolved.ok) return resolved;
+  const invalid = rejectInvalidSlug(resolved.slug);
+  if (invalid) return invalid;
+  const engine = createEngine(workspaceDir);
+  const result = runWorkflowSkill(engine, taiyiRoot, skillId, resolved.slug);
+  const modeMap: Partial<Record<WorkflowSkillId, TaiyiModeId>> = {
+    ralplan: "ralplan",
+    plan: "plan",
+    ultraqa: "ultraqa",
+    ecomode: "ecomode",
+    "deep-interview": "deep-interview",
+    "visual-verdict": "visual-verdict",
+    "ai-slop-cleaner": "ai-slop-cleaner",
+  };
+  const mode = modeMap[skillId];
+  if (mode) {
+    const step = runModeStep(engine, workspaceDir, taiyiRoot, resolved.slug, mode);
+    const text = [result.text, "", "── step ──", step.text].join("\n");
+    if (plain) return { ok: result.ok && step.ok, text, result, step };
+    return { ok: result.ok && step.ok, result, step };
+  }
+  if (plain) return { ok: result.ok, text: result.text, result };
+  return { ok: result.ok, result };
+}
+
+export function taiyiStep(
+  workspaceDir: string,
+  slug?: string,
+  options?: { mode?: string },
+  plain = true,
+) {
+  const taiyiRoot = resolveTaiyiRoot(workspaceDir);
+  const resolved = resolveActiveSlug(taiyiRoot, slug);
+  if (!resolved.ok) return resolved;
+  const invalid = rejectInvalidSlug(resolved.slug);
+  if (invalid) return invalid;
+  const engine = createEngine(workspaceDir);
+  const mode = options?.mode?.trim() as TaiyiModeId | undefined;
+  const step = runModeStep(engine, workspaceDir, taiyiRoot, resolved.slug, mode);
+  const banner = formatActiveModesBanner(taiyiRoot);
+  const text = banner ? `[${banner}]\n\n${step.text}` : step.text;
+  if (plain) return { ok: step.ok, text, step };
+  return { ok: step.ok, step: { ...step, text } };
 }

@@ -71,6 +71,11 @@ export class WorkflowEngine {
     return path.join(this.changesDir(), slug);
   }
 
+  /** `.taiyi` 根目录 */
+  get taiyiRoot(): string {
+    return this.workspaceRoot;
+  }
+
   initChange(slug: string, options?: InitChangeOptions): ChangeState & { seeded: string[] } {
     assertValidSlug(slug);
     const dir = this.changeDir(slug);

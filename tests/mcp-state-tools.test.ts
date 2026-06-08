@@ -10,7 +10,11 @@ import {
   taiyiStateCancel,
   taiyiStateListActive,
   taiyiStateRead,
+  taiyiDetectKeyword,
+  taiyiProjectRemember,
+  taiyiRunWorkflow,
 } from "../src/mcp/state-tools.js";
+import { taiyiLspGotoDefinition } from "../src/mcp/lsp-tools.js";
 
 describe("mcp state-tools", () => {
   let workspace: string;
@@ -71,5 +75,30 @@ describe("mcp state-tools", () => {
     }
     const list = taiyiStateListActive(workspace);
     expect(list.active.length).toBe(0);
+  });
+
+  it("keyword detects ralph", () => {
+    const r = taiyiDetectKeyword(workspace, "ralph until green");
+    expect(r.ok).toBe(true);
+    expect(r.text).toContain("/taiyi:ralph");
+  });
+
+  it("remember reads project memory", () => {
+    const r = taiyiProjectRemember(workspace, "test note from MCP");
+    expect(r.ok).toBe(true);
+    expect(r.text).toContain("test note from MCP");
+  });
+
+  it("workflow runs external-context guide", () => {
+    const r = taiyiRunWorkflow(workspace, "external-context", "demo-change");
+    expect(r.ok).toBe(true);
+    expect(r.text).toContain("External Context");
+  });
+
+  it("lsp goto finds symbol in repo", () => {
+    fs.writeFileSync(path.join(workspace, "sample.ts"), "export function demoFn() {}\n");
+    const r = taiyiLspGotoDefinition(workspace, "demoFn");
+    expect(r.ok).toBe(true);
+    expect(r.matches.some((m) => m.includes("sample.ts"))).toBe(true);
   });
 });

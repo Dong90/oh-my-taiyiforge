@@ -22,9 +22,19 @@
 
 `.taiyi/changes/<slug>/` 为**真源**；OpenSpec 为可选镜像/归档，与 Spec-Kit **不冲突**。
 
-## 核心引擎能力（对齐架构图）
+## 架构总览
 
-架构图真源：[taiyiforge-architecture.svg](./taiyiforge-architecture.svg)（v0.22）
+<p align="center">
+  <img
+    src="./taiyiforge-architecture.png"
+    alt="TaiyiForge 架构图 — 六大标准 × 中心引擎 × 九阶段 × 17 Skill × 三重门禁"
+    width="960"
+  />
+</p>
+
+> 可编辑真源：[taiyiforge-architecture.svg](./taiyiforge-architecture.svg)（v0.22）· 高清位图（4× / 7200×8400）：[taiyiforge-architecture.png](./taiyiforge-architecture.png) · 重生成：`python3 scripts/generate-architecture-svg.py`
+
+## 核心引擎能力（对齐架构图）
 
 | 能力 | 实现 |
 |------|------|

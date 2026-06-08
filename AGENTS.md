@@ -25,7 +25,7 @@ npm install oh-my-taiyiforge
 
 ## Claude Code / Cursor / Codex（OMX 风格）
 
-安装后各端同步 **16 个** `taiyi-*` Skill（含 `taiyi-forge` 引擎控制面 + `taiyi-orchestrator`）。
+安装后各端同步 **18 个** `taiyi-*` Skill（含 `taiyi-forge` 引擎控制面 + `taiyi-orchestrator` + `taiyi-ultrawork` 等）。
 
 ```bash
 npx taiyi-forge-install --all

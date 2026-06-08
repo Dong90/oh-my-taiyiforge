@@ -1,4 +1,5 @@
 import { listChanges } from "./list-changes.js";
+import { validateSlug } from "./slug.js";
 
 export type ResolveSlugResult =
   | { ok: true; slug: string; inferred: boolean }
@@ -7,7 +8,10 @@ export type ResolveSlugResult =
 /** 未传 slug 时：唯一进行中变更 → 最近更新；0 个或多于 1 个则报错（对齐 OpenSpec apply 推断规则） */
 export function resolveActiveSlug(taiyiRoot: string, explicit?: string): ResolveSlugResult {
   if (explicit?.trim()) {
-    return { ok: true, slug: explicit.trim(), inferred: false };
+    const slug = explicit.trim();
+    const valid = validateSlug(slug);
+    if (!valid.ok) return { ok: false, error: valid.error };
+    return { ok: true, slug, inferred: false };
   }
 
   const active = listChanges(taiyiRoot).filter((c) => c.workflowActive);

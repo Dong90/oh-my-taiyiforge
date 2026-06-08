@@ -43,8 +43,14 @@ User invoked TaiyiForge. **Every engine verb has a slash alias** — map `$ARGUM
 | `/taiyi:land` | gstack `land-and-deploy` |
 | `/taiyi:gstack review` | gstack `review` |
 | `/taiyi:gstack qa` | gstack `qa` |
+| `/taiyi:gstack <skill>` | any gstack Skill (design-shotgun · autoplan · canary · gstack-upgrade …) |
 | `/taiyi:release` | gstack `document-release` |
+| `/taiyi:sp <skill>` | any Superpowers Skill (writing-skills …) |
+| `/taiyi:security` | semgrep + trivy (+ optional gstack cso) |
+| `/taiyi:e2e` | `npx playwright test` + verification |
+| `/taiyi:resume` | HANDOFF.md + status |
+| `/taiyi:help` | slash catalog |
 
-No slash (chat-only): `/taiyi:explore` · `/taiyi:flow` · `/taiyi:full-flow` · `/taiyi:tdd` — load Skills per prompt.
+Skill loaders: `/taiyi:explore` · `/taiyi:flow` · `/taiyi:full-flow` · `/taiyi:tdd` — see each prompt.
 
 Run from project root. Show stdout/stderr. Full list: `docs/taiyi/commands.yaml`.

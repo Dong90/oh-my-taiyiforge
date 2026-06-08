@@ -16,7 +16,18 @@ import {
   taiyiStateCancel,
   taiyiStateListActive,
   taiyiStateRead,
+  taiyiModeStep,
+  taiyiModeStop,
+  taiyiModeList,
+  taiyiProjectRemember,
+  taiyiDetectKeyword,
+  taiyiRunWorkflow,
 } from "./state-tools.js";
+import {
+  taiyiLspDiagnostics,
+  taiyiLspFindReferences,
+  taiyiLspGotoDefinition,
+} from "./lsp-tools.js";
 
 const server = new Server(
   { name: "taiyi-forge", version: "0.22.0" },
@@ -88,6 +99,116 @@ server.setRequestHandler(ListToolsRequestSchema, async () => ({
         },
       },
     },
+    {
+      name: "taiyi_mode_step",
+      description:
+        "OMC-style single runtime step (ralph verify, autopilot continue, harness). Prefer over chat memory when modes are active.",
+      inputSchema: {
+        type: "object",
+        properties: {
+          slug: { type: "string" },
+          mode: {
+            type: "string",
+            description: "ralph | autopilot | ultraqa | ultrawork | team | ralplan | plan",
+          },
+          workspace: { type: "string" },
+        },
+      },
+    },
+    {
+      name: "taiyi_mode_stop",
+      description: "Cancel active runtime modes. Aligns with /taiyi:stop-mode and stopomc keyword.",
+      inputSchema: {
+        type: "object",
+        properties: {
+          slug: { type: "string" },
+          force: { type: "boolean" },
+          workspace: { type: "string" },
+        },
+      },
+    },
+    {
+      name: "taiyi_mode_list",
+      description: "List active .taiyi/runtime modes. Aligns with /taiyi:modes.",
+      inputSchema: {
+        type: "object",
+        properties: {
+          workspace: { type: "string" },
+        },
+      },
+    },
+    {
+      name: "taiyi_remember",
+      description: "Read/write .taiyi/project-memory.json. Optional note appends a fact. Aligns with /taiyi:remember and OpenCode taiyi_remember.",
+      inputSchema: {
+        type: "object",
+        properties: {
+          note: { type: "string" },
+          workspace: { type: "string" },
+        },
+      },
+    },
+    {
+      name: "taiyi_keyword",
+      description: "Detect OMC-compatible keywords (ralph, autopilot, team, ccg, deslop, ultrathink, deepsearch). Aligns with OpenCode taiyi_keyword.",
+      inputSchema: {
+        type: "object",
+        properties: {
+          prompt: { type: "string", description: "User message to scan" },
+          workspace: { type: "string" },
+        },
+        required: ["prompt"],
+      },
+    },
+    {
+      name: "taiyi_workflow",
+      description:
+        "Run workflow skill guide: plan, ralplan, ultraqa, ccg, sciomc, deepinit, external-context, ai-slop-cleaner, ecomode.",
+      inputSchema: {
+        type: "object",
+        properties: {
+          skill: { type: "string" },
+          slug: { type: "string" },
+          workspace: { type: "string" },
+        },
+        required: ["skill"],
+      },
+    },
+    {
+      name: "taiyi_lsp_diagnostics",
+      description: "Lightweight diagnostics via npm typecheck/lint/tsc (OMC lsp_diagnostics parity). Set TAIYI_LSP=off to skip.",
+      inputSchema: {
+        type: "object",
+        properties: {
+          workspace: { type: "string" },
+        },
+      },
+    },
+    {
+      name: "taiyi_lsp_goto_definition",
+      description: "Text search for symbol definition candidates (OMC lsp_goto_definition fallback).",
+      inputSchema: {
+        type: "object",
+        properties: {
+          symbol: { type: "string" },
+          file: { type: "string", description: "Optional path substring filter" },
+          workspace: { type: "string" },
+        },
+        required: ["symbol"],
+      },
+    },
+    {
+      name: "taiyi_lsp_find_references",
+      description: "Text search for symbol references (OMC lsp_find_references fallback).",
+      inputSchema: {
+        type: "object",
+        properties: {
+          symbol: { type: "string" },
+          workspace: { type: "string" },
+        },
+        required: ["symbol"],
+      },
+    },
   ],
 }));
 
@@ -96,6 +217,12 @@ server.setRequestHandler(CallToolRequestSchema, async (req) => {
     slug?: string;
     note?: string;
     workspace?: string;
+    mode?: string;
+    force?: boolean;
+    prompt?: string;
+    skill?: string;
+    symbol?: string;
+    file?: string;
   };
   const workspace = resolveWorkspaceDir(args.workspace);
 
@@ -176,6 +303,135 @@ server.setRequestHandler(CallToolRequestSchema, async (req) => {
             ),
           },
         ],
+      };
+    }
+
+    if (req.params.name === "taiyi_mode_step") {
+      const r = taiyiModeStep(workspace, args.slug, args.mode);
+      return {
+        content: [{ type: "text", text: JSON.stringify({ ok: r.ok, text: r.text, step: r.step }, null, 2) }],
+        isError: !r.ok,
+      };
+    }
+
+    if (req.params.name === "taiyi_mode_stop") {
+      const r = taiyiModeStop(workspace, { slug: args.slug, force: args.force });
+      return {
+        content: [{ type: "text", text: JSON.stringify({ ok: r.ok, text: r.text, result: r.result }, null, 2) }],
+        isError: !r.ok,
+      };
+    }
+
+    if (req.params.name === "taiyi_mode_list") {
+      const r = taiyiModeList(workspace);
+      return {
+        content: [
+          {
+            type: "text",
+            text: JSON.stringify({ ok: r.ok, text: r.text, active: r.active }, null, 2),
+          },
+        ],
+      };
+    }
+
+    if (req.params.name === "taiyi_remember") {
+      const r = taiyiProjectRemember(workspace, args.note);
+      return {
+        content: [
+          {
+            type: "text",
+            text: JSON.stringify({ ok: r.ok, text: r.text, memory: r.memory }, null, 2),
+          },
+        ],
+      };
+    }
+
+    if (req.params.name === "taiyi_keyword") {
+      if (!args.prompt?.trim()) {
+        return {
+          content: [{ type: "text", text: JSON.stringify({ ok: false, error: "prompt required" }) }],
+          isError: true,
+        };
+      }
+      const r = taiyiDetectKeyword(workspace, args.prompt);
+      return {
+        content: [
+          {
+            type: "text",
+            text: JSON.stringify({ ok: r.ok, text: r.text, detected: r.detected }, null, 2),
+          },
+        ],
+        isError: !r.ok,
+      };
+    }
+
+    if (req.params.name === "taiyi_workflow") {
+      if (!args.skill?.trim()) {
+        return {
+          content: [{ type: "text", text: JSON.stringify({ ok: false, error: "skill required" }) }],
+          isError: true,
+        };
+      }
+      const r = taiyiRunWorkflow(workspace, args.skill, args.slug);
+      return {
+        content: [
+          {
+            type: "text",
+            text: JSON.stringify({ ok: r.ok, text: r.text, result: r.result, step: r.step }, null, 2),
+          },
+        ],
+        isError: !r.ok,
+      };
+    }
+
+    if (req.params.name === "taiyi_lsp_diagnostics") {
+      const r = taiyiLspDiagnostics(workspace);
+      return {
+        content: [
+          {
+            type: "text",
+            text: JSON.stringify({ ok: r.ok, text: r.text, source: r.source }, null, 2),
+          },
+        ],
+        isError: !r.ok,
+      };
+    }
+
+    if (req.params.name === "taiyi_lsp_goto_definition") {
+      if (!args.symbol?.trim()) {
+        return {
+          content: [{ type: "text", text: JSON.stringify({ ok: false, error: "symbol required" }) }],
+          isError: true,
+        };
+      }
+      const r = taiyiLspGotoDefinition(workspace, args.symbol, args.file);
+      return {
+        content: [
+          {
+            type: "text",
+            text: JSON.stringify({ ok: r.ok, text: r.text, matches: r.matches }, null, 2),
+          },
+        ],
+        isError: !r.ok,
+      };
+    }
+
+    if (req.params.name === "taiyi_lsp_find_references") {
+      if (!args.symbol?.trim()) {
+        return {
+          content: [{ type: "text", text: JSON.stringify({ ok: false, error: "symbol required" }) }],
+          isError: true,
+        };
+      }
+      const r = taiyiLspFindReferences(workspace, args.symbol);
+      return {
+        content: [
+          {
+            type: "text",
+            text: JSON.stringify({ ok: r.ok, text: r.text, matches: r.matches }, null, 2),
+          },
+        ],
+        isError: !r.ok,
       };
     }
 

@@ -37,11 +37,22 @@ description: TaiyiForge 引擎控制面 — 用户只说 /taiyi:* 斜杠，Agent
 | `/taiyi:land` | land-and-deploy |
 | `/taiyi:gstack review` | review |
 | `/taiyi:gstack qa` | qa |
+| `/taiyi:gstack <skill>` | design-shotgun · autoplan · canary · gstack-upgrade … |
 | `/taiyi:release` | document-release |
+
+## 扩展斜杠
+
+| 斜杠 | 用途 |
+|------|------|
+| `/taiyi:sp <skill>` | Superpowers（writing-skills …） |
+| `/taiyi:security` | semgrep + trivy |
+| `/taiyi:e2e` | Playwright E2E |
+| `/taiyi:resume` | HANDOFF + status |
+| `/taiyi:help` | 斜杠总览 |
 
 ## 无 shell 子命令（仅 Skill）
 
-`/taiyi:explore` · `/taiyi:flow` · `/taiyi:full-flow` · `/taiyi:tdd plan|dev`
+`/taiyi:explore` · `/taiyi:flow` · `/taiyi:full-flow` · `/taiyi:tdd plan|dev` · `/taiyi:gstack *` · `/taiyi:sp *`
 
 完整列表：`docs/taiyi/commands.yaml` → `slash_catalog`
 

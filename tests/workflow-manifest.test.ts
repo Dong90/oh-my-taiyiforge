@@ -53,6 +53,15 @@ describe("workflow-manifest", () => {
     expect(getHarnessHooksFromManifest("review").some((h) => h.tool === "trivy")).toBe(true);
   });
 
+  it("includes optional taiyi-ultrawork on task and dev", () => {
+    resetWorkflowManifestCache();
+    const taskHook = getHarnessHooksFromManifest("task").find((h) => h.skill === "taiyi-ultrawork");
+    const devHook = getHarnessHooksFromManifest("dev").find((h) => h.skill === "taiyi-ultrawork");
+    expect(taskHook?.optional).toBe(true);
+    expect(devHook?.optional).toBe(true);
+    expect(taskHook?.tool).toBe("taiyi");
+  });
+
   it("profiles skip phases for lite", () => {
     resetWorkflowManifestCache();
     const lite = getWorkflowManifest().profiles.lite;

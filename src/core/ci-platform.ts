@@ -10,7 +10,14 @@ import type { ChangeState } from "./types.js";
 
 export type CiPlatformId = InstallTarget;
 
-const EXPECTED_SKILLS = 17; // 14 taiyi-* phases + orchestrator + forge + compress
+function countTaiyiSkillsFromSource(skillsSrc: string): number {
+  if (!fs.existsSync(skillsSrc)) return 18;
+  return fs.readdirSync(skillsSrc).filter((n) => n.startsWith("taiyi-")).length;
+}
+
+export function expectedTaiyiSkillCount(pkgRoot: string): number {
+  return countTaiyiSkillsFromSource(skillSourceRoot(pkgRoot));
+}
 
 export type CiPlatformProbe = {
   platform: CiPlatformId;
@@ -87,13 +94,14 @@ export function smokeInstallPlatformSkills(
 }
 
 export function probePlatformCi(pkgRoot: string, platform: CiPlatformId): CiPlatformProbe {
+  const expectedSkills = expectedTaiyiSkillCount(pkgRoot);
   const { skillsDir, count } = smokeInstallPlatformSkills(pkgRoot, platform);
   const cliOnPath = detectCli(platform);
   let pluginOk = true;
   if (platform === "opencode") {
     pluginOk = fs.existsSync(path.join(pkgRoot, "dist/plugin/index.js"));
   }
-  const ok = count >= EXPECTED_SKILLS && pluginOk;
+  const ok = count >= expectedSkills && pluginOk;
   return {
     platform,
     skillsInstalled: count,
@@ -105,7 +113,7 @@ export function probePlatformCi(pkgRoot: string, platform: CiPlatformId): CiPlat
     ok,
     detail: ok
       ? `${count} skills synced; CLI=${cliOnPath ?? "n/a"}`
-      : `skills=${count}/${EXPECTED_SKILLS} plugin=${pluginOk}`,
+      : `skills=${count}/${expectedSkills} plugin=${pluginOk}`,
   };
 }
 

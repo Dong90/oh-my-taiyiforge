@@ -59,8 +59,14 @@
 | `/taiyi:gstack review` | PR diff 结构审查（gstack review） |
 | `/taiyi:gstack qa` | 站点 QA（test 阶段 optional） |
 | `/taiyi:release` | 文档/CHANGELOG 发布同步（integration optional） |
+| `/taiyi:gstack <skill>` | 任意 gstack（design-shotgun · autoplan · canary · gstack-upgrade …） |
+| `/taiyi:sp <skill>` | 任意 Superpowers（writing-skills …） |
+| `/taiyi:security` | semgrep + trivy（review） |
+| `/taiyi:e2e` | Playwright E2E（test） |
+| `/taiyi:resume` | 从 HANDOFF 恢复 |
+| `/taiyi:help` | 斜杠总览 |
 
-写工件仍用 **taiyi-change … taiyi-integration** Skill，不走 `/taiyi:*`。
+写工件用 **`/taiyi:write`** 或 **`/taiyi:change` … `/taiyi:integration`**（等价 `@taiyi-*` Skill）。场景捷径：**`/taiyi:feature`** · **`/taiyi:bug`** · **`/taiyi:ui-test`**。
 
 **new/init 只铺当前阶段模板**（默认仅 `CHANGE.md`）；`CONTEXT.md` 由 `taiyi-intel-scan` 产出，不会预置。过关后引擎才为下一阶段生成模板文件。
 

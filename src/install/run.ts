@@ -6,6 +6,7 @@ import { installClaudeControlPlane } from "./claude-control.js";
 import { addPluginToConfigFile } from "./opencode-plugin.js";
 import {
   claudeConfigDir,
+  codexConfigPath,
   codexPromptsDir,
   defaultSkillTargets,
   opencodeConfigCandidates,
@@ -15,6 +16,7 @@ import {
 import { installCursorRules } from "./cursor-rules.js";
 import { installThirdPartyDeps, shouldInstallDeps } from "./third-party-deps.js";
 import { syncCodexPrompts } from "./sync-codex-prompts.js";
+import { installCodexDeveloperInstructions } from "./sync-codex-config.js";
 import { defaultCursorCommandsDir, syncCursorCommands } from "./sync-cursor-commands.js";
 import { installCursorPhaseGuardHook } from "./sync-cursor-hooks.js";
 import { installClaudePhaseGuardHook } from "./sync-claude-hooks.js";
@@ -135,7 +137,7 @@ function formatInstallSummary(targets: InstallTarget[], dirs: ReturnType<typeof 
     lines.push(`  OpenCode  → ${dirs.opencode}/taiyi-*`);
   }
   if (targets.includes("codex")) {
-    lines.push(`  Codex     → ${dirs.codex}/taiyi-* + AGENTS.md + $taiyi-new … + ~/.codex/mcp.json`);
+    lines.push(`  Codex     → ${dirs.codex}/taiyi-* + AGENTS.md + config.toml ($taiyi-preflight) + prompts + ~/.codex/mcp.json`);
   }
   if (targets.includes("claude")) {
     lines.push(`  Claude    → ${dirs.claude}/taiyi-* + CLAUDE.md + ~/.claude/mcp.json + .claude/settings.json hook`);
@@ -178,6 +180,7 @@ export async function runInstall(opts: RunInstallOptions = {}): Promise<InstallR
   if (targets.includes("codex")) {
     results.push({ ...syncTaiyiSkills(skillsSrc, dirs.codex), target: "codex" });
     results.push(installCodexAgents(resolvedRoot, path.dirname(dirs.codex)));
+    results.push(installCodexDeveloperInstructions(codexConfigPath()));
     results.push(syncCodexPrompts(path.join(resolvedRoot, "prompts"), codexPromptsDir()));
     results.push(installCodexMcpConfig());
   }
@@ -276,7 +279,7 @@ export async function runInstallCli(argv: string[]): Promise<number> {
   --all                 四端全装（默认，无参数时同 --all）
   --opencode              ~/.config/opencode skills + npm + opencode.json plugin
   --claude                ~/.claude/skills/taiyi-* + CLAUDE.md 控制面
-  --codex                 ~/.codex/skills/taiyi-* + AGENTS.md + prompts
+  --codex                 ~/.codex/skills/taiyi-* + AGENTS.md + config.toml ($taiyi-preflight) + prompts
   --cursor                ~/.cursor/skills/taiyi-* + commands/taiyi-*
   --skip-deps             不自动安装 OpenSpec / gstack / Superpowers / web-quality-skills
 

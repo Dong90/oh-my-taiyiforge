@@ -1,0 +1,150 @@
+# Taiyi 专 Agent 角色（原生 · 自 OMC agent 池迁移）
+# 运行时真源: src/core/agent-roles.ts
+# 本文件由 renderAgentRolesYaml() 生成 — 勿手改 roles/phase_defaults/manual_only
+
+version: 1
+description: 29 个专 Agent；按阶段默认启用，可通过 /taiyi:agent 单独加载
+
+roles:
+  analyst:
+    label: 需求分析
+    phases: [change, requirement]
+    when: 澄清范围、风险、验收标准
+  api-reviewer:
+    label: API 审查
+    phases: [design, review]
+    when: HTTP 契约、版本、错误形状
+  architect:
+    label: 架构师
+    phases: [design]
+    when: "≥2 方案与 ADR"
+  code-reviewer:
+    label: 代码审查
+    phases: [review]
+    when: REVIEW.md 与 review-loop
+  code-simplifier:
+    label: 简化重构
+    phases: [dev, review]
+    when: 行为不变的前提下降复杂度
+  critic:
+    label: 方案挑战
+    phases: [design, review]
+    when: 挑战前提与 scope
+  debugger:
+    label: 排错
+    phases: [dev, test]
+    when: 测试失败、回归、异常栈
+  dependency-expert:
+    label: 依赖专家
+    phases: [design, dev]
+    when: 升级、供应链、license
+  designer:
+    label: UI/UX 设计
+    phases: [ui-design]
+    when: 界面契约与无障碍
+  document-specialist:
+    label: 规格文档
+    phases: [requirement, integration]
+    when: AC、API 契约、归档
+  executor:
+    label: 实现
+    phases: [dev]
+    when: TDD 红绿重构写代码
+  explore:
+    label: 代码库探索
+    phases: [change]
+    when: 立项前摸清仓库结构与约束
+  git-master:
+    label: Git 交付
+    phases: [review, integration]
+    when: trailer、PR、合并
+  information-architect:
+    label: 信息架构
+    phases: [design, ui-design]
+    when: 导航、内容结构、IA
+  performance-reviewer:
+    label: 性能审查
+    phases: [dev, review]
+    when: 瓶颈、回归、bundle
+  planner:
+    label: 执行计划
+    phases: [requirement, task]
+    when: bite-sized 切片与依赖顺序
+  product-analyst:
+    label: 产品分析
+    phases: [change, requirement]
+    when: 竞品、指标、可行性
+  product-manager:
+    label: 产品经理
+    phases: [change, requirement]
+    when: 范围、优先级、用户故事
+  qa-tester:
+    label: QA 走查
+    phases: [test]
+    when: 站点/E2E 手工+自动 QA
+  quality-strategist:
+    label: 质量策略
+    phases: [requirement, test]
+    when: 验收维度、门禁策略
+  scientist:
+    label: 实验验证
+    phases: [design, test]
+    when: spike/对比实验再定案
+  security-reviewer:
+    label: 安全审查
+    phases: [review]
+    when: semgrep/trivy 与威胁面
+  style-reviewer:
+    label: 风格审查
+    phases: [dev, review]
+    when: 命名、格式、lint 一致性
+  test-engineer:
+    label: 测试工程
+    phases: [task, test]
+    when: 测试计划与 TEST.md 证据
+  tracer:
+    label: 追踪取证
+    phases: [test, review]
+    when: 复现步骤、截图、日志证据
+  ux-researcher:
+    label: UX 研究
+    phases: [change, ui-design]
+    when: 用户场景、可用性假设
+  verifier:
+    label: 完成验证
+    phases: [test, integration]
+    when: 声明完成前须有运行输出
+  vision:
+    label: 视觉验证
+    phases: [ui-design, test]
+    when: 截图对比、视觉回归
+  writer:
+    label: 文档
+    phases: [integration]
+    when: CHANGELOG 与集成说明
+
+phase_defaults:
+  change: [analyst, explore]
+  requirement: [analyst, planner, document-specialist]
+  design: [architect, critic, scientist]
+  ui-design: [designer]
+  task: [planner, test-engineer]
+  dev: [executor, debugger, test-engineer]
+  test: [verifier, qa-tester, tracer, debugger]
+  review: [code-reviewer, security-reviewer, style-reviewer, api-reviewer, performance-reviewer, critic, git-master]
+  integration: [verifier, writer, git-master]
+
+# 不在 phase_defaults 中；仅 /taiyi:agent <role> 手动加载
+manual_only:
+  - code-simplifier
+  - dependency-expert
+  - information-architect
+  - product-analyst
+  - product-manager
+  - quality-strategist
+  - ux-researcher
+  - vision
+
+parallel:
+  team: /taiyi:team
+  ultrawork: /taiyi:ultrawork

@@ -26,6 +26,12 @@ dev/test 完成
 | `/taiyi:gstack review` | `review` | PR/diff 结构审查（≠ `/taiyi:review-loop`） |
 | `/taiyi:gstack qa` | `qa` | 站点 QA（test 阶段 optional） |
 | `/taiyi:release` | `document-release` | 文档/CHANGELOG 发布同步 |
+| `/taiyi:gstack <skill>` | 任意 gstack | design-shotgun · autoplan · canary · gstack-upgrade 等 |
+| `/taiyi:sp <skill>` | Superpowers | writing-skills 等 |
+| `/taiyi:security` | semgrep + trivy | SAST/漏洞（review） |
+| `/taiyi:e2e` | Playwright | E2E（test） |
+| `/taiyi:resume` | HANDOFF + status | 恢复会话 |
+| `/taiyi:help` | — | 斜杠总览 |
 
 Codex：`$taiyi-ship`、`$taiyi-land`、`$taiyi-commit` 等（`prompts/taiyi-*.md`）。
 

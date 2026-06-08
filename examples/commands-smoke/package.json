@@ -1,0 +1,11 @@
+{
+  "name": "taiyi-commands-smoke",
+  "private": true,
+  "description": "TaiyiForge CLI 全命令 smoke 夹具工作区（见 commands.manifest.json）",
+  "scripts": {
+    "test": "node -e \"process.exit(0)\""
+  },
+  "taiyi": {
+    "deliveryVerifyCmd": "npm test"
+  }
+}

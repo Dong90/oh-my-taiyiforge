@@ -263,6 +263,10 @@ phases:
       - tool: superpowers
         skill: test-driven-development
         when: 切片测试计划（/taiyi:tdd plan）
+      - tool: taiyi
+        skill: taiyi-ultrawork
+        optional: true
+        when: TASK.md 多切片并行或 /taiyi:ultrawork（TAIYI_ULW_AUTO_TASK=1 强制 Task 派发）
   dev:
     order: 6
     taiyi_skill: taiyi-dev
@@ -292,6 +296,10 @@ phases:
         skill: using-git-worktrees
         optional: true
         when: 隔离 worktree 开发
+      - tool: taiyi
+        skill: taiyi-ultrawork
+        optional: true
+        when: 多切片并行 dev 或 /taiyi:ultrawork（TAIYI_ULW_AUTO_TASK=1 强制 Task 派发）
   test:
     order: 7
     taiyi_skill: taiyi-test

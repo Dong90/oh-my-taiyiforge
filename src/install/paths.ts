@@ -42,6 +42,10 @@ export function codexPromptsDir(): string {
   return process.env.CODEX_PROMPTS_DIR || path.join(homeDir(), ".codex", "prompts");
 }
 
+export function codexConfigPath(): string {
+  return process.env.CODEX_CONFIG_PATH || path.join(homeDir(), ".codex", "config.toml");
+}
+
 export function claudeConfigDir(): string {
   return process.env.CLAUDE_CONFIG_DIR || path.join(homeDir(), ".claude");
 }

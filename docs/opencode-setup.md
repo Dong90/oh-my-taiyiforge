@@ -10,8 +10,9 @@ npm install oh-my-taiyiforge
 
 1. 将 `taiyi-*` skills 同步到 `~/.config/opencode/skills/`
 2. 同步到 `~/.claude/skills/`、`~/.codex/skills/`、`~/.cursor/skills/`（四端同源）
-3. 在 `~/.codex/AGENTS.md` 插入 TaiyiForge 指引段落（若不存在则创建）
-4. 向 **`~/.config/opencode/opencode.json`** 的 `plugin` 数组追加 `"oh-my-taiyiforge"`（若尚未存在）
+3. 在 `~/.codex/AGENTS.md` 插入 TaiyiForge 指引段落；在 **`~/.codex/config.toml`** 写入 `developer_instructions`（**$taiyi-preflight** 每轮纪律）
+4. 同步 `~/.codex/prompts/taiyi-*.md`（含 `$taiyi-preflight`）
+5. 向 **`~/.config/opencode/opencode.json`** 的 `plugin` 数组追加 `"oh-my-taiyiforge"`（若尚未存在）
 
 本地开发包：
 

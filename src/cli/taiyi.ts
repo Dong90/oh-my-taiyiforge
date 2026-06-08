@@ -36,6 +36,21 @@ import {
   taiyiCiPrompt,
   taiyiReviewCheck,
   taiyiReviewLoop,
+  taiyiRalph,
+  taiyiAutopilot,
+  taiyiTeam,
+  taiyiUltrawork,
+  taiyiAgent,
+  taiyiWrite,
+  taiyiPhaseWrite,
+  taiyiFeature,
+  taiyiBug,
+  taiyiStep,
+  taiyiStopMode,
+  taiyiModes,
+  taiyiRemember,
+  taiyiKeyword,
+  taiyiWorkflowSkill,
   taiyiToken,
 } from "../plugin/handlers.js";
 import type { CiPlatformId } from "../core/ci-platform.js";
@@ -92,6 +107,19 @@ function usage(): void {
   npm run taiyi -- token compress <slug>     → /taiyi:token compress
   npm run taiyi -- review-check <slug>       → 机器审查 REVIEW.md（不计轮次）
   npm run taiyi -- review-loop [slug]        → /taiyi:review-loop — 不过则继续修再跑
+  npm run taiyi -- ralph [slug]              → /taiyi:ralph — 验证命令不过则修到绿
+  npm run taiyi -- autopilot [slug]          → /taiyi:autopilot — 九阶段全自动指引
+  npm run taiyi -- team [slug]               → /taiyi:team — plan/exec/verify/fix 泳道
+  npm run taiyi -- ultrawork [slug]          → /taiyi:ultrawork — task/dev 并行切片
+  npm run taiyi -- agent <role|list> [slug]  → /taiyi:agent — 专 Agent 角色协议
+  npm run taiyi -- plan|ralplan|ultraqa|… [slug]  → workflow skills（见 stop-mode / modes）
+  npm run taiyi -- step [slug] [--mode ralph|autopilot|…]  → /taiyi:step — OMC 式单步驱动
+  npm run taiyi -- modes                    → /taiyi:modes — 列出活跃模式
+  npm run taiyi -- remember [note]          → /taiyi:remember — 项目记忆
+  npm run taiyi -- write [slug]              → /taiyi:write — 写当前阶段工件
+  npm run taiyi -- change|requirement|… [slug] → /taiyi:change 等九阶段写工件
+  npm run taiyi -- feature [标题或slug]      → /taiyi:feature — 新功能场景
+  npm run taiyi -- bug [标题或slug]          → /taiyi:bug — lite 修 bug 场景
 
 Profile: full | api（跳过 ui-design）| lite（五阶段）
 Token: 见 docs/taiyi/token-budget.yaml · TAIYI_TOKEN_BUDGET / TAIYI_TOKEN_ENFORCE
@@ -103,6 +131,43 @@ const templatesDir = resolveTemplatesDir(import.meta.url);
 const engine = new WorkflowEngine(taiyiRoot, templatesDir);
 const argv = process.argv.slice(2).filter((a) => a !== "--json");
 const [cmd, ...args] = argv;
+
+const WORKFLOW_SKILL_VERBS = new Set([
+  "plan",
+  "ralplan",
+  "ultraqa",
+  "visual-verdict",
+  "deep-interview",
+  "ai-slop-cleaner",
+  "ecomode",
+  "ccg",
+  "sciomc",
+  "deepinit",
+  "external-context",
+]);
+
+const PHASE_WRITE_VERBS = new Set([
+  "change",
+  "requirement",
+  "design",
+  "ui-design",
+  "task",
+  "dev",
+  "test",
+  "review",
+  "integration",
+]);
+
+function printHandlerResult(r: { ok: boolean; text?: string; error?: string }, exitOnFail = false): void {
+  if (!r.ok) {
+    if ("text" in r && r.text) console.error(r.text);
+    else if ("error" in r && r.error) console.error(r.error);
+    if (exitOnFail) process.exit(1);
+    return;
+  }
+  if (jsonMode) console.log(JSON.stringify(r, null, 2));
+  else if ("text" in r && r.text) console.log(r.text);
+}
 
 function parseProfile(argv: string[]): ChangeProfile | undefined {
   const idx = argv.indexOf("--profile");
@@ -772,6 +837,81 @@ switch (cmd) {
     }
     process.exit(r.ok ? 0 : 1);
   }
+  case "ralph": {
+    const slug = requireSlug(args);
+    const r = taiyiRalph(workspaceDir, slug, !jsonMode);
+    if (jsonMode) {
+      console.log(JSON.stringify(r, null, 2));
+    } else if ("text" in r && r.text) {
+      console.log(r.text);
+    }
+    process.exit(r.ok ? 0 : 1);
+  }
+  case "autopilot": {
+    const slug = requireSlug(args);
+    const r = taiyiAutopilot(workspaceDir, slug, !jsonMode);
+    if (!r.ok && !("text" in r && r.text)) {
+      console.error("error" in r ? r.error : "autopilot failed");
+      process.exit(1);
+    }
+    if (jsonMode) console.log(JSON.stringify(r, null, 2));
+    else if ("text" in r && r.text) console.log(r.text);
+    process.exit(r.ok ? 0 : 1);
+  }
+  case "team": {
+    const slug = requireSlug(args);
+    const r = taiyiTeam(workspaceDir, slug, !jsonMode);
+    if (!r.ok) {
+      if ("text" in r && r.text) console.error(r.text);
+      else console.error("error" in r ? r.error : "team failed");
+      process.exit(1);
+    }
+    if (jsonMode) console.log(JSON.stringify(r, null, 2));
+    else if ("text" in r && r.text) console.log(r.text);
+    process.exit(r.ok ? 0 : 1);
+  }
+  case "ultrawork": {
+    const slug = requireSlug(args);
+    const r = taiyiUltrawork(workspaceDir, slug, !jsonMode);
+    if (jsonMode) console.log(JSON.stringify(r, null, 2));
+    else if ("text" in r && r.text) console.log(r.text);
+    process.exit(r.ok ? 0 : 1);
+  }
+  case "agent": {
+    const { positional } = parseRepeatCount(stripFlags(args));
+    const role = positional[0];
+    if (!role) {
+      console.error("用法: agent <role|list> [slug]");
+      process.exit(1);
+    }
+    const r = taiyiAgent(workspaceDir, role, positional[1], !jsonMode);
+    if (!r.ok) {
+      if ("text" in r && r.text) console.error(r.text);
+      else console.error("error" in r ? r.error : "agent failed");
+      process.exit(1);
+    }
+    if (jsonMode) console.log(JSON.stringify(r, null, 2));
+    else if ("text" in r && r.text) console.log(r.text);
+    break;
+  }
+  case "write": {
+    const { positional } = parseRepeatCount(stripFlags(args));
+    const r = taiyiWrite(workspaceDir, positional[0], !jsonMode);
+    printHandlerResult(r, false);
+    break;
+  }
+  case "feature": {
+    const title = stripFlags(args).join(" ").trim();
+    const r = taiyiFeature(workspaceDir, title || undefined, !jsonMode);
+    printHandlerResult(r, false);
+    break;
+  }
+  case "bug": {
+    const title = stripFlags(args).join(" ").trim();
+    const r = taiyiBug(workspaceDir, title || undefined, !jsonMode);
+    printHandlerResult(r, false);
+    break;
+  }
   case "token": {
     const [sub, ...tokenArgs] = args;
     const phaseIdx = tokenArgs.indexOf("--phase");
@@ -817,7 +957,64 @@ switch (cmd) {
     if ("text" in r && r.text) console.log(r.text);
     break;
   }
+  case "step": {
+    const modeIdx = args.indexOf("--mode");
+    const mode = modeIdx >= 0 ? args[modeIdx + 1] : undefined;
+    const slugArg = args.find((a) => !a.startsWith("--") && a !== mode);
+    const r = taiyiStep(workspaceDir, slugArg, { mode }, !jsonMode);
+    if (!r.ok && !("text" in r && r.text)) {
+      console.error("error" in r ? r.error : "step failed");
+      process.exit(1);
+    }
+    if (jsonMode) console.log(JSON.stringify(r, null, 2));
+    else if ("text" in r && r.text) console.log(r.text);
+    process.exit(r.ok ? 0 : 1);
+  }
+  case "stop-mode": {
+    const force = args.includes("--force") || args.includes("--all");
+    const slugArg = args.find((a) => !a.startsWith("--"));
+    const r = taiyiStopMode(workspaceDir, { force, slug: slugArg }, !jsonMode);
+    if (jsonMode) console.log(JSON.stringify(r, null, 2));
+    else if ("text" in r && r.text) console.log(r.text);
+    break;
+  }
+  case "modes": {
+    const r = taiyiModes(workspaceDir, !jsonMode);
+    if (jsonMode) console.log(JSON.stringify(r, null, 2));
+    else if ("text" in r && r.text) console.log(r.text);
+    break;
+  }
+  case "remember": {
+    const note = args.filter((a) => !a.startsWith("--")).join(" ").trim();
+    const r = taiyiRemember(workspaceDir, note || undefined, !jsonMode);
+    if (jsonMode) console.log(JSON.stringify(r, null, 2));
+    else if ("text" in r && r.text) console.log(r.text);
+    break;
+  }
+  case "keyword": {
+    const prompt = args.join(" ").trim();
+    const r = taiyiKeyword(workspaceDir, prompt, !jsonMode);
+    if (jsonMode) console.log(JSON.stringify(r, null, 2));
+    else if ("text" in r && r.text) console.log(r.text);
+    process.exit(r.ok ? 0 : 1);
+  }
   default:
+    if (cmd && WORKFLOW_SKILL_VERBS.has(cmd)) {
+      const { positional } = parseRepeatCount(stripFlags(args));
+      const r = taiyiWorkflowSkill(workspaceDir, cmd, positional[0], !jsonMode);
+      if (jsonMode) console.log(JSON.stringify(r, null, 2));
+      else if ("text" in r && r.text) console.log(r.text);
+      else if ("error" in r && r.error) console.error(r.error);
+      process.exit(r.ok ? 0 : 1);
+    }
+    if (cmd && PHASE_WRITE_VERBS.has(cmd)) {
+      const { positional } = parseRepeatCount(stripFlags(args));
+      const r = taiyiPhaseWrite(workspaceDir, cmd, positional[0], !jsonMode);
+      if (jsonMode) console.log(JSON.stringify(r, null, 2));
+      else if ("text" in r && r.text) console.log(r.text);
+      else if ("error" in r && r.error) console.error(r.error);
+      process.exit(r.ok ? 0 : 1);
+    }
     usage();
     process.exit(cmd ? 1 : 0);
 }

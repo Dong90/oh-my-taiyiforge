@@ -43,7 +43,7 @@ ${chatIntro}
 
 **主流程：** /taiyi:new · /taiyi:status · /taiyi:continue · /taiyi:apply · /taiyi:archive
 
-**常用辅助：** /taiyi:doctor · /taiyi:audit · /taiyi:verify · /taiyi:list · /taiyi:check · /taiyi:sync · /taiyi:handoff · /taiyi:cancel · /taiyi:loop · /taiyi:review-loop · /taiyi:review-check · /taiyi:token * · /taiyi:commit-trailers
+**常用辅助：** /taiyi:doctor · /taiyi:audit · /taiyi:verify · /taiyi:list · /taiyi:check · /taiyi:sync · /taiyi:handoff · /taiyi:cancel · /taiyi:loop · /taiyi:write · /taiyi:change … /taiyi:integration · /taiyi:feature · /taiyi:bug · /taiyi:ralph · /taiyi:autopilot · /taiyi:team · /taiyi:ultrawork · /taiyi:agent · /taiyi:review-loop · /taiyi:review-check · /taiyi:token * · /taiyi:commit-trailers
 
 **引擎斜杠（原 engine-only）：** /taiyi:init · /taiyi:complete · … · /taiyi:ci platform · /taiyi:ci prompt
 
@@ -68,4 +68,41 @@ ${skillBlock}
 ## 变更目录
 
 \`.taiyi/changes/<slug>/\` · 详见 \`docs/taiyi/control-plane.md\``;
+}
+
+/** Codex developer_instructions — 每轮 $taiyi-preflight 纪律（写入 ~/.codex/config.toml） */
+export function codexDeveloperInstructions(): string {
+  return `TaiyiForge Codex session loop (= $taiyi-preflight; prompt at ~/.codex/prompts/taiyi-preflight.md):
+
+BEFORE processing each user message:
+- Run: node node_modules/oh-my-taiyiforge/scripts/codex-keyword-preflight.mjs "<user text>"
+  (or scripts/taiyi-forge.sh keyword "<user text>")
+- Follow injected $taiyi-* prompts / activate modes from output.
+
+BEFORE ending each turn:
+- Run: node node_modules/oh-my-taiyiforge/scripts/codex-mode-reminder.mjs
+  (or scripts/taiyi-forge.sh modes)
+- If any ralph/autopilot/ultrawork/team mode is active: do NOT stop — run scripts/taiyi-forge.sh step [slug] until green or user says stopomc (/taiyi:stop-mode).
+
+Ultrawork: when TAIYI_ULW_AUTO_TASK=1 or user invoked /taiyi:ultrawork, load ~/.codex/skills/taiyi-ultrawork/SKILL.md and dispatch parallel Task/subagent workers; main session merges only.
+
+Engine: scripts/taiyi-forge.sh · Skills: ~/.codex/skills/taiyi-* · MCP: taiyi_keyword / taiyi_mode_step (optional).`;
+}
+
+/** Codex 无 hook 时的 OMC 循环替代（写入 ~/.codex/AGENTS.md） */
+export function codexOmcLoopBlock(): string {
+  return `## 每轮必做（$taiyi-preflight）
+
+\`npx taiyi-forge-install --codex\` 已在 **~/.codex/config.toml** 写入 \`developer_instructions\`（Codex 默认 system 层，优先于 AGENTS.md 正文）。纪律 = **$taiyi-preflight**：
+
+1. **读用户消息前**：\`codex-keyword-preflight.mjs "<用户原文>"\` 或 \`scripts/taiyi-forge.sh keyword\` → 加载对应 \`$taiyi-*\` prompt。
+2. **回合结束前**：\`codex-mode-reminder.mjs\` 或 \`scripts/taiyi-forge.sh modes\` → 有活跃模式则 **禁止结束**，代跑 \`scripts/taiyi-forge.sh step [slug]\` 直到绿或 stopomc。
+
+## OMC 式模式循环（Codex 无 Stop hook）
+
+Cursor/Claude 有 keyword + stop hook；**Codex 靠 developer_instructions + 上节纪律**：
+
+3. **Ultrawork 并行**：\`TAIYI_ULW_AUTO_TASK=1\` 或 harness 清单 \`taiyi/taiyi-ultrawork\` → 加载 \`taiyi-ultrawork\` Skill，必须 Task 派发 worker，主会话只合并。
+
+4. **MCP 等价**：\`taiyi_keyword\` · \`taiyi_remember\` · \`taiyi_workflow\` · \`taiyi_mode_step\`（与 OpenCode 对齐）。`;
 }

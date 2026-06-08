@@ -15,12 +15,12 @@
 <p align="center">
   <img
     src="./docs/taiyiforge-architecture.png"
-    alt="TaiyiForge 架构图 — 六大标准 × 中心引擎 × 九阶段 × 17 Skill × 三重门禁"
+    alt="TaiyiForge 架构图 — 六大标准 × 中心引擎 × 九阶段 × OMC 原生控制面 × 三重门禁"
     width="1200"
   />
 </p>
 
-> 可编辑真源：[docs/taiyiforge-architecture.svg](./docs/taiyiforge-architecture.svg)（v0.22）。README 展示用 2× 高清位图（4050×5454）：[taiyiforge-architecture.png](./docs/taiyiforge-architecture.png)。重生成：`python3 scripts/generate-architecture-svg.py`
+> 可编辑真源：[docs/taiyiforge-architecture.svg](./docs/taiyiforge-architecture.svg)（v0.22）。README 展示用 **4×** 高清位图（7200×8400）：[taiyiforge-architecture.png](./docs/taiyiforge-architecture.png)。重生成：`python3 scripts/generate-architecture-svg.py`
 
 上图分区说明：
 
@@ -31,7 +31,8 @@
 | **聊天命令** | 四动词 `new/status/continue/apply/archive`；排查 **doctor · audit · verify · health** |
 | **九阶段** | full 9 · api 8（跳过 ui-design）· lite 5；`continue`/`apply` 分工 |
 | **三门禁** | 人工门 + 质量五维 + **交付门**（git commit + 干净工作区）；`--auto` harness-check |
-| **17 Skill** | 9 主流程 + 6 辅助（含 compress）+ `taiyi-orchestrator` |
+| **17 Skill** | 9 主流程 + 6 辅助 + orchestrator/forge/ultrawork |
+| **OMC 原生** | ralph/autopilot/team/ultrawork · 29 agent · workflow 斜杠 · keyword hook · MCP state_* |
 
 ### 六大工程规范（顶部）
 

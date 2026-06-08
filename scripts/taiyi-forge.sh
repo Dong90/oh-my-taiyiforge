@@ -41,7 +41,9 @@ TaiyiForge — 100% /taiyi:* 斜杠（Agent 代跑本脚本）
 常用:
   /taiyi:doctor  /taiyi:audit  /taiyi:verify  /taiyi:list  /taiyi:check
   /taiyi:sync  /taiyi:handoff  /taiyi:cancel  /taiyi:loop
-  /taiyi:review-loop  /taiyi:review-check  /taiyi:token *
+  /taiyi:review-loop  /taiyi:review-check  /taiyi:write  /taiyi:change … /taiyi:integration  /taiyi:feature  /taiyi:bug
+  /taiyi:ui-test  /taiyi:ralph  /taiyi:autopilot
+  /taiyi:team  /taiyi:ultrawork  /taiyi:agent  /taiyi:token *
   /taiyi:commit-trailers  /taiyi:run  /taiyi:explore  /taiyi:flow  /taiyi:tdd
 
 引擎斜杠:
@@ -101,7 +103,7 @@ case "$cmd" in
   run)
     run_taiyi walkthrough "$@"
     ;;
-  audit|health|verify|doctor|init|next|harness|harness-check|complete|assess|mark-aux|status|guide|sync|sync-openspec|walkthrough|ci|token|loop|review-check|review-loop|phases|cancel|handoff|pause|commit-trailers)
+  audit|health|verify|doctor|init|next|harness|harness-check|complete|assess|mark-aux|status|guide|sync|sync-openspec|walkthrough|ci|token|loop|review-check|review-loop|ralph|autopilot|team|ultrawork|agent|write|feature|bug|change|requirement|design|ui-design|task|dev|test|review|integration|phases|cancel|handoff|pause|commit-trailers|step|stop-mode|modes|remember|keyword|plan|ralplan|ultraqa|visual-verdict|deep-interview|ai-slop-cleaner|ecomode)
     run_taiyi "$cmd" "$@"
     ;;
   help|--help|-h)

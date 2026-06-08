@@ -44,6 +44,11 @@ describe("active-slug", () => {
     expect(r).toEqual({ ok: true, slug: "my-fix", inferred: false });
   });
 
+  it("resolveActiveSlug rejects invalid explicit slug", () => {
+    const r = resolveActiveSlug(taiyiRoot, "../bad");
+    expect(r.ok).toBe(false);
+  });
+
   it("resolveActiveSlug infers single active change", () => {
     writeChange("only-one", { updatedAt: "2026-06-05T10:00:00Z" });
     const r = resolveActiveSlug(taiyiRoot);

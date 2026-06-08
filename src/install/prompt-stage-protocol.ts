@@ -4,6 +4,7 @@ import path from "node:path";
 /** 源 prompt 中可写此占位符；安装时替换为 prompts/inc/stage-protocol.md */
 export const STAGE_PROTOCOL_PLACEHOLDER = "{{TAIYI_STAGE_PROTOCOL}}";
 export const GSTACK_INVOKE_PLACEHOLDER = "{{GSTACK_INVOKE}}";
+export const SUPERPOWERS_INVOKE_PLACEHOLDER = "{{SUPERPOWERS_INVOKE}}";
 
 const INLINE_PROTOCOL_RE = /\n## Agent 协议（必须遵守）\n[\s\S]*$/;
 
@@ -17,6 +18,14 @@ export function loadStageProtocol(promptsDir: string): string {
 
 export function loadGstackInvoke(promptsDir: string): string {
   const file = path.join(promptsDir, "inc", "gstack-invoke.md");
+  if (!fs.existsSync(file)) {
+    return "";
+  }
+  return fs.readFileSync(file, "utf8").trimEnd();
+}
+
+export function loadSuperpowersInvoke(promptsDir: string): string {
+  const file = path.join(promptsDir, "inc", "superpowers-invoke.md");
   if (!fs.existsSync(file)) {
     return "";
   }
@@ -41,6 +50,11 @@ export function renderTaiyiPrompt(filename: string, body: string, promptsDir: st
   const gstack = loadGstackInvoke(promptsDir);
   if (gstack && out.includes(GSTACK_INVOKE_PLACEHOLDER)) {
     out = out.replaceAll(GSTACK_INVOKE_PLACEHOLDER, gstack);
+  }
+
+  const superpowers = loadSuperpowersInvoke(promptsDir);
+  if (superpowers && out.includes(SUPERPOWERS_INVOKE_PLACEHOLDER)) {
+    out = out.replaceAll(SUPERPOWERS_INVOKE_PLACEHOLDER, superpowers);
   }
 
   return out;

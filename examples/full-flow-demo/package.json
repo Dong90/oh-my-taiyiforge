@@ -1,0 +1,14 @@
+{
+  "name": "taiyi-full-flow-demo",
+  "private": true,
+  "description": "九阶段 + 29 Agent 斜杠命令 E2E 示例工程",
+  "type": "module",
+  "scripts": {
+    "test": "node --test test/counter.test.js",
+    "taiyi:slash-e2e": "node scripts/run-slash-e2e.mjs",
+    "taiyi:verify-inplace": "node scripts/run-inplace-verify.mjs"
+  },
+  "taiyi": {
+    "deliveryVerifyCmd": "npm test"
+  }
+}

@@ -1,6 +1,7 @@
 import type { ChangeState } from "./types.js";
 import type { PhaseGuide } from "./phase-guide.js";
 import { displayPhase, isChangeActive } from "./change-status.js";
+import { listActiveModes } from "./runtime/mode-state.js";
 
 /** 对标 OMC state_get_status — 引擎真源一行看清 */
 export type EngineTruth = {
@@ -23,13 +24,18 @@ export type EngineTruth = {
   syncActions: string[];
   earlyCodeWarning?: string;
   handoffExists?: boolean;
+  /** 活跃运行时模式（ralph/autopilot/…） */
+  activeModes?: { mode: string; slug?: string }[];
 };
 
 export function buildEngineTruth(
   state: ChangeState,
   guide: PhaseGuide,
-  options?: { handoffExists?: boolean },
+  options?: { handoffExists?: boolean; taiyiRoot?: string },
 ): EngineTruth {
+  const activeModes = options?.taiyiRoot
+    ? listActiveModes(options.taiyiRoot).map((m) => ({ mode: m.mode, slug: m.slug }))
+    : undefined;
   return {
     slug: state.slug,
     workflowStatus: state.workflowStatus ?? "active",
@@ -50,5 +56,6 @@ export function buildEngineTruth(
     syncActions: guide.syncActions ?? [],
     earlyCodeWarning: guide.earlyCodeWarning,
     handoffExists: options?.handoffExists,
+    activeModes,
   };
 }

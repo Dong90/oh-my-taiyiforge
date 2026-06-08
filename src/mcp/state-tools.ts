@@ -13,6 +13,7 @@ import { loadTokenBudgetConfig } from "../core/token/budget-config.js";
 import { WorkflowEngine } from "../core/workflow-engine.js";
 import type { ChangeState } from "../core/types.js";
 import type { EngineTruth } from "../core/engine-truth.js";
+import { taiyiStep, taiyiStopMode, taiyiModes, taiyiKeyword, taiyiRemember, taiyiWorkflowSkill } from "../plugin/handlers.js";
 
 export type StateListActiveResult = {
   changes: ReturnType<typeof listChanges>;
@@ -54,6 +55,7 @@ export function taiyiStateGetStatus(
   const changeDir = path.join(taiyiRoot, "changes", resolved.slug);
   const engineTruth = buildEngineTruth(state, guide, {
     handoffExists: handoffExists(changeDir),
+    taiyiRoot,
   });
   return {
     ok: true,
@@ -92,7 +94,7 @@ export function taiyiStateHandoff(
     statusLine,
     compressHint,
   });
-  const engineTruth = buildEngineTruth(state, guide, { handoffExists: true });
+  const engineTruth = buildEngineTruth(state, guide, { handoffExists: true, taiyiRoot });
   return { ok: true, slug: resolved.slug, path: filePath, engineTruth };
 }
 
@@ -132,4 +134,89 @@ export function taiyiStateRead(
       error: e instanceof Error ? e.message : `Invalid state.json: ${resolved.slug}`,
     };
   }
+}
+
+export function taiyiModeStep(
+  workspaceDir: string,
+  slug?: string,
+  mode?: string,
+): { ok: boolean; text: string; step?: unknown } {
+  const r = taiyiStep(workspaceDir, slug, { mode }, false);
+  if (!("step" in r) && "error" in r) {
+    return { ok: false, text: String(r.error) };
+  }
+  const text = "step" in r && r.step && typeof r.step === "object" && "text" in r.step
+    ? String((r.step as { text: string }).text)
+    : "text" in r
+      ? String(r.text)
+      : JSON.stringify(r);
+  return { ok: r.ok, text, step: "step" in r ? r.step : undefined };
+}
+
+export function taiyiModeStop(
+  workspaceDir: string,
+  options?: { slug?: string; force?: boolean },
+): { ok: boolean; text: string; result?: unknown } {
+  const r = taiyiStopMode(workspaceDir, options, false);
+  const text =
+    "result" in r && r.result && typeof r.result === "object" && "text" in r.result
+      ? String((r.result as { text: string }).text)
+      : "text" in r
+        ? String(r.text)
+        : JSON.stringify(r);
+  return { ok: r.ok, text, result: "result" in r ? r.result : undefined };
+}
+
+export function taiyiModeList(workspaceDir: string): { ok: boolean; text: string; active: unknown[] } {
+  const r = taiyiModes(workspaceDir, false);
+  const text = "text" in r ? String(r.text) : "";
+  const active = "active" in r ? r.active : [];
+  return { ok: r.ok, text, active };
+}
+
+export function taiyiProjectRemember(
+  workspaceDir: string,
+  note?: string,
+): { ok: boolean; text: string; memory?: unknown } {
+  const r = taiyiRemember(workspaceDir, note, false);
+  const text = "text" in r ? String(r.text) : JSON.stringify(r);
+  return { ok: r.ok, text, memory: "memory" in r ? r.memory : undefined };
+}
+
+export function taiyiDetectKeyword(
+  workspaceDir: string,
+  prompt: string,
+): { ok: boolean; text: string; detected?: unknown } {
+  const r = taiyiKeyword(workspaceDir, prompt, false);
+  if (!r.ok) {
+    return { ok: false, text: "text" in r ? String(r.text) : "no keyword" };
+  }
+  return {
+    ok: true,
+    text: "text" in r ? String(r.text) : "",
+    detected: "detected" in r ? r.detected : undefined,
+  };
+}
+
+export function taiyiRunWorkflow(
+  workspaceDir: string,
+  skill: string,
+  slug?: string,
+): { ok: boolean; text: string; result?: unknown; step?: unknown } {
+  const r = taiyiWorkflowSkill(workspaceDir, skill, slug, false);
+  if (!r.ok) {
+    return { ok: false, text: "error" in r ? String(r.error) : JSON.stringify(r) };
+  }
+  const text =
+    "text" in r
+      ? String(r.text)
+      : "result" in r && r.result && typeof r.result === "object" && "text" in r.result
+        ? String((r.result as { text: string }).text)
+        : JSON.stringify(r);
+  return {
+    ok: r.ok,
+    text,
+    result: "result" in r ? r.result : undefined,
+    step: "step" in r ? r.step : undefined,
+  };
 }

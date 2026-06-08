@@ -1,0 +1,41 @@
+{
+  "version": 1,
+  "description": "九阶段全流程斜杠验证清单（CLI / taiyi-forge.sh 等价于聊天 /taiyi:*）",
+  "title": "Full flow demo",
+  "expectedSlug": "full-flow-demo",
+  "approver": "full-flow-e2e",
+  "humanGatePhases": ["change", "design", "review"],
+  "init": {
+    "slash": "/taiyi:new Full flow demo",
+    "cli": ["new", "Full flow demo"],
+    "forge": ["new", "Full flow demo"]
+  },
+  "perPhaseSlashes": [
+    "write",
+    "harness",
+    "status",
+    "continue"
+  ],
+  "reviewExtras": {
+    "slash": ["/taiyi:health", "/taiyi:mark-aux", "/taiyi:review-loop", "/taiyi:review-check"],
+    "cli": [
+      ["health"],
+      ["mark-aux", "{slug}", "taiyi-health"],
+      ["review-loop"],
+      ["review-check"]
+    ]
+  },
+  "devTestSlashes": {
+    "slash": ["/taiyi:apply", "/taiyi:ralph", "/taiyi:tdd dev"],
+    "cli": [["apply"], ["ralph"], ["dev"]]
+  },
+  "taskDevSlashes": {
+    "slash": ["/taiyi:team", "/taiyi:ultrawork", "/taiyi:plan", "/taiyi:ralplan"],
+    "cli": [["team"], ["ultrawork"], ["plan"], ["ralplan"]]
+  },
+  "agentSlash": "/taiyi:agent",
+  "finishSlashes": {
+    "slash": ["/taiyi:archive", "/taiyi:verify", "/taiyi:status", "/taiyi:list"],
+    "cli": [["archive", "{slug}"], ["verify", "{slug}"], ["status", "{slug}"], ["list"]]
+  }
+}
