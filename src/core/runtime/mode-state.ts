@@ -27,7 +27,7 @@ export type ModeStateBase = {
   meta?: Record<string, unknown>;
 };
 
-const MODE_FILE: Record<TaiyiModeId, string> = {
+export const MODE_FILE: Record<TaiyiModeId, string> = {
   ralph: "ralph-mode.json",
   autopilot: "autopilot-mode.json",
   ultrawork: "ultrawork-mode.json",
@@ -148,4 +148,17 @@ export function listActiveModes(
 
 export function anyModeActive(taiyiRoot: string): boolean {
   return listActiveModes(taiyiRoot).length > 0;
+}
+
+/** 变更已完成时关闭该 slug 上的全部活跃模式（避免 stop-hook 误报未完成） */
+export function deactivateModesForSlug(taiyiRoot: string, slug: string): void {
+  for (const mode of Object.keys(MODE_FILE) as TaiyiModeId[]) {
+    const st = readModeState(taiyiRoot, mode);
+    if (st?.slug !== slug) continue;
+    if (mode === "autopilot" && st.preserveOnDeactivate) {
+      deactivateMode(taiyiRoot, mode, { preserve: true, meta: { workflowCompleted: true } });
+    } else {
+      clearModeState(taiyiRoot, mode);
+    }
+  }
 }

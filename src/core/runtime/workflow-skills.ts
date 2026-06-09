@@ -153,6 +153,17 @@ const WORKFLOW_MODE_MAP: Partial<Record<WorkflowSkillId, TaiyiModeId>> = {
   "ai-slop-cleaner": "ai-slop-cleaner",
 };
 
+/** workflow skill 允许激活 runtime 模式的阶段（未列出的 skill 仅打印协议） */
+const SKILL_ALLOWED_PHASES: Partial<Record<WorkflowSkillId, PhaseId[]>> = {
+  "deep-interview": ["change", "requirement"],
+  "visual-verdict": ["ui-design", "dev", "test", "review"],
+  "ai-slop-cleaner": ["dev", "review"],
+  plan: ["change", "requirement", "design", "task"],
+  ralplan: ["requirement", "design", "task"],
+  ultraqa: ["test", "review", "integration"],
+  ecomode: ["change", "requirement", "design", "ui-design", "task", "dev", "test", "review"],
+};
+
 export function runWorkflowSkill(
   engine: WorkflowEngine,
   taiyiRoot: string,
@@ -172,15 +183,20 @@ export function runWorkflowSkill(
 
   const phase = state.currentPhase as PhaseId;
   const mode = WORKFLOW_MODE_MAP[skill];
-  if (mode) {
+  const allowed = SKILL_ALLOWED_PHASES[skill];
+  const phaseOk = !allowed || allowed.includes(phase);
+
+  const lines = [...SKILL_PROTOCOL[skill](slug, phase)];
+
+  if (mode && phaseOk) {
     activateMode(taiyiRoot, mode, slug);
+  } else if (mode && !phaseOk) {
+    lines.unshift(
+      `⚠ ${skill} 仅适用于 ${allowed!.join("/")} 阶段（当前 ${phase}）；已跳过 runtime 激活，不会驱动 step。`,
+    );
   }
 
-  const lines = [
-    ...SKILL_PROTOCOL[skill](slug, phase),
-    "",
-    formatPhaseAgentsPlain(phase, slug),
-  ];
+  lines.push("", formatPhaseAgentsPlain(phase, slug));
 
   return { ok: true, skill, slug, phase, text: lines.join("\n") };
 }
