@@ -8,6 +8,7 @@ import { listAgentRoleIds, PHASE_AGENT_ROLES } from "./agent-roles.js";
 import { requiresHumanGate } from "./gates/human-gate-config.js";
 import { skippedPhasesForProfile } from "./profile.js";
 import type { ChangeProfile, PhaseId } from "./types.js";
+import { resolveChangeDir } from "./taiyi-archive.js";
 
 const HEALTH_REPORT = `# Health Report
 
@@ -370,14 +371,16 @@ export function runSlashFlow(options: RunSlashFlowOptions): SlashFlowRunResult {
     if (verify.code !== 0) errors.push(`verify: ${verify.out}`);
   }
 
-  const artifactCheck = assertExpectedArtifacts(changeDir, profile);
+  const taiyiRoot = path.join(workspaceDir, ".taiyi");
+  const resolvedChangeDir = resolveChangeDir(taiyiRoot, slug) ?? changeDir;
+  const artifactCheck = assertExpectedArtifacts(resolvedChangeDir, profile);
   if (!artifactCheck.ok) {
     errors.push(`missing artifacts: ${artifactCheck.missing.join(", ")}`);
   }
 
   let completedPhases: PhaseId[] = [];
   let workflowStatus: string | undefined;
-  const statePath = path.join(changeDir, "state.json");
+  const statePath = path.join(resolvedChangeDir, "state.json");
   if (fs.existsSync(statePath)) {
     const final = JSON.parse(fs.readFileSync(statePath, "utf8")) as {
       completedPhases: PhaseId[];
@@ -397,10 +400,10 @@ export function runSlashFlow(options: RunSlashFlowOptions): SlashFlowRunResult {
     ok: errors.length === 0,
     slug,
     workspaceDir,
-    changeDir,
+    changeDir: resolvedChangeDir,
     errors,
     steps,
-    generatedFiles: collectGeneratedFiles(changeDir, profile),
+    generatedFiles: collectGeneratedFiles(resolvedChangeDir, profile),
     completedPhases,
     workflowStatus,
   };

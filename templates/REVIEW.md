@@ -19,5 +19,7 @@
 
 ## Verdict
 
+<!-- 过关须勾选 Approve：- [x] **Approve**（写 PASS 文本无效） -->
+
 - [ ] **Approve** — 可合并
 - [ ] **Request changes** — 阻塞项：…

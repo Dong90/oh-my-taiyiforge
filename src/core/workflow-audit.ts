@@ -8,6 +8,7 @@ import { normalizeState } from "./normalize-state.js";
 import { deliveryGateEnabled, evaluateDeliveryGate } from "./gates/delivery-gate.js";
 import { getOpenspecStatus } from "../integrations/openspec.js";
 import { detectAheadArtifacts } from "./ahead-artifacts.js";
+import { resolveChangeDir } from "./taiyi-archive.js";
 
 export type AuditFinding = {
   severity: "high" | "medium" | "low";
@@ -63,7 +64,7 @@ function legacyStateFindings(raw: ChangeState): AuditFinding[] {
 function changeCheckboxDrift(
   changeDir: string,
   integrationDone: boolean,
-  preIntegrationAudit = false,
+  options?: { preIntegrationAudit?: boolean; currentPhase?: string },
 ): AuditFinding[] {
   const changePath = path.join(changeDir, "CHANGE.md");
   const changelogPath = path.join(changeDir, "CHANGELOG.md");
@@ -74,13 +75,22 @@ function changeCheckboxDrift(
   if (openBoxes === 0) return [];
 
   const out: AuditFinding[] = [];
-  if (integrationDone) {
+  const preIntegrationAudit = options?.preIntegrationAudit === true;
+  const earlyPhase = ["dev", "test", "review"].includes(options?.currentPhase ?? "");
+
+  if (integrationDone || preIntegrationAudit) {
     out.push({
-      severity: "high",
+      severity: preIntegrationAudit || integrationDone ? "high" : "medium",
       code: preIntegrationAudit ? "ac.open-before-integration" : "ac.open-after-integration",
       message: preIntegrationAudit
         ? `complete integration 前 CHANGE.md 仍有 ${openBoxes} 条 Success Criteria 未勾选`
         : `integration 已完成但 CHANGE.md 仍有 ${openBoxes} 条 Success Criteria 未勾选`,
+    });
+  } else if (earlyPhase) {
+    out.push({
+      severity: "medium",
+      code: "ac.open-before-integration",
+      message: `CHANGE.md 仍有 ${openBoxes} 条 Success Criteria 未勾选（integration 前须全部 [x]）`,
     });
   }
 
@@ -104,14 +114,57 @@ function openspecFindings(workspaceDir: string, slug: string, integrationDone: b
   const status = getOpenspecStatus(workspaceDir, slug);
   if (!status.detected) return [];
   const out: AuditFinding[] = [];
-  if (integrationDone && !status.changeExists) {
+  if (integrationDone && !status.changeExists && !status.archivedExists) {
     out.push({
       severity: "medium",
       code: "openspec.missing-active-change",
       message: `integration 已完成但无 openspec/changes/${slug}/，archive 前需 taiyi sync-openspec`,
     });
   }
+  if (integrationDone && status.archivedExists && status.changeExists) {
+    out.push({
+      severity: "medium",
+      code: "openspec.stale-active-after-archive",
+      message: `OpenSpec 已归档于 ${status.archivedPath}，但 active openspec/changes/${slug}/ 仍存在（多为 post-archive sync）；删除 active 目录或 git restore`,
+    });
+  }
   return out;
+}
+
+function deliveryFindings(
+  workspaceDir: string,
+  slug: string,
+  integrationDone: boolean,
+  options?: { preIntegrationAudit?: boolean },
+): AuditFinding[] {
+  if (!deliveryGateEnabled(workspaceDir) || !integrationDone) return [];
+
+  const delivery = evaluateDeliveryGate(workspaceDir, { slug, phase: "integration" });
+  if (delivery.passed || delivery.skipped) return [];
+
+  const openspec = getOpenspecStatus(workspaceDir, slug);
+  const dirtyWorkspace = Boolean(delivery.reason?.includes("未提交"));
+  const postArchive = openspec.archivedExists && dirtyWorkspace;
+
+  if (postArchive) {
+    return [
+      {
+        severity: "medium",
+        code: "delivery.dirty-after-archive",
+        message: `Taiyi/OpenSpec 已归档，交付待 git commit：${delivery.reason}`,
+      },
+    ];
+  }
+
+  return [
+    {
+      severity: "high",
+      code: "delivery.not-closed",
+      message: options?.preIntegrationAudit
+        ? `complete integration 前交付未闭环: ${delivery.reason}`
+        : `integration 已过关但工程交付未闭环: ${delivery.reason}`,
+    },
+  ];
 }
 
 export type AuditChangeOptions = {
@@ -125,7 +178,7 @@ export function auditChange(
   slug: string,
   options?: AuditChangeOptions,
 ): ChangeAuditReport | null {
-  const changeDir = path.join(taiyiRoot, "changes", slug);
+  const changeDir = resolveChangeDir(taiyiRoot, slug) ?? path.join(taiyiRoot, "changes", slug);
   const raw = readRawState(changeDir);
   if (!raw) return null;
 
@@ -165,7 +218,10 @@ export function auditChange(
   }
 
   findings.push(
-    ...changeCheckboxDrift(changeDir, integrationDone, preIntegrationAudit),
+    ...changeCheckboxDrift(changeDir, integrationDone, {
+      preIntegrationAudit,
+      currentPhase: state.currentPhase,
+    }),
   );
   findings.push(...openspecFindings(workspaceDir, slug, integrationDone));
 
@@ -177,18 +233,9 @@ export function auditChange(
     });
   }
 
-  if (deliveryGateEnabled(workspaceDir)) {
-    const delivery = evaluateDeliveryGate(workspaceDir);
-    if (integrationDone && !delivery.passed && !delivery.skipped) {
-      findings.push({
-        severity: "high",
-        code: "delivery.not-closed",
-        message: options?.pretendIntegrationComplete
-          ? `complete integration 前交付未闭环: ${delivery.reason}`
-          : `integration 已过关但工程交付未闭环: ${delivery.reason}`,
-      });
-    }
-  }
+  findings.push(
+    ...deliveryFindings(workspaceDir, slug, integrationDone, { preIntegrationAudit }),
+  );
 
   const hasHigh = findings.some((f) => f.severity === "high");
   return {
@@ -251,7 +298,21 @@ export function auditWorkspace(
 
 export function formatAuditPlain(report: WorkflowAuditReport): string {
   const lines: string[] = [];
+  const highCount = report.changes.reduce(
+    (n, c) => n + c.findings.filter((f) => f.severity === "high").length,
+    0,
+  );
+  const mediumCount = report.changes.reduce(
+    (n, c) => n + c.findings.filter((f) => f.severity === "medium").length,
+    0,
+  );
   lines.push(`TaiyiForge audit — ${report.ok ? "PASS" : "FAIL"}`);
+  lines.push(
+    `三态: 工件 verify（用 taiyi verify）· 流程 audit（本命令）· 交付 delivery（git commit / 干净工作区）`,
+  );
+  if (highCount === 0 && mediumCount > 0) {
+    lines.push(`提示: 仅 ${mediumCount} 条 medium（多为 post-archive 脏工作区），commit 后可再 audit`);
+  }
   lines.push(`workspace: ${report.workspaceDir}`);
   for (const c of report.changes) {
     lines.push(`\n[${c.ok ? "✓" : "✗"}] ${c.slug}  phase=${c.phase}  completed=${c.workflowCompleted}`);

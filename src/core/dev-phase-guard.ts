@@ -37,6 +37,14 @@ function isTaiyiArtifactPath(file: string): boolean {
   return n.startsWith(".taiyi/") || n.includes("/.taiyi/");
 }
 
+/** 规划阶段误报：仓库级 OpenSpec / 根 CHANGELOG 与当前变更无关。 */
+function isPlanningNoisePath(file: string): boolean {
+  const n = file.replace(/\\/g, "/");
+  if (n === "CHANGELOG.md") return true;
+  if (n.startsWith("openspec/")) return true;
+  return false;
+}
+
 /** dev 之前若工作区有非 .taiyi 未提交改动，提示勿跳步写代码。 */
 export function detectEarlyCodeChanges(
   workspaceDir: string,
@@ -45,7 +53,9 @@ export function detectEarlyCodeChanges(
   if (process.env.TAIYI_EARLY_CODE_GUARD === "0") return null;
   if (getPhaseOrder(currentPhase) >= getPhaseOrder("dev")) return null;
 
-  const dirty = listUncommitted(workspaceDir).filter((f) => !isTaiyiArtifactPath(f));
+  const dirty = listUncommitted(workspaceDir).filter(
+    (f) => !isTaiyiArtifactPath(f) && !isPlanningNoisePath(f),
+  );
   if (dirty.length === 0) return null;
 
   const sample = dirty.slice(0, 6).join(", ");

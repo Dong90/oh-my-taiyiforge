@@ -12,6 +12,8 @@ import { syncTaiyiToOpenspec } from "../integrations/openspec-sync.js";
 import { pendingIronTriangleHooks } from "./harness-checkpoints.js";
 import { loadTokenBudgetConfig } from "./token/budget-config.js";
 import { scanArtifactTokens } from "./token/scan-artifacts.js";
+import { resolveChangeDir } from "./taiyi-archive.js";
+import { isWorkflowCompleted } from "./change-status.js";
 
 export type HarnessStepKind = "agent" | "shell" | "taiyi-cli";
 
@@ -94,7 +96,7 @@ export function buildHarnessPlan(
   state: ChangeState,
 ): HarnessPlan {
   const phase = state.currentPhase;
-  const changeDir = path.join(taiyiRoot, "changes", state.slug);
+  const changeDir = resolveChangeDir(taiyiRoot, state.slug) ?? path.join(taiyiRoot, "changes", state.slug);
   const phaseDef = getPhase(phase);
   const harness = getHarnessContext(workspaceDir, state.slug, phase);
 
@@ -155,7 +157,7 @@ export function buildHarnessPlan(
     }
   }
 
-  if (state.autoHarness) {
+  if (state.autoHarness && !isWorkflowCompleted(state)) {
     for (const step of auxiliary) {
       if (step.status === "pending") {
         blockers.push(`auto 模式：先完成 ${step.skill}（或生成对应工件）`);
@@ -194,7 +196,6 @@ export function enforceAutoHarnessBeforeComplete(
 ): { ok: boolean; error?: string; plan?: HarnessPlan } {
   if (!state.autoHarness) return { ok: true };
 
-  const changeDir = path.join(taiyiRoot, "changes", state.slug);
   const plan = buildHarnessPlan(workspaceDir, taiyiRoot, state);
 
   if (plan.blockers.length > 0) {
@@ -221,7 +222,7 @@ export function runPostCompleteShellHooks(
     if (h.command.includes("archive") && phaseId === "integration") {
       const openspec = getOpenspecStatus(workspaceDir, slug);
       if (openspec.detected) {
-        const changeDir = path.join(taiyiRoot, "changes", slug);
+        const changeDir = resolveChangeDir(taiyiRoot, slug) ?? path.join(taiyiRoot, "changes", slug);
         const sync = syncTaiyiToOpenspec(workspaceDir, slug, changeDir, { createChangeDir: true });
         results.push({
           kind: "shell",

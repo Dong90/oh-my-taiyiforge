@@ -73,11 +73,15 @@ export function mergeAuxiliaryFromArtifacts(
 export function detectStepBlockers(changeDir: string, state: ChangeState): StepBlocker[] {
   const blockers: StepBlocker[] = [];
 
+  if (state.autoHarness) {
+    return blockers;
+  }
+
   for (const f of detectAheadArtifacts(changeDir, state)) {
     if (f.code === "artifacts.ahead-of-phase") {
       blockers.push({
         code: f.code,
-        message: `${f.message}。请删除 ${f.file} 或先 /taiyi:continue 按顺序过关当前阶段 ${state.currentPhase}，勿跳步写后续工件。`,
+        message: `${f.message}。请删除 ${f.file}、运行 scripts/taiyi-forge.sh trim-ahead ${state.slug}，或先 /taiyi:continue 按顺序过关当前阶段 ${state.currentPhase}。`,
       });
     }
   }

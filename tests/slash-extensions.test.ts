@@ -69,11 +69,17 @@ describe("slash extensions", () => {
     expect(handoff).toContain("/taiyi:resume");
   });
 
-  it("taiyi-help lists catalog and scenario shortcuts", () => {
+  it("taiyi-help lists full slash_catalog (not abbreviated)", () => {
     const body = rendered("taiyi-help.md");
     expect(body).toContain("/taiyi:help");
-    expect(body).toContain("canonical-commands");
+    expect(body).toContain("slash_catalog");
     expect(body).toContain("/taiyi:write");
+    expect(body).toContain("/taiyi:apply");
+    expect(body).toContain("/taiyi:doctor");
+    expect(body).toContain("/taiyi:browser-smoke");
+    expect(body).toContain("/taiyi:daemon");
+    expect(body).toContain("/taiyi:init");
+    expect(body).toContain("/taiyi:commit");
     expect(body).toContain("/taiyi:ralph");
     expect(body).toContain("/taiyi:autopilot");
     expect(body).toContain("/taiyi:team");
@@ -87,6 +93,7 @@ describe("slash extensions", () => {
     expect(body).toContain("/taiyi:gstack");
     expect(body).toContain("/taiyi:sp");
     expect(body).toContain("/taiyi:resume");
+    expect(body).toMatch(/taiyi-xxx|连字符/);
   });
 
   it("commands.yaml documents extension slashes", () => {

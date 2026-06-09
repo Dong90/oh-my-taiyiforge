@@ -1,6 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import type { ChangeProfile, ChangeState, GateInput, PhaseId } from "./types.js";
+import { clearRuntimeForSlug } from "./runtime/orphan-runtime.js";
 import { evaluateHumanGate } from "./gates/human-gate.js";
 import { rejectAutomatedHumanApproval, requiresHumanGate } from "./gates/human-gate-config.js";
 import { isKnownAuxiliarySkill, KNOWN_AUXILIARY_SKILLS } from "./routing/auxiliary-skills.js";
@@ -14,6 +15,7 @@ import { canEnterPhase, getNextPhase, getPhase } from "./phase-registry.js";
 import { isPhaseSkipped, skippedPhasesForProfile } from "./profile.js";
 import { assessComplexity, type ComplexitySignals } from "./routing/complexity.js";
 import { inferComplexitySignals } from "./routing/infer-complexity.js";
+import { resolveChangeDir } from "./taiyi-archive.js";
 import { resetChangeArtifacts } from "./change-artifact-reset.js";
 import { seedChangeTemplates, seedPhaseTemplate } from "./template-seed.js";
 import {
@@ -64,11 +66,12 @@ export class WorkflowEngine {
   }
 
   private statePath(slug: string): string {
-    return path.join(this.changesDir(), slug, "state.json");
+    const dir = resolveChangeDir(this.workspaceRoot, slug) ?? path.join(this.changesDir(), slug);
+    return path.join(dir, "state.json");
   }
 
   changeDir(slug: string): string {
-    return path.join(this.changesDir(), slug);
+    return resolveChangeDir(this.workspaceRoot, slug) ?? path.join(this.changesDir(), slug);
   }
 
   /** `.taiyi` 根目录 */
@@ -86,6 +89,7 @@ export class WorkflowEngine {
     fs.mkdirSync(dir, { recursive: true });
     if (options?.force && fs.existsSync(dir)) {
       resetChangeArtifacts(dir);
+      clearRuntimeForSlug(this.workspaceRoot, slug);
     }
     const profile = options?.profile ?? "full";
     const skippedPhases = skippedPhasesForProfile(profile);
@@ -411,7 +415,10 @@ export class WorkflowEngine {
       ...workingState,
       completedPhases: completed,
       currentPhase: next ?? phaseId,
-      complexity: assessComplexity(inferComplexitySignals(changeDir)),
+      complexity:
+        workingState.completedPhases.includes("change") && workingState.complexity
+          ? workingState.complexity
+          : assessComplexity(inferComplexitySignals(changeDir)),
       updatedAt: new Date().toISOString(),
     };
     const allDone =
