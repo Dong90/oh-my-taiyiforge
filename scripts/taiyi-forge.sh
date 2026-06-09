@@ -42,8 +42,9 @@ TaiyiForge — 推荐 /taiyi:* 斜杠（Agent 代跑本脚本）
   /taiyi:doctor  /taiyi:audit  /taiyi:verify  /taiyi:list  /taiyi:check
   /taiyi:sync  /taiyi:handoff  /taiyi:cancel  /taiyi:loop
   /taiyi:review-loop  /taiyi:feature  /taiyi:bug  /taiyi:ui-test
-  /taiyi:ralph  /taiyi:autopilot  /taiyi:team  /taiyi:ultrawork  /taiyi:agent
-  /taiyi:run  /taiyi:explore  /taiyi:flow  /taiyi:tdd  /taiyi:help
+  /taiyi:ralph  /taiyi:autopilot  /taiyi:daemon  /taiyi:team  /taiyi:ultrawork  /taiyi:agent
+  /taiyi:diagram-pipeline  /taiyi:diagram-c4  /taiyi:diagram-arch  /taiyi:diagram-flow  /taiyi:diagram-render
+  /taiyi:run  /taiyi:explore  /taiyi:flow  /taiyi:tdd  /taiyi:browser-smoke  /taiyi:help
 
 引擎斜杠（脚本/CI）:
   /taiyi:init  /taiyi:complete  /taiyi:mark-aux  /taiyi:harness-check  /taiyi:ci *
@@ -104,7 +105,7 @@ case "$cmd" in
   run)
     run_taiyi walkthrough "$@"
     ;;
-  audit|health|verify|doctor|init|next|harness|harness-check|complete|assess|mark-aux|status|guide|sync|sync-openspec|walkthrough|ci|token|loop|review-check|review-loop|ralph|autopilot|team|ultrawork|agent|write|feature|bug|change|requirement|design|ui-design|task|dev|test|review|integration|phases|cancel|handoff|pause|commit-trailers|step|stop-mode|modes|remember|keyword|plan|ralplan|ultraqa|visual-verdict|deep-interview|ai-slop-cleaner|ecomode|daemon)
+  audit|health|verify|doctor|init|next|harness|harness-check|complete|assess|mark-aux|status|guide|sync|sync-openspec|walkthrough|browser-smoke|ci|token|loop|review-check|review-loop|ralph|autopilot|team|ultrawork|agent|write|feature|bug|change|requirement|design|ui-design|task|dev|test|review|integration|phases|cancel|handoff|pause|commit-trailers|step|stop-mode|modes|remember|keyword|plan|ralplan|ultraqa|visual-verdict|deep-interview|ai-slop-cleaner|ecomode|daemon)
     run_taiyi "$cmd" "$@"
     ;;
   help|--help|-h)

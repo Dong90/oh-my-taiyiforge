@@ -46,6 +46,13 @@ describe("slash extensions", () => {
     expect(body).toContain("/taiyi:gstack cso");
   });
 
+  it("taiyi-browser-smoke runs forge browser-smoke script", () => {
+    const body = rendered("taiyi-browser-smoke.md");
+    expect(body).toContain("/taiyi:browser-smoke");
+    expect(body).toContain("browser-smoke");
+    expect(body).toContain("playwright");
+  });
+
   it("taiyi-e2e runs playwright with verification skill", () => {
     const body = rendered("taiyi-e2e.md");
     expect(body).toContain("/taiyi:e2e");
@@ -96,8 +103,12 @@ describe("slash extensions", () => {
       "/taiyi:resume",
       "/taiyi:security",
       "/taiyi:e2e",
+      "/taiyi:browser-smoke",
       "/taiyi:ralph",
       "/taiyi:autopilot",
+      "/taiyi:daemon",
+      "/taiyi:diagram-arch",
+      "/taiyi:diagram-flow",
       "/taiyi:team",
       "/taiyi:agent",
       "/taiyi:gstack <skill>",

@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 import { WorkflowEngine } from "../core/workflow-engine.js";
+import { runBrowserSmoke } from "../core/browser-smoke.js";
 import { listPhases } from "../core/phase-registry.js";
 import { resolveTaiyiRoot } from "../core/paths.js";
 import { resolvePackageRoot, resolveTemplatesDir } from "../core/package-root.js";
@@ -96,6 +97,7 @@ function usage(): void {
   npm run taiyi -- sync [slug]              /taiyi:sync（别名 sync-openspec）
   npm run taiyi -- archive <slug>
   npm run taiyi -- walkthrough [--slug name] [--profile api|lite]
+  npm run taiyi -- browser-smoke [--json]     → /taiyi:browser-smoke — Playwright 浏览器冒烟
   npm run taiyi -- audit [slug]              /taiyi:audit — 流程/交付排查（非 doctor）
   npm run taiyi -- health [slug]            /taiyi:health — 输出 health Agent 协议（须 Skill 写报告 + mark-aux）
   npm run taiyi -- verify [slug] [--require-complete]   /taiyi:verify — PR/CI 工件门禁
@@ -806,6 +808,17 @@ switch (cmd) {
     }
     if ("text" in r && r.text) console.log(r.text);
     else console.log(JSON.stringify(r, null, 2));
+    break;
+  }
+  case "browser-smoke": {
+    const r = runBrowserSmoke(workspaceDir, !jsonMode);
+    if (!r.ok) {
+      if (r.text) console.error(r.text);
+      console.error(r.error);
+      process.exit(1);
+    }
+    if (jsonMode) console.log(JSON.stringify({ ok: true, text: r.text }, null, 2));
+    else console.log(r.text);
     break;
   }
   case "complete": {

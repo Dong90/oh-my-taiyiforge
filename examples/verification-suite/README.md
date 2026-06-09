@@ -26,6 +26,7 @@ node examples/verification-suite/run-all.mjs
 | **L3 安装/Hooks/MCP** | 四端写盘、Hook stdin/stdout、MCP stdio | ✅ | `post-install-smoke`、`hook-contract`、`mcp-server-smoke`、`install-prompt-parity` |
 | **L4 无头契约** | 原 IDE UAT 清单的 CLI/prompt 替代 | ✅ | `l4-headless-contract` |
 | **L4 真机（可选）** | Cursor 聊天内斜杠、Skill 真加载 | ⚠️ 抽样 | 见下「可选真机 UAT」 |
+| **Browser E2E** | `/taiyi:browser-smoke` · `/taiyi:e2e` | ✅ | `scripts/taiyi-forge.sh browser-smoke` |
 
 ---
 
@@ -117,4 +118,6 @@ node examples/full-flow-demo/scripts/run-inplace-verify.mjs
 
 ```bash
 node examples/verification-suite/run-all.mjs
+node examples/browser-e2e-smoke/run-verify.mjs   # /taiyi:e2e 浏览器 Playwright
+npm test -- tests/browser-e2e-smoke.test.ts
 ```

@@ -56,6 +56,7 @@ Legacy CLI（无聊天斜杠）：`pause`→handoff · `commit-trailers`→用 `
 | `/taiyi:sp <skill>` | Superpowers（writing-skills …） |
 | `/taiyi:security` | semgrep + trivy |
 | `/taiyi:e2e` | Playwright E2E |
+| `/taiyi:browser-smoke` | 内置 Playwright 浏览器冒烟 |
 | `/taiyi:resume` | HANDOFF + status |
 | `/taiyi:help` | 斜杠总览 |
 

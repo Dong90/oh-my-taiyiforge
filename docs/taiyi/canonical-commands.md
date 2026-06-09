@@ -27,6 +27,18 @@
 | 流程/交付排查 | `/taiyi:audit` |
 | PR/CI 工件门禁 | `/taiyi:verify` |
 
+## 架构图流水线
+
+| 斜杠 | 步骤 | 说明 |
+|------|------|------|
+| `/taiyi:diagram-pipeline` | ①②③ | C4 → arch → render 一条龙 |
+| `/taiyi:diagram-c4` | ① | 扫代码写 C4 真源 |
+| `/taiyi:diagram-arch` | ② | 以 C4 同步 `architecture.md` |
+| `/taiyi:diagram-render` | ③ | Mermaid → SVG |
+| `/taiyi:diagram-flow` | — | 业务流程 / AC 追溯（独立） |
+
+详见 `docs/diagrams/pipeline.md` · `commands.yaml` → `auxiliary.commands`。
+
 ## 交付链（gstack）
 
 ```text
@@ -44,6 +56,15 @@
 | `/taiyi:feature` | 新功能 full 九阶段剧本 |
 | `/taiyi:bug` | lite 五阶段修 bug |
 | `/taiyi:ui-test` | test 阶段 UI QA（gstack qa + e2e） |
+
+## 浏览器 / E2E
+
+| 斜杠 | 引擎 | 说明 |
+|------|------|------|
+| `/taiyi:browser-smoke` | `browser-smoke` | 内置 Playwright 冒烟（无需项目配置） |
+| `/taiyi:e2e` | （聊天） | 目标项目 `npx playwright test` |
+| `/taiyi:gstack qa` | （聊天） | gstack browse 走查 |
+| `/taiyi:ui-test` | （聊天） | qa + e2e 捷径 |
 
 ## 自主编排（OMC 原生迁移 · 多 Agent）
 

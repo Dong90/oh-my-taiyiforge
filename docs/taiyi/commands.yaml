@@ -396,6 +396,15 @@ profiles:
         engine: "提示 /taiyi:gstack qa + /taiyi:e2e"
         meaning: test 阶段 UI QA 捷径
 
+      - chat: "/taiyi:browser-smoke [--json]"
+        codex: "$taiyi-browser-smoke"
+        engine: "taiyi-forge.sh browser-smoke [--json]"
+        meaning: |
+          内置 Playwright 浏览器冒烟（examples/browser-e2e-smoke）。
+          无需目标项目 Playwright 配置；等价于可复现的 /taiyi:e2e 验证子集。
+          Agent 代跑，勿让用户手打 node 路径。
+        when: 验证 TaiyiForge 浏览器 E2E 路径、CI 冒烟、发版前快速检查
+
       - chat: "/taiyi:loop [slug] [xN]"
         codex: "$taiyi-loop"
         engine: "taiyi-forge.sh loop [slug] [xN]"
@@ -434,6 +443,8 @@ profiles:
       - /taiyi:health
       - /taiyi:diagram-pipeline
       - /taiyi:diagram-c4
+      - /taiyi:diagram-arch
+      - /taiyi:diagram-flow
       - /taiyi:diagram-render
       - /taiyi:list
       - /taiyi:check
@@ -476,6 +487,7 @@ profiles:
       - /taiyi:resume
       - /taiyi:security
       - /taiyi:e2e
+      - /taiyi:browser-smoke
       - /taiyi:gstack <skill>
       - /taiyi:sp <skill>
     phase_write:
@@ -557,6 +569,8 @@ profiles:
         engine: "semgrep + trivy（optional gstack cso）"
       - chat: "/taiyi:e2e [slug]"
         engine: "npx playwright test + verification-before-completion"
+      - chat: "/taiyi:browser-smoke [--json]"
+        engine: "taiyi-forge.sh browser-smoke [--json]"
       - chat: "/taiyi:resume [slug]"
         engine: "read HANDOFF.md + status"
       - chat: "/taiyi:help [topic]"

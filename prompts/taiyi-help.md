@@ -50,13 +50,21 @@ User invoked **$taiyi-help** (= `/taiyi:help`). 打印 **推荐斜杠**（真源
 
 **与 OMC 差异**：无 tmux team / 无 spawn_agent SDK — 只出 spawn 计划 + 宿主 Task；keyword 靠 hook 或 `/taiyi:keyword`。详见 `docs/taiyi/autonomous.md`
 
+## 架构图
+
+| 斜杠 | 用途 |
+|------|------|
+| `/taiyi:diagram-pipeline` | C4 → arch → render 三步 |
+| `/taiyi:diagram-c4` · `/taiyi:diagram-arch` · `/taiyi:diagram-render` | 单步 |
+| `/taiyi:diagram-flow` | 业务流程 / AC 追溯 |
+
 ## 交付 / 质量
 
 | 斜杠 | 用途 |
 |------|------|
 | `/taiyi:commit` → `/taiyi:verify` → `/taiyi:ship` | 提交 + 门禁 + 开 PR |
 | `/taiyi:land` → `/taiyi:release` → `/taiyi:archive` | 合并部署 + 文档同步 |
-| `/taiyi:security` · `/taiyi:e2e` | review / test 质量 |
+| `/taiyi:security` · `/taiyi:e2e` · `/taiyi:browser-smoke` | review / test 质量 |
 | `/taiyi:review-loop` | REVIEW.md 机器循环 |
 
 ## 外挂

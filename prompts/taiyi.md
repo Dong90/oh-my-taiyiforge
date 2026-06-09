@@ -43,6 +43,7 @@ User invoked TaiyiForge. Map `$ARGUMENTS` or the user's `/taiyi:*` to `scripts/t
 | `/taiyi:sp <skill>` | any Superpowers Skill |
 | `/taiyi:security` | semgrep + trivy |
 | `/taiyi:e2e` | `npx playwright test` + verification |
+| `/taiyi:browser-smoke` | `browser-smoke` — 内置 Playwright 冒烟 |
 | `/taiyi:resume` | HANDOFF.md + status |
 | `/taiyi:help` | slash catalog |
 

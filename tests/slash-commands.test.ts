@@ -58,6 +58,7 @@ const SLASH_PROMPTS: Record<string, string> = {
   "taiyi-sp.md": "/taiyi:sp",
   "taiyi-security.md": "/taiyi:security",
   "taiyi-e2e.md": "/taiyi:e2e",
+  "taiyi-browser-smoke.md": "/taiyi:browser-smoke",
   "taiyi-resume.md": "/taiyi:resume",
   "taiyi-help.md": "/taiyi:help",
   "taiyi-release.md": "/taiyi:release",
