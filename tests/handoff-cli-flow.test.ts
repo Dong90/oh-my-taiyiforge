@@ -61,4 +61,40 @@ describe("handoff CLI 链", () => {
       fs.readFileSync(path.join(workspace, ".taiyi/changes", slug, "HANDOFF.md"), "utf8"),
     ).toContain("via pause");
   }, 60_000);
+
+  it("handoff on completed change exits 0 (noop)", () => {
+    runForge(REPO, workspace, ["init", slug, "--profile", "lite", "--title", "Done handoff"]);
+    const changeDir = path.join(workspace, ".taiyi/changes", slug);
+    const statePath = path.join(changeDir, "state.json");
+    const state = JSON.parse(fs.readFileSync(statePath, "utf8"));
+    state.currentPhase = "integration";
+    state.completedPhases = ["change", "requirement", "dev", "test", "integration"];
+    state.workflowStatus = "completed";
+    fs.writeFileSync(statePath, JSON.stringify(state));
+    const handoff = runForge(REPO, workspace, ["handoff", slug]);
+    expect(handoff.code).toBe(0);
+    expect(handoff.out).toMatch(/无需 handoff/);
+  }, 60_000);
+
+  it("handoff on archived-only change exits 0 (noop)", () => {
+    const archiveDir = path.join(workspace, ".taiyi/archive", slug);
+    fs.mkdirSync(archiveDir, { recursive: true });
+    fs.writeFileSync(
+      path.join(archiveDir, "state.json"),
+      JSON.stringify({
+        slug,
+        currentPhase: "integration",
+        completedPhases: ["change", "requirement", "dev", "test", "integration"],
+        profile: "lite",
+        skippedPhases: ["design", "ui-design", "task", "review"],
+        workflowStatus: "completed",
+        autoHarness: false,
+        createdAt: "2026-01-01",
+        updatedAt: "2026-01-02",
+      }),
+    );
+    const handoff = runForge(REPO, workspace, ["handoff", slug]);
+    expect(handoff.code).toBe(0);
+    expect(handoff.out).toMatch(/无需 handoff|已归档/);
+  }, 60_000);
 });

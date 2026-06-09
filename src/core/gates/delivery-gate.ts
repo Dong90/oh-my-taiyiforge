@@ -47,6 +47,21 @@ function resolveBaseBranch(workspaceDir: string): string {
   }
 }
 
+function normalizeRel(file: string): string {
+  return file.replace(/\\/g, "/");
+}
+
+/** integration 交付门：仅本变更相关路径的未提交改动会阻塞过关。 */
+export function isChangeScopedDirtyPath(file: string, slug: string): boolean {
+  const n = normalizeRel(file);
+  if (n.includes(`.taiyi/changes/${slug}/`)) return true;
+  if (n.includes(`.taiyi/archive/${slug}`)) return true;
+  if (n.includes(`.taiyi/ci-prompts/${slug}-`)) return true;
+  if (n.startsWith(`openspec/changes/${slug}/`)) return true;
+  if (n.includes("openspec/changes/archive/") && n.includes(slug)) return true;
+  return false;
+}
+
 function listUncommitted(workspaceDir: string): string[] {
   const parts: string[] = [];
   for (const cmd of [
@@ -97,22 +112,41 @@ export function evaluateDeliveryGate(
   }
 
   if (committedAhead.length === 0) {
-    return {
-      passed: false,
-      reason: `integration 需在实现代码 commit 之后（相对 ${base} 无新 commit）`,
-      hints: [
-        "先按 TASK 切片 commit，再 complete integration",
-        "或设置 TAIYI_DELIVERY_GATE=0 仅用于本地演示（不推荐）",
-      ],
-    };
+    let count = 0;
+    try {
+      count = parseInt(runGit(workspaceDir, "rev-list --count HEAD"), 10) || 0;
+    } catch {
+      count = 0;
+    }
+    if (base === "HEAD" && count >= 1) {
+      // 新仓库仅 main 且无远端 base：首个 commit 即视为已有交付 commit
+    } else {
+      return {
+        passed: false,
+        reason: `integration 需在实现代码 commit 之后（相对 ${base} 无新 commit）`,
+        hints: [
+          "先按 TASK 切片 commit，再 complete integration",
+          "或设置 TAIYI_DELIVERY_GATE=0 仅用于本地演示（不推荐）",
+        ],
+      };
+    }
   }
 
   const dirty = listUncommitted(workspaceDir);
-  if (dirty.length > 0) {
+  const blockingDirty = options?.slug
+    ? dirty.filter((f) => isChangeScopedDirtyPath(f, options.slug!))
+    : dirty;
+  if (blockingDirty.length > 0) {
+    const slugTag = options?.slug ? `[${options.slug}] ` : "";
     return {
       passed: false,
-      reason: `工作区仍有 ${dirty.length} 个未提交文件，integration 应在提交/merge 前完成`,
-      hints: dirty.slice(0, 8),
+      reason: `delivery.not-closed ${slugTag}${blockingDirty.length} 个未提交文件（本变更范围）`,
+      hints: [
+        `未提交: ${blockingDirty.slice(0, 8).join(", ")}${blockingDirty.length > 8 ? " …" : ""}`,
+        "先 git add + git commit（含 Taiyi-Change trailer），再 complete/continue integration",
+        "或 /taiyi:commit [slug] 生成带 trailer 的提交信息",
+        "本地演示可设 TAIYI_DELIVERY_GATE=0（不推荐 CI）",
+      ],
     };
   }
 
