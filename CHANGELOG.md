@@ -1,5 +1,20 @@
 # Changelog
 
+## [0.22.1] - 2026-06-09
+
+### Fixed
+
+- **archive 幂等**：支持 dated 归档目录名（如 `2026-06-09-<slug>`）；二次 `archive` exit 0 并输出「已归档 / 幂等 no-op」
+- **消费方 wrapper**：薄 shim 转发 `list "$@"`、`prune`、`smoke-reset` 等；`sync-wrapper` 强制迁移
+- **daemon dry-run**：blocked 变更首轮早停，避免打满 max-rounds 空转
+- **step 完成态**：九阶段已完成 / 已归档时 `step` exit 0
+- **list `--archived`**：仅列 `.taiyi/archive/`；`--all --archived` 才合并 changes+archive
+
+### Added
+
+- **`validateSlug`**：拒绝 NUL 字节，CLI 可读错误
+- **文档**：`docs/taiyi/probe-triage.md`（十轮探测归类）；Skill 补 `list --archived` / `prune --aborted` / `bug --create`
+
 ## [0.22.0] - 2026-06-07
 
 ### Added

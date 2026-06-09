@@ -1,6 +1,6 @@
 {
   "name": "oh-my-taiyiforge",
-  "version": "0.22.0",
+  "version": "0.22.1",
   "description": "TaiyiForge — OpenCode 插件 + Claude/Codex/Cursor 共用 taiyi-* 九阶段研发工作流",
   "license": "MIT",
   "type": "module",
@@ -60,7 +60,10 @@
     "walkthrough": "node scripts/walkthrough.mjs",
     "ci:verify": "node scripts/ci.mjs verify",
     "ci:platforms": "node scripts/ci.mjs platform opencode && node scripts/ci.mjs platform claude && node scripts/ci.mjs platform codex && node scripts/ci.mjs platform cursor",
-    "prepublishOnly": "npm run build && npm test"
+    "prepublishOnly": "npm run build && npm test",
+    "taiyi:doctor": "taiyi doctor --strict-workspace",
+    "taiyi:verify": "taiyi verify",
+    "taiyi:smoke": "node -e \"process.exit(0)\""
   },
   "engines": {
     "node": ">=20"
@@ -77,5 +80,8 @@
     "tsx": "^4.19.0",
     "typescript": "^5.7.0",
     "vitest": "^3.0.0"
+  },
+  "taiyi": {
+    "deliveryVerifyCmd": "npm test"
   }
 }

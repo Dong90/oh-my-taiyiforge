@@ -23,3 +23,7 @@
 | OpenCode | `taiyi_new` / `taiyi_*` tools | 同左（plugin，无需 shell） |
 
 完整九阶段路径：`docs/taiyi/workflow.md` · 详见 `docs/taiyi/invoke.yaml`。
+
+## 探测与回归
+
+十轮 / 多角度探测的归类、BY DESIGN 项与脚本误报修正见 **[probe-triage.md](./probe-triage.md)**。

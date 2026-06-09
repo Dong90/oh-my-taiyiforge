@@ -23,6 +23,8 @@
 | 恢复 | `/taiyi:resume` |
 | 放弃变更 | `/taiyi:cancel` |
 | 多变更列表 | `/taiyi:list` |
+| 仅归档列表 | CLI：`list --archived`；全量：`list --all [--archived]` |
+| 清理 aborted | `prune --aborted` |
 | 安装自检 | `/taiyi:doctor` |
 | 流程/交付排查 | `/taiyi:audit` |
 | PR/CI 工件门禁 | `/taiyi:verify` |

@@ -25,6 +25,22 @@ description: TaiyiForge 引擎控制面 — 用户只说 /taiyi:* 斜杠，Agent
 
 `/taiyi:doctor` · `/taiyi:audit` · `/taiyi:verify` · `/taiyi:list` · `/taiyi:check` · `/taiyi:sync` · `/taiyi:handoff` · `/taiyi:cancel` · `/taiyi:loop` · `/taiyi:write` · `/taiyi:review-loop` · `/taiyi:review-check` · `/taiyi:token *`
 
+### list / prune（CLI 与 wrapper 均有）
+
+| 命令 | 说明 |
+|------|------|
+| `list` | 默认仅**活跃**变更（进行中 + 未归档 completed） |
+| `list --archived` | 仅 `.taiyi/archive/` |
+| `list --all` | changes 全状态（含 completed / aborted） |
+| `list --all --archived` | changes + archive 合并 |
+| `prune [--dry-run] [--aborted]` | 清理孤儿 runtime；`--aborted` 删已取消变更目录 |
+| `trim-ahead <slug>` | 删除超前阶段工件 |
+| `smoke-reset` | **仅 wrapper** — 内部 `stop-mode --force`；CLI 直调 exit 2 属预期 |
+
+### feature / bug
+
+- `feature [标题] [--create]` / `bug [标题] [--create]` — **`--create` 才自动 `new` 建 slug**；无 `--create` 不隐式 init（command-matrix 设计）。
+
 ## 引擎斜杠（脚本/CI）
 
 `/taiyi:init` · `/taiyi:complete` · `/taiyi:mark-aux` · `/taiyi:assess` · `/taiyi:harness-check` · `/taiyi:phases` · `/taiyi:ci platform` · `/taiyi:ci prompt`
@@ -62,9 +78,11 @@ Legacy CLI（无聊天斜杠）：`pause`→handoff · `commit-trailers`→用 `
 
 ## 无 shell 子命令（仅 Skill）
 
-`/taiyi:explore` · `/taiyi:flow` · `/taiyi:full-flow` · `/taiyi:tdd plan|dev` · `/taiyi:gstack *` · `/taiyi:sp *`
+`/taiyi:explore` · `/taiyi:flow` · `/taiyi:full-flow` · `/taiyi:tdd plan|dev` · `/taiyi:ship` · `/taiyi:land` · `/taiyi:commit` · `/taiyi:gstack *` · `/taiyi:sp *`
 
-完整列表：`docs/taiyi/canonical-commands.md` · `docs/taiyi/commands.yaml`
+CLI 直调 `ship`/`land`/`commit` → exit 2 + 提示加载 gstack Skill（见 `docs/taiyi/delivery-slash.md`）。
+
+完整列表：`docs/taiyi/canonical-commands.md` · `docs/taiyi/commands.yaml` · 探测归类：`docs/taiyi/probe-triage.md`
 
 ## Agent 代跑
 
