@@ -11,5 +11,6 @@ describe("slug", () => {
     expect(validateSlug("../escape").ok).toBe(false);
     expect(validateSlug("Bad_Slug").ok).toBe(false);
     expect(validateSlug("").ok).toBe(false);
+    expect(validateSlug("a\u0000b").ok).toBe(false);
   });
 });

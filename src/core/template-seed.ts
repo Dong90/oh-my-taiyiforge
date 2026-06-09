@@ -2,7 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 import type { PhaseId } from "./types.js";
 import { getPhase, listPhases } from "./phase-registry.js";
-import { wrapSeedTemplate } from "./seed-marker.js";
+import { isSeedTemplate, wrapSeedTemplate } from "./seed-marker.js";
 
 export type SeedVars = {
   slug: string;
@@ -34,7 +34,14 @@ function seedArtifactFile(
   if (!fs.existsSync(templateFile)) return false;
 
   const dest = path.join(changeDir, artifact);
-  if (fs.existsSync(dest)) return false;
+  if (fs.existsSync(dest)) {
+    try {
+      const existing = fs.readFileSync(dest, "utf8");
+      if (!isSeedTemplate(existing)) return false;
+    } catch {
+      return false;
+    }
+  }
 
   const raw = fs.readFileSync(templateFile, "utf8");
   fs.writeFileSync(dest, renderTemplate(raw, vars), "utf8");

@@ -5,6 +5,9 @@ export function validateSlug(slug: string): { ok: true } | { ok: false; error: s
   if (!trimmed) {
     return { ok: false, error: "slug must not be empty" };
   }
+  if (trimmed.includes("\0")) {
+    return { ok: false, error: "slug must not contain null bytes" };
+  }
   if (trimmed.includes("..") || trimmed.includes("/") || trimmed.includes("\\")) {
     return { ok: false, error: `invalid slug: ${slug}` };
   }
