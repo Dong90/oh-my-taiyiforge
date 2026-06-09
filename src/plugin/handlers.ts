@@ -468,6 +468,33 @@ export function taiyiArchive(
         text,
       };
     }
+    if (state.completedPhases.includes("integration")) {
+      const taiyiOnly = archiveTaiyiChange(taiyiRoot, slug, { openspec: false });
+      if (taiyiOnly.ok) {
+        const text = [
+          `✓ Taiyi 归档完成（OpenSpec 未成功，已降级仅 Taiyi 侧）`,
+          `  slug: ${slug}`,
+          taiyiOnly.dest ? `  path: ${taiyiOnly.dest}` : "",
+          `  OpenSpec: ${result.reason ?? "archive failed"}`,
+          openspec.detected
+            ? "  提示: 可稍后手动 openspec archive 或重试 archive --skip-specs"
+            : "",
+        ]
+          .filter(Boolean)
+          .join("\n");
+        return {
+          ok: true as const,
+          skipped: true as const,
+          reason: result.reason,
+          openspec,
+          stdout: result.stdout,
+          stderr: result.stderr,
+          state,
+          taiyiArchive: taiyiOnly,
+          text,
+        };
+      }
+    }
     return {
       ok: false as const,
       error: result.reason ?? "openspec archive failed",
@@ -492,11 +519,19 @@ export function taiyiArchive(
         taiyiArchiveResult.reason?.includes("already") ||
         taiyiArchiveResult.reason?.includes("跳过重复")));
 
-  const text = idempotent
-    ? formatTaiyiArchivePlain(slug, taiyiArchiveResult)
-    : taiyiArchiveResult.ok
-      ? formatTaiyiArchivePlain(slug, taiyiArchiveResult)
-      : undefined;
+  if (!taiyiArchiveResult.ok) {
+    return {
+      ok: false as const,
+      error: taiyiArchiveResult.reason ?? "Taiyi 归档失败",
+      reason: result.reason,
+      openspec,
+      stdout: result.stdout,
+      state,
+      taiyiArchive: taiyiArchiveResult,
+    };
+  }
+
+  const text = formatTaiyiArchivePlain(slug, taiyiArchiveResult);
 
   return {
     ok: true as const,
@@ -506,7 +541,7 @@ export function taiyiArchive(
     openspec,
     stdout: result.stdout,
     state,
-    taiyiArchive: taiyiArchiveResult.ok ? taiyiArchiveResult : undefined,
+    taiyiArchive: taiyiArchiveResult,
     text,
   };
 }

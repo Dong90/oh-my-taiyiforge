@@ -1,6 +1,6 @@
 {
   "name": "oh-my-taiyiforge",
-  "version": "0.22.1",
+  "version": "0.22.2",
   "description": "TaiyiForge — OpenCode 插件 + Claude/Codex/Cursor 共用 taiyi-* 九阶段研发工作流",
   "license": "MIT",
   "type": "module",
@@ -63,7 +63,9 @@
     "prepublishOnly": "npm run build && npm test",
     "taiyi:doctor": "taiyi doctor --strict-workspace",
     "taiyi:verify": "taiyi verify",
-    "taiyi:smoke": "node -e \"process.exit(0)\""
+    "taiyi:smoke": "node -e \"process.exit(0)\"",
+    "probe:fullflow": "node scripts/probes/taiyi-fullflow-probe.mjs",
+    "probe:postfix": "node scripts/probes/post-fix-regression.mjs"
   },
   "engines": {
     "node": ">=20"

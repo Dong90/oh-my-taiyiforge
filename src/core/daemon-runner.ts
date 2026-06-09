@@ -514,6 +514,25 @@ export function runDaemonLoop(
       };
     }
 
+    if (options.dryRun && !engineAdvanced) {
+      markDaemonInactive(taiyiRoot, slug, "blocked");
+      return {
+        ok: false,
+        slug,
+        stopReason: "blocked",
+        rounds,
+        roundCount: round,
+        maxRounds,
+        promptFile,
+        agentCommand,
+        message: [
+          `dry-run: 第 ${round} 轮无引擎进展，提前退出（避免空转 ${maxRounds} 轮）`,
+          "",
+          step.text.slice(0, 800),
+        ].join("\n"),
+      };
+    }
+
     daemonSleep(daemonIntervalMs(env));
   }
 

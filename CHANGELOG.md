@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.22.2] - 2026-06-09
+
+### Fixed
+
+- **archive**：OpenSpec CLI 失败且 integration 已完成时降级 Taiyi-only 归档（S3/S4）；Taiyi 移动失败不再误报 `ok: true`
+- **daemon dry-run**：轮末兜底早停，避免 blocked 变更空转 max-rounds
+- **handoff**：dated archive 目录（`2026-06-09-<slug>`）noop exit 0
+
+### Added
+
+- **probe-triage**：S0–S10 冒烟矩阵与 S3/S4 archive 根因说明
+- **`/taiyi:help`**：补 `list --archived`、`bug --create`、`smoke-reset` 说明
+- **探测脚本**：`scripts/probes/` + `npm run probe:fullflow` / `probe:postfix`（修正 C1 `--force`、slug 推导、smoke-reset 分通道断言）
+
 ## [0.22.1] - 2026-06-09
 
 ### Fixed

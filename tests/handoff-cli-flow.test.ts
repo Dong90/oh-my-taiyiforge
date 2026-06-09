@@ -97,4 +97,26 @@ describe("handoff CLI 链", () => {
     expect(handoff.code).toBe(0);
     expect(handoff.out).toMatch(/无需 handoff|已归档/);
   }, 60_000);
+
+  it("handoff on dated archive dir only exits 0 (noop)", () => {
+    const dated = path.join(workspace, ".taiyi/archive", `2026-06-09-${slug}`);
+    fs.mkdirSync(dated, { recursive: true });
+    fs.writeFileSync(
+      path.join(dated, "state.json"),
+      JSON.stringify({
+        slug,
+        currentPhase: "integration",
+        completedPhases: ["change", "requirement", "dev", "test", "integration"],
+        profile: "lite",
+        skippedPhases: ["design", "ui-design", "task", "review"],
+        workflowStatus: "completed",
+        autoHarness: false,
+        createdAt: "2026-01-01",
+        updatedAt: "2026-01-02",
+      }),
+    );
+    const handoff = runForge(REPO, workspace, ["handoff", slug]);
+    expect(handoff.code).toBe(0);
+    expect(handoff.out).toMatch(/无需 handoff|已归档/);
+  }, 60_000);
 });

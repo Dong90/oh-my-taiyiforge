@@ -1,4 +1,4 @@
-import { describe, expect, it, beforeEach, afterEach } from "vitest";
+import { describe, expect, it, beforeEach, afterEach, vi } from "vitest";
 import fs from "node:fs";
 import path from "node:path";
 import os from "node:os";
@@ -11,6 +11,7 @@ import {
 } from "../src/core/taiyi-archive.js";
 import { taiyiArchive } from "../src/plugin/handlers.js";
 import { formatArchivePlain } from "../src/core/format-integration.js";
+import * as openspec from "../src/integrations/openspec.js";
 
 describe("taiyi-archive", () => {
   let tmp: string;
@@ -141,5 +142,36 @@ describe("taiyi-archive", () => {
     expect(r.ok).toBe(true);
     const text = formatArchivePlain("demo", r);
     expect(text).toMatch(/幂等|no-op|already|跳过重复/i);
+  });
+
+  it("falls back to taiyi-only archive when openspec CLI fails after integration", () => {
+    fs.writeFileSync(
+      path.join(taiyiRoot, "changes", "demo", "state.json"),
+      JSON.stringify({
+        slug: "demo",
+        currentPhase: "integration",
+        completedPhases: ["change", "requirement", "dev", "test", "integration"],
+        profile: "lite",
+        skippedPhases: ["design", "ui-design", "task", "review"],
+        workflowStatus: "completed",
+        createdAt: "2026-01-01",
+        updatedAt: "2026-01-02",
+      }),
+    );
+    fs.mkdirSync(path.join(tmp, "openspec", "changes", "demo"), { recursive: true });
+    fs.writeFileSync(path.join(tmp, "openspec", "config.yaml"), "schema: spec-driven\n");
+
+    const spy = vi.spyOn(openspec, "runOpenspecArchive").mockReturnValue({
+      ok: false,
+      reason: "openspec validation failed (probe mock)",
+    });
+
+    const r = taiyiArchive(tmp, "demo");
+    spy.mockRestore();
+
+    expect(r.ok).toBe(true);
+    expect(isTaiyiArchived(taiyiRoot, "demo")).toBe(true);
+    const text = formatArchivePlain("demo", r);
+    expect(text).toMatch(/Taiyi 归档|已归档/i);
   });
 });
