@@ -39,7 +39,7 @@
 
     { "id": "review-check", "argv": ["review-check", "{slug}"], "expectExit": [0, 1] },
     { "id": "review-loop", "argv": ["review-loop", "{slug}"], "expectExit": [0, 1] },
-    { "id": "ralph", "argv": ["ralph", "{slug}"], "expectExit": 0 },
+    { "id": "ralph", "argv": ["ralph", "{slug}"], "expectExit": 1 },
     { "id": "autopilot", "argv": ["autopilot", "{slug}"], "expectExit": 1 },
     { "id": "team", "argv": ["team", "{slug}"], "expectExit": 0 },
     { "id": "ultrawork", "argv": ["ultrawork", "{slug}"], "expectExit": 1 },

@@ -4,11 +4,12 @@ import { runBrowserSmoke } from "../core/browser-smoke.js";
 import { listPhases } from "../core/phase-registry.js";
 import { resolveTaiyiRoot } from "../core/paths.js";
 import { resolvePackageRoot, resolveTemplatesDir } from "../core/package-root.js";
+import { installProjectWrapper } from "../install/sync-project-wrapper.js";
 import { resolveHumanForComplete } from "../core/gates/human-gate-config.js";
 import { formatChangeListPlain, formatGuidePlain, formatPhaseProgressLine, formatStatusPlain } from "../core/format-guide.js";
 import { buildPhaseGuide } from "../core/phase-guide.js";
-import { isChangeAborted, isWorkflowCompleted } from "../core/change-status.js";
-import { resolveActiveSlug, slugifyTitle } from "../core/active-slug.js";
+import { isChangeAborted, isWorkflowCompleted, completedWorkflowMessage } from "../core/change-status.js";
+import { resolveActiveSlug, resolveChangeSlug, slugifyTitle } from "../core/active-slug.js";
 import {
   evaluateCommitTrailers,
   suggestCommitMessage,
@@ -17,6 +18,7 @@ import { resolveAutoHarness } from "../core/resolve-auto-harness.js";
 import type { ChangeProfile, PhaseId } from "../core/types.js";
 import {
   taiyiArchive,
+  taiyiCancel,
   taiyiAssess,
   taiyiComplete,
   taiyiDoctor,
@@ -46,8 +48,13 @@ import {
   taiyiPhaseWrite,
   taiyiFeature,
   taiyiBug,
+  taiyiResume,
+  taiyiSlashOnlyHint,
+  taiyiChatSlashOnlyHint,
   taiyiStep,
   taiyiStopMode,
+  taiyiTrimAhead,
+  taiyiPrune,
   taiyiModes,
   taiyiRemember,
   taiyiKeyword,
@@ -124,19 +131,65 @@ function usage(): void {
   npm run taiyi -- remember [note]          → /taiyi:remember — 项目记忆
   npm run taiyi -- write [slug]              → /taiyi:write — 写当前阶段工件
   npm run taiyi -- change|requirement|… [slug]  legacy CLI；聊天用 /taiyi:write
-  npm run taiyi -- feature [标题或slug]      → /taiyi:feature — 新功能场景
-  npm run taiyi -- bug [标题或slug]          → /taiyi:bug — lite 修 bug 场景
+  npm run taiyi -- list [--all] [--archived]   默认仅活跃；--archived 仅 archive/；--all 含 completed/aborted
+  npm run taiyi -- resume [slug]               /taiyi:resume — HANDOFF + status
+  npm run taiyi -- prune [--dry-run] [--aborted]  清理孤儿目录 + runtime
+  npm run taiyi -- trim-ahead <slug>           删除超前阶段工件
+  npm run taiyi -- sync-wrapper                消费方 scripts/taiyi-forge.sh → shim
+  npm run taiyi -- help                        用法（exit 0）
+  npm run taiyi -- ls|check|pause|n|go|ok|run   legacy 别名 → list|harness|handoff|next|done|walkthrough
+  npm run taiyi -- feature [标题] [--create]   → /taiyi:feature — 新功能场景（--create 自动 new）
+  npm run taiyi -- bug [标题] [--create]       → /taiyi:bug — lite 修 bug（--create 自动 new）
 
 Profile: full | api（跳过 ui-design）| lite（五阶段）
 Token: 见 docs/taiyi/token-budget.yaml · TAIYI_TOKEN_BUDGET / TAIYI_TOKEN_ENFORCE
 CI: 见 docs/ci/README.md 与 examples/ci/github-actions/
+
+仅聊天斜杠（无 shell/CLI 实现，请用 /taiyi:<verb> 加载 Skill）:
+  explore · flow · tdd · security · e2e · ui-test · release · ship · land · commit
+Legacy 别名: ls→list · n/go→next · done/ok→done · check→harness · pause→handoff
 `);
+}
+
+const CLI_ALIASES: Record<string, string> = {
+  ls: "list",
+  n: "next",
+  go: "next",
+  ok: "done",
+  check: "harness",
+  pause: "handoff",
+  run: "walkthrough",
+};
+
+const SLASH_ONLY_COMMANDS = new Set([
+  "explore",
+  "flow",
+  "full-flow",
+  "tdd",
+  "security",
+  "e2e",
+  "ui-test",
+  "release",
+  "preflight",
+  "sp",
+  "gstack",
+  "diagram-pipeline",
+  "diagram-c4",
+  "diagram-arch",
+  "diagram-flow",
+  "diagram-render",
+]);
+
+function normalizeCliCommand(raw?: string): string | undefined {
+  if (!raw) return undefined;
+  return CLI_ALIASES[raw] ?? raw;
 }
 
 const templatesDir = resolveTemplatesDir(import.meta.url);
 const engine = new WorkflowEngine(taiyiRoot, templatesDir);
 const argv = process.argv.slice(2).filter((a) => a !== "--json");
-const [cmd, ...args] = argv;
+const [rawCmd, ...args] = argv;
+const cmd = normalizeCliCommand(rawCmd);
 
 const WORKFLOW_SKILL_VERBS = new Set([
   "plan",
@@ -288,7 +341,7 @@ function printCompleteSuccess(slug: string, phaseId: PhaseId): void {
     return;
   }
   if (state && isWorkflowCompleted(state)) {
-    console.log(`✓ ${phaseId} 完成 → 九阶段已全部完成\n→ /taiyi:archive`);
+    console.log(`✓ ${phaseId} 完成 → ${completedWorkflowMessage(state)}\n→ /taiyi:archive`);
     return;
   }
   console.log(`✓ ${phaseId} 过关`);
@@ -343,9 +396,22 @@ function printDoctor(): void {
 }
 
 switch (cmd) {
+  case "help":
+  case "--help":
+  case "-h":
+    usage();
+    break;
   case "doctor":
     printDoctor();
     break;
+  case "sync-wrapper": {
+    const pkgRoot = resolvePackageRoot(import.meta.url);
+    const r = installProjectWrapper(workspaceDir, pkgRoot);
+    if (jsonMode) console.log(JSON.stringify(r, null, 2));
+    else console.log(`[taiyi-forge] ${r.action}: ${r.detail ?? r.path}`);
+    if (r.action === "failed") process.exit(1);
+    break;
+  }
   case "audit": {
     const { positional } = parseRepeatCount(stripFlags(args));
     const r = taiyiAudit(workspaceDir, { slug: positional[0], plain: !jsonMode });
@@ -369,9 +435,32 @@ switch (cmd) {
     runVerifyCommand(args);
     break;
   case "list": {
-    const r = taiyiList(workspaceDir);
+    const listOpts = {
+      includeAll: args.includes("--all"),
+      includeArchived: args.includes("--archived"),
+    };
+    const r = taiyiList(workspaceDir, listOpts);
     if (jsonMode) console.log(JSON.stringify(r, null, 2));
     else console.log(formatChangeListPlain(r.changes));
+    break;
+  }
+  case "resume": {
+    const slug = stripFlags(args)[0];
+    const r = taiyiResume(workspaceDir, slug, !jsonMode);
+    if (!r.ok) {
+      console.error(r.error);
+      process.exit(1);
+    }
+    if (jsonMode) console.log(JSON.stringify(r, null, 2));
+    else console.log(r.text);
+    break;
+  }
+  case "ship":
+  case "land":
+  case "commit": {
+    const r = taiyiSlashOnlyHint(cmd as "ship" | "land" | "commit");
+    console.error(r.text);
+    process.exit(2);
     break;
   }
   case "init": {
@@ -434,17 +523,22 @@ switch (cmd) {
     break;
   }
   case "cancel": {
-    const slug = requireSlug(args);
-    const result = engine.abortChange(slug);
+    const removeDir = args.includes("--remove-dir");
+    const slug = requireSlug(stripFlags(args));
+    const result = taiyiCancel(workspaceDir, slug, { removeDir });
     if (!result.ok) {
       console.error(result.error);
       process.exit(1);
     }
     if (jsonMode) {
-      console.log(JSON.stringify({ ok: true, slug, workflowStatus: "aborted" }, null, 2));
+      console.log(JSON.stringify(result, null, 2));
     } else {
-      console.log(`已取消变更: ${slug}`);
-      console.log("目录仍保留于 .taiyi/changes/；可 /taiyi:new 创建新变更。");
+      console.log(`已取消变更: ${result.slug}`);
+      if (result.removed) {
+        console.log("变更目录已删除。");
+      } else {
+        console.log("目录仍保留于 .taiyi/changes/（--remove-dir 可删除；默认 list 不展示 aborted）。");
+      }
     }
     break;
   }
@@ -633,6 +727,8 @@ switch (cmd) {
     }
     if (jsonMode) {
       console.log(JSON.stringify(r, null, 2));
+    } else if ("noop" in r && r.noop && r.message) {
+      console.log(r.message);
     } else {
       console.log(`已写入: ${r.path}`);
       console.log(`恢复: /taiyi:status ${r.slug}`);
@@ -755,7 +851,7 @@ switch (cmd) {
       process.exit(1);
     }
     if (isWorkflowCompleted(state)) {
-      console.log(`变更 ${slug} 九阶段已完成`);
+      console.log(`变更 ${slug} ${completedWorkflowMessage(state)}`);
       break;
     }
     completeCurrentPhase(slug, state.currentPhase as PhaseId, approver);
@@ -918,14 +1014,16 @@ switch (cmd) {
     break;
   }
   case "feature": {
+    const create = args.includes("--create");
     const title = stripFlags(args).join(" ").trim();
-    const r = taiyiFeature(workspaceDir, title || undefined, !jsonMode);
+    const r = taiyiFeature(workspaceDir, title || undefined, { plain: !jsonMode, create });
     printHandlerResult(r, false);
     break;
   }
   case "bug": {
+    const create = args.includes("--create");
     const title = stripFlags(args).join(" ").trim();
-    const r = taiyiBug(workspaceDir, title || undefined, !jsonMode);
+    const r = taiyiBug(workspaceDir, title || undefined, { plain: !jsonMode, create });
     printHandlerResult(r, false);
     break;
   }
@@ -985,12 +1083,45 @@ switch (cmd) {
     }
     if (jsonMode) console.log(JSON.stringify(r, null, 2));
     else if ("text" in r && r.text) console.log(r.text);
-    process.exit(r.ok ? 0 : 1);
+    const code = "exitCode" in r && typeof r.exitCode === "number" ? r.exitCode : r.ok ? 0 : 1;
+    process.exit(code);
+  }
+  case "trim-ahead": {
+    const slugArg = args.find((a) => !a.startsWith("--"));
+    const r = taiyiTrimAhead(workspaceDir, slugArg, !jsonMode);
+    if (!r.ok) {
+      console.error("error" in r ? r.error : "trim-ahead failed");
+      process.exit(1);
+    }
+    if (jsonMode) console.log(JSON.stringify(r, null, 2));
+    else if ("text" in r && r.text) console.log(r.text);
+    break;
+  }
+  case "prune": {
+    const dryRun = args.includes("--dry-run");
+    const includeAborted = args.includes("--aborted");
+    const r = taiyiPrune(workspaceDir, { dryRun, includeAborted }, !jsonMode);
+    if (jsonMode) console.log(JSON.stringify(r, null, 2));
+    else if ("text" in r && r.text) console.log(r.text);
+    break;
   }
   case "stop-mode": {
     const force = args.includes("--force") || args.includes("--all");
-    const slugArg = args.find((a) => !a.startsWith("--"));
-    const r = taiyiStopMode(workspaceDir, { force, slug: slugArg }, !jsonMode);
+    const MODE_IDS = new Set([
+      "ralph",
+      "autopilot",
+      "ultrawork",
+      "ultraqa",
+      "team",
+      "ralplan",
+      "plan",
+    ]);
+    const positional = args.filter((a) => !a.startsWith("--"));
+    const modeArg = positional.find((a) => MODE_IDS.has(a)) as
+      | import("../core/runtime/mode-state.js").TaiyiModeId
+      | undefined;
+    const slugArg = positional.find((a) => !MODE_IDS.has(a));
+    const r = taiyiStopMode(workspaceDir, { force, slug: slugArg, mode: modeArg }, !jsonMode);
     if (jsonMode) console.log(JSON.stringify(r, null, 2));
     else if ("text" in r && r.text) console.log(r.text);
     break;
@@ -1003,9 +1134,17 @@ switch (cmd) {
     const positional = rest.filter((a) => !a.startsWith("--"));
 
     if (sub === "status") {
-      const resolved = resolveActiveSlug(taiyiRoot, positional[0]);
+      const slugArg = positional[0];
+      const resolved = slugArg
+        ? resolveChangeSlug(taiyiRoot, slugArg)
+        : resolveActiveSlug(taiyiRoot);
       if (!resolved.ok) {
         console.error(resolved.error);
+        if (resolved.error.includes("多个")) {
+          console.error("用法: daemon status <slug>   # 多变更并存时须指定 slug");
+        } else if (resolved.error.includes("没有进行中")) {
+          console.error("用法: daemon status <slug>   # 或 archive 中 slug 查历史 runtime");
+        }
         process.exit(1);
       }
       const st = readDaemonState(taiyiRoot, resolved.slug);
@@ -1071,6 +1210,11 @@ switch (cmd) {
     process.exit(r.ok ? 0 : 1);
   }
   default:
+    if (rawCmd && SLASH_ONLY_COMMANDS.has(rawCmd)) {
+      const hint = taiyiChatSlashOnlyHint(rawCmd);
+      console.error(hint.text);
+      process.exit(2);
+    }
     if (cmd && WORKFLOW_SKILL_VERBS.has(cmd)) {
       const { positional } = parseRepeatCount(stripFlags(args));
       const r = taiyiWorkflowSkill(workspaceDir, cmd, positional[0], !jsonMode);
@@ -1088,5 +1232,5 @@ switch (cmd) {
       process.exit(r.ok ? 0 : 1);
     }
     usage();
-    process.exit(cmd ? 1 : 0);
+    process.exit(rawCmd ? 2 : 0);
 }

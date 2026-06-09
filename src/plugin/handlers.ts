@@ -6,9 +6,9 @@ import { listPhases, getPhase, tryGetPhase } from "../core/phase-registry.js";
 import { resolveTaiyiRoot } from "../core/paths.js";
 import { resolveTemplatesDir } from "../core/package-root.js";
 import { resolveHumanForComplete } from "../core/gates/human-gate-config.js";
-import { resolveActiveSlug, slugifyTitle } from "../core/active-slug.js";
+import { resolveActiveSlug, resolveChangeSlug, slugifyTitle } from "../core/active-slug.js";
 import { resolveAutoHarness } from "../core/resolve-auto-harness.js";
-import { isWorkflowCompleted } from "../core/change-status.js";
+import { isWorkflowCompleted, completedWorkflowMessage, loadChangeState } from "../core/change-status.js";
 import {
   formatAgentLoopProtocol,
   formatLoopResultPlain,
@@ -27,12 +27,20 @@ import type { ComplexitySignals } from "../core/routing/complexity.js";
 import { buildPhaseGuide } from "../core/phase-guide.js";
 import { getOpenspecStatus, runOpenspecArchive } from "../integrations/openspec.js";
 import { syncTaiyiToOpenspec } from "../integrations/openspec-sync.js";
+import {
+  archiveTaiyiChange,
+  findExistingArchiveDirForSlug,
+  formatTaiyiArchivePlain,
+  isTaiyiArchived,
+  resolveChangeDir,
+  taiyiArchiveWhenOpenspecAlreadyDone,
+} from "../core/taiyi-archive.js";
 import { runDoctor } from "../core/doctor.js";
 import { runDoctorWorkspace } from "../core/doctor-workspace.js";
-import { listChanges } from "../core/list-changes.js";
+import { listChanges, type ListChangesOptions } from "../core/list-changes.js";
 import { formatGuidePlain, formatPhaseProgressLine } from "../core/format-guide.js";
 import { buildEngineTruth } from "../core/engine-truth.js";
-import { writeHandoff, handoffExists } from "../core/handoff.js";
+import { writeHandoff, handoffExists, handoffPath } from "../core/handoff.js";
 import {
   evaluateCommitTrailers,
   suggestCommitMessage,
@@ -47,6 +55,15 @@ import {
   runPostCompleteShellHooks,
 } from "../core/harness-runner.js";
 import { markHarnessCheckpoint, hookKey } from "../core/harness-checkpoints.js";
+import { trimAheadArtifacts, formatTrimAheadPlain } from "../core/trim-ahead-artifacts.js";
+import { pruneOrphanChangeDirs, formatPrunePlain } from "../core/prune-changes.js";
+import {
+  formatOrphanRuntimePlain,
+  formatStaleRuntimePlain,
+  pruneOrphanRuntimeModes,
+  pruneStaleRuntimeModes,
+  clearRuntimeForSlug,
+} from "../core/runtime/orphan-runtime.js";
 import { getHarnessContext } from "../integrations/harness-hooks.js";
 import {
   verifyWorkspaceCi,
@@ -198,7 +215,7 @@ export function taiyiStatus(workspaceDir: string, slug: string) {
   const taiyiRoot = resolveTaiyiRoot(workspaceDir);
   const guide = buildPhaseGuide(taiyiRoot, slug, state, workspaceDir);
   const openspec = getOpenspecStatus(workspaceDir, slug);
-  const changeDir = path.join(taiyiRoot, "changes", slug);
+  const changeDir = engine.changeDir(slug);
   const engineTruth = buildEngineTruth(state, guide, {
     handoffExists: handoffExists(changeDir),
     taiyiRoot,
@@ -302,6 +319,24 @@ export function taiyiSyncOpenspec(
   return { ...result, state };
 }
 
+function finalizeTaiyiArchive(
+  taiyiRoot: string,
+  slug: string,
+  opts: {
+    openspecWasArchivedBefore: boolean;
+    alreadyArchived?: boolean;
+    openspecDetected: boolean;
+    openspecSkipped?: boolean;
+  },
+): ReturnType<typeof archiveTaiyiChange> {
+  if (opts.openspecWasArchivedBefore || opts.alreadyArchived) {
+    return taiyiArchiveWhenOpenspecAlreadyDone(taiyiRoot, slug);
+  }
+  return archiveTaiyiChange(taiyiRoot, slug, {
+    openspec: opts.openspecDetected && !opts.openspecSkipped,
+  });
+}
+
 export function taiyiArchive(
   workspaceDir: string,
   slug: string,
@@ -309,8 +344,8 @@ export function taiyiArchive(
 ) {
   const invalid = rejectInvalidSlug(slug);
   if (invalid) return invalid;
-  const engine = createEngine(workspaceDir);
-  const state = engine.getState(slug);
+  const taiyiRoot = resolveTaiyiRoot(workspaceDir);
+  const state = loadChangeState(taiyiRoot, slug);
   if (!state) return { ok: false as const, error: `Change not found: ${slug}` };
 
   if (options?.requireIntegrationComplete !== false) {
@@ -323,9 +358,54 @@ export function taiyiArchive(
     }
   }
 
-  let openspec = getOpenspecStatus(workspaceDir, slug);
-  if (openspec.detected && !openspec.changeExists) {
-    const changeDir = path.join(resolveTaiyiRoot(workspaceDir), "changes", slug);
+  const existingTaiyiArchive = isTaiyiArchived(taiyiRoot, slug);
+  const openspecEarly = getOpenspecStatus(workspaceDir, slug);
+  const workflowDone = isWorkflowCompleted(state);
+
+  if (existingTaiyiArchive) {
+    const dest = findExistingArchiveDirForSlug(taiyiRoot, slug) ?? resolveChangeDir(taiyiRoot, slug)!;
+    const text = formatTaiyiArchivePlain(slug, {
+      ok: true,
+      dest,
+      reason: "already in .taiyi/archive (幂等 no-op，跳过重复移动与 OpenSpec archive)",
+    });
+    return {
+      ok: true as const,
+      alreadyArchived: true as const,
+      skipped: true as const,
+      state,
+      openspec: openspecEarly,
+      taiyiArchive: { ok: true, dest, reason: "already in .taiyi/archive (幂等)" },
+      text,
+    };
+  }
+
+  if (workflowDone && openspecEarly.archivedExists) {
+    const dest = openspecEarly.archivedPath ?? resolveChangeDir(taiyiRoot, slug) ?? undefined;
+    const text = [
+      `✓ 已归档 (${slug})（幂等 no-op）`,
+      openspecEarly.archivedPath
+        ? `  OpenSpec: ${openspecEarly.archivedPath}`
+        : "  OpenSpec 已归档",
+      dest && dest.includes(`${path.sep}archive${path.sep}`)
+        ? `  Taiyi: ${dest}`
+        : "  Taiyi 变更仍在 .taiyi/changes/（verify/status 可用）",
+    ].join("\n");
+    return {
+      ok: true as const,
+      alreadyArchived: true as const,
+      skipped: true as const,
+      state,
+      openspec: openspecEarly,
+      reason: "workflow 与 OpenSpec 均已归档（幂等 no-op）",
+      text,
+    };
+  }
+
+  let openspec = openspecEarly;
+  const openspecWasArchivedBefore = openspec.archivedExists && !openspec.changeExists;
+  if (openspec.detected && !openspec.changeExists && !openspec.archivedExists) {
+    const changeDir = resolveChangeDir(taiyiRoot, slug) ?? path.join(taiyiRoot, "changes", slug);
     const sync = syncTaiyiToOpenspec(workspaceDir, slug, changeDir, { createChangeDir: true });
     if (!sync.ok) {
       return {
@@ -338,15 +418,56 @@ export function taiyiArchive(
     openspec = getOpenspecStatus(workspaceDir, slug);
   }
 
-  const result = runOpenspecArchive(workspaceDir, slug, {
-    skipSpecs: options?.skipSpecs,
-    yes: true,
-  });
+  const result = openspecWasArchivedBefore
+    ? {
+        ok: true as const,
+        skipped: true as const,
+        alreadyArchived: true as const,
+        reason: openspec.archivedPath
+          ? `OpenSpec 已归档: ${openspec.archivedPath}`
+          : "OpenSpec 已归档",
+      }
+    : runOpenspecArchive(workspaceDir, slug, {
+        skipSpecs: options?.skipSpecs,
+        yes: true,
+      });
 
-  if (result.skipped && result.ok) {
-    return { ok: true as const, skipped: true as const, reason: result.reason, openspec, state };
+  if (result.skipped && result.ok && !result.alreadyArchived) {
+    const taiyiArchive = finalizeTaiyiArchive(taiyiRoot, slug, {
+      openspecWasArchivedBefore,
+      openspecDetected: openspec.detected,
+      openspecSkipped: true,
+    });
+    const text = formatTaiyiArchivePlain(slug, taiyiArchive);
+    return {
+      ok: taiyiArchive.ok,
+      skipped: true as const,
+      reason: result.reason,
+      openspec,
+      state,
+      taiyiArchive,
+      text,
+    };
   }
   if (!result.ok) {
+    if (result.alreadyArchived) {
+      const taiyiArchiveResult = taiyiArchiveWhenOpenspecAlreadyDone(taiyiRoot, slug);
+      const text = [
+        `✓ OpenSpec 已归档（幂等）`,
+        result.reason ?? "",
+        taiyiArchiveResult.reason ?? (taiyiArchiveResult.dest ? `Taiyi: ${taiyiArchiveResult.dest}` : ""),
+      ].join("\n");
+      return {
+        ok: true as const,
+        alreadyArchived: true as const,
+        skipped: true as const,
+        reason: result.reason,
+        openspec,
+        state,
+        taiyiArchive: taiyiArchiveResult,
+        text,
+      };
+    }
     return {
       ok: false as const,
       error: result.reason ?? "openspec archive failed",
@@ -357,11 +478,36 @@ export function taiyiArchive(
     };
   }
 
+  const taiyiArchiveResult = finalizeTaiyiArchive(taiyiRoot, slug, {
+    openspecWasArchivedBefore,
+    alreadyArchived: result.alreadyArchived,
+    openspecDetected: openspec.detected,
+    openspecSkipped: result.skipped,
+  });
+
+  const idempotent =
+    result.alreadyArchived ||
+    (taiyiArchiveResult.ok &&
+      (taiyiArchiveResult.reason?.includes("幂等") ||
+        taiyiArchiveResult.reason?.includes("already") ||
+        taiyiArchiveResult.reason?.includes("跳过重复")));
+
+  const text = idempotent
+    ? formatTaiyiArchivePlain(slug, taiyiArchiveResult)
+    : taiyiArchiveResult.ok
+      ? formatTaiyiArchivePlain(slug, taiyiArchiveResult)
+      : undefined;
+
   return {
     ok: true as const,
+    skipped: idempotent ? (true as const) : undefined,
+    alreadyArchived: idempotent ? (true as const) : undefined,
+    reason: idempotent ? (taiyiArchiveResult.reason ?? result.reason) : result.reason,
     openspec,
     stdout: result.stdout,
     state,
+    taiyiArchive: taiyiArchiveResult.ok ? taiyiArchiveResult : undefined,
+    text,
   };
 }
 
@@ -387,14 +533,24 @@ export function taiyiDoctor(
 export function taiyiCancel(
   workspaceDir: string,
   slug?: string,
-): { ok: true; slug: string; workflowStatus: "aborted" } | { ok: false; error: string } {
+  options?: { removeDir?: boolean },
+): { ok: true; slug: string; workflowStatus: "aborted"; removed?: boolean } | { ok: false; error: string } {
   const taiyiRoot = resolveTaiyiRoot(workspaceDir);
   const resolved = resolveActiveSlug(taiyiRoot, slug);
   if (!resolved.ok) return { ok: false, error: resolved.error };
   const engine = createEngine(workspaceDir);
   const result = engine.abortChange(resolved.slug);
   if (!result.ok) return { ok: false, error: result.error ?? "abort failed" };
-  return { ok: true, slug: resolved.slug, workflowStatus: "aborted" };
+  let removed = false;
+  if (options?.removeDir) {
+    const dir = engine.changeDir(resolved.slug);
+    if (fs.existsSync(dir)) {
+      fs.rmSync(dir, { recursive: true, force: true });
+      removed = true;
+    }
+    clearRuntimeForSlug(taiyiRoot, resolved.slug);
+  }
+  return { ok: true, slug: resolved.slug, workflowStatus: "aborted", removed };
 }
 
 export function taiyiCommitTrailers(
@@ -430,17 +586,49 @@ export function taiyiHandoff(
   workspaceDir: string,
   slug?: string,
   note?: string,
-): { ok: true; slug: string; path: string; engineTruth: ReturnType<typeof buildEngineTruth> } | { ok: false; error: string } {
+):
+  | {
+      ok: true;
+      slug: string;
+      path: string;
+      noop?: boolean;
+      message?: string;
+      engineTruth: ReturnType<typeof buildEngineTruth>;
+    }
+  | { ok: false; error: string } {
   const taiyiRoot = resolveTaiyiRoot(workspaceDir);
-  const resolved = resolveActiveSlug(taiyiRoot, slug);
+  const resolved = slug?.trim()
+    ? resolveChangeSlug(taiyiRoot, slug)
+    : resolveActiveSlug(taiyiRoot);
   if (!resolved.ok) return { ok: false, error: resolved.error };
   const engine = createEngine(workspaceDir);
   const stateResult = requireChangeState(engine, resolved.slug);
   if (!stateResult.ok) return stateResult;
   const state = stateResult.state;
+  const changeDir = resolveChangeDir(taiyiRoot, resolved.slug);
+  if (!changeDir) {
+    return { ok: false, error: `Change not found: ${resolved.slug}` };
+  }
   const guide = buildPhaseGuide(taiyiRoot, resolved.slug, state, workspaceDir);
   const statusLine = formatPhaseProgressLine(guide);
-  const changeDir = path.join(taiyiRoot, "changes", resolved.slug);
+  const engineTruth = buildEngineTruth(state, guide, {
+    handoffExists: handoffExists(changeDir),
+    taiyiRoot,
+  });
+
+  if (isWorkflowCompleted(state) || isTaiyiArchived(taiyiRoot, resolved.slug)) {
+    return {
+      ok: true,
+      slug: resolved.slug,
+      path: handoffPath(changeDir),
+      noop: true,
+      message: isTaiyiArchived(taiyiRoot, resolved.slug)
+        ? "变更已归档，无需 handoff"
+        : "变更已完成，无需 handoff；可用 /taiyi:archive 或 git commit 收尾",
+      engineTruth,
+    };
+  }
+
   const tokenCfg = loadTokenBudgetConfig();
   const artifactScan = scanArtifactTokens(changeDir);
   const compressHint =
@@ -454,14 +642,98 @@ export function taiyiHandoff(
     statusLine,
     compressHint,
   });
-  const engineTruth = buildEngineTruth(state, guide, { handoffExists: true, taiyiRoot });
-  return { ok: true, slug: resolved.slug, path: filePath, engineTruth };
+  return {
+    ok: true,
+    slug: resolved.slug,
+    path: filePath,
+    engineTruth: buildEngineTruth(state, guide, { handoffExists: true, taiyiRoot }),
+  };
 }
 
-export function taiyiList(workspaceDir: string) {
+export function taiyiList(workspaceDir: string, options?: ListChangesOptions) {
   const taiyiRoot = resolveTaiyiRoot(workspaceDir);
-  const changes = listChanges(taiyiRoot);
+  const changes = listChanges(taiyiRoot, options);
   return { ok: true as const, changes, taiyiRoot };
+}
+
+export function taiyiResume(
+  workspaceDir: string,
+  slug?: string,
+  plain = true,
+):
+  | { ok: true; slug: string; hasHandoff: boolean; handoffPath: string; text: string; statusText?: string }
+  | { ok: false; error: string } {
+  const taiyiRoot = resolveTaiyiRoot(workspaceDir);
+  const resolved = slug?.trim()
+    ? resolveChangeSlug(taiyiRoot, slug)
+    : resolveActiveSlug(taiyiRoot);
+  if (!resolved.ok) return { ok: false, error: resolved.error };
+  const state = loadChangeState(taiyiRoot, resolved.slug);
+  if (!state) return { ok: false, error: `Change not found: ${resolved.slug}` };
+  const changeDir = resolveChangeDir(taiyiRoot, resolved.slug)!;
+  const handoffPath = path.join(changeDir, "HANDOFF.md");
+  const hasHandoff = fs.existsSync(handoffPath);
+  const handoffBody = hasHandoff ? fs.readFileSync(handoffPath, "utf8") : "";
+  const status = taiyiStatus(workspaceDir, resolved.slug);
+  const statusText =
+    status.ok && "text" in status && typeof status.text === "string"
+      ? status.text
+      : undefined;
+  const lines = ["══ Taiyi Resume ══", ""];
+  if (hasHandoff) {
+    lines.push("── HANDOFF ──", handoffBody.trim(), "");
+  } else {
+    lines.push("（无 HANDOFF.md — 暂停时可用 /taiyi:handoff 生成）", "");
+  }
+  if (statusText) {
+    lines.push("── Status ──", statusText);
+  }
+  const text = lines.join("\n");
+  if (plain) {
+    return {
+      ok: true,
+      slug: resolved.slug,
+      hasHandoff,
+      handoffPath,
+      text,
+      statusText,
+    };
+  }
+  return { ok: true, slug: resolved.slug, hasHandoff, handoffPath, text, statusText };
+}
+
+const GSTACK_SLASH_ONLY = [
+  "ship 仅聊天斜杠 — 加载 gstack `ship` Skill 或 prompts/taiyi-ship.md",
+  "land 仅聊天斜杠 — 加载 gstack `land-and-deploy` 或 prompts/taiyi-land.md",
+  "commit 仅聊天斜杠 — /taiyi:commit 或 taiyi commit-trailers",
+].join("\n");
+
+export function taiyiSlashOnlyHint(command: "ship" | "land" | "commit"): {
+  ok: false;
+  error: string;
+  text: string;
+} {
+  const line =
+    command === "ship"
+      ? GSTACK_SLASH_ONLY.split("\n")[0]!
+      : command === "land"
+        ? GSTACK_SLASH_ONLY.split("\n")[1]!
+        : GSTACK_SLASH_ONLY.split("\n")[2]!;
+  return {
+    ok: false,
+    error: line,
+    text: `${line}\n\n引擎 CLI 无 ${command} 子命令；交付链见 docs/taiyi/delivery-slash.md`,
+  };
+}
+
+/** 仅聊天斜杠、无 shell 子命令（explore / flow / e2e …） */
+export function taiyiChatSlashOnlyHint(verb: string): { ok: false; error: string; text: string } {
+  const line = `${verb} 仅聊天斜杠 — 在 IDE 中用 /taiyi:${verb} 加载对应 Skill（引擎 CLI 无 shell 实现）`;
+  return {
+    ok: false,
+    error: line,
+    text: `${line}\n见 docs/taiyi/canonical-commands.md`,
+  };
 }
 
 export function taiyiNext(workspaceDir: string, slug: string, plain = true) {
@@ -641,7 +913,7 @@ export function taiyiContinue(
   const state = stateResult.state;
 
   if (isWorkflowCompleted(state)) {
-    return { ok: true as const, completed: true as const, message: "九阶段已全部完成" };
+    return { ok: true as const, completed: true as const, message: completedWorkflowMessage(state) };
   }
 
   const times = options?.times ?? 1;
@@ -740,7 +1012,7 @@ export function taiyiApply(
   const state = stateResult.state;
 
   if (isWorkflowCompleted(state)) {
-    return { ok: true as const, completed: true as const, message: "九阶段已全部完成" };
+    return { ok: true as const, completed: true as const, message: completedWorkflowMessage(state) };
   }
 
   const phase = state.currentPhase;
@@ -769,7 +1041,7 @@ export function taiyiToken(
 ) {
   const taiyiRoot = resolveTaiyiRoot(workspaceDir);
   const slugResult = options?.slug?.trim()
-    ? { ok: true as const, slug: options.slug.trim(), inferred: false }
+    ? resolveChangeSlug(taiyiRoot, options.slug.trim())
     : resolveActiveSlug(taiyiRoot);
   if (!slugResult.ok) return slugResult;
 
@@ -777,11 +1049,38 @@ export function taiyiToken(
   const invalid = rejectInvalidSlug(slug);
   if (invalid) return invalid;
 
-  const engine = createEngine(workspaceDir);
-  const stateResult = requireChangeState(engine, slug);
-  const state = stateResult.ok ? stateResult.state : null;
-  const changeDir = path.join(taiyiRoot, "changes", slug);
+  const changeDir = resolveChangeDir(taiyiRoot, slug);
+  if (!changeDir) {
+    return { ok: false as const, error: `Change not found: ${slug}` };
+  }
+  const state = loadChangeState(taiyiRoot, slug);
+  const archived =
+    isTaiyiArchived(taiyiRoot, slug) ||
+    changeDir.includes(`${path.sep}archive${path.sep}`) ||
+    Boolean(state && isWorkflowCompleted(state));
   const phase = (options?.phase ?? state?.currentPhase ?? "change") as PhaseId;
+
+  if (sub === "compress") {
+    if (archived || isTaiyiArchived(taiyiRoot, slug)) {
+      return {
+        ok: false as const,
+        error: "变更已归档或已完成，token compress 仅适用于进行中的 active 变更（目录须在 .taiyi/changes/）",
+      };
+    }
+    try {
+      if (!fs.existsSync(changeDir) || !fs.statSync(changeDir).isDirectory()) {
+        return {
+          ok: false as const,
+          error: `变更目录不存在: ${changeDir}（若已归档请用 token status/scan）`,
+        };
+      }
+    } catch {
+      return {
+        ok: false as const,
+        error: `无法访问变更目录: ${changeDir}`,
+      };
+    }
+  }
 
   if (sub === "status") {
     return { ok: true as const, text: tokenStatusPlain(changeDir, slug, state?.currentPhase) };
@@ -803,7 +1102,14 @@ export function taiyiToken(
   if (sub === "scan") {
     return { ok: true as const, text: tokenScan(changeDir, slug, phase) };
   }
-  return { ok: true as const, text: tokenCompress(changeDir, slug, phase) };
+  try {
+    return { ok: true as const, text: tokenCompress(changeDir, slug, phase) };
+  } catch (e) {
+    return {
+      ok: false as const,
+      error: e instanceof Error ? e.message : String(e),
+    };
+  }
 }
 
 export function taiyiReviewCheck(workspaceDir: string, slug: string, plain = true) {
@@ -962,25 +1268,71 @@ export function taiyiPhaseWrite(
   return { ok: result.ok, result };
 }
 
-export function taiyiFeature(workspaceDir: string, args?: string, plain = true) {
+export function taiyiFeature(
+  workspaceDir: string,
+  args?: string,
+  options?: { plain?: boolean; create?: boolean },
+) {
+  const plain = options?.plain !== false;
   const taiyiRoot = resolveTaiyiRoot(workspaceDir);
   const engine = createEngine(workspaceDir);
-  const result = runFeatureScenario(engine, taiyiRoot, args?.trim());
-  if (plain) return { ok: result.ok, text: result.text, result };
-  return { ok: result.ok, result };
+  let arg = args?.trim();
+  let createdSlug: string | undefined;
+  if (arg) {
+    const looksLikeSlug = /^[a-z0-9][a-z0-9-]*$/i.test(arg);
+    const slug = looksLikeSlug ? arg : slugifyTitle(arg);
+    if (!engine.getState(slug)) {
+      engine.initChange(slug, {
+        title: looksLikeSlug ? arg : arg,
+        templatesDir: TEMPLATES_DIR,
+        profile: "full",
+      });
+      createdSlug = slug;
+      arg = slug;
+    }
+  }
+  const result = runFeatureScenario(engine, taiyiRoot, arg);
+  const text = createdSlug
+    ? `已创建变更: ${createdSlug}\n\n${result.text}`
+    : result.text;
+  if (plain) return { ok: result.ok, text, result: { ...result, slug: createdSlug ?? result.slug } };
+  return { ok: result.ok, result: { ...result, slug: createdSlug ?? result.slug } };
 }
 
-export function taiyiBug(workspaceDir: string, args?: string, plain = true) {
+export function taiyiBug(
+  workspaceDir: string,
+  args?: string,
+  options?: { plain?: boolean; create?: boolean },
+) {
+  const plain = options?.plain !== false;
   const taiyiRoot = resolveTaiyiRoot(workspaceDir);
   const engine = createEngine(workspaceDir);
-  const result = runBugScenario(engine, taiyiRoot, args?.trim());
-  if (plain) return { ok: result.ok, text: result.text, result };
-  return { ok: result.ok, result };
+  let arg = args?.trim();
+  let createdSlug: string | undefined;
+  if (arg) {
+    const looksLikeSlug = /^[a-z0-9][a-z0-9-]*$/i.test(arg);
+    const slug = looksLikeSlug ? arg : slugifyTitle(arg);
+    if (!engine.getState(slug)) {
+      engine.initChange(slug, {
+        title: looksLikeSlug ? arg : arg,
+        templatesDir: TEMPLATES_DIR,
+        profile: "lite",
+      });
+      createdSlug = slug;
+      arg = slug;
+    }
+  }
+  const result = runBugScenario(engine, taiyiRoot, arg);
+  const text = createdSlug
+    ? `已创建 lite 变更: ${createdSlug}\n\n${result.text}`
+    : result.text;
+  if (plain) return { ok: result.ok, text, result: { ...result, slug: createdSlug ?? result.slug } };
+  return { ok: result.ok, result: { ...result, slug: createdSlug ?? result.slug } };
 }
 
 export function taiyiStopMode(
   workspaceDir: string,
-  options?: { force?: boolean; slug?: string },
+  options?: { force?: boolean; slug?: string; mode?: TaiyiModeId },
   plain = true,
 ) {
   const taiyiRoot = resolveTaiyiRoot(workspaceDir);
@@ -1091,7 +1443,40 @@ export function taiyiStep(
   const mode = options?.mode?.trim() as TaiyiModeId | undefined;
   const step = runModeStep(engine, workspaceDir, taiyiRoot, resolved.slug, mode);
   const banner = formatActiveModesBanner(taiyiRoot);
-  const text = banner ? `[${banner}]\n\n${step.text}` : step.text;
-  if (plain) return { ok: step.ok, text, step };
-  return { ok: step.ok, step: { ...step, text } };
+  const text = banner ? `${banner}\n\n${step.text}` : step.text;
+  const exitCode = step.exitCode ?? (step.ok ? 0 : 1);
+  if (plain) return { ok: step.ok, text, step, exitCode };
+  return { ok: step.ok, step: { ...step, text }, exitCode };
+}
+
+export function taiyiTrimAhead(workspaceDir: string, slug?: string, plain = true) {
+  const taiyiRoot = resolveTaiyiRoot(workspaceDir);
+  const resolved = resolveActiveSlug(taiyiRoot, slug);
+  if (!resolved.ok) return resolved;
+  const invalid = rejectInvalidSlug(resolved.slug);
+  if (invalid) return invalid;
+  const engine = createEngine(workspaceDir);
+  const state = engine.getState(resolved.slug);
+  if (!state) return { ok: false as const, error: `Change not found: ${resolved.slug}` };
+  const changeDir = engine.changeDir(resolved.slug);
+  const result = trimAheadArtifacts(changeDir, state);
+  const text = formatTrimAheadPlain(resolved.slug, result);
+  if (plain) return { ok: true, text, result };
+  return { ok: true, result, text };
+}
+
+export function taiyiPrune(workspaceDir: string, options?: { dryRun?: boolean; includeAborted?: boolean }, plain = true) {
+  const taiyiRoot = resolveTaiyiRoot(workspaceDir);
+  const orphans = pruneOrphanChangeDirs(taiyiRoot, {
+    dryRun: options?.dryRun,
+    includeAborted: options?.includeAborted,
+  });
+  const runtimeOrphans = pruneOrphanRuntimeModes(taiyiRoot, { dryRun: options?.dryRun });
+  const staleRuntime = pruneStaleRuntimeModes(taiyiRoot, { dryRun: options?.dryRun });
+  const dirText = formatPrunePlain(orphans, Boolean(options?.dryRun), options?.includeAborted);
+  const rtText = formatOrphanRuntimePlain(runtimeOrphans, Boolean(options?.dryRun));
+  const staleText = formatStaleRuntimePlain(staleRuntime, Boolean(options?.dryRun));
+  const text = [dirText, rtText, staleText].filter(Boolean).join("\n\n");
+  if (plain) return { ok: true, text, orphans, runtimeOrphans, staleRuntime };
+  return { ok: true, orphans, runtimeOrphans, staleRuntime, text };
 }

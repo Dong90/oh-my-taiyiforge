@@ -79,6 +79,28 @@ Need feature A for users.
     }
   });
 
+  it("handoff on completed change is noop exit 0", () => {
+    const init = taiyiInit(workspace, "done-h", { title: "Done", profile: "lite" });
+    expect(init.ok).toBe(true);
+    const changeDir = path.join(workspace, ".taiyi", "changes", "done-h");
+    const statePath = path.join(changeDir, "state.json");
+    const state = JSON.parse(fs.readFileSync(statePath, "utf8")) as {
+      currentPhase: string;
+      completedPhases: string[];
+      workflowStatus: string;
+    };
+    state.currentPhase = "integration";
+    state.completedPhases = ["change", "requirement", "dev", "test", "integration"];
+    state.workflowStatus = "completed";
+    fs.writeFileSync(statePath, JSON.stringify(state));
+    const handoff = taiyiHandoff(workspace, "done-h", "should noop");
+    expect(handoff.ok).toBe(true);
+    if (handoff.ok) {
+      expect(handoff.noop).toBe(true);
+      expect(handoff.message).toMatch(/无需 handoff/);
+    }
+  });
+
   it("writes handoff and cancels active change", () => {
     const init = taiyiInit(workspace, "feat-h", { title: "Handoff test" });
     expect(init.ok).toBe(true);
