@@ -57,7 +57,7 @@ describe("daemon run（无人 Agent 闭环）", { timeout: 120_000 }, () => {
     const prevPlatform = process.env.TAIYI_DAEMON_PLATFORM;
     const prevMax = process.env.TAIYI_DAEMON_MAX_ROUNDS;
     process.env.TAIYI_DAEMON_PLATFORM = "codex";
-    process.env.TAIYI_DAEMON_MAX_ROUNDS = "1";
+    process.env.TAIYI_DAEMON_MAX_ROUNDS = "8";
     try {
       const r = runForge(REPO, workspace, ["daemon", "run", SLUG, "--dry-run"]);
       expect(r.out).toMatch(/dry-run|CI prompt|Daemon/i);
@@ -66,7 +66,8 @@ describe("daemon run（无人 Agent 闭环）", { timeout: 120_000 }, () => {
       const files = fs.readdirSync(promptDir).filter((f) => f.startsWith(SLUG));
       expect(files.length).toBeGreaterThan(0);
       expect(r.code).toBe(1);
-      expect(r.out).toMatch(/max-rounds|轮次上限/i);
+      expect(r.out).toMatch(/blocked|阻塞|提前退出/i);
+      expect(r.out).toMatch(/轮次 1\/8/);
     } finally {
       if (prevPlatform === undefined) delete process.env.TAIYI_DAEMON_PLATFORM;
       else process.env.TAIYI_DAEMON_PLATFORM = prevPlatform;

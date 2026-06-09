@@ -2,8 +2,8 @@ import fs from "node:fs";
 import path from "node:path";
 import { spawnSync } from "node:child_process";
 import type { WorkflowEngine } from "./workflow-engine.js";
-import { isChangeAborted, isWorkflowCompleted } from "./change-status.js";
-import { activateMode } from "./runtime/mode-state.js";
+import { isChangeAborted, isWorkflowCompleted, workflowPhaseLabelFromState } from "./change-status.js";
+import { activateMode, deactivateModesForSlug } from "./runtime/mode-state.js";
 import { runModeStep, type ModeStepAction } from "./runtime/mode-orchestrator.js";
 import { runAutopilotGuide } from "./autopilot-runner.js";
 import { runContinueRepeat } from "./loop-runner.js";
@@ -176,6 +176,7 @@ export function runDaemonLoop(
   }
 
   if (isWorkflowCompleted(state0)) {
+    deactivateModesForSlug(taiyiRoot, slug);
     return {
       ok: true,
       slug,
@@ -183,7 +184,7 @@ export function runDaemonLoop(
       rounds,
       roundCount: 0,
       maxRounds,
-      message: "九阶段已全部完成 → archive",
+      message: `${workflowPhaseLabelFromState(state0)}已全部完成 → archive`,
     };
   }
 
@@ -248,6 +249,7 @@ export function runDaemonLoop(
     }
 
     if (isWorkflowCompleted(state)) {
+      deactivateModesForSlug(taiyiRoot, slug);
       markDaemonInactive(taiyiRoot, slug, "completed");
       return {
         ok: true,
@@ -256,7 +258,7 @@ export function runDaemonLoop(
         rounds,
         roundCount: round,
         maxRounds,
-        message: "✓ 九阶段已全部完成 → archive",
+        message: `✓ ${workflowPhaseLabelFromState(state)}已全部完成 → archive`,
       };
     }
 
@@ -279,6 +281,7 @@ export function runDaemonLoop(
     const step = runModeStep(engine, workspaceDir, taiyiRoot, slug, "autopilot");
 
     if (step.action === "done") {
+      deactivateModesForSlug(taiyiRoot, slug);
       rounds.push({
         round,
         phase,
@@ -299,10 +302,26 @@ export function runDaemonLoop(
       };
     }
 
-    if (step.action === "advanced" || step.ok) {
+    if (step.action === "advanced") {
       engineAdvanced = true;
       summary = step.text.split("\n").find((l) => l.includes("✓")) ?? "engine advanced";
       rounds.push({ round, phase, stepAction: step.action, engineAdvanced, agentInvoked, summary });
+      if (options.dryRun) {
+        markDaemonInactive(taiyiRoot, slug, "blocked");
+        return {
+          ok: false,
+          slug,
+          stopReason: "blocked",
+          rounds,
+          roundCount: round,
+          maxRounds,
+          message: [
+            `dry-run: ${phase} 阶段引擎已过关，提前退出（避免空转 ${maxRounds} 轮）`,
+            "",
+            step.text.slice(0, 800),
+          ].join("\n"),
+        };
+      }
       daemonSleep(daemonIntervalMs(env));
       continue;
     }
@@ -345,6 +364,26 @@ export function runDaemonLoop(
     }
 
     if (!needsAgentStep(step.action, step.ok)) {
+      if (
+        options.dryRun &&
+        !engineAdvanced &&
+        (step.action === "harness" || step.action === "blocked" || step.action === "human-gate")
+      ) {
+        markDaemonInactive(taiyiRoot, slug, "blocked");
+        return {
+          ok: false,
+          slug,
+          stopReason: "blocked",
+          rounds,
+          roundCount: round,
+          maxRounds,
+          message: [
+            `dry-run: ${phase} 阶段阻塞且无引擎进展，提前退出（避免空转 ${maxRounds} 轮）`,
+            "",
+            step.text.slice(0, 800),
+          ].join("\n"),
+        };
+      }
       summary = step.text.split("\n")[0] ?? "waiting";
       rounds.push({ round, phase, stepAction: step.action, engineAdvanced, agentInvoked, summary });
       daemonSleep(daemonIntervalMs(env));
@@ -451,6 +490,29 @@ export function runDaemonLoop(
       agentOk,
       summary,
     });
+
+    if (
+      options.dryRun &&
+      !engineAdvanced &&
+      ["harness", "human-gate", "blocked", "ralph-fix", "review-fix"].includes(step.action)
+    ) {
+      markDaemonInactive(taiyiRoot, slug, "blocked");
+      return {
+        ok: false,
+        slug,
+        stopReason: "blocked",
+        rounds,
+        roundCount: round,
+        maxRounds,
+        promptFile,
+        agentCommand,
+        message: [
+          `dry-run: ${phase} 阶段阻塞且无引擎进展，提前退出（避免空转 ${maxRounds} 轮）`,
+          "",
+          step.text.slice(0, 800),
+        ].join("\n"),
+      };
+    }
 
     daemonSleep(daemonIntervalMs(env));
   }
