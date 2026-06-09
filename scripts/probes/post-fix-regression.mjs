@@ -91,6 +91,22 @@ if (fs.existsSync(forgeSh)) {
   );
 }
 
+// --- misuse-probe：非法 profile 须 exit 1 ---
+const badProfile = runCli([
+  "init",
+  "probe-invalid-profile",
+  "--profile",
+  "notreal",
+  "--title",
+  "x",
+]);
+expectCode("init-invalid-profile", badProfile, 1);
+check(
+  "init-invalid-profile-text",
+  /无效 profile|notreal/i.test(badProfile.out) && /full, api, ui, lite/.test(badProfile.out),
+  badProfile.out.slice(0, 160),
+);
+
 // --- archive 幂等（若存在已完成 slug 可环境变量覆盖）---
 const archiveSlug = process.env.TAIYI_PROBE_ARCHIVE_SLUG;
 if (archiveSlug) {

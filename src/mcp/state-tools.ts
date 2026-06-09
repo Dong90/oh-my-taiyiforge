@@ -1,6 +1,6 @@
 import path from "node:path";
 import fs from "node:fs";
-import { resolveActiveSlug } from "../core/active-slug.js";
+import { resolveActiveSlug, resolveChangeSlug } from "../core/active-slug.js";
 import { buildEngineTruth } from "../core/engine-truth.js";
 import { buildPhaseGuide } from "../core/phase-guide.js";
 import { handoffExists, writeHandoff } from "../core/handoff.js";
@@ -106,7 +106,7 @@ export function taiyiStateCancel(
   slug?: string,
 ): { ok: true; slug: string; workflowStatus: "aborted" } | { ok: false; error: string } {
   const taiyiRoot = resolveTaiyiRoot(workspaceDir);
-  const resolved = resolveActiveSlug(taiyiRoot, slug);
+  const resolved = resolveChangeSlug(taiyiRoot, slug);
   if (!resolved.ok) return { ok: false, error: resolved.error };
 
   const engine = new WorkflowEngine(taiyiRoot, resolveTemplatesDir(import.meta.url));

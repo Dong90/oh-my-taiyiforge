@@ -28,6 +28,10 @@
 |------|------|------|
 | **bug 无 `--create` 不建 slug** | 仅输出 playbook | **BY DESIGN** — 须 `bug … --create` 或先 `/taiyi:new` |
 | **help 未提 `list --archived`** | 文档/help 可补 | CLI + wrapper 已有；`/taiyi:help` · Skill 已补 |
+| **非法 `--profile`** | init/new 静默回落 full | **v0.22.3+**：非法 profile exit 1 + 列出 full/api/ui/lite |
+| **坏 slug / 假 skill 提示过短** | exit 码对、文案短 | **v0.22.3+**：slug 含示例；Change not found 含 list/init；workflow skill / harness hook 列可用项 |
+| **无参 continue 超长 slug 列表** | 测试仓 slug 多 | **v0.22.3+**：最多展示 5 个 + `npx taiyi list`；探针 worktree 减污染 |
+| **sync-openspec 拒已归档 slug** | 防误写 active | **BY DESIGN** — `commands.yaml` + 本表；`--force` 可覆盖 |
 | **null byte slug** | Node spawn 层拒绝 | **已补** — `validateSlug` 提前拒绝 NUL |
 | **smoke-reset cli=2 / wrapper=0** | wrapper 专用 | **BY DESIGN** — 仅 `scripts/taiyi-forge.sh smoke-reset` |
 | **ship/land/commit 仅斜杠** | exit 2 + gstack | **BY DESIGN** — 加载 gstack Skill，无 shell 子命令 |

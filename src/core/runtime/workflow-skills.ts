@@ -1,3 +1,4 @@
+import { formatChangeNotFound } from "../cli-hints.js";
 import type { WorkflowEngine } from "../workflow-engine.js";
 import type { PhaseId } from "../types.js";
 import { activateMode, type TaiyiModeId } from "./mode-state.js";
@@ -177,7 +178,7 @@ export function runWorkflowSkill(
       skill,
       slug,
       phase: "change",
-      text: `Change not found: ${slug}`,
+      text: formatChangeNotFound(slug),
     };
   }
 

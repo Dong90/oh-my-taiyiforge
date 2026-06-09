@@ -9,6 +9,7 @@ import {
   auxiliaryArtifactSatisfied,
   AUXILIARY_ARTIFACTS,
 } from "./auxiliary-artifacts.js";
+import { formatChangeNotFound, formatWrongPhaseError } from "./cli-hints.js";
 import { assertValidSlug, validateSlug } from "./slug.js";
 import { evaluateQualityGate } from "./gates/quality-gate.js";
 import { canEnterPhase, getNextPhase, getPhase } from "./phase-registry.js";
@@ -185,7 +186,7 @@ export class WorkflowEngine {
     const slugCheck = validateSlug(slug);
     if (!slugCheck.ok) return { ok: false, error: slugCheck.error };
     const state = this.getState(slug);
-    if (!state) return { ok: false, error: "Change not found" };
+    if (!state) return { ok: false, error: formatChangeNotFound(slug) };
     if (!skillId.startsWith("taiyi-")) {
       return { ok: false, error: "skillId must be taiyi-*" };
     }
@@ -236,7 +237,7 @@ export class WorkflowEngine {
     const slugCheck = validateSlug(slug);
     if (!slugCheck.ok) return { ok: false, error: slugCheck.error };
     const state = this.getState(slug);
-    if (!state) return { ok: false, error: "Change not found" };
+    if (!state) return { ok: false, error: formatChangeNotFound(slug) };
     if (isWorkflowCompleted(state)) {
       return { ok: false, error: "Workflow already completed (九阶段已完成)" };
     }
@@ -249,7 +250,7 @@ export class WorkflowEngine {
     if (state.currentPhase !== phaseId) {
       return {
         ok: false,
-        error: `Current phase is ${state.currentPhase}, not ${phaseId}`,
+        error: formatWrongPhaseError(slug, state.currentPhase, phaseId),
       };
     }
 
@@ -463,7 +464,7 @@ export class WorkflowEngine {
     const slugCheck = validateSlug(slug);
     if (!slugCheck.ok) return { ok: false, error: slugCheck.error };
     const state = this.getState(slug);
-    if (!state) return { ok: false, error: "Change not found" };
+    if (!state) return { ok: false, error: formatChangeNotFound(slug) };
     if (isWorkflowCompleted(state)) {
       return { ok: false, error: "已完成变更不可 cancel，请 /taiyi:archive" };
     }

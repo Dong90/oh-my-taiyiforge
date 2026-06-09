@@ -17,6 +17,7 @@ import {
   suggestCommitMessage,
 } from "../core/gates/commit-trailer.js";
 import { resolveAutoHarness } from "../core/resolve-auto-harness.js";
+import { formatChangeNotFound, parseProfileFlag } from "../core/cli-hints.js";
 import type { ChangeProfile, PhaseId } from "../core/types.js";
 import {
   taiyiArchive,
@@ -232,12 +233,13 @@ function printHandlerResult(r: { ok: boolean; text?: string; error?: string }, e
   else if ("text" in r && r.text) console.log(r.text);
 }
 
-function parseProfile(argv: string[]): ChangeProfile | undefined {
-  const idx = argv.indexOf("--profile");
-  if (idx < 0) return undefined;
-  const v = argv[idx + 1] as ChangeProfile;
-  if (v === "full" || v === "api" || v === "ui" || v === "lite") return v;
-  return undefined;
+function resolveProfileFromArgs(argv: string[]): ChangeProfile | undefined {
+  const parsed = parseProfileFlag(argv);
+  if (!parsed.ok) {
+    console.error(parsed.error);
+    process.exit(1);
+  }
+  return parsed.profile;
 }
 
 function extractApprover(argv: string[]): { argv: string[]; approver?: string } {
@@ -305,7 +307,7 @@ function tryCompletePhase(
   options?: { approver?: string; phaseId?: PhaseId },
 ): { ok: true } | { ok: false; error: string } {
   const state = engine.getState(slug);
-  if (!state) return { ok: false, error: `Change not found: ${slug}` };
+  if (!state) return { ok: false, error: formatChangeNotFound(slug) };
   if (isWorkflowCompleted(state)) return { ok: true };
 
   const phaseId = options?.phaseId ?? (state.currentPhase as PhaseId);
@@ -500,7 +502,7 @@ switch (cmd) {
       const result = engine.initChange(slug, {
         title,
         templatesDir,
-        profile: parseProfile(args) ?? "full",
+        profile: resolveProfileFromArgs(args) ?? "full",
         strictDev: args.includes("--strict-dev"),
         autoHarness: resolveAutoHarness(args, false),
         force: args.includes("--force"),
@@ -528,7 +530,7 @@ switch (cmd) {
       const result = engine.initChange(slug, {
         title,
         templatesDir,
-        profile: parseProfile(args) ?? "full",
+        profile: resolveProfileFromArgs(args) ?? "full",
         strictDev: args.includes("--strict-dev"),
         autoHarness: resolveAutoHarness(args, false),
         force: args.includes("--force"),
@@ -580,7 +582,7 @@ switch (cmd) {
     }
     const state = engine.getState(slug);
     if (!state) {
-      console.error(`Change not found: ${slug}`);
+      console.error(formatChangeNotFound(slug));
       process.exit(1);
     }
     if (isWorkflowCompleted(state)) {
@@ -616,7 +618,7 @@ switch (cmd) {
     const { slug, times } = requireSlugAndRepeat(args);
     const state = engine.getState(slug);
     if (!state) {
-      console.error(`Change not found: ${slug}`);
+      console.error(formatChangeNotFound(slug));
       process.exit(1);
     }
     if (isWorkflowCompleted(state)) {
@@ -878,7 +880,7 @@ switch (cmd) {
     const slug = requireSlug(doneArgs);
     const state = engine.getState(slug);
     if (!state) {
-      console.error(`Change not found: ${slug}`);
+      console.error(formatChangeNotFound(slug));
       process.exit(1);
     }
     if (isWorkflowCompleted(state)) {
@@ -923,10 +925,9 @@ switch (cmd) {
   }
   case "walkthrough": {
     let slug: string | undefined;
-    let profile: ChangeProfile | undefined;
+    const profile = resolveProfileFromArgs(args);
     const slugIdx = args.indexOf("--slug");
     if (slugIdx >= 0) slug = args[slugIdx + 1];
-    profile = parseProfile(args);
     const r = taiyiWalkthrough(workspaceDir, { slug, profile, plain: !jsonMode });
     if (!r.ok) {
       if ("text" in r && r.text) console.error(r.text);

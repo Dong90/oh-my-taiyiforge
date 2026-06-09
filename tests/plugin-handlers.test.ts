@@ -101,6 +101,15 @@ Need feature A for users.
     }
   });
 
+  it("cancel on missing slug includes recovery hints", () => {
+    const cancel = taiyiCancel(workspace, "misuse-ghost-999", { removeDir: true });
+    expect(cancel.ok).toBe(false);
+    if (!cancel.ok) {
+      expect(cancel.error).toMatch(/init misuse-ghost-999 --force/);
+      expect(cancel.error).toMatch(/list --archived/);
+    }
+  });
+
   it("writes handoff and cancels active change", () => {
     const init = taiyiInit(workspace, "feat-h", { title: "Handoff test" });
     expect(init.ok).toBe(true);

@@ -80,6 +80,27 @@ describe("CLI exit codes & aliases", () => {
     expect(`${r.stdout ?? ""}${r.stderr ?? ""}`).not.toMatch(/unknown command/i);
   });
 
+  it("init rejects invalid --profile with exit 1", () => {
+    const r = runTaiyiCli(workspace, [
+      "init",
+      "bad-profile-slug",
+      "--profile",
+      "notreal",
+      "--title",
+      "x",
+    ]);
+    expect(r.code).toBe(1);
+    expect(r.out).toMatch(/无效 profile|notreal/);
+    expect(r.out).toMatch(/full, api, ui, lite/);
+  });
+
+  it("continue rejects invalid slug with hint", () => {
+    fs.mkdirSync(path.join(workspace, ".taiyi/changes"), { recursive: true });
+    const r = runTaiyiCli(workspace, ["continue", "Bad_Slug!"]);
+    expect(r.code).toBe(1);
+    expect(r.out).toMatch(/slug must match|示例:/);
+  });
+
   it("token compress on archive-only slug exits 1 without crash (CLI)", () => {
     const archiveDir = path.join(workspace, ".taiyi/archive/arch-only");
     fs.mkdirSync(archiveDir, { recursive: true });

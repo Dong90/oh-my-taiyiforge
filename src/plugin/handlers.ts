@@ -54,6 +54,11 @@ import {
   formatHarnessPlanPlain,
   runPostCompleteShellHooks,
 } from "../core/harness-runner.js";
+import {
+  formatChangeNotFound,
+  formatUnknownHarnessHook,
+  formatUnknownWorkflowSkill,
+} from "../core/cli-hints.js";
 import { markHarnessCheckpoint, hookKey } from "../core/harness-checkpoints.js";
 import { trimAheadArtifacts, formatTrimAheadPlain } from "../core/trim-ahead-artifacts.js";
 import { pruneOrphanChangeDirs, formatPrunePlain } from "../core/prune-changes.js";
@@ -130,7 +135,7 @@ function requireChangeState(
     return { ok: false, error: `Corrupt state.json for ${slug}: ${lookup.error}` };
   }
   if (lookup.status === "missing") {
-    return { ok: false, error: `Change not found: ${slug}` };
+    return { ok: false, error: formatChangeNotFound(slug) };
   }
   return { ok: true, state: lookup.state };
 }
@@ -308,7 +313,7 @@ export function taiyiSyncOpenspec(
   if (invalid) return invalid;
   const engine = createEngine(workspaceDir);
   const state = engine.getState(slug);
-  if (!state) return { ok: false as const, error: `Change not found: ${slug}` };
+  if (!state) return { ok: false as const, error: formatChangeNotFound(slug) };
 
   const changeDir = path.join(resolveTaiyiRoot(workspaceDir), "changes", slug);
   const result = syncTaiyiToOpenspec(workspaceDir, slug, changeDir, {
@@ -346,7 +351,7 @@ export function taiyiArchive(
   if (invalid) return invalid;
   const taiyiRoot = resolveTaiyiRoot(workspaceDir);
   const state = loadChangeState(taiyiRoot, slug);
-  if (!state) return { ok: false as const, error: `Change not found: ${slug}` };
+  if (!state) return { ok: false as const, error: formatChangeNotFound(slug) };
 
   if (options?.requireIntegrationComplete !== false) {
     if (!state.completedPhases.includes("integration")) {
@@ -571,7 +576,7 @@ export function taiyiCancel(
   options?: { removeDir?: boolean },
 ): { ok: true; slug: string; workflowStatus: "aborted"; removed?: boolean } | { ok: false; error: string } {
   const taiyiRoot = resolveTaiyiRoot(workspaceDir);
-  const resolved = resolveActiveSlug(taiyiRoot, slug);
+  const resolved = resolveChangeSlug(taiyiRoot, slug);
   if (!resolved.ok) return { ok: false, error: resolved.error };
   const engine = createEngine(workspaceDir);
   const result = engine.abortChange(resolved.slug);
@@ -642,7 +647,7 @@ export function taiyiHandoff(
   const state = stateResult.state;
   const changeDir = resolveChangeDir(taiyiRoot, resolved.slug);
   if (!changeDir) {
-    return { ok: false, error: `Change not found: ${resolved.slug}` };
+    return { ok: false, error: formatChangeNotFound(resolved.slug) };
   }
   const guide = buildPhaseGuide(taiyiRoot, resolved.slug, state, workspaceDir);
   const statusLine = formatPhaseProgressLine(guide);
@@ -704,7 +709,7 @@ export function taiyiResume(
     : resolveActiveSlug(taiyiRoot);
   if (!resolved.ok) return { ok: false, error: resolved.error };
   const state = loadChangeState(taiyiRoot, resolved.slug);
-  if (!state) return { ok: false, error: `Change not found: ${resolved.slug}` };
+  if (!state) return { ok: false, error: formatChangeNotFound(resolved.slug) };
   const changeDir = resolveChangeDir(taiyiRoot, resolved.slug)!;
   const handoffPath = path.join(changeDir, "HANDOFF.md");
   const hasHandoff = fs.existsSync(handoffPath);
@@ -816,7 +821,7 @@ export function taiyiHarness(workspaceDir: string, slug: string, plain = true) {
   if (invalid) return invalid;
   const engine = createEngine(workspaceDir);
   const state = engine.getState(slug);
-  if (!state) return { ok: false as const, error: `Change not found: ${slug}` };
+  if (!state) return { ok: false as const, error: formatChangeNotFound(slug) };
   const taiyiRoot = resolveTaiyiRoot(workspaceDir);
   const plan = buildHarnessPlan(workspaceDir, taiyiRoot, state);
   if (plain) {
@@ -830,14 +835,15 @@ export function taiyiHarnessCheck(workspaceDir: string, slug: string, hookRef: s
   if (invalid) return invalid;
   const engine = createEngine(workspaceDir);
   const state = engine.getState(slug);
-  if (!state) return { ok: false as const, error: `Change not found: ${slug}` };
+  if (!state) return { ok: false as const, error: formatChangeNotFound(slug) };
   const changeDir = path.join(resolveTaiyiRoot(workspaceDir), "changes", slug);
   const harness = getHarnessContext(workspaceDir, slug, state.currentPhase);
   const match = harness.hooks.find((h) => hookKey(h) === hookRef || h.skill === hookRef);
   if (!match) {
+    const available = harness.hooks.map((h) => hookKey(h));
     return {
       ok: false as const,
-      error: `Unknown harness hook: ${hookRef}`,
+      error: formatUnknownHarnessHook(hookRef, available),
     };
   }
   const key = hookKey(match);
@@ -877,7 +883,7 @@ export function taiyiHealth(workspaceDir: string, slug?: string) {
   const changeDir = path.join(taiyiRoot, "changes", resolved);
   const engine = createEngine(workspaceDir);
   const state = engine.getState(resolved);
-  if (!state) return { ok: false as const, error: `Change not found: ${resolved}` };
+  if (!state) return { ok: false as const, error: formatChangeNotFound(resolved) };
 
   const reportPath = path.join(changeDir, "health-report.md");
   const text = formatAgentHealthProtocol(workspaceDir, resolved, reportPath);
@@ -919,7 +925,7 @@ export function taiyiCiPrompt(workspaceDir: string, slug: string) {
   if (invalid) return invalid;
   const engine = createEngine(workspaceDir);
   const state = engine.getState(slug);
-  if (!state) return { ok: false as const, error: `Change not found: ${slug}` };
+  if (!state) return { ok: false as const, error: formatChangeNotFound(slug) };
   const file = writeCiAgentPrompt(workspaceDir, resolveTaiyiRoot(workspaceDir), state);
   return { ok: true as const, promptFile: file, phase: state.currentPhase };
 }
@@ -929,7 +935,7 @@ export function taiyiHarnessRunShell(workspaceDir: string, slug: string) {
   if (invalid) return invalid;
   const engine = createEngine(workspaceDir);
   const state = engine.getState(slug);
-  if (!state) return { ok: false as const, error: `Change not found: ${slug}` };
+  if (!state) return { ok: false as const, error: formatChangeNotFound(slug) };
   const taiyiRoot = resolveTaiyiRoot(workspaceDir);
   const results = runPostCompleteShellHooks(workspaceDir, taiyiRoot, slug, state.currentPhase);
   return { ok: true as const, results, phase: state.currentPhase };
@@ -1087,7 +1093,7 @@ export function taiyiToken(
 
   const changeDir = resolveChangeDir(taiyiRoot, slug);
   if (!changeDir) {
-    return { ok: false as const, error: `Change not found: ${slug}` };
+    return { ok: false as const, error: formatChangeNotFound(slug) };
   }
   const state = loadChangeState(taiyiRoot, slug);
   const archived =
@@ -1250,7 +1256,7 @@ export function taiyiAgent(
   const engine = createEngine(workspaceDir);
   const state = engine.getState(resolved.slug);
   if (!state) {
-    return { ok: false as const, error: `Change not found: ${resolved.slug}` };
+    return { ok: false as const, error: formatChangeNotFound(resolved.slug) };
   }
 
   const phase = state.currentPhase as PhaseId;
@@ -1434,7 +1440,7 @@ export function taiyiWorkflowSkill(
   if (!listWorkflowSkills().includes(skillId)) {
     return {
       ok: false as const,
-      error: `未知 workflow skill: ${skill}。可用: ${listWorkflowSkills().join(", ")}`,
+      error: formatUnknownWorkflowSkill(skill, listWorkflowSkills()),
     };
   }
   const taiyiRoot = resolveTaiyiRoot(workspaceDir);
@@ -1493,7 +1499,7 @@ export function taiyiTrimAhead(workspaceDir: string, slug?: string, plain = true
   if (invalid) return invalid;
   const engine = createEngine(workspaceDir);
   const state = engine.getState(resolved.slug);
-  if (!state) return { ok: false as const, error: `Change not found: ${resolved.slug}` };
+  if (!state) return { ok: false as const, error: formatChangeNotFound(resolved.slug) };
   const changeDir = engine.changeDir(resolved.slug);
   const result = trimAheadArtifacts(changeDir, state);
   const text = formatTrimAheadPlain(resolved.slug, result);

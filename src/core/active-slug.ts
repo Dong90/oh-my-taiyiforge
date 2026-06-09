@@ -1,3 +1,4 @@
+import { formatChangeNotFound, formatMultipleActiveChanges } from "./cli-hints.js";
 import { listChanges } from "./list-changes.js";
 import { validateSlug } from "./slug.js";
 import { resolveChangeDir } from "./taiyi-archive.js";
@@ -23,10 +24,9 @@ export function resolveActiveSlug(taiyiRoot: string, explicit?: string): Resolve
     };
   }
   if (active.length > 1) {
-    const names = active.map((c) => c.slug).join(", ");
     return {
       ok: false,
-      error: `有多个进行中的变更（${names}），请指定 slug：/taiyi:continue <slug>`,
+      error: formatMultipleActiveChanges(active.map((c) => c.slug)),
     };
   }
   return { ok: true, slug: active[0]!.slug, inferred: true };
@@ -39,7 +39,7 @@ export function resolveChangeSlug(taiyiRoot: string, explicit?: string): Resolve
     const valid = validateSlug(slug);
     if (!valid.ok) return { ok: false, error: valid.error };
     if (!resolveChangeDir(taiyiRoot, slug)) {
-      return { ok: false, error: `Change not found: ${slug}` };
+      return { ok: false, error: formatChangeNotFound(slug) };
     }
     return { ok: true, slug, inferred: false };
   }

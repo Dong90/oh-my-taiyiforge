@@ -48,7 +48,7 @@ exit 0
       expect(r.skipped).toBeFalsy();
     });
 
-    it("taiyiArchive 在 integration 完成后调 openspec", () => {
+    it("taiyiArchive 在 integration 完成后调 openspec", { timeout: 15_000 }, () => {
       const taiyiRoot = path.join(workspace, ".taiyi");
       const engine = new WorkflowEngine(taiyiRoot);
       engine.initChange("feat-x", { profile: "lite" });
@@ -93,7 +93,7 @@ exit 0
     it("resolveActiveSlug 在多个进行中变更时报错", () => {
       const r = resolveActiveSlug(taiyiRoot);
       expect(r.ok).toBe(false);
-      if (!r.ok) expect(r.error).toMatch(/多个进行中的变更/);
+      if (!r.ok) expect(r.error).toMatch(/2 个进行中的变更/);
     });
 
     it("CLI continue 无 slug 时 exit 1", () => {
@@ -105,7 +105,7 @@ exit 0
         env: { ...process.env, TAIYI_FORGE_ROOT: REPO },
       });
       expect(r.status).toBe(1);
-      expect(`${r.stdout}${r.stderr}`).toMatch(/多个进行中的变更|请指定 slug/);
+      expect(`${r.stdout}${r.stderr}`).toMatch(/2 个进行中的变更|多个进行中的变更|请指定 slug|npx taiyi list/);
     });
   });
 

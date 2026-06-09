@@ -172,8 +172,10 @@ profiles:
       - chat: "/taiyi:sync"
         codex: "$taiyi-sync"
         engine: "taiyi-forge.sh sync [slug]   # 引擎子命令为 sync（非 sync-openspec）；CLI 也接受 sync-openspec"
-        meaning: Taiyi 工件 → OpenSpec（对标 opsx:sync）。聊天动词无连字符，引擎用 sync 别名
-        when: 项目已装 OpenSpec，integration 前后
+        meaning: |
+          Taiyi 工件 → OpenSpec（对标 opsx:sync）。聊天动词无连字符，引擎用 sync 别名。
+          **BY DESIGN**：OpenSpec 已归档于 changes/archive/ 时默认拒绝 sync（exit 1），防误写 active 目录；须 --force 或删误建 openspec/changes/<slug>/
+        when: 项目已装 OpenSpec，integration 前后（勿对已 OpenSpec 归档 slug 重复 sync）
 
       - chat: "/taiyi:run"
         codex: "$taiyi-run"
@@ -622,6 +624,7 @@ phase_skills:
   skills: taiyi-change … taiyi-integration
 
 profile_notes:
+  invalid: "init/new/walkthrough 非法 --profile（非 full|api|ui|lite）须 exit 1，勿静默回落 full"
   ui: "与 full 相同九阶段，仅命名强调 UI 项目"
   lite: "五阶段，跳过 design/ui-design/task/review，无 REVIEW.md 与 review-loop 路径"
   api: "跳过 ui-design"
