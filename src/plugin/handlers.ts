@@ -69,7 +69,7 @@ import {
   verifyWorkspaceCi,
   formatCiVerifyPlain,
 } from "../core/ci-verify.js";
-import { auditWorkspace, formatAuditPlain } from "../core/workflow-audit.js";
+import { auditWorkspace, formatAuditCompact, formatAuditPlain } from "../core/workflow-audit.js";
 import { formatAgentHealthProtocol } from "../core/health-invoke.js";
 import {
   probePlatformCi,
@@ -852,12 +852,13 @@ export function taiyiHarnessCheck(workspaceDir: string, slug: string, hookRef: s
 
 export function taiyiAudit(
   workspaceDir: string,
-  options?: { slug?: string; plain?: boolean },
+  options?: { slug?: string; plain?: boolean; compact?: boolean },
 ) {
   const taiyiRoot = resolveTaiyiRoot(workspaceDir);
   const report = auditWorkspace(workspaceDir, taiyiRoot, { slug: options?.slug });
   if (options?.plain !== false) {
-    return { ok: report.ok, text: formatAuditPlain(report), report };
+    const text = options?.compact ? formatAuditCompact(report) : formatAuditPlain(report);
+    return { ok: report.ok, text, report };
   }
   return { ok: report.ok, report };
 }

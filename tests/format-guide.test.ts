@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   formatPhaseProgressLine,
+  formatStatusCompact,
   formatStatusPlain,
 } from "../src/core/format-guide.js";
 import type { PhaseGuide } from "../src/core/phase-guide.js";
@@ -73,5 +74,12 @@ describe("format-guide", () => {
       }),
     );
     expect(text).toContain("review 门禁");
+  });
+
+  it("formatStatusCompact is short and omits footer", () => {
+    const text = formatStatusCompact(baseGuide());
+    expect(text).toContain("design（3/9）");
+    expect(text).toContain("artifact=DESIGN.md");
+    expect(text).not.toContain("/taiyi:loop");
   });
 });

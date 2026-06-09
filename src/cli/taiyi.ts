@@ -1,12 +1,14 @@
 #!/usr/bin/env node
 import { WorkflowEngine } from "../core/workflow-engine.js";
+import { buildDoctorJsonCompact } from "../core/doctor.js";
+import { buildAuditJsonCompact } from "../core/workflow-audit.js";
 import { runBrowserSmoke } from "../core/browser-smoke.js";
 import { listPhases } from "../core/phase-registry.js";
 import { resolveTaiyiRoot } from "../core/paths.js";
 import { resolvePackageRoot, resolveTemplatesDir } from "../core/package-root.js";
 import { installProjectWrapper } from "../install/sync-project-wrapper.js";
 import { resolveHumanForComplete } from "../core/gates/human-gate-config.js";
-import { formatChangeListPlain, formatGuidePlain, formatPhaseProgressLine, formatStatusPlain } from "../core/format-guide.js";
+import { formatChangeListPlain, formatGuidePlain, formatPhaseProgressLine, formatStatusCompact, formatStatusPlain } from "../core/format-guide.js";
 import { buildPhaseGuide } from "../core/phase-guide.js";
 import { isChangeAborted, isWorkflowCompleted, completedWorkflowMessage } from "../core/change-status.js";
 import { resolveActiveSlug, resolveChangeSlug, slugifyTitle } from "../core/active-slug.js";
@@ -75,12 +77,14 @@ import { formatDaemonResultPlain, readDaemonState, runDaemonLoop } from "../core
 const workspaceDir = process.cwd();
 const taiyiRoot = resolveTaiyiRoot(workspaceDir);
 const jsonMode = process.argv.includes("--json");
+const compactMode = process.argv.includes("--compact");
 
 function usage(): void {
   console.log(`TaiyiForge (oh-my-taiyiforge)
 
 用法:
-  npm run taiyi -- doctor [--strict-workspace]     检查四端安装；strict 时工作区 blocker 也 FAIL
+  npm run taiyi -- doctor [--strict-workspace] [--json] [--compact]
+  npm run taiyi -- audit [slug] [--json] [--compact]
   npm run taiyi -- list                     列出 .taiyi/changes/ 下所有变更
   npm run taiyi -- init <slug> [--profile api|lite|ui] [--strict-dev] [--auto] [--force] [--json]
   npm run taiyi -- harness <slug>              全自动编排清单（铁三角→辅助→主流程）
@@ -89,7 +93,7 @@ function usage(): void {
   npm run taiyi -- cancel [slug]           /taiyi:cancel — 取消进行中变更
   npm run taiyi -- handoff [slug] [备注]   /taiyi:handoff — 写 HANDOFF.md（跨会话恢复）
   npm run taiyi -- commit-trailers [slug] [subject]  legacy；聊天用 /taiyi:commit
-  npm run taiyi -- status [slug]           /taiyi:status — 阶段进度（3/9）
+  npm run taiyi -- status [slug] [--json] [--compact]   Agent 默认 --json --compact
   npm run taiyi -- continue [slug] [xN]   → /taiyi:continue [xN]
   npm run taiyi -- apply [slug] [xN]        → /taiyi:apply [xN]
   npm run taiyi -- loop [slug] [xN]         → /taiyi:loop — 循环 continue 直到完成或阻塞
@@ -105,7 +109,7 @@ function usage(): void {
   npm run taiyi -- archive <slug>
   npm run taiyi -- walkthrough [--slug name] [--profile api|lite]
   npm run taiyi -- browser-smoke [--json]     → /taiyi:browser-smoke — Playwright 浏览器冒烟
-  npm run taiyi -- audit [slug]              /taiyi:audit — 流程/交付排查（非 doctor）
+  npm run taiyi -- audit [slug] [--json] [--compact]   /taiyi:audit — 流程/交付排查
   npm run taiyi -- health [slug]            /taiyi:health — 输出 health Agent 协议（须 Skill 写报告 + mark-aux）
   npm run taiyi -- verify [slug] [--require-complete]   /taiyi:verify — PR/CI 工件门禁
   npm run taiyi -- ci verify [--slug x] [--require-complete]   （verify 别名，供 GitHub Actions）
@@ -187,7 +191,7 @@ function normalizeCliCommand(raw?: string): string | undefined {
 
 const templatesDir = resolveTemplatesDir(import.meta.url);
 const engine = new WorkflowEngine(taiyiRoot, templatesDir);
-const argv = process.argv.slice(2).filter((a) => a !== "--json");
+const argv = process.argv.slice(2).filter((a) => a !== "--json" && a !== "--compact");
 const [rawCmd, ...args] = argv;
 const cmd = normalizeCliCommand(rawCmd);
 
@@ -367,7 +371,21 @@ function printDoctor(): void {
   const strictWorkspace = args.includes("--strict-workspace");
   const r = taiyiDoctor(undefined, workspaceDir, { strictWorkspace });
   if (jsonMode) {
-    console.log(JSON.stringify(r, null, 2));
+    const payload = compactMode ? buildDoctorJsonCompact(r) : r;
+    console.log(JSON.stringify(payload, null, 2));
+    if (!r.ok) process.exit(1);
+    return;
+  }
+  if (compactMode) {
+    console.log(`doctor ${r.ok ? "PASS" : "FAIL"} v${r.report.version}`);
+    const all = [...r.report.checks, ...(r.report.workspaceChecks ?? [])];
+    const failed = all.filter((c) => !c.ok);
+    if (failed.length === 0) {
+      console.log(`checks=${all.length} ok`);
+    } else {
+      for (const c of failed.slice(0, 8)) console.log(`✗ ${c.id}: ${c.detail}`);
+      if (failed.length > 8) console.log(`… +${failed.length - 8} more`);
+    }
     if (!r.ok) process.exit(1);
     return;
   }
@@ -414,9 +432,15 @@ switch (cmd) {
   }
   case "audit": {
     const { positional } = parseRepeatCount(stripFlags(args));
-    const r = taiyiAudit(workspaceDir, { slug: positional[0], plain: !jsonMode });
-    if (jsonMode) console.log(JSON.stringify(r.report, null, 2));
-    else if ("text" in r && r.text) console.log(r.text);
+    const r = taiyiAudit(workspaceDir, {
+      slug: positional[0],
+      plain: !jsonMode,
+      compact: compactMode,
+    });
+    if (jsonMode) {
+      const payload = compactMode ? buildAuditJsonCompact(r.report) : r.report;
+      console.log(JSON.stringify(payload, null, 2));
+    } else if ("text" in r && r.text) console.log(r.text);
     if (!r.ok) process.exit(1);
     break;
   }
@@ -678,13 +702,20 @@ switch (cmd) {
       process.exit(1);
     }
     if (jsonMode) {
-      console.log(
-        JSON.stringify(
-          { engineTruth: r.engineTruth, state: r.state, guide: r.guide, openspec: r.openspec },
-          null,
-          2,
-        ),
-      );
+      const payload = compactMode
+        ? {
+            engineTruth: r.engineTruth,
+            statusLine: formatPhaseProgressLine(r.guide),
+          }
+        : {
+            engineTruth: r.engineTruth,
+            state: r.state,
+            guide: r.guide,
+            openspec: r.openspec,
+          };
+      console.log(JSON.stringify(payload, null, 2));
+    } else if (compactMode) {
+      console.log(formatStatusCompact(r.guide));
     } else {
       console.log(formatStatusPlain(r.guide));
     }

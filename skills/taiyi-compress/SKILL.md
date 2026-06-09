@@ -71,3 +71,5 @@ scripts/taiyi-forge.sh harness-check <slug> gstack/checkpoint
 - 在已超阈值时仍全量读 CHANGE…CHANGELOG 进聊天  
 - 跳过 CONTEXT-COMPACT 重复 grep 全库  
 - 主会话直接实现多个 TASK slice（应 subagent）
+- **completed 变更不 archive、探针 slug 堆在 workspace**（污染 `/taiyi:list` 与对话上下文）
+- **在聊天里跑全量 E2E / npm test / probe**（日志灌上下文；应 CI 后台 + TEST.md 摘要）

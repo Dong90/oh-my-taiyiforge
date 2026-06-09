@@ -10,10 +10,12 @@ export function resolvePackageRoot(fromModuleUrl: string): string {
     `${path.sep}dist${path.sep}core`,
     `${path.sep}src${path.sep}core`,
     `${path.sep}src${path.sep}plugin`,
-    `${path.sep}dist${path.sep}integrations`,
-    `${path.sep}src${path.sep}integrations`,
     `${path.sep}dist${path.sep}install`,
     `${path.sep}src${path.sep}install`,
+    `${path.sep}dist${path.sep}integrations`,
+    `${path.sep}src${path.sep}integrations`,
+    `${path.sep}dist${path.sep}mcp`,
+    `${path.sep}src${path.sep}mcp`,
     `${path.sep}tests`,
   ];
   for (const m of markers) {

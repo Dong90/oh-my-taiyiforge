@@ -27,7 +27,7 @@
 <rect width="2800" height="1880" fill="url(#bgG)"/>
 <text x="1400" y="72" fill="#eef2ff" font-size="52" font-weight="800" text-anchor="middle" font-family="PingFang SC, Microsoft YaHei, SF Pro Display, system-ui, sans-serif">TaiyiForge</text>
 <text x="1400" y="118" fill="#94a3b8" font-size="22" font-weight="500" text-anchor="middle" font-family="PingFang SC, Microsoft YaHei, SF Pro Display, system-ui, sans-serif">把六大工程规范变成 AI 可执行工作流</text>
-<text x="1400" y="152" fill="#64748b" font-size="16" font-weight="400" text-anchor="middle" font-family="PingFang SC, Microsoft YaHei, SF Pro Display, system-ui, sans-serif">6 大工程规范融合  ×  20 Skill 协同执行  ×  四端统一  ×  OMC 原生控制面</text>
+<text x="1400" y="152" fill="#64748b" font-size="16" font-weight="400" text-anchor="middle" font-family="PingFang SC, Microsoft YaHei, SF Pro Display, system-ui, sans-serif">6 大工程规范融合  ×  23 Skill 协同执行  ×  四端统一  ×  OMC 原生控制面</text>
 <text x="2720" y="56" fill="#38bdf8" font-size="16" font-weight="600" text-anchor="end" font-family="PingFang SC, Microsoft YaHei, SF Pro Display, system-ui, sans-serif">v0.22</text>
 <text x="2720" y="80" fill="#64748b" font-size="13" font-weight="400" text-anchor="end" font-family="PingFang SC, Microsoft YaHei, SF Pro Display, system-ui, sans-serif">oh-my-taiyiforge</text>
 <line x1="100" y1="175" x2="2700" y2="175" stroke="#243049" stroke-width="1"/>

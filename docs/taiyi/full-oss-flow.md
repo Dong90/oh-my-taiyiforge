@@ -1,5 +1,7 @@
 # 完整开源流程（Superpowers + 全部外挂）
 
+> **何时读本文**：需要 **gstack + OpenSpec + Playwright + 安全扫描 + Changesets** 全链演示或 dogfood 时。日常开发 → [superpowers-flow.md](./superpowers-flow.md) · 命令索引 → [canonical-commands.md](./canonical-commands.md)。
+
 > **一条链跑通**：九阶段 × Superpowers 14 技能 × gstack × OpenSpec × web-quality × Playwright × Semgrep × Trivy × Changesets × taiyi 辅助 Skill。  
 > **单一真源**：[`workflow-manifest.yaml`](./workflow-manifest.yaml)（引擎读取）· 本页（人类剧本）
 

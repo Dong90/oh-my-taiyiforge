@@ -2,18 +2,24 @@
 
 真源：`docs/taiyi/commands.yaml` → `canonical_commands` · `slash_catalog` · `legacy_cli`
 
+**generated 表格**：`npm run generate:docs` → `prompts/inc/slash-catalog.generated.md` + 本节标记块（`docs/taiyi/inc/canonical-tables.generated.md`）
+
 **原则**：每条职责一个聊天入口；重复别名已移除。引擎 CLI legacy 子命令仍可用于脚本/CI。
+
+<!-- BEGIN GENERATED canonical-tables -->
+
+<!-- AUTO-GENERATED from docs/taiyi/commands.yaml — do not edit; run npm run generate:docs -->
 
 ## 日常主链
 
 | 意图 | 推荐斜杠 | 说明 |
 |------|----------|------|
-| 新建变更 | `/taiyi:new <标题>` | 默认手动九阶段 |
-| 看进度 | `/taiyi:status` | 人类可读；JSON 用 `status --json` 或 MCP |
+| 新建变更 | `/taiyi:new <标题>` | 创建变更目录、**默认手动**九阶段、仅铺 CHANGE.md 模板（对标 opsx:new） |
+| 看进度 | `/taiyi:status` | Agent 默认 `status --json --compact`；人类可读用无前缀 status |
 | 写当前阶段工件 | `/taiyi:write` | 引擎输出应加载的 `@taiyi-*` Skill |
-| 过关 | `/taiyi:continue` | 人工门须 `--approver` |
-| dev/test 实现清单 | `/taiyi:apply` | 不写代码，只列 harness |
-| 归档 | `/taiyi:archive` | integration 完成后 |
+| 过关 | `/taiyi:continue` | 尝试 complete 当前阶段；失败则输出 next 指引（对标 opsx:continue） |
+| dev/test 实现清单 | `/taiyi:apply` | 仅 dev/test：打印实现 harness 清单（对标 opsx:apply） |
+| 归档 | `/taiyi:archive` | integration 阶段完成后归档（对标 opsx:archive） |
 
 ## 会话与排查
 
@@ -25,21 +31,41 @@
 | 多变更列表 | `/taiyi:list` |
 | 仅归档列表 | CLI：`list --archived`；全量：`list --all [--archived]` |
 | 清理 aborted | `prune --aborted` |
-| 安装自检 | `/taiyi:doctor` |
-| 流程/交付排查 | `/taiyi:audit` |
+| 安装自检 | `/taiyi:doctor`（Agent `doctor --json --compact`） |
+| 流程/交付排查 | `/taiyi:audit`（Agent `audit --json --compact`） |
 | PR/CI 工件门禁 | `/taiyi:verify` |
+
+## 场景捷径
+
+| 斜杠 | 用途 |
+|------|------|
+| `/taiyi:feature` | 新功能 full 九阶段剧本 |
+| `/taiyi:bug` | lite 五阶段修 bug |
+| `/taiyi:ui-test` | test 阶段 UI QA（gstack qa + e2e） |
+
+<!-- END GENERATED canonical-tables -->
+
+<!-- BEGIN GENERATED diagram-pipeline -->
+
+<!-- AUTO-GENERATED from docs/taiyi/commands.yaml — do not edit; run npm run generate:docs -->
 
 ## 架构图流水线
 
 | 斜杠 | 步骤 | 说明 |
 |------|------|------|
-| `/taiyi:diagram-pipeline` | ①②③ | C4 → arch → render 一条龙 |
-| `/taiyi:diagram-c4` | ① | 扫代码写 C4 真源 |
-| `/taiyi:diagram-arch` | ② | 以 C4 同步 `architecture.md` |
-| `/taiyi:diagram-render` | ③ | Mermaid → SVG |
-| `/taiyi:diagram-flow` | — | 业务流程 / AC 追溯（独立） |
+| `/taiyi:diagram-pipeline` | ①②③ | 架构图三步流水线编排：① diagram-c4（C4 真源）→ ② diagram-arch（工程补充）→ ③ diagram-render（SVG） |
+| `/taiyi:diagram-c4` | ① | 流水线第 1 步：扫代码写 C4 真源（Observed/Inferred + Mermaid） |
+| `/taiyi:diagram-arch` | ② | 流水线第 2 步：以 `diagrams/c4/containers.md` 为真源同步 `diagrams/architecture.md`（勿重划模块） |
+| `/taiyi:diagram-render` | ③ | 流水线第 3 步：Mermaid → SVG（`render-mermaid.mjs` 或 diagramming-architecture 视觉审查） |
+| `/taiyi:diagram-flow` | — | 业务流程图 / 状态机 / 九阶段 flowchart；AC 追溯表；TASK 切片对齐 |
 
 详见 `docs/diagrams/pipeline.md` · `commands.yaml` → `auxiliary.commands`。
+
+<!-- END GENERATED diagram-pipeline -->
+
+<!-- BEGIN GENERATED delivery-chain -->
+
+<!-- AUTO-GENERATED from docs/taiyi/commands.yaml — do not edit; run npm run generate:docs -->
 
 ## 交付链（gstack）
 
@@ -51,22 +77,24 @@
 
 详见 [delivery-slash.md](./delivery-slash.md)。
 
-## 场景捷径
+<!-- END GENERATED delivery-chain -->
 
-| 斜杠 | 用途 |
-|------|------|
-| `/taiyi:feature` | 新功能 full 九阶段剧本 |
-| `/taiyi:bug` | lite 五阶段修 bug |
-| `/taiyi:ui-test` | test 阶段 UI QA（gstack qa + e2e） |
+<!-- BEGIN GENERATED browser-e2e -->
+
+<!-- AUTO-GENERATED from docs/taiyi/commands.yaml — do not edit; run npm run generate:docs -->
 
 ## 浏览器 / E2E
 
+Token 纪律：全量 `playwright test` / probe 在 **CI 或后台**跑；聊天只写 TEST.md 摘要，勿灌日志。
+
 | 斜杠 | 引擎 | 说明 |
 |------|------|------|
-| `/taiyi:browser-smoke` | `browser-smoke` | 内置 Playwright 冒烟（无需项目配置） |
-| `/taiyi:e2e` | （聊天） | 目标项目 `npx playwright test` |
+| `/taiyi:browser-smoke` | `browser-smoke` | 内置 Playwright 浏览器冒烟（examples/browser-e2e-smoke） |
+| `/taiyi:e2e` | （聊天） | 目标项目 `npx playwright test`（Agent 代跑；摘要写 TEST.md） |
 | `/taiyi:gstack qa` | （聊天） | gstack browse 走查 |
-| `/taiyi:ui-test` | （聊天） | qa + e2e 捷径 |
+| `/taiyi:ui-test` | （聊天） | test 阶段 UI QA 捷径 |
+
+<!-- END GENERATED browser-e2e -->
 
 ## 自主编排（OMC 原生迁移 · 多 Agent）
 

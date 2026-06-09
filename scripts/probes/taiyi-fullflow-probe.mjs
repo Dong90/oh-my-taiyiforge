@@ -8,14 +8,22 @@ import fs from "node:fs";
 import path from "node:path";
 import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
+import { cleanupProbeWorktree, resolveProbeCwd } from "./probe-worktree.mjs";
 
 const pkgRoot = path.dirname(fileURLToPath(new URL("../../package.json", import.meta.url)));
-const workspace = process.cwd();
+const repoRoot = process.cwd();
+const workspace = resolveProbeCwd(repoRoot);
 const taiyiJs = path.join(pkgRoot, "dist/cli/taiyi.js");
 const forgeSh = path.join(workspace, "scripts/taiyi-forge.sh");
 
 const results = [];
 let failed = 0;
+
+function probeHygiene() {
+  if (!fs.existsSync(forgeSh)) return;
+  runForge(["smoke-reset"]);
+  runForge(["prune", "--aborted"]);
+}
 
 function runCli(argv) {
   const r = spawnSync(process.execPath, [taiyiJs, ...argv], {
@@ -81,6 +89,7 @@ function extractSlug(out, title) {
 }
 
 // C1：固定 slug 须 --force 或随机 slug
+probeHygiene();
 const initSlug = process.env.TAIYI_PROBE_INIT_SLUG ?? "probe-init-slug";
 expect(
   "C1-init-fixed",
@@ -131,4 +140,5 @@ fs.mkdirSync(outDir, { recursive: true });
 const reportPath = path.join(outDir, "fullflow-probe-report.json");
 fs.writeFileSync(reportPath, `${JSON.stringify(report, null, 2)}\n`);
 console.log(`\n报告: ${reportPath} — ${report.passed}/${report.total} 通过`);
+cleanupProbeWorktree(repoRoot);
 process.exit(failed > 0 ? 1 : 0);

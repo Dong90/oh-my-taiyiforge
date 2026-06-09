@@ -5,11 +5,13 @@ argument-hint: "optional slug"
 User invoked **$taiyi-status** (= `/taiyi:status`). Run:
 
 ```bash
-scripts/taiyi-forge.sh status $ARGUMENTS
+scripts/taiyi-forge.sh status $ARGUMENTS --json --compact
 ```
 
-Shows current phase, Skill, artifact readiness, sync actions, and next action. **Trust this output** over chat memory. Omit slug when only one active change.
+Parse **`engineTruth`** (phase, skill, artifact, qualityReady, nextAction, blockers). **Trust this over chat memory.** Omit slug when only one active change.
 
-For machine/MCP JSON: `scripts/taiyi-forge.sh status $ARGUMENTS --json` or MCP `taiyi_state_get_status`.
+Human-readable summary (user asks explicitly): `scripts/taiyi-forge.sh status $ARGUMENTS` or `--compact` without `--json`.
+
+MCP alternative: `taiyi_state_get_status`.
 
 {{TAIYI_STAGE_PROTOCOL}}

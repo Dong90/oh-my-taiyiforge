@@ -37,6 +37,13 @@ ${hookLine}
 - /taiyi:status / /taiyi:continue 会自动：从磁盘同步 mark-aux（如已有 CONTEXT.md）、去掉已填好内容的 seed 标记。
 - 若出现「顺序冲突 / 超前工件」：删除未来阶段 md，或先 complete 当前阶段，**不可跳步**。
 
+## Token 纪律（Agent 必守 · 明显省 token）
+
+1. **清 slug**：同时只服务 **1 个 active**；完成后 \`/taiyi:archive\`，废弃 \`/taiyi:cancel <slug> --remove-dir\`，探针 slug 勿留对话里。
+2. **archive 闭环**：integration 过关即 archive，再 \`/taiyi:new\`；completed 变更勿继续聊。
+3. **token compress**：长阶段或 dev 前 \`/taiyi:token compress <slug>\`，读 \`CONTEXT-COMPACT.md\`，勿全量工件进聊天。
+4. **E2E 别在对话跑**：Playwright / \`npm test\` / walkthrough / probe → CI 或后台终端；聊天只写 TEST.md 证据摘要。
+
 ## 聊天命令（用户只说斜杠，见 docs/taiyi/commands.yaml）
 
 ${chatIntro}

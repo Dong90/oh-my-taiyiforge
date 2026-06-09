@@ -1,5 +1,5 @@
 import type { WorkflowEngine } from "./workflow-engine.js";
-import { resolveActiveSlug } from "./active-slug.js";
+import { resolveActiveSlug, slugifyTitle } from "./active-slug.js";
 import { resolveTaiyiRoot } from "./paths.js";
 
 export type ScenarioRunResult = {
@@ -13,12 +13,37 @@ function scenarioHeader(title: string, subtitle: string): string[] {
   return [`══ ${title} ══`, subtitle, ""];
 }
 
+function resolveScenarioSlug(
+  engine: WorkflowEngine,
+  titleOrSlug?: string,
+): { slug?: string; hasState: boolean; title?: string } {
+  const title = titleOrSlug?.trim();
+  if (!title) return { hasState: false };
+  const looksLikeSlug = /^[a-z0-9][a-z0-9-]*$/i.test(title);
+  const slug = looksLikeSlug ? title : slugifyTitle(title);
+  return { slug, hasState: Boolean(engine.getState(slug)), title };
+}
+
+function shortScenarioLine(scenario: "feature" | "bug", slug: string, profile: string): string {
+  return `slug=${slug} scenario=${scenario} profile=${profile} → /taiyi:status ${slug}`;
+}
+
 /** /taiyi:feature — 新功能（full 九阶段）场景剧本 */
 export function runFeatureScenario(
   engine: WorkflowEngine,
   taiyiRoot: string,
   titleOrSlug?: string,
 ): ScenarioRunResult {
+  const existing = resolveScenarioSlug(engine, titleOrSlug);
+  if (existing.hasState && existing.slug) {
+    return {
+      ok: true,
+      scenario: "feature",
+      slug: existing.slug,
+      text: shortScenarioLine("feature", existing.slug, "full"),
+    };
+  }
+
   const lines = scenarioHeader(
     "Taiyi 场景 · 做功能",
     "profile **full**（九阶段）· 用户给标题则先 new，否则用当前 slug",
@@ -72,6 +97,16 @@ export function runBugScenario(
   taiyiRoot: string,
   titleOrSlug?: string,
 ): ScenarioRunResult {
+  const existing = resolveScenarioSlug(engine, titleOrSlug);
+  if (existing.hasState && existing.slug) {
+    return {
+      ok: true,
+      scenario: "bug",
+      slug: existing.slug,
+      text: shortScenarioLine("bug", existing.slug, "lite"),
+    };
+  }
+
   const lines = scenarioHeader(
     "Taiyi 场景 · 修 Bug",
     "profile **lite** — 跳过 design / ui-design / task / review",

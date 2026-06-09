@@ -8,86 +8,37 @@ description: TaiyiForge 引擎控制面 — 用户只说 /taiyi:* 斜杠，Agent
 ## 原则
 
 - **用户只说 `/taiyi:*`**（Codex：`$taiyi-*`）；你代跑 `scripts/taiyi-forge.sh`，禁止让用户手打 shell。
-- 写工件 → **`/taiyi:write`**，再加载引擎输出的 `taiyi-change` … `taiyi-integration` Skill。
+- 读状态默认：**`status [slug] --json --compact`** → 解析 **`engineTruth`**。
+- 写工件 → **`/taiyi:write`**，再加载当前阶段 `taiyi-change` … `taiyi-integration` Skill。
 
-## 主流程
+## 主流程（仅这五条）
 
-| 斜杠 | 含义 |
+| 斜杠 | 引擎 |
 |------|------|
-| `/taiyi:new 功能名` | 新建变更 |
-| `/taiyi:status` | 阶段进度、Skill、工件 |
-| `/taiyi:write` | 写当前阶段工件 |
-| `/taiyi:continue` | 过关当前阶段 |
-| `/taiyi:apply` | dev/test 实现清单 |
-| `/taiyi:archive` | 归档 |
+| `/taiyi:new` | `new` |
+| `/taiyi:status` | `status --json --compact` |
+| `/taiyi:write` | `write` |
+| `/taiyi:continue` | `continue` |
+| `/taiyi:apply` | `apply`（dev/test） |
+| `/taiyi:archive` | `archive` |
 
-## 常用辅助
+**其余斜杠**（doctor、audit、ralph、token、gstack 交付链等）→ [`docs/taiyi/canonical-commands.md`](../../docs/taiyi/canonical-commands.md) · [`docs/taiyi/commands.yaml`](../../docs/taiyi/commands.yaml)
 
-`/taiyi:doctor` · `/taiyi:audit` · `/taiyi:verify` · `/taiyi:list` · `/taiyi:check` · `/taiyi:sync` · `/taiyi:handoff` · `/taiyi:cancel` · `/taiyi:loop` · `/taiyi:write` · `/taiyi:review-loop` · `/taiyi:review-check` · `/taiyi:token *`
+## Token 纪律
 
-### list / prune（CLI 与 wrapper 均有）
+| # | 动作 |
+|---|------|
+| 1 | **清 slug** — archive / `cancel --remove-dir`；只保留 1 个 active |
+| 2 | **archive 闭环** — integration 后立刻 archive |
+| 3 | **compress** — `/taiyi:token compress <slug>` → 读 `CONTEXT-COMPACT.md` |
+| 4 | **E2E 别在对话跑** — CI/后台；聊天只写 TEST.md 摘要 |
 
-| 命令 | 说明 |
-|------|------|
-| `list` | 默认仅**活跃**变更（进行中 + 未归档 completed） |
-| `list --archived` | 仅 `.taiyi/archive/` |
-| `list --all` | changes 全状态（含 completed / aborted） |
-| `list --all --archived` | changes + archive 合并 |
-| `prune [--dry-run] [--aborted]` | 清理孤儿 runtime；`--aborted` 删已取消变更目录 |
-| `trim-ahead <slug>` | 删除超前阶段工件 |
-| `smoke-reset` | **仅 wrapper** — 内部 `stop-mode --force`；CLI 直调 exit 2 属预期 |
-
-### feature / bug
-
-- `feature [标题] [--create]` / `bug [标题] [--create]` — **`--create` 才自动 `new` 建 slug**；无 `--create` 不隐式 init（command-matrix 设计）。
-
-## 引擎斜杠（脚本/CI）
-
-`/taiyi:init` · `/taiyi:complete` · `/taiyi:mark-aux` · `/taiyi:assess` · `/taiyi:harness-check` · `/taiyi:phases` · `/taiyi:ci platform` · `/taiyi:ci prompt`
-
-Legacy CLI（无聊天斜杠）：`pause`→handoff · `commit-trailers`→用 `/taiyi:commit` · `next`/`done`→`/taiyi:continue` · `change`…→`/taiyi:write`
-
-## 自主编排（OMC · 均有斜杠）
-
-`/taiyi:ralph` · `/taiyi:autopilot` · `/taiyi:daemon` · `/taiyi:team` · `/taiyi:ultrawork` · `/taiyi:agent` · `/taiyi:step` · `/taiyi:stop-mode` · `/taiyi:modes` · `/taiyi:keyword` · `/taiyi:preflight`
-
-与 OMC 差异：无 tmux team / 无 spawn_agent SDK — 见 `docs/taiyi/canonical-commands.md`
-
-## 交付链（gstack · 见 docs/taiyi/delivery-slash.md）
-
-| 斜杠 | gstack Skill |
-|------|--------------|
-| `/taiyi:commit` | commit-trailers + git |
-| `/taiyi:ship` | ship |
-| `/taiyi:land` | land-and-deploy |
-| `/taiyi:gstack review` | review |
-| `/taiyi:gstack qa` | qa |
-| `/taiyi:gstack <skill>` | design-shotgun · autoplan · canary · gstack-upgrade … |
-| `/taiyi:release` | document-release |
-
-## 扩展斜杠
-
-| 斜杠 | 用途 |
-|------|------|
-| `/taiyi:sp <skill>` | Superpowers（writing-skills …） |
-| `/taiyi:security` | semgrep + trivy |
-| `/taiyi:e2e` | Playwright E2E |
-| `/taiyi:browser-smoke` | 内置 Playwright 浏览器冒烟 |
-| `/taiyi:resume` | HANDOFF + status |
-| `/taiyi:help` | 斜杠总览 |
-
-## 无 shell 子命令（仅 Skill）
-
-`/taiyi:explore` · `/taiyi:flow` · `/taiyi:full-flow` · `/taiyi:tdd plan|dev` · `/taiyi:ship` · `/taiyi:land` · `/taiyi:commit` · `/taiyi:gstack *` · `/taiyi:sp *`
-
-CLI 直调 `ship`/`land`/`commit` → exit 2 + 提示加载 gstack Skill（见 `docs/taiyi/delivery-slash.md`）。
-
-完整列表：`docs/taiyi/canonical-commands.md` · `docs/taiyi/commands.yaml` · 探测归类：`docs/taiyi/probe-triage.md`
+细节：Skill **`taiyi-compress`** · [`docs/taiyi/control-plane.md`](../../docs/taiyi/control-plane.md)
 
 ## Agent 代跑
 
 ```bash
-scripts/taiyi-forge.sh <cmd> ...   # 映射自用户斜杠
+scripts/taiyi-forge.sh <cmd> ...
 ```
 
-示例：用户 `/taiyi:continue` → `taiyi-forge.sh continue [slug] [--approver 名]`
+示例：`/taiyi:continue` → `taiyi-forge.sh continue [slug] [--approver 名]`

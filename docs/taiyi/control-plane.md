@@ -24,6 +24,16 @@
 
 完整九阶段路径：`docs/taiyi/workflow.md` · 详见 `docs/taiyi/invoke.yaml`。
 
+## Token 纪律（Agent）
+
+| 动作 | 命令 | 目的 |
+|------|------|------|
+| 清 slug | `/taiyi:archive` · `/taiyi:cancel … --remove-dir` · `prune --aborted` | 对话只带 1 个 active |
+| 压缩 | `/taiyi:token compress <slug>` | 读 `CONTEXT-COMPACT.md`，勿全量工件 |
+| E2E | CI / 后台跑 `playwright` · `npm test` · probe | 聊天只写 TEST.md 证据，不灌日志 |
+
+详见 `prompts/inc/stage-protocol.md` · Skill `taiyi-compress`。
+
 ## 探测与回归
 
 十轮 / 多角度探测的归类、BY DESIGN 项与脚本误报修正见 **[probe-triage.md](./probe-triage.md)**。

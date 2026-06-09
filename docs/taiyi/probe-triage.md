@@ -60,6 +60,8 @@
 
 ## 探测脚本检查清单
 
+**Worktree 隔离（v0.22.2+）**：`probe:fullflow` / `probe:postfix` **默认**在 `.taiyi/probe-worktree`（detach HEAD）跑，避免污染主工作区 `.taiyi/changes/`。主工作区内跑：`TAIYI_PROBE_IN_PLACE=1`；显式关闭 worktree：`TAIYI_PROBE_WORKTREE=0`。
+
 ```bash
 # BY DESIGN — 不应 FAIL
 npx taiyi smoke-reset                         # exit 2

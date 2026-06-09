@@ -78,14 +78,21 @@ describe("scenario-shortcuts", () => {
     fs.rmSync(workspace, { recursive: true, force: true });
   });
 
-  it("feature playbook mentions nine phases", () => {
+  it("feature with existing slug returns short line", () => {
     engine.initChange("feat-x", { profile: "full" });
     const r = runFeatureScenario(engine, taiyiRoot, "feat-x");
+    expect(r.text).toContain("slug=feat-x");
+    expect(r.text).toContain("/taiyi:status feat-x");
+    expect(r.text).not.toContain("推荐串联");
+  });
+
+  it("feature without slug returns full playbook", () => {
+    const r = runFeatureScenario(engine, taiyiRoot, "New feature title");
     expect(r.text).toContain("/taiyi:write");
     expect(r.text).toContain("/taiyi:archive");
   });
 
-  it("bug playbook mentions lite profile", () => {
+  it("bug without state returns lite playbook", () => {
     const r = runBugScenario(engine, taiyiRoot, "fix-login");
     expect(r.text).toContain("lite");
     expect(r.text).toContain("review-loop");

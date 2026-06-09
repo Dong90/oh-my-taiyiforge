@@ -4,6 +4,8 @@ argument-hint: "[--json]"
 ---
 User invoked **$taiyi-browser-smoke** (= `/taiyi:browser-smoke`). **Browser E2E smoke** — 内置 Playwright 夹具，等价于完整 `/taiyi:e2e` 验证路径的可复现子集。
 
+**Token 纪律：CI / 后台跑，勿把完整输出贴进聊天** — 只把 exit code + 摘要写入 TEST.md。
+
 ## Agent 代跑（勿让用户手打）
 
 ```bash

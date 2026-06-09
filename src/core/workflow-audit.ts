@@ -327,3 +327,65 @@ export function formatAuditPlain(report: WorkflowAuditReport): string {
   for (const n of report.notes) lines.push(`\n${n}`);
   return lines.join("\n");
 }
+
+/** audit --compact：摘要 + 仅 high/blocking findings */
+export function formatAuditCompact(report: WorkflowAuditReport): string {
+  const high: string[] = [];
+  const medium: string[] = [];
+  for (const c of report.changes) {
+    for (const f of c.findings) {
+      const line = `${c.slug}: [${f.severity}] ${f.code}`;
+      if (f.severity === "high") high.push(line);
+      else if (f.severity === "medium") medium.push(line);
+    }
+  }
+  const lines = [
+    `audit ${report.ok ? "PASS" : "FAIL"} · changes=${report.changes.length} · high=${high.length} · medium=${medium.length}`,
+  ];
+  for (const h of high.slice(0, 8)) lines.push(`  ${h}`);
+  if (high.length > 8) lines.push(`  … +${high.length - 8} high`);
+  if (!report.ok && high.length === 0 && medium.length) {
+    lines.push(`  (medium only — often post-archive dirty workspace)`);
+    for (const m of medium.slice(0, 3)) lines.push(`  ${m}`);
+  }
+  return lines.join("\n");
+}
+
+export type AuditJsonCompact = {
+  ok: boolean;
+  changes: number;
+  highCount: number;
+  mediumCount: number;
+  findings: Array<{ slug: string; severity: "high"; code: string; message: string }>;
+  notes?: string[];
+};
+
+/** audit --json --compact — Agent 读法：计数 + 仅 high findings */
+export function buildAuditJsonCompact(report: WorkflowAuditReport): AuditJsonCompact {
+  const findings: AuditJsonCompact["findings"] = [];
+  let highCount = 0;
+  let mediumCount = 0;
+  for (const c of report.changes) {
+    for (const f of c.findings) {
+      if (f.severity === "high") {
+        highCount++;
+        findings.push({
+          slug: c.slug,
+          severity: "high",
+          code: f.code,
+          message: f.message,
+        });
+      } else if (f.severity === "medium") {
+        mediumCount++;
+      }
+    }
+  }
+  return {
+    ok: report.ok,
+    changes: report.changes.length,
+    highCount,
+    mediumCount,
+    findings: findings.slice(0, 12),
+    notes: report.notes.length ? report.notes : undefined,
+  };
+}

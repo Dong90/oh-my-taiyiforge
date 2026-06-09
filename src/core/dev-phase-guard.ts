@@ -37,11 +37,15 @@ function isTaiyiArtifactPath(file: string): boolean {
   return n.startsWith(".taiyi/") || n.includes("/.taiyi/");
 }
 
-/** 规划阶段误报：仓库级 OpenSpec / 根 CHANGELOG 与当前变更无关。 */
+/** 规划阶段误报：仓库级 OpenSpec / 根 CHANGELOG / 探针报告等与当前变更无关。 */
 function isPlanningNoisePath(file: string): boolean {
   const n = file.replace(/\\/g, "/");
   if (n === "CHANGELOG.md") return true;
   if (n.startsWith("openspec/")) return true;
+  if (n === ".DS_Store" || n.endsWith("/.DS_Store")) return true;
+  if (n.startsWith(".taiyi/") && (n.endsWith(".json") || n.includes("probe"))) return true;
+  if (n === "docs/taiyi/probe-triage.md") return true;
+  if (n.startsWith("scripts/probes/")) return true;
   return false;
 }
 

@@ -522,12 +522,16 @@ profiles:
         - taiyi_keyword
         - taiyi_remember
         - taiyi_workflow
+        - taiyi_doctor
+        - taiyi_audit
       mcp_tools:
         - taiyi_state_get_status
         - taiyi_state_list_active
         - taiyi_state_read
         - taiyi_state_handoff
         - taiyi_state_cancel
+        - taiyi_doctor
+        - taiyi_audit
         - taiyi_mode_step
         - taiyi_mode_stop
         - taiyi_mode_list

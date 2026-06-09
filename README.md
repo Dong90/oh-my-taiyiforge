@@ -76,7 +76,35 @@
 
 ## 快速开始
 
-### 消费者（业务仓库）
+实操路径见 **[docs/QUICKSTART.md](./docs/QUICKSTART.md)**（唯一 5 分钟教程）。此处仅摘要：
+
+```bash
+npm install oh-my-taiyiforge
+npx taiyi-forge-install --all    # 23 个 taiyi-* Skill
+npx taiyi doctor --strict-workspace
+```
+
+聊天：`/taiyi:new` → `/taiyi:status` → `/taiyi:write` → `/taiyi:continue` → `/taiyi:archive`
+
+## 文档索引
+
+| 文档 | 用途 |
+|------|------|
+| [QUICKSTART.md](./docs/QUICKSTART.md) | **唯一实操路径** |
+| [canonical-commands.md](./docs/taiyi/canonical-commands.md) | 斜杠命令表 |
+| [control-plane.md](./docs/taiyi/control-plane.md) | Agent 纪律 + Token 纪律 |
+| [ARCHITECTURE.md](./docs/ARCHITECTURE.md) | 架构与代码布局 |
+| [superpowers-flow.md](./docs/taiyi/superpowers-flow.md) | 日常 Superpowers 主轴 |
+| [full-oss-flow.md](./docs/taiyi/full-oss-flow.md) | 全外挂演示链 |
+| [probe-triage.md](./docs/taiyi/probe-triage.md) | CI/探测归类（维护者） |
+| [AGENTS.md](./AGENTS.md) | Agent 入口指针 |
+
+---
+
+## 四端安装
+
+<details>
+<summary>展开：各端安装细节（详见 QUICKSTART）</summary>
 
 ```bash
 npm install oh-my-taiyiforge
@@ -112,9 +140,9 @@ npm run walkthrough-e2e
 
 详见 [QUICKSTART.md](./docs/QUICKSTART.md)。
 
----
+</details>
 
-## 四端安装
+## 四端一览
 
 | 平台 | 入口 | 安装验证 |
 |------|------|----------|

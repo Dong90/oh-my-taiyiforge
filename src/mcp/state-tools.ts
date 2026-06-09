@@ -13,7 +13,10 @@ import { loadTokenBudgetConfig } from "../core/token/budget-config.js";
 import { WorkflowEngine } from "../core/workflow-engine.js";
 import type { ChangeState } from "../core/types.js";
 import type { EngineTruth } from "../core/engine-truth.js";
-import { taiyiStep, taiyiStopMode, taiyiModes, taiyiKeyword, taiyiRemember, taiyiWorkflowSkill } from "../plugin/handlers.js";
+import { taiyiStep, taiyiStopMode, taiyiModes, taiyiKeyword, taiyiRemember, taiyiWorkflowSkill, taiyiDoctor, taiyiAudit } from "../plugin/handlers.js";
+import { buildDoctorJsonCompact, type DoctorJsonCompact } from "../core/doctor.js";
+import { buildAuditJsonCompact, type AuditJsonCompact } from "../core/workflow-audit.js";
+import { resolvePackageRoot } from "../core/package-root.js";
 
 export type StateListActiveResult = {
   changes: ReturnType<typeof listChanges>;
@@ -219,4 +222,20 @@ export function taiyiRunWorkflow(
     result: "result" in r ? r.result : undefined,
     step: "step" in r ? r.step : undefined,
   };
+}
+
+/** MCP slim — 对齐 `doctor --json --compact` */
+export function taiyiDoctorCompact(
+  workspaceDir: string,
+  options?: { strictWorkspace?: boolean },
+): DoctorJsonCompact {
+  const pkgRoot = resolvePackageRoot(import.meta.url);
+  const r = taiyiDoctor(pkgRoot, workspaceDir, options);
+  return buildDoctorJsonCompact(r);
+}
+
+/** MCP slim — 对齐 `audit --json --compact` */
+export function taiyiAuditCompact(workspaceDir: string, slug?: string): AuditJsonCompact {
+  const r = taiyiAudit(workspaceDir, { slug, plain: false });
+  return buildAuditJsonCompact(r.report);
 }

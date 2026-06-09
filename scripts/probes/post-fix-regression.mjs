@@ -8,15 +8,24 @@ import fs from "node:fs";
 import path from "node:path";
 import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
+import { cleanupProbeWorktree, resolveProbeCwd } from "./probe-worktree.mjs";
 
 const pkgRoot = path.dirname(fileURLToPath(new URL("../../package.json", import.meta.url)));
-const workspace = process.cwd();
+const repoRoot = process.cwd();
+const workspace = resolveProbeCwd(repoRoot);
 const taiyiJs = path.join(pkgRoot, "dist/cli/taiyi.js");
 const forgeSh = path.join(workspace, "scripts/taiyi-forge.sh");
 const upstreamSh = path.join(pkgRoot, "scripts/taiyi-forge.sh");
 
 const results = [];
 let failed = 0;
+
+function probeHygiene() {
+  if (fs.existsSync(forgeSh)) {
+    runBash(forgeSh, ["smoke-reset"]);
+    runBash(forgeSh, ["prune", "--aborted"]);
+  }
+}
 
 function run(cmd, args, opts = {}) {
   const r = spawnSync(cmd, args, {
@@ -52,6 +61,8 @@ function expectCode(label, r, expected) {
 }
 
 // --- smoke-reset：BY DESIGN，非三通道 parity ---
+probeHygiene();
+
 const cliReset = runCli(["smoke-reset"]);
 expectCode("cmd-smoke-reset-cli", cliReset, 2);
 
@@ -111,4 +122,5 @@ fs.mkdirSync(outDir, { recursive: true });
 const reportPath = path.join(outDir, "post-fix-regression.json");
 fs.writeFileSync(reportPath, `${JSON.stringify(report, null, 2)}\n`);
 console.log(`\n报告: ${reportPath} — ${report.passed}/${report.total} 通过`);
+cleanupProbeWorktree(repoRoot);
 process.exit(failed > 0 ? 1 : 0);

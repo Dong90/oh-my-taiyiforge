@@ -54,6 +54,30 @@ export function formatPhaseProgressLine(guide: PhaseGuide): string {
   return `当前: ${guide.currentPhase}（${index}/${total}）| Skill: ${guide.skill} | 推进: ${verb}`;
 }
 
+/** /taiyi:status --compact — Agent/终端短输出（无 footer） */
+export function formatStatusCompact(guide: PhaseGuide): string {
+  const lines: string[] = [`# ${guide.slug}`, formatPhaseProgressLine(guide)];
+  if (guide.workflowCompleted) {
+    lines.push("→ /taiyi:archive");
+    return lines.join("\n");
+  }
+  const artifactStatus = guide.qualityReady
+    ? "ready"
+    : guide.artifactIsSeed
+      ? "seed"
+      : "!ready";
+  lines.push(`artifact=${guide.artifact} (${artifactStatus}) | ${guide.nextAction}`);
+  if (guide.stepBlockers?.length) {
+    lines.push(`blockers: ${guide.stepBlockers.join("; ")}`);
+  }
+  if (guide.earlyCodeWarning) {
+    lines.push(`⚠ ${guide.earlyCodeWarning}`);
+  } else if (guide.qualityHints.length && !guide.qualityReady) {
+    lines.push(`hints: ${guide.qualityHints.slice(0, 2).join("; ")}`);
+  }
+  return lines.join("\n");
+}
+
 /** /taiyi:status 人类可读摘要 */
 export function formatStatusPlain(guide: PhaseGuide): string {
   const lines: string[] = [];
