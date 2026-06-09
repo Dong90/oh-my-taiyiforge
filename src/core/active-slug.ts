@@ -1,5 +1,6 @@
 import { listChanges } from "./list-changes.js";
 import { validateSlug } from "./slug.js";
+import { resolveChangeDir } from "./taiyi-archive.js";
 
 export type ResolveSlugResult =
   | { ok: true; slug: string; inferred: boolean }
@@ -29,6 +30,20 @@ export function resolveActiveSlug(taiyiRoot: string, explicit?: string): Resolve
     };
   }
   return { ok: true, slug: active[0]!.slug, inferred: true };
+}
+
+/** 显式 slug 时在 changes 或 archive 查找；未传则回退 resolveActiveSlug */
+export function resolveChangeSlug(taiyiRoot: string, explicit?: string): ResolveSlugResult {
+  if (explicit?.trim()) {
+    const slug = explicit.trim();
+    const valid = validateSlug(slug);
+    if (!valid.ok) return { ok: false, error: valid.error };
+    if (!resolveChangeDir(taiyiRoot, slug)) {
+      return { ok: false, error: `Change not found: ${slug}` };
+    }
+    return { ok: true, slug, inferred: false };
+  }
+  return resolveActiveSlug(taiyiRoot);
 }
 
 /** 从标题生成 slug（OMX/OpenSpec 的 new <name> 惯例） */
