@@ -1,31 +1,27 @@
 ---
-description: "TaiyiForge slash router — map any /taiyi:* to taiyi-forge.sh (100% slash surface)"
+description: "TaiyiForge slash router — map /taiyi:* to taiyi-forge.sh (canonical slash surface)"
 argument-hint: "any /taiyi:<verb> args"
 ---
-User invoked TaiyiForge. **Every engine verb has a slash alias** — map `$ARGUMENTS` or the user's `/taiyi:*` to `scripts/taiyi-forge.sh`:
+User invoked TaiyiForge. Map `$ARGUMENTS` or the user's `/taiyi:*` to `scripts/taiyi-forge.sh`. **One slash per responsibility** — duplicates removed; legacy CLI verbs still work (see `docs/taiyi/commands.yaml` → `legacy_cli`).
 
 | Slash | Shell |
 |-------|-------|
 | `/taiyi:new` | `new` |
 | `/taiyi:init` | `init` |
-| `/taiyi:status` | `status` |
-| `/taiyi:state` | `status --json` |
-| `/taiyi:state-read` | read `.taiyi/changes/<slug>/state.json` after `/taiyi:list` |
+| `/taiyi:status` | `status` (add `--json` for machine/MCP) |
 | `/taiyi:continue` | `continue` |
 | `/taiyi:complete` | `complete` |
-| `/taiyi:done` | `done` (legacy) |
-| `/taiyi:next` | `next` |
 | `/taiyi:apply` | `apply` |
 | `/taiyi:archive` | `archive` |
 | `/taiyi:cancel` | `cancel` |
-| `/taiyi:handoff` / `/taiyi:pause` | `handoff` |
+| `/taiyi:handoff` | `handoff` |
+| `/taiyi:write` | `write` (nine-stage artifact writes) |
 | `/taiyi:list` | `list` |
 | `/taiyi:check` | `check` (= harness) |
 | `/taiyi:harness-check` | `harness-check` |
 | `/taiyi:mark-aux` | `mark-aux` |
 | `/taiyi:assess` | `assess` |
 | `/taiyi:phases` | `phases` |
-| `/taiyi:guide` | `guide --json` |
 | `/taiyi:doctor` | `doctor` |
 | `/taiyi:audit` | `audit` |
 | `/taiyi:verify` | `verify` (= `ci verify`) |
@@ -35,7 +31,6 @@ User invoked TaiyiForge. **Every engine verb has a slash alias** — map `$ARGUM
 | `/taiyi:loop` | `loop` |
 | `/taiyi:review-loop` | `review-loop` |
 | `/taiyi:review-check` | `review-check` |
-| `/taiyi:commit-trailers` | `commit-trailers` |
 | `/taiyi:token status\|record\|scan\|compress` | `token …` |
 | `/taiyi:ci platform` | `ci platform` |
 | `/taiyi:commit` | `commit-trailers` + git |
@@ -43,14 +38,14 @@ User invoked TaiyiForge. **Every engine verb has a slash alias** — map `$ARGUM
 | `/taiyi:land` | gstack `land-and-deploy` |
 | `/taiyi:gstack review` | gstack `review` |
 | `/taiyi:gstack qa` | gstack `qa` |
-| `/taiyi:gstack <skill>` | any gstack Skill (design-shotgun · autoplan · canary · gstack-upgrade …) |
+| `/taiyi:gstack <skill>` | any gstack Skill |
 | `/taiyi:release` | gstack `document-release` |
-| `/taiyi:sp <skill>` | any Superpowers Skill (writing-skills …) |
-| `/taiyi:security` | semgrep + trivy (+ optional gstack cso) |
+| `/taiyi:sp <skill>` | any Superpowers Skill |
+| `/taiyi:security` | semgrep + trivy |
 | `/taiyi:e2e` | `npx playwright test` + verification |
 | `/taiyi:resume` | HANDOFF.md + status |
 | `/taiyi:help` | slash catalog |
 
 Skill loaders: `/taiyi:explore` · `/taiyi:flow` · `/taiyi:full-flow` · `/taiyi:tdd` — see each prompt.
 
-Run from project root. Show stdout/stderr. Full list: `docs/taiyi/commands.yaml`.
+Run from project root. Full list: `docs/taiyi/commands.yaml` → `slash_catalog` + `canonical_commands`.

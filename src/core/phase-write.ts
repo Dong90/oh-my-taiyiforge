@@ -100,7 +100,7 @@ export const PHASE_WRITE_HINTS: Record<PhaseId, PhaseWriteHint> = {
     superpowers: ["finishing-a-development-branch", "verification-before-completion"],
     superpowersOptional: [],
     auxiliary: [],
-    external: ["/taiyi:release", "/taiyi:gstack document-release"],
+    external: ["/taiyi:release"],
     slashExtras: ["/taiyi:commit", "/taiyi:verify", "/taiyi:archive"],
     notes: ["CHANGELOG + 交付门（git commit + 干净工作区）"],
   },
@@ -205,7 +205,7 @@ export function runPhaseWriteGuide(
 
   if (mismatch) {
     lines.push("  ⚠ 阶段不一致：优先写当前阶段工件，或先 /taiyi:continue 推进");
-    lines.push(`  当前应写: /taiyi:${PHASE_SLASH_VERB[current]} 或 /taiyi:write`);
+    lines.push(`  当前应写: /taiyi:write`);
     lines.push("");
   }
 

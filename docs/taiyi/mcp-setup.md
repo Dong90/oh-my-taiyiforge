@@ -165,7 +165,7 @@ Monorepo / 本地开发：
 
 | 场景 | 用户说 | Agent 代跑 |
 |------|--------|------------|
-| 读状态 | `/taiyi:status` · `/taiyi:state` | `taiyi-forge.sh status` |
+| 读状态 | `/taiyi:status` · MCP `taiyi_state_get_status` | `taiyi-forge.sh status [--json]` |
 | handoff / cancel | `/taiyi:handoff` · `/taiyi:cancel` | 同左映射 |
 | 过关 / 门禁 | `/taiyi:continue` · `/taiyi:complete` | `taiyi-forge.sh …` |
 | CI（无聊天） | — | `taiyi ci verify` |

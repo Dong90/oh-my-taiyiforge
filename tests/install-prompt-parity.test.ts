@@ -49,7 +49,7 @@ describe("install prompt parity (Cursor ↔ Codex ↔ prompts/)", () => {
 
   it("syncCursorCommands 写入全部 taiyi-*.md 且内容与 render 一致", () => {
     const prompts = listTaiyiPrompts();
-    expect(prompts.length).toBeGreaterThanOrEqual(85);
+    expect(prompts.length).toBeGreaterThanOrEqual(75);
 
     const installed = fs.readdirSync(cursorDir).filter((f) => f.startsWith("taiyi-")).sort();
     expect(installed).toEqual(prompts);
@@ -75,7 +75,7 @@ describe("install prompt parity (Cursor ↔ Codex ↔ prompts/)", () => {
   });
 
   it("抽样 prompt 渲染后无未替换占位符", () => {
-    for (const name of ["taiyi-change.md", "taiyi-dev.md", "taiyi-gstack.md", "taiyi-sp.md"]) {
+    for (const name of ["taiyi-write.md", "taiyi-gstack.md", "taiyi-sp.md"]) {
       const body = expectedCodexBody(name);
       expect(body, name).not.toMatch(/\{\{[A-Z_]+\}\}/);
       expect(body.length, name).toBeGreaterThan(80);

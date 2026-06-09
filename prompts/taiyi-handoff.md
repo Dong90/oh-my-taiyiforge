@@ -2,7 +2,7 @@
 description: "TaiyiForge /taiyi:handoff — pause and write HANDOFF.md for next session"
 argument-hint: "optional slug and note"
 ---
-User invoked **$taiyi-handoff** (= `/taiyi:handoff` or `/taiyi:pause`). Run:
+User invoked **$taiyi-handoff** (= `/taiyi:handoff`). Run:
 
 ```bash
 scripts/taiyi-forge.sh handoff $ARGUMENTS

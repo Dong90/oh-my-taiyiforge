@@ -147,7 +147,7 @@ describe("install", () => {
     expect(raw).toContain("taiyi-forge");
     expect(raw).toContain("/taiyi:handoff");
     expect(raw).toContain("/taiyi:cancel");
-    expect(raw).toContain("100% 斜杠");
+    expect(raw).toContain("canonical_commands");
   });
 
   it("writes cursor mcp.json template when missing", () => {

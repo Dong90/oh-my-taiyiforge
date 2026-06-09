@@ -8,6 +8,7 @@ chat_pattern: "/taiyi:<verb> [args]"
 codex_pattern: "$taiyi-<verb> [args]   # prompts/taiyi-<verb>.md"
 
 references:
+  canonical: docs/taiyi/canonical-commands.md
   openspec_core:
     - "/opsx:new"
     - "/opsx:continue"
@@ -58,10 +59,10 @@ profiles:
 
       - chat: "/taiyi:status"
         codex: "$taiyi-status"
-        engine: "taiyi-forge.sh status [slug]"
+        engine: "taiyi-forge.sh status [slug] [--json]"
         meaning: |
           阶段进度（如 design 3/9）、当前 Skill、工件是否就绪、下一步动作。
-          人类可读首选；guide 命令默认 JSON，日常用 status/next。
+          人类可读首选；机器/MCP 用 `status --json` 或 MCP taiyi_state_get_status。
 
       - chat: "/taiyi:archive"
         codex: "$taiyi-archive"
@@ -267,6 +268,14 @@ profiles:
           须 init --auto / autoHarness；stop hook 在未完成时继续推进。
         when: 想法 → 可运行代码，一条龙
 
+      - chat: "/taiyi:daemon run <slug> [--engine-only] [--dry-run]"
+        codex: "$taiyi-daemon"
+        engine: "taiyi-forge.sh daemon run [slug]"
+        meaning: |
+          无人 Agent 闭环：终端循环 step/loop；阻塞时写 ci-prompt 并 exec codex/claude/cursor。
+          `--engine-only` 仅引擎；`daemon status` 查 runtime 状态。
+        when: CI/夜间无人值守跑完九阶段（须 --auto + 外部 Agent CLI）
+
       - chat: "/taiyi:step [slug] [--mode ralph|autopilot|…]"
         codex: "$taiyi-step"
         engine: "taiyi-forge.sh step [slug] [--mode …]"
@@ -335,6 +344,14 @@ profiles:
         meaning: 外部文档/研究上下文写入 external-context.md
         when: AC 依赖外部 API/法规/第三方 SDK
 
+      - chat: "/taiyi:keyword <text>"
+        codex: "$taiyi-keyword"
+        engine: "taiyi-forge.sh keyword <text>"
+        meaning: |
+          OMC keyword-detector 斜杠：扫描用户消息 → 映射 `/taiyi:ralph` 等。
+          Cursor/Claude 通常由 keyword hook 自动注入；Codex 用 `/taiyi:preflight` 或本命令。
+        when: 口头触发 ralph/autopilot/team/ulw/stopomc 等；OpenCode 用 taiyi_keyword 工具
+
       - chat: "/taiyi:preflight"
         codex: "$taiyi-preflight"
         engine: "codex-keyword-preflight.mjs + codex-mode-reminder.mjs"
@@ -362,46 +379,10 @@ profiles:
       - chat: "/taiyi:write [slug]"
         codex: "$taiyi-write"
         engine: "taiyi-forge.sh write [slug]"
-        meaning: 写当前阶段工件 — 输出 Skill/artifact/continue 指引
-        when: 不确定用哪个阶段斜杠时
-
-      - chat: "/taiyi:change [slug]"
-        codex: "$taiyi-change"
-        engine: "taiyi-forge.sh change [slug]"
-        meaning: 写 CHANGE.md（@taiyi-change）
-        when: change 阶段
-
-      - chat: "/taiyi:requirement [slug]"
-        engine: "taiyi-forge.sh requirement [slug]"
-        meaning: 写 REQUIREMENT.md
-
-      - chat: "/taiyi:design [slug]"
-        engine: "taiyi-forge.sh design [slug]"
-        meaning: 写 DESIGN.md（人工门）
-
-      - chat: "/taiyi:ui-design [slug]"
-        engine: "taiyi-forge.sh ui-design [slug]"
-        meaning: 写 UI-DESIGN.md
-
-      - chat: "/taiyi:task [slug]"
-        engine: "taiyi-forge.sh task [slug]"
-        meaning: 写 TASK.md
-
-      - chat: "/taiyi:dev [slug]"
-        engine: "taiyi-forge.sh dev [slug]"
-        meaning: TDD 实现 + .dev-complete
-
-      - chat: "/taiyi:test [slug]"
-        engine: "taiyi-forge.sh test [slug]"
-        meaning: 写 TEST.md 测试证据
-
-      - chat: "/taiyi:review [slug]"
-        engine: "taiyi-forge.sh review [slug]"
-        meaning: 写 REVIEW.md（人工门）
-
-      - chat: "/taiyi:integration [slug]"
-        engine: "taiyi-forge.sh integration [slug]"
-        meaning: 写 CHANGELOG.md + 交付门
+        meaning: |
+          写当前阶段工件 — 输出 Skill/artifact/continue 指引（九阶段唯一写入口）。
+          仍可用 @taiyi-change … @taiyi-integration Skill；引擎 CLI `change` 等保留给脚本。
+        when: 任意规划/实现阶段写工件
 
       - chat: "/taiyi:feature [标题或slug]"
         engine: "taiyi-forge.sh feature …"
@@ -425,11 +406,21 @@ profiles:
         when: 自动推进非人工门阶段；不能替代人工审批
 
   engine_only:
-    description: 已废弃 — 全部引擎动词均有 /taiyi:* 斜杠（见 slash_catalog）
-    note: Agent 代跑 taiyi-forge.sh；用户只说斜杠
+    description: 无独立聊天斜杠的引擎子命令 — 见 legacy_cli；脚本/CI 仍直接调用 taiyi-forge.sh
+    note: 聊天入口以 canonical_commands 为准
+
+  canonical_commands:
+    description: 每条职责一个推荐斜杠；重复别名已移除（引擎 CLI legacy 仍可用，见 legacy_cli）
+    map:
+      handoff: /taiyi:handoff
+      commit: /taiyi:commit
+      status: /taiyi:status
+      continue: /taiyi:continue
+      write: /taiyi:write
+      release: /taiyi:release
 
   slash_catalog:
-    description: 100% 斜杠面 — 每个 taiyi CLI 子命令均有聊天别名（prompts/taiyi-*.md）
+    description: 推荐斜杠面 — prompts/taiyi-*.md；无重复别名
     core:
       - /taiyi:new
       - /taiyi:status
@@ -449,13 +440,13 @@ profiles:
       - /taiyi:sync
       - /taiyi:run
       - /taiyi:handoff
-      - /taiyi:pause
       - /taiyi:cancel
       - /taiyi:loop
       - /taiyi:review-loop
       - /taiyi:review-check
       - /taiyi:ralph
       - /taiyi:autopilot
+      - /taiyi:daemon
       - /taiyi:step
       - /taiyi:stop-mode
       - /taiyi:modes
@@ -467,6 +458,7 @@ profiles:
       - /taiyi:sciomc
       - /taiyi:deepinit
       - /taiyi:external-context
+      - /taiyi:keyword
       - /taiyi:preflight
       - /taiyi:deep-interview
       - /taiyi:visual-verdict
@@ -488,15 +480,6 @@ profiles:
       - /taiyi:sp <skill>
     phase_write:
       - /taiyi:write
-      - /taiyi:change
-      - /taiyi:requirement
-      - /taiyi:design
-      - /taiyi:ui-design
-      - /taiyi:task
-      - /taiyi:dev
-      - /taiyi:test
-      - /taiyi:review
-      - /taiyi:integration
     scenarios:
       - /taiyi:feature
       - /taiyi:bug
@@ -508,25 +491,12 @@ profiles:
         engine: "taiyi-forge.sh complete"
       - chat: "/taiyi:phases"
         engine: "taiyi-forge.sh phases"
-      - chat: "/taiyi:guide <slug>"
-        engine: "taiyi-forge.sh guide --json"
-      - chat: "/taiyi:next [slug]"
-        engine: "taiyi-forge.sh next"
-      - chat: "/taiyi:done [slug]"
-        engine: "taiyi-forge.sh done"
       - chat: "/taiyi:mark-aux <slug> <skill>"
         engine: "taiyi-forge.sh mark-aux"
       - chat: "/taiyi:assess <slug>"
         engine: "taiyi-forge.sh assess"
       - chat: "/taiyi:harness-check <slug> <key>"
         engine: "taiyi-forge.sh harness-check"
-      - chat: "/taiyi:commit-trailers [slug]"
-        engine: "taiyi-forge.sh commit-trailers"
-      - chat: "/taiyi:state [slug]"
-        engine: "taiyi-forge.sh status --json"
-        note: MCP taiyi_state_get_status 人类斜杠等价
-      - chat: "/taiyi:state-read [slug]"
-        engine: "read state.json or MCP taiyi_state_read"
       - chat: "/taiyi:ci platform <端>"
         engine: "taiyi-forge.sh ci platform"
       - chat: "/taiyi:ci prompt <slug>"
@@ -579,7 +549,6 @@ profiles:
         gstack: qa
       - chat: "/taiyi:release"
         gstack: document-release
-        alias: "/taiyi:gstack release"
       - chat: "/taiyi:gstack <skill>"
         gstack: "任意 gstack Skill（design-shotgun · autoplan · canary · gstack-upgrade …）"
       - chat: "/taiyi:sp <skill>"
@@ -612,25 +581,27 @@ profiles:
         engine: "taiyi-forge.sh doctor"
 
 legacy_aliases:
-  shell: [done, next, n, go, ls, check, sync]
+  shell: [done, next, n, go, ls, check, sync, pause, guide, commit-trailers, change, requirement, design, ui-design, task, dev, test, review, integration]
   chat: ["/tf new", "/tf next", "/tf done"]
-  note: "仍可用，文档以 /taiyi:<verb> 为准"
+  note: "引擎 CLI 仍可用；聊天以 canonical_commands 为准"
+
+legacy_cli:
+  description: 无聊天斜杠的引擎子命令（脚本/CI/MCP）
+  replaces:
+    pause: handoff
+    commit-trailers: /taiyi:commit
+    state: "status --json 或 MCP taiyi_state_get_status"
+    state-read: "MCP taiyi_state_read 或读 state.json"
+    next: /taiyi:status 或 /taiyi:continue
+    done: /taiyi:continue
+    guide: "taiyi-forge.sh guide --json"
+    phase_writes: /taiyi:write
 
 phase_skills:
-  description: 九阶段写工件 — 现已全部有 /taiyi:* 斜杠（等价 @taiyi-* Skill）
-  slashes:
-    - /taiyi:write
-    - /taiyi:change
-    - /taiyi:requirement
-    - /taiyi:design
-    - /taiyi:ui-design
-    - /taiyi:task
-    - /taiyi:dev
-    - /taiyi:test
-    - /taiyi:review
-    - /taiyi:integration
-  engine: "taiyi-forge.sh write | change | … — 输出 Skill/工件/continue 指引"
-  skills: taiyi-change … taiyi-integration（@skill 仍可用）
+  description: 九阶段写工件 — 聊天唯一入口 /taiyi:write；@taiyi-* Skill 仍可直接加载
+  slash: /taiyi:write
+  engine: "taiyi-forge.sh write [slug] — 输出当前阶段 Skill/工件/continue 指引"
+  skills: taiyi-change … taiyi-integration
 
 profile_notes:
   ui: "与 full 相同九阶段，仅命名强调 UI 项目"

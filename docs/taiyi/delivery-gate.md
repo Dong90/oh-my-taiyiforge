@@ -26,7 +26,7 @@ Taiyi-Change: my-slug
 Taiyi-Phase: dev
 ```
 
-生成建议：
+生成建议（聊天用 **`/taiyi:commit`**；legacy CLI）：
 
 ```bash
 npx taiyi commit-trailers [slug] [subject line]

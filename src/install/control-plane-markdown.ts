@@ -29,7 +29,7 @@ export function taiyiControlPlaneBody(platform: "cursor" | "claude"): string {
 4. **一步一 continue**：只写当前阶段工件；**禁止**跳步创建后续阶段 md 或改业务代码（dev 前）。
 5. **以 /taiyi:status 为准**：文件写了但 status 未就绪 → 跑 /taiyi:status 看「已自动对齐 / 顺序冲突」提示，勿重复劳动。
 6. **跨会话**：暂停前 /taiyi:handoff；恢复先 /taiyi:status。
-7. **100% 斜杠**：用户只说 /taiyi:*；你代跑 \`scripts/taiyi-forge.sh\`。完整列表见 \`docs/taiyi/commands.yaml\` → \`slash_catalog\`。
+7. **推荐斜杠**：每条职责一个入口；重复别名已移除。见 \`docs/taiyi/canonical-commands.md\` 与 \`commands.yaml\` → \`canonical_commands\`。
 ${hookLine}
 
 ## 状态同步（v0.22+）
@@ -43,13 +43,13 @@ ${chatIntro}
 
 **主流程：** /taiyi:new · /taiyi:status · /taiyi:continue · /taiyi:apply · /taiyi:archive
 
-**常用辅助：** /taiyi:doctor · /taiyi:audit · /taiyi:verify · /taiyi:list · /taiyi:check · /taiyi:sync · /taiyi:handoff · /taiyi:cancel · /taiyi:loop · /taiyi:write · /taiyi:change … /taiyi:integration · /taiyi:feature · /taiyi:bug · /taiyi:ralph · /taiyi:autopilot · /taiyi:team · /taiyi:ultrawork · /taiyi:agent · /taiyi:review-loop · /taiyi:review-check · /taiyi:token * · /taiyi:commit-trailers
+**常用辅助：** /taiyi:doctor · /taiyi:audit · /taiyi:verify · /taiyi:list · /taiyi:check · /taiyi:sync · /taiyi:handoff · /taiyi:cancel · /taiyi:loop · /taiyi:write · /taiyi:feature · /taiyi:bug · /taiyi:ralph · /taiyi:autopilot · /taiyi:team · /taiyi:ultrawork · /taiyi:agent · /taiyi:review-loop · /taiyi:review-check · /taiyi:token *
 
 **引擎斜杠（原 engine-only）：** /taiyi:init · /taiyi:complete · … · /taiyi:ci platform · /taiyi:ci prompt
 
 **交付链（gstack）：** /taiyi:commit · /taiyi:ship · /taiyi:land · /taiyi:gstack review · /taiyi:gstack qa · /taiyi:release
 
-九阶段写工件仍用 \`taiyi-change\` … \`taiyi-integration\` Skill，见 docs/taiyi/workflow.md
+九阶段写工件：聊天用 **/taiyi:write**；仍加载 \`taiyi-change\` … \`taiyi-integration\` Skill，见 docs/taiyi/workflow.md
 
 Codex：$taiyi-* prompts（与 /taiyi:* 一一对应）
 

@@ -81,7 +81,7 @@ describe("scenario-shortcuts", () => {
   it("feature playbook mentions nine phases", () => {
     engine.initChange("feat-x", { profile: "full" });
     const r = runFeatureScenario(engine, taiyiRoot, "feat-x");
-    expect(r.text).toContain("/taiyi:change");
+    expect(r.text).toContain("/taiyi:write");
     expect(r.text).toContain("/taiyi:archive");
   });
 

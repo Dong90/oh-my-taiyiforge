@@ -70,7 +70,7 @@ npx taiyi list
 
 ## dev 后 commit + integration 交付门
 
-实现并 `complete dev/test` 后，**integration 前**须有带 trailer 的 git commit：
+实现并 `complete dev/test` 后，**integration 前**须有带 trailer 的 git commit。聊天推荐 **`/taiyi:commit`**；脚本可用：
 
 ```bash
 npx taiyi commit-trailers my-first "feat: export large files"

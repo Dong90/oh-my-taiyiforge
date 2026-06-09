@@ -65,8 +65,17 @@ describe("slash extensions", () => {
   it("taiyi-help lists catalog and scenario shortcuts", () => {
     const body = rendered("taiyi-help.md");
     expect(body).toContain("/taiyi:help");
-    expect(body).toContain("slash_catalog");
-    expect(body).toContain("/taiyi:security");
+    expect(body).toContain("canonical-commands");
+    expect(body).toContain("/taiyi:write");
+    expect(body).toContain("/taiyi:ralph");
+    expect(body).toContain("/taiyi:autopilot");
+    expect(body).toContain("/taiyi:team");
+    expect(body).toContain("/taiyi:ultrawork");
+    expect(body).toContain("/taiyi:agent");
+    expect(body).toContain("/taiyi:keyword");
+    expect(body).toContain("/taiyi:step");
+    expect(body).toContain("/taiyi:stop-mode");
+    expect(body).toContain("/taiyi:modes");
     expect(body).toContain("/taiyi:e2e");
     expect(body).toContain("/taiyi:gstack");
     expect(body).toContain("/taiyi:sp");
@@ -81,7 +90,6 @@ describe("slash extensions", () => {
     for (const needle of [
       "/taiyi:help",
       "/taiyi:write",
-      "/taiyi:change",
       "/taiyi:feature",
       "/taiyi:bug",
       "/taiyi:ui-test",

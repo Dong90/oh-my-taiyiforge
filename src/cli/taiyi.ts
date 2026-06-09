@@ -62,6 +62,7 @@ import {
   runContinueRepeat,
   runLoopUntilComplete,
 } from "../core/loop-runner.js";
+import { formatDaemonResultPlain, readDaemonState, runDaemonLoop } from "../core/daemon-runner.js";
 
 const workspaceDir = process.cwd();
 const taiyiRoot = resolveTaiyiRoot(workspaceDir);
@@ -79,7 +80,7 @@ function usage(): void {
   npm run taiyi -- new <标题>              /taiyi:new — 自动 slug（默认手动；--auto 全自动）
   npm run taiyi -- cancel [slug]           /taiyi:cancel — 取消进行中变更
   npm run taiyi -- handoff [slug] [备注]   /taiyi:handoff — 写 HANDOFF.md（跨会话恢复）
-  npm run taiyi -- commit-trailers [slug] [subject]  建议含 Taiyi-Change trailer 的 commit message
+  npm run taiyi -- commit-trailers [slug] [subject]  legacy；聊天用 /taiyi:commit
   npm run taiyi -- status [slug]           /taiyi:status — 阶段进度（3/9）
   npm run taiyi -- continue [slug] [xN]   → /taiyi:continue [xN]
   npm run taiyi -- apply [slug] [xN]        → /taiyi:apply [xN]
@@ -114,10 +115,13 @@ function usage(): void {
   npm run taiyi -- agent <role|list> [slug]  → /taiyi:agent — 专 Agent 角色协议
   npm run taiyi -- plan|ralplan|ultraqa|… [slug]  → workflow skills（见 stop-mode / modes）
   npm run taiyi -- step [slug] [--mode ralph|autopilot|…]  → /taiyi:step — OMC 式单步驱动
+  npm run taiyi -- daemon run <slug> [--engine-only] [--dry-run] [--force]
+                        无人 Agent 闭环（引擎 step + 可选 codex/claude/cursor Agent）
+  npm run taiyi -- daemon status [slug]           查看 daemon 运行时状态
   npm run taiyi -- modes                    → /taiyi:modes — 列出活跃模式
   npm run taiyi -- remember [note]          → /taiyi:remember — 项目记忆
   npm run taiyi -- write [slug]              → /taiyi:write — 写当前阶段工件
-  npm run taiyi -- change|requirement|… [slug] → /taiyi:change 等九阶段写工件
+  npm run taiyi -- change|requirement|… [slug]  legacy CLI；聊天用 /taiyi:write
   npm run taiyi -- feature [标题或slug]      → /taiyi:feature — 新功能场景
   npm run taiyi -- bug [标题或slug]          → /taiyi:bug — lite 修 bug 场景
 
@@ -977,6 +981,61 @@ switch (cmd) {
     if (jsonMode) console.log(JSON.stringify(r, null, 2));
     else if ("text" in r && r.text) console.log(r.text);
     break;
+  }
+  case "daemon": {
+    const [sub, ...rest] = args.filter((a) => a !== "--json");
+    const engineOnly = rest.includes("--engine-only");
+    const dryRun = rest.includes("--dry-run");
+    const force = rest.includes("--force");
+    const positional = rest.filter((a) => !a.startsWith("--"));
+
+    if (sub === "status") {
+      const resolved = resolveActiveSlug(taiyiRoot, positional[0]);
+      if (!resolved.ok) {
+        console.error(resolved.error);
+        process.exit(1);
+      }
+      const st = readDaemonState(taiyiRoot, resolved.slug);
+      if (jsonMode) {
+        console.log(JSON.stringify({ slug: resolved.slug, daemon: st }, null, 2));
+      } else if (st) {
+        console.log(
+          `Daemon ${resolved.slug}: round ${st.round}/${st.maxRounds} · phase ${st.lastPhase} · ${st.active ? "active" : "stopped"}${st.lastStopReason ? ` (${st.lastStopReason})` : ""}`,
+        );
+      } else {
+        console.log(`Daemon ${resolved.slug}: (no runtime state)`);
+      }
+      break;
+    }
+
+    if (sub !== "run") {
+      console.error("用法: daemon run <slug> [--engine-only] [--dry-run] [--force]");
+      console.error("      daemon status [slug]");
+      process.exit(1);
+    }
+
+    if (!positional[0]) {
+      console.error("用法: daemon run <slug> [--engine-only] [--dry-run] [--force]");
+      process.exit(1);
+    }
+
+    const resolved = resolveActiveSlug(taiyiRoot, positional[0]);
+    if (!resolved.ok) {
+      console.error(resolved.error);
+      process.exit(1);
+    }
+
+    const result = runDaemonLoop(engine, workspaceDir, taiyiRoot, resolved.slug, {
+      engineOnly,
+      dryRun,
+      force,
+    });
+    if (jsonMode) {
+      console.log(JSON.stringify(result, null, 2));
+    } else {
+      console.log(formatDaemonResultPlain(result));
+    }
+    process.exit(result.ok ? 0 : 1);
   }
   case "modes": {
     const r = taiyiModes(workspaceDir, !jsonMode);

@@ -66,7 +66,7 @@
 | `/taiyi:resume` | 从 HANDOFF 恢复 |
 | `/taiyi:help` | 斜杠总览 |
 
-写工件用 **`/taiyi:write`** 或 **`/taiyi:change` … `/taiyi:integration`**（等价 `@taiyi-*` Skill）。场景捷径：**`/taiyi:feature`** · **`/taiyi:bug`** · **`/taiyi:ui-test`**。
+写工件用 **`/taiyi:write`**（引擎按当前阶段输出 Skill）；或直接加载 **`@taiyi-*`** Skill。场景捷径：**`/taiyi:feature`** · **`/taiyi:bug`** · **`/taiyi:ui-test`**。
 
 **new/init 只铺当前阶段模板**（默认仅 `CHANGE.md`）；`CONTEXT.md` 由 `taiyi-intel-scan` 产出，不会预置。过关后引擎才为下一阶段生成模板文件。
 
@@ -136,19 +136,21 @@ high 复杂度会推荐 `taiyi-evolve`，其 home 阶段为 **test**（`architec
 
 `audit` 会报告 `artifacts.ahead-of-phase`：当前阶段未到但未来阶段工件已存在（常见于旧版全量 seed 或手误），易误判进度。
 
-## 100% 斜杠（v0.23+）
+## 推荐斜杠（v0.24+ 去重）
 
-所有 `taiyi` CLI 子命令均有 `/taiyi:*` 别名，见 `commands.yaml` → `slash_catalog`。用户只说斜杠；Agent 代跑 `taiyi-forge.sh`。
+每条职责一个聊天入口；重复别名已移除。见 `commands.yaml` → `canonical_commands` + `legacy_cli`。
 
-| 原仅 CLI | 现斜杠 |
-|----------|--------|
-| `init` / `complete` / `mark-aux` / `assess` / `harness-check` | 同名斜杠 |
-| `phases` / `guide` / `next` / `done` | 同名斜杠 |
-| `commit-trailers` | `/taiyi:commit-trailers` |
-| MCP 读状态 | `/taiyi:state` · `/taiyi:state-read` |
-| `ci platform` / `ci prompt` | `/taiyi:ci platform` · `/taiyi:ci prompt` |
+| 用途 | 推荐斜杠 |
+|------|----------|
+| 写当前阶段工件 | `/taiyi:write` |
+| 读状态（人类） | `/taiyi:status` |
+| 读状态（JSON/MCP） | `status --json` · MCP `taiyi_state_get_status` |
+| 暂停 | `/taiyi:handoff` |
+| 过关 | `/taiyi:continue` |
+| integration 前 commit | `/taiyi:commit` |
+| 脚本/CI 专用 | `init` · `complete` · `mark-aux` · `commit-trailers` · `change` …（无聊天斜杠） |
 
-写工件仍用 **taiyi-change … taiyi-integration** Skill（@Skill，不是斜杠）。
+写工件仍用 **taiyi-change … taiyi-integration** Skill（@Skill）或 **`/taiyi:write`**。
 
 ## 和 OpenSpec 对照
 
