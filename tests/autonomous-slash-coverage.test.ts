@@ -34,7 +34,7 @@ describe("OMC autonomous slash coverage", () => {
     }
   });
 
-  it("each core OMC slash is listed in commands.yaml slash_catalog", () => {
+  it("each core OMC slash is listed in commands.yaml legacy_slash or canonical_v28", () => {
     for (const { slash } of OMC_AUTONOMOUS_SLASHES) {
       expect(yaml, slash).toContain(slash);
     }
@@ -47,11 +47,13 @@ describe("OMC autonomous slash coverage", () => {
     }
   });
 
-  it("canonical-commands documents OMC diff and all core slashes", () => {
+  it("canonical-commands documents OMC diff and v28 mode umbrella", () => {
     const canon = fs.readFileSync(path.join(REPO, "docs/taiyi/canonical-commands.md"), "utf8");
     expect(canon).toContain("与 OMC 的差异");
     expect(canon).toContain("spawn 计划");
     expect(canon).toContain("无 tmux");
+    expect(canon).toContain("canonical v28");
+    expect(canon).toContain("/taiyi:mode");
     for (const { slash } of OMC_AUTONOMOUS_SLASHES) {
       expect(canon, slash).toContain(slash.split(" ")[0]);
     }

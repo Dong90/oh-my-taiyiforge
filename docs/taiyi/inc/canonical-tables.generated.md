@@ -1,6 +1,6 @@
 <!-- AUTO-GENERATED from docs/taiyi/commands.yaml — do not edit; run npm run generate:docs -->
 
-## 日常主链
+## v28 主链（6）
 
 | 意图 | 推荐斜杠 | 说明 |
 |------|----------|------|
@@ -11,7 +11,7 @@
 | dev/test 实现清单 | `/taiyi:apply` | 仅 dev/test：打印实现 harness 清单（对标 opsx:apply） |
 | 归档 | `/taiyi:archive` | integration 阶段完成后归档（对标 opsx:archive） |
 
-## 会话与排查
+## v28 会话（4）
 
 | 意图 | 推荐斜杠 |
 |------|----------|
@@ -19,17 +19,49 @@
 | 恢复 | `/taiyi:resume` |
 | 放弃变更 | `/taiyi:cancel` |
 | 多变更列表 | `/taiyi:list` |
-| 仅归档列表 | CLI：`list --archived`；全量：`list --all [--archived]` |
-| 清理 aborted | `prune --aborted` |
+
+## v28 排查（3）
+
+| 意图 | 推荐斜杠 |
+|------|----------|
 | 安装自检 | `/taiyi:doctor`（Agent `doctor --json --compact`） |
 | 流程/交付排查 | `/taiyi:audit`（Agent `audit --json --compact`） |
 | PR/CI 工件门禁 | `/taiyi:verify` |
 
-## 场景捷径
+## v28 交付（4）
 
-| 斜杠 | 用途 |
+| 意图 | 推荐斜杠 |
+|------|----------|
+| 带 trailer 提交 | `/taiyi:commit` |
+| 创建 PR | `/taiyi:ship` |
+| 合并部署 | `/taiyi:land` |
+| 文档/CHANGELOG | `/taiyi:release` |
+
+## v28 路由与捷径
+
+| 分组 | 斜杠 |
 |------|------|
-| `/taiyi:feature` | 新功能 full 九阶段剧本 |
-| `/taiyi:bug` | lite 五阶段修 bug |
-| `/taiyi:ui-test` | test 阶段 UI QA（gstack qa + e2e） |
+| 外挂 | `/taiyi:gstack <skill>` · `/taiyi:sp <skill>` |
+| 阶段 | `/taiyi:explore` · `/taiyi:tdd plan|dev` · `/taiyi:flow` |
+
+## v28 伞形命令（6）
+
+| 域 | 斜杠 |
+|----|------|
+| Token | `/taiyi:token status|record|scan|compress` |
+| 测试 | `/taiyi:test smoke|e2e|qa|ui|security` |
+| Review | `/taiyi:review loop|check|health|gstack` |
+| 架构图 | `/taiyi:diagram pipeline|c4|arch|render|flow` |
+| 多 Agent / OMC | `/taiyi:mode ralph|autopilot|…` |
+| 工作流扩展 | `/taiyi:workflow plan|loop|sync|…` |
+
+## 场景（legacy → flow）
+
+| 旧斜杠 | v28 入口 |
+|--------|----------|
+| `/taiyi:feature` | 新功能 full 九阶段（`/taiyi:flow feature`） |
+| `/taiyi:bug` | lite 修 bug（`/taiyi:flow bug`） |
+| `/taiyi:ui-test` | test UI QA（`/taiyi:test ui`） |
+
+列表/清理：`list --archived` · `list --all` · `prune --aborted`（CLI，无独立顶栏）。
 

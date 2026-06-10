@@ -7,10 +7,11 @@
 | 目的 | 文档 |
 |------|------|
 | **5 分钟跑通** | [`docs/QUICKSTART.md`](docs/QUICKSTART.md) |
-| **斜杠命令真源** | [`docs/taiyi/canonical-commands.md`](docs/taiyi/canonical-commands.md) · [`docs/taiyi/commands.yaml`](docs/taiyi/commands.yaml) |
+| **斜杠命令真源** | [`docs/taiyi/canonical-commands.md`](docs/taiyi/canonical-commands.md)（**v28 顶栏**）· [`docs/taiyi/commands.yaml`](docs/taiyi/commands.yaml) |
 | **控制面 / Agent 纪律** | [`docs/taiyi/control-plane.md`](docs/taiyi/control-plane.md) |
 | **工件目录** | [`docs/taiyi/artifact-layout.md`](docs/taiyi/artifact-layout.md) |
 | **架构** | [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) |
+| **Skill 融合原则** | [`docs/taiyi/skill-fusion-principles.md`](docs/taiyi/skill-fusion-principles.md) |
 | **贡献** | [`CONTRIBUTING.md`](CONTRIBUTING.md) |
 
 ## 硬约定（摘要）

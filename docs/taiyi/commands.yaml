@@ -422,6 +422,7 @@ profiles:
 
   canonical_commands:
     description: 每条职责一个推荐斜杠；重复别名已移除（引擎 CLI legacy 仍可用，见 legacy_cli）
+    version: 28
     map:
       handoff: /taiyi:handoff
       commit: /taiyi:commit
@@ -430,74 +431,224 @@ profiles:
       write: /taiyi:write
       release: /taiyi:release
 
+  canonical_v28:
+    description: |
+      聊天推荐顶栏 — 28 条。引擎能力不删；旧独立斜杠见 legacy_slash 与 legacy_chat_aliases。
+      子命令格式：/taiyi:<verb> <sub>（Agent 代跑 taiyi-forge.sh 或加载对应 prompt）。
+    groups:
+      main_chain:
+        count: 6
+        commands:
+          - slash: /taiyi:new
+            engine: "taiyi-forge.sh new <标题>"
+          - slash: /taiyi:status
+            engine: "taiyi-forge.sh status [slug] [--json --compact]"
+          - slash: /taiyi:write
+            engine: "taiyi-forge.sh write [slug]"
+            note: 九阶段写工件唯一聊天入口；@taiyi-change … @taiyi-integration 仍可直接加载
+          - slash: /taiyi:continue
+            engine: "taiyi-forge.sh continue [slug] [--approver 名]"
+          - slash: /taiyi:apply
+            engine: "taiyi-forge.sh apply [slug]"
+          - slash: /taiyi:archive
+            engine: "taiyi-forge.sh archive [slug]"
+      session:
+        count: 4
+        commands:
+          - slash: /taiyi:handoff
+            replaces: [pause]
+          - slash: /taiyi:resume
+          - slash: /taiyi:cancel
+          - slash: /taiyi:list
+            cli_extras: ["list --archived", "list --all", "prune --aborted"]
+      triage:
+        count: 3
+        commands:
+          - slash: /taiyi:doctor
+            note: 安装 + 四端 + 工作区；Agent 用 doctor --json --compact
+          - slash: /taiyi:audit
+            note: 漂移、交付未闭环；非 verify
+          - slash: /taiyi:verify
+            note: PR/CI 工件门禁；等价 taiyi ci verify
+      delivery:
+        count: 4
+        commands:
+          - slash: /taiyi:commit
+            replaces: [commit-trailers]
+          - slash: /taiyi:ship
+            gstack: ship
+          - slash: /taiyi:land
+            gstack: land-and-deploy
+          - slash: /taiyi:release
+            gstack: document-release
+            replaces: ["/taiyi:gstack release"]
+      routers:
+        count: 2
+        commands:
+          - slash: "/taiyi:gstack <skill>"
+            note: 任意 gstack Skill（review · qa · plan-eng-review · ship …）
+          - slash: "/taiyi:sp <skill>"
+            note: 任意 Superpowers Skill（brainstorming · test-driven-development …）
+      phase_shortcuts:
+        count: 3
+        commands:
+          - slash: /taiyi:explore
+            phase: change
+            loads: superpowers/brainstorming + taiyi-change
+          - slash: "/taiyi:tdd plan|dev"
+            phases: [task, dev]
+          - slash: /taiyi:flow
+            subcommands: [full-flow, feature, bug, help]
+            note: 流程总览；feature/bug 场景剧本；子 topic 见 canonical-commands.md
+      umbrellas:
+        count: 6
+        commands:
+          - slash: "/taiyi:token status|record|scan|compress"
+            engine_map:
+              status: token status
+              record: token record
+              scan: token scan
+              compress: token compress
+          - slash: "/taiyi:test smoke|e2e|qa|ui|security"
+            legacy_map:
+              smoke: /taiyi:browser-smoke
+              e2e: /taiyi:e2e
+              qa: /taiyi:gstack qa
+              ui: /taiyi:ui-test
+              security: /taiyi:security
+          - slash: "/taiyi:review loop|check|health|gstack"
+            legacy_map:
+              loop: /taiyi:review-loop
+              check: /taiyi:review-check
+              health: /taiyi:health
+              gstack: /taiyi:gstack review
+          - slash: "/taiyi:diagram pipeline|c4|arch|render|flow"
+            legacy_map:
+              pipeline: /taiyi:diagram-pipeline
+              c4: /taiyi:diagram-c4
+              arch: /taiyi:diagram-arch
+              render: /taiyi:diagram-render
+              flow: /taiyi:diagram-flow
+          - slash: "/taiyi:mode ralph|autopilot|daemon|team|ultrawork|agent|step|stop|list|keyword|preflight"
+            legacy_map:
+              ralph: /taiyi:ralph
+              autopilot: /taiyi:autopilot
+              daemon: /taiyi:daemon
+              team: /taiyi:team
+              ultrawork: /taiyi:ultrawork
+              agent: /taiyi:agent
+              step: /taiyi:step
+              stop: /taiyi:stop-mode
+              list: /taiyi:modes
+              keyword: /taiyi:keyword
+              preflight: /taiyi:preflight
+          - slash: "/taiyi:workflow plan|ralplan|loop|check|run|sync|ccg|sciomc|deepinit|remember|ultraqa|…"
+            legacy_map:
+              plan: /taiyi:plan
+              ralplan: /taiyi:ralplan
+              loop: /taiyi:loop
+              check: /taiyi:check
+              run: /taiyi:run
+              sync: /taiyi:sync
+              ccg: /taiyi:ccg
+              sciomc: /taiyi:sciomc
+              deepinit: /taiyi:deepinit
+              remember: /taiyi:remember
+              ultraqa: /taiyi:ultraqa
+              external-context: /taiyi:external-context
+              deep-interview: /taiyi:deep-interview
+              visual-verdict: /taiyi:visual-verdict
+              ai-slop-cleaner: /taiyi:ai-slop-cleaner
+              ecomode: /taiyi:ecomode
+
   slash_catalog:
-    description: 推荐斜杠面 — prompts/taiyi-*.md；无重复别名
-    core:
-      - /taiyi:new
-      - /taiyi:status
-      - /taiyi:continue
-      - /taiyi:apply
-      - /taiyi:archive
-    auxiliary:
-      - /taiyi:doctor
-      - /taiyi:audit
-      - /taiyi:verify
-      - /taiyi:health
-      - /taiyi:diagram-pipeline
-      - /taiyi:diagram-c4
-      - /taiyi:diagram-arch
-      - /taiyi:diagram-flow
-      - /taiyi:diagram-render
-      - /taiyi:list
-      - /taiyi:check
-      - /taiyi:sync
-      - /taiyi:run
-      - /taiyi:handoff
-      - /taiyi:cancel
-      - /taiyi:loop
-      - /taiyi:review-loop
-      - /taiyi:review-check
-      - /taiyi:ralph
-      - /taiyi:autopilot
-      - /taiyi:daemon
-      - /taiyi:step
-      - /taiyi:stop-mode
-      - /taiyi:modes
-      - /taiyi:remember
-      - /taiyi:plan
-      - /taiyi:ralplan
-      - /taiyi:ultraqa
-      - /taiyi:ccg
-      - /taiyi:sciomc
-      - /taiyi:deepinit
-      - /taiyi:external-context
-      - /taiyi:keyword
-      - /taiyi:preflight
-      - /taiyi:deep-interview
-      - /taiyi:visual-verdict
-      - /taiyi:ai-slop-cleaner
-      - /taiyi:ecomode
-      - /taiyi:team
-      - /taiyi:ultrawork
-      - /taiyi:agent
-      - /taiyi:token status|record|scan|compress
-      - /taiyi:explore
-      - /taiyi:flow
-      - /taiyi:full-flow
-      - /taiyi:tdd plan|dev
-      - /taiyi:help
-      - /taiyi:resume
-      - /taiyi:security
-      - /taiyi:e2e
-      - /taiyi:browser-smoke
-      - /taiyi:gstack <skill>
-      - /taiyi:sp <skill>
-    phase_write:
-      - /taiyi:write
-    scenarios:
-      - /taiyi:feature
-      - /taiyi:bug
-      - /taiyi:ui-test
+    description: |
+      v28 推荐顶栏（canonical_v28）+ legacy 兼容斜杠（prompt/引擎仍可用，不再新增同类入口）。
+    recommended_v28:
+      main_chain:
+        - /taiyi:new
+        - /taiyi:status
+        - /taiyi:write
+        - /taiyi:continue
+        - /taiyi:apply
+        - /taiyi:archive
+      session:
+        - /taiyi:handoff
+        - /taiyi:resume
+        - /taiyi:cancel
+        - /taiyi:list
+      triage:
+        - /taiyi:doctor
+        - /taiyi:audit
+        - /taiyi:verify
+      delivery:
+        - /taiyi:commit
+        - /taiyi:ship
+        - /taiyi:land
+        - /taiyi:release
+      routers:
+        - /taiyi:gstack <skill>
+        - /taiyi:sp <skill>
+      phase_shortcuts:
+        - /taiyi:explore
+        - /taiyi:tdd plan|dev
+        - /taiyi:flow
+      umbrellas:
+        - /taiyi:token status|record|scan|compress
+        - /taiyi:test smoke|e2e|qa|ui|security
+        - /taiyi:review loop|check|health|gstack
+        - /taiyi:diagram pipeline|c4|arch|render|flow
+        - /taiyi:mode ralph|autopilot|daemon|team|ultrawork|agent|step|stop|list|keyword|preflight
+        - /taiyi:workflow plan|ralplan|loop|check|run|sync|ccg|sciomc|deepinit|remember|ultraqa|…
+    legacy_slash:
+      description: 旧顶栏 — 仍绑定 prompts/taiyi-*.md；请优先用 v28 伞形命令
+      phase_write:
+        - /taiyi:write
+      scenarios:
+        - /taiyi:feature
+        - /taiyi:bug
+        - /taiyi:ui-test
+      auxiliary:
+        - /taiyi:health
+        - /taiyi:diagram-pipeline
+        - /taiyi:diagram-c4
+        - /taiyi:diagram-arch
+        - /taiyi:diagram-flow
+        - /taiyi:diagram-render
+        - /taiyi:check
+        - /taiyi:sync
+        - /taiyi:run
+        - /taiyi:loop
+        - /taiyi:review-loop
+        - /taiyi:review-check
+        - /taiyi:ralph
+        - /taiyi:autopilot
+        - /taiyi:daemon
+        - /taiyi:step
+        - /taiyi:stop-mode
+        - /taiyi:modes
+        - /taiyi:remember
+        - /taiyi:plan
+        - /taiyi:ralplan
+        - /taiyi:ultraqa
+        - /taiyi:ccg
+        - /taiyi:sciomc
+        - /taiyi:deepinit
+        - /taiyi:external-context
+        - /taiyi:keyword
+        - /taiyi:preflight
+        - /taiyi:deep-interview
+        - /taiyi:visual-verdict
+        - /taiyi:ai-slop-cleaner
+        - /taiyi:ecomode
+        - /taiyi:team
+        - /taiyi:ultrawork
+        - /taiyi:agent
+        - /taiyi:full-flow
+        - /taiyi:help
+        - /taiyi:security
+        - /taiyi:e2e
+        - /taiyi:browser-smoke
     engine_slash:
       - chat: "/taiyi:init <slug>"
         engine: "taiyi-forge.sh init"

@@ -75,13 +75,13 @@ export function runFeatureScenario(
   lines.push("推荐串联:");
   lines.push("  /taiyi:status → /taiyi:explore → /taiyi:write（每阶段）");
   lines.push("  阶段顺序: change → requirement → design → ui-design → task");
-  lines.push("  → /taiyi:tdd plan → /taiyi:tdd dev · /taiyi:ralph");
-  lines.push("  → /taiyi:e2e · /taiyi:gstack qa");
-  lines.push("  → /taiyi:review-loop · /taiyi:security");
+  lines.push("  → /taiyi:tdd plan → /taiyi:tdd dev · /taiyi:mode ralph");
+  lines.push("  → /taiyi:test smoke · /taiyi:test e2e · /taiyi:test qa");
+  lines.push("  → /taiyi:review loop · /taiyi:test security");
   lines.push("  → /taiyi:commit → /taiyi:verify → /taiyi:ship → /taiyi:land");
   lines.push("  → /taiyi:integration → /taiyi:archive");
   lines.push("");
-  lines.push("总览: /taiyi:flow · 全自动: /taiyi:autopilot（须 --auto）");
+  lines.push("总览: /taiyi:flow · 全自动: /taiyi:mode autopilot（须 --auto）");
 
   return {
     ok: true,
@@ -134,8 +134,8 @@ export function runBugScenario(
   lines.push("lite 路径（每阶段 /taiyi:write + /taiyi:continue）:");
   lines.push("  change → requirement → dev → test → integration");
   lines.push("");
-  lines.push("  /taiyi:write · /taiyi:tdd dev · /taiyi:ralph");
-  lines.push("  /taiyi:test · /taiyi:e2e（若有 UI 回归）");
+  lines.push("  /taiyi:write · /taiyi:tdd dev · /taiyi:mode ralph");
+  lines.push("  /taiyi:test smoke · /taiyi:test e2e（若有 UI 回归）");
   lines.push("  /taiyi:integration · /taiyi:commit · /taiyi:archive");
   lines.push("");
   lines.push("无 REVIEW.md / review-loop；仍须 TEST.md 证据 + integration 交付门");

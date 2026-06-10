@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.23.0] - 2026-06-09
+
+### Added
+
+- **canonical v28**：聊天推荐顶栏收敛为 28 条（主链 / 会话 / 排查 / 交付 / 路由 / 捷径 / 伞形）；legacy 斜杠与 prompt 保留
+- **skill-fusion-principles.md**：主链 / harness / 禁止三层融合原则
+- **catalog 校验**：`validateV28CatalogSync` + `generate:docs` 门禁；`legacy_map` / `token engine_map` → prompt 对账测试
+
+### Changed
+
+- **commands.yaml**：`canonical_v28` + `slash_catalog.recommended_v28` + `legacy_slash` 结构化真源
+- **canonical-commands.md** / **taiyi-help**：v28 叙事 + Phase 1 说明（文档收敛 ≠ Cursor 菜单裁剪）
+- **scenario-shortcuts**：场景剧本改用 v28 伞形推荐路径（`test smoke`、`mode ralph` 等）
+
 ## [0.22.2] - 2026-06-09
 
 ### Fixed

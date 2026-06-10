@@ -1,8 +1,8 @@
 ---
-description: "TaiyiForge /taiyi:help — 全量斜杠目录（slash_catalog 真源）"
+description: "TaiyiForge /taiyi:help — v28 顶栏 + legacy 全量目录（`/taiyi:flow help` 同等）"
 argument-hint: "[optional topic: scenarios|delivery|autonomous|gstack|superpowers|canonical|engine]"
 ---
-User invoked **$taiyi-help** (= `/taiyi:help`)。**输出下方全量斜杠目录**（真源：`docs/taiyi/commands.yaml` → `slash_catalog`；表格由 `npm run generate:docs` 生成）。
+User invoked **$taiyi-help** (= `/taiyi:help` 或 `/taiyi:flow help`)。**输出 v28 推荐顶栏（28 条）+ legacy 兼容清单**（真源：`docs/taiyi/commands.yaml` → `canonical_v28` · `slash_catalog`；表格由 `npm run generate:docs` 生成）。
 
 **Cursor 输入**：文档写 `/taiyi:xxx`；Cursor `/` 菜单用 **`/taiyi-xxx`**（连字符，无冒号）。
 

@@ -155,28 +155,188 @@ export function firstSentence(meaning) {
   return s.length > 120 ? `${s.slice(0, 117)}…` : s;
 }
 
+function normalizeCatalogSlash(s) {
+  return String(s ?? "")
+    .replace(/^["']|["']$/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+/** @param {string} yaml @returns {string[]} slash values from canonical_v28.groups.*.commands */
+export function parseCanonicalV28Slashes(yaml) {
+  const slashes = [];
+  let inBlock = false;
+  for (const line of yaml.split("\n")) {
+    if (line.match(/^  canonical_v28:/)) {
+      inBlock = true;
+      continue;
+    }
+    if (inBlock && line.match(/^  [a-z_0-9]+:/) && !line.startsWith("    ")) {
+      if (!line.startsWith("  canonical_v28")) break;
+    }
+    if (!inBlock) continue;
+    const m = line.match(/slash:\s+(.+?)\s*$/);
+    if (m) slashes.push(normalizeCatalogSlash(m[1]));
+  }
+  return slashes;
+}
+
+/** @param {string} yaml @returns {string[]} legacy_map target slashes in canonical_v28 umbrellas */
+export function parseCanonicalV28LegacyMapTargets(yaml) {
+  const out = [];
+  let inBlock = false;
+  let inLegacyMap = false;
+  for (const line of yaml.split("\n")) {
+    if (line.match(/^  canonical_v28:/)) {
+      inBlock = true;
+      continue;
+    }
+    if (inBlock && line.match(/^  [a-z_0-9]+:/) && !line.startsWith("    ")) {
+      if (!line.startsWith("  canonical_v28")) break;
+    }
+    if (!inBlock) continue;
+
+    if (line.match(/^\s+legacy_map:\s*$/)) {
+      inLegacyMap = true;
+      continue;
+    }
+    if (inLegacyMap) {
+      const m = line.match(/^\s{14}[a-z0-9-]+:\s+(\/taiyi:.+?)\s*$/);
+      if (m) {
+        out.push(m[1].trim());
+        continue;
+      }
+      if (line.match(/^\s{10}- slash:/) || line.match(/^\s{10}[a-z_]+:\s*$/)) {
+        inLegacyMap = false;
+      }
+    }
+  }
+  return [...new Set(out)];
+}
+
+/** @param {string} yaml @returns {string[]} token engine_map keys → taiyi-token-<key> prompts */
+export function parseCanonicalV28TokenEngineKeys(yaml) {
+  const keys = [];
+  let inBlock = false;
+  let inEngineMap = false;
+  for (const line of yaml.split("\n")) {
+    if (line.match(/^  canonical_v28:/)) {
+      inBlock = true;
+      continue;
+    }
+    if (inBlock && line.match(/^  [a-z_0-9]+:/) && !line.startsWith("    ")) {
+      if (!line.startsWith("  canonical_v28")) break;
+    }
+    if (!inBlock) continue;
+
+    if (line.match(/^\s+engine_map:\s*$/)) {
+      inEngineMap = true;
+      continue;
+    }
+    if (inEngineMap) {
+      const m = line.match(/^\s{14}([a-z]+):\s+token\s+/);
+      if (m) {
+        keys.push(m[1]);
+        continue;
+      }
+      if (line.match(/^\s{10}- slash:/) || line.match(/^\s{10}[a-z_]+:\s*$/)) {
+        inEngineMap = false;
+      }
+    }
+  }
+  return keys;
+}
+
+/**
+ * @param {string} yaml
+ * @param {{ recommended_v28?: string[] }} sections from parseSlashCatalogLists
+ * @returns {{ ok: true } | { ok: false, errors: string[] }}
+ */
+export function validateV28CatalogSync(yaml, sections) {
+  const errors = [];
+  const canonical = parseCanonicalV28Slashes(yaml).map(normalizeCatalogSlash);
+  const recommended = (sections.recommended_v28 ?? []).map(normalizeCatalogSlash);
+
+  if (canonical.length !== 28) {
+    errors.push(`canonical_v28 应有 28 条 slash，实际 ${canonical.length}`);
+  }
+  if (recommended.length !== 28) {
+    errors.push(`slash_catalog.recommended_v28 应有 28 条，实际 ${recommended.length}`);
+  }
+  const a = [...canonical].sort();
+  const b = [...recommended].sort();
+  if (a.length === b.length) {
+    for (let i = 0; i < a.length; i++) {
+      if (a[i] !== b[i]) {
+        errors.push(`v28 漂移: canonical=${a[i]} vs recommended=${b[i]}`);
+        break;
+      }
+    }
+  }
+  return errors.length ? { ok: false, errors } : { ok: true };
+}
+
 export function parseSlashCatalogLists(yaml) {
   const sections = {};
   let inCatalog = false;
   let section = null;
+  let inRecommended = false;
+  let inLegacy = false;
   for (const line of yaml.split("\n")) {
     if (line.match(/^  slash_catalog:/)) {
       inCatalog = true;
       continue;
     }
-    if (inCatalog && line.match(/^  [a-z_]+:/) && !line.startsWith("    ")) {
+    if (inCatalog && line.match(/^  [a-z_0-9]+:/) && !line.startsWith("    ")) {
       if (!line.startsWith("  slash_catalog")) break;
     }
     if (!inCatalog) continue;
-    const sec = line.match(/^    ([a-z_]+):\s*$/);
-    if (sec) {
-      section = sec[1];
+
+    if (line.match(/^    recommended_v28:\s*$/)) {
+      inRecommended = true;
+      inLegacy = false;
+      section = null;
+      continue;
+    }
+    if (line.match(/^    legacy_slash:\s*$/)) {
+      inLegacy = true;
+      inRecommended = false;
+      section = null;
+      continue;
+    }
+    if (line.match(/^    engine_slash:\s*$/)) {
+      inRecommended = false;
+      inLegacy = false;
+      section = "engine_slash";
+      if (!sections.engine_slash) sections.engine_slash = [];
+      continue;
+    }
+    if ((inRecommended || inLegacy) && line.match(/^      [a-z_]+:\s*$/)) {
+      const subsection = line.trim().replace(":", "");
+      section = inLegacy ? `legacy_${subsection}` : subsection;
       if (!sections[section]) sections[section] = [];
       continue;
     }
-    const item = line.match(/^      - (\/taiyi:[^\s#]+(?:\s[^\s#]+)?)\s*$/);
-    if (item && section) sections[section].push(item[1].trim());
+    if (!inRecommended && !inLegacy && line.match(/^    ([a-z_]+):\s*$/)) {
+      section = line.match(/^    ([a-z_]+):\s*$/)?.[1] ?? null;
+      if (section && !sections[section]) sections[section] = [];
+      continue;
+    }
+    const item = line.match(/^\s{6,10}- (\/taiyi:[^\s#]+(?:\s[^\s#]+)?)\s*$/);
+    if (item && section) {
+      if (!sections[section]) sections[section] = [];
+      sections[section].push(item[1].trim());
+    }
   }
+  sections.recommended_v28 = [
+    ...(sections.main_chain ?? []),
+    ...(sections.session ?? []),
+    ...(sections.triage ?? []),
+    ...(sections.delivery ?? []),
+    ...(sections.routers ?? []),
+    ...(sections.phase_shortcuts ?? []),
+    ...(sections.umbrellas ?? []),
+  ];
   return sections;
 }
 

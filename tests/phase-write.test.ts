@@ -95,6 +95,6 @@ describe("scenario-shortcuts", () => {
   it("bug without state returns lite playbook", () => {
     const r = runBugScenario(engine, taiyiRoot, "fix-login");
     expect(r.text).toContain("lite");
-    expect(r.text).toContain("review-loop");
+    expect(r.text).toContain("无 REVIEW.md / review-loop");
   });
 });

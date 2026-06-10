@@ -6,8 +6,8 @@ Token 纪律：全量 `playwright test` / probe 在 **CI 或后台**跑；聊天
 
 | 斜杠 | 引擎 | 说明 |
 |------|------|------|
-| `/taiyi:browser-smoke` | `browser-smoke` | 内置 Playwright 浏览器冒烟（examples/browser-e2e-smoke） |
-| `/taiyi:e2e` | （聊天） | 目标项目 `npx playwright test`（Agent 代跑；摘要写 TEST.md） |
-| `/taiyi:gstack qa` | （聊天） | gstack browse 走查 |
-| `/taiyi:ui-test` | （聊天） | test 阶段 UI QA 捷径 |
+| `/taiyi:test smoke` | `browser-smoke` | 内置 Playwright 冒烟（v28 伞形 `test smoke`） |
+| `/taiyi:test e2e` | （聊天） | 目标项目 `npx playwright test`（v28 伞形 `test e2e`） |
+| `/taiyi:test qa` | （聊天） | gstack browse 走查（v28 伞形 `test qa`） |
+| `/taiyi:test ui` | （聊天） | test 阶段 UI QA（v28 伞形 `test ui`） |
 

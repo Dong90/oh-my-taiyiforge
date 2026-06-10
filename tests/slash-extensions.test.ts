@@ -69,10 +69,10 @@ describe("slash extensions", () => {
     expect(handoff).toContain("/taiyi:resume");
   });
 
-  it("taiyi-help lists full slash_catalog (not abbreviated)", () => {
+  it("taiyi-help lists full slash catalog including v28 and legacy", () => {
     const body = rendered("taiyi-help.md");
     expect(body).toContain("/taiyi:help");
-    expect(body).toContain("slash_catalog");
+    expect(body).toContain("v28");
     expect(body).toContain("/taiyi:write");
     expect(body).toContain("/taiyi:apply");
     expect(body).toContain("/taiyi:doctor");
