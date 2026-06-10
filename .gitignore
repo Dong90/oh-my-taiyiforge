@@ -5,3 +5,5 @@ dist/
 .flow-x/
 *.log
 .gstack/
+.cursor/
+garden-gpt-image-2/
