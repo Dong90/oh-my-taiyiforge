@@ -18,6 +18,7 @@ import {
 } from "../core/gates/commit-trailer.js";
 import { resolveAutoHarness } from "../core/resolve-auto-harness.js";
 import { formatChangeNotFound, parseProfileFlag } from "../core/cli-hints.js";
+import { resolveDefaultProfile } from "../core/project-config.js";
 import type { ChangeProfile, PhaseId } from "../core/types.js";
 import {
   taiyiArchive,
@@ -51,6 +52,13 @@ import {
   taiyiPhaseWrite,
   taiyiFeature,
   taiyiBug,
+  taiyiFlow,
+  taiyiMvp,
+  taiyiMicro,
+  taiyiNano,
+  taiyiService,
+  taiyiDesignSystem,
+  taiyiCiScenario,
   taiyiResume,
   taiyiSlashOnlyHint,
   taiyiChatSlashOnlyHint,
@@ -145,8 +153,10 @@ function usage(): void {
   npm run taiyi -- ls|check|pause|n|go|ok|run   legacy 别名 → list|harness|handoff|next|done|walkthrough
   npm run taiyi -- feature [标题] [--create]   → /taiyi:feature — 新功能场景（--create 自动 new）
   npm run taiyi -- bug [标题] [--create]       → /taiyi:bug — lite 修 bug（--create 自动 new）
+  npm run taiyi -- mvp|micro|nano|service|design-system [标题] [--create]  → 场景 playbook
+  npm run taiyi -- flow [场景] [标题]          → 场景选型或展开 playbook
 
-Profile: full | api（跳过 ui-design）| lite（五阶段）
+Profile: full | api | ui | lite | spike（MVP 四阶段）| micro（个人三阶段）
 Token: 见 docs/taiyi/token-budget.yaml · TAIYI_TOKEN_BUDGET / TAIYI_TOKEN_ENFORCE
 CI: 见 docs/ci/README.md 与 examples/ci/github-actions/
 
@@ -168,7 +178,6 @@ const CLI_ALIASES: Record<string, string> = {
 
 const SLASH_ONLY_COMMANDS = new Set([
   "explore",
-  "flow",
   "full-flow",
   "tdd",
   "security",
@@ -502,7 +511,7 @@ switch (cmd) {
       const result = engine.initChange(slug, {
         title,
         templatesDir,
-        profile: resolveProfileFromArgs(args) ?? "full",
+        profile: resolveProfileFromArgs(args) ?? resolveDefaultProfile(workspaceDir),
         strictDev: args.includes("--strict-dev"),
         autoHarness: resolveAutoHarness(args, false),
         force: args.includes("--force"),
@@ -530,7 +539,7 @@ switch (cmd) {
       const result = engine.initChange(slug, {
         title,
         templatesDir,
-        profile: resolveProfileFromArgs(args) ?? "full",
+        profile: resolveProfileFromArgs(args) ?? resolveDefaultProfile(workspaceDir),
         strictDev: args.includes("--strict-dev"),
         autoHarness: resolveAutoHarness(args, false),
         force: args.includes("--force"),
@@ -1056,6 +1065,53 @@ switch (cmd) {
     const create = args.includes("--create");
     const title = stripFlags(args).join(" ").trim();
     const r = taiyiBug(workspaceDir, title || undefined, { plain: !jsonMode, create });
+    printHandlerResult(r, false);
+    break;
+  }
+  case "flow": {
+    const title = stripFlags(args).join(" ").trim();
+    const r = taiyiFlow(workspaceDir, title || undefined, { plain: !jsonMode });
+    printHandlerResult(r, false);
+    break;
+  }
+  case "mvp": {
+    const create = args.includes("--create");
+    const title = stripFlags(args).join(" ").trim();
+    const r = taiyiMvp(workspaceDir, title || undefined, { plain: !jsonMode, create });
+    printHandlerResult(r, false);
+    break;
+  }
+  case "micro": {
+    const create = args.includes("--create");
+    const title = stripFlags(args).join(" ").trim();
+    const r = taiyiMicro(workspaceDir, title || undefined, { plain: !jsonMode, create });
+    printHandlerResult(r, false);
+    break;
+  }
+  case "nano": {
+    const create = args.includes("--create");
+    const title = stripFlags(args).join(" ").trim();
+    const r = taiyiNano(workspaceDir, title || undefined, { plain: !jsonMode, create });
+    printHandlerResult(r, false);
+    break;
+  }
+  case "service": {
+    const create = args.includes("--create");
+    const title = stripFlags(args).join(" ").trim();
+    const r = taiyiService(workspaceDir, title || undefined, { plain: !jsonMode, create });
+    printHandlerResult(r, false);
+    break;
+  }
+  case "design-system": {
+    const create = args.includes("--create");
+    const title = stripFlags(args).join(" ").trim();
+    const r = taiyiDesignSystem(workspaceDir, title || undefined, { plain: !jsonMode, create });
+    printHandlerResult(r, false);
+    break;
+  }
+  case "ci-scenario": {
+    const title = stripFlags(args).join(" ").trim();
+    const r = taiyiCiScenario(workspaceDir, title || undefined, { plain: !jsonMode });
     printHandlerResult(r, false);
     break;
   }

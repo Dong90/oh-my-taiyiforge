@@ -96,7 +96,14 @@ import {
   formatWriteCurrentPhasePlain,
   PHASE_SLASH_VERB,
 } from "../core/phase-write.js";
-import { runBugScenario, runFeatureScenario } from "../core/scenario-shortcuts.js";
+import {
+  runBugScenario,
+  runFeatureScenario,
+  runFlowScenario,
+  runScenario,
+  type ScenarioId,
+} from "../core/scenario-shortcuts.js";
+import { resolveDefaultProfile } from "../core/project-config.js";
 import { cancelRuntimeModes, formatCancelModePlain } from "../core/runtime/cancel-mode.js";
 import {
   formatProjectMemoryPlain,
@@ -1370,6 +1377,160 @@ export function taiyiBug(
     : result.text;
   if (plain) return { ok: result.ok, text, result: { ...result, slug: createdSlug ?? result.slug } };
   return { ok: result.ok, result: { ...result, slug: createdSlug ?? result.slug } };
+}
+
+const SCENARIO_CREATE_PROFILE: Partial<Record<ScenarioId, ChangeProfile>> = {
+  mvp: "spike",
+  micro: "micro",
+  nano: "nano",
+  service: "api",
+  "design-system": "ui",
+};
+
+function taiyiScenarioInternal(
+  workspaceDir: string,
+  scenario: ScenarioId,
+  args?: string,
+  options?: { plain?: boolean; create?: boolean },
+) {
+  const plain = options?.plain !== false;
+  const taiyiRoot = resolveTaiyiRoot(workspaceDir);
+  const engine = createEngine(workspaceDir);
+  let arg = args?.trim();
+  let createdSlug: string | undefined;
+  const createProfile = SCENARIO_CREATE_PROFILE[scenario] ?? resolveDefaultProfile(workspaceDir);
+
+  if (options?.create && arg) {
+    const looksLikeSlug = /^[a-z0-9][a-z0-9-]*$/i.test(arg);
+    const slug = looksLikeSlug ? arg : slugifyTitle(arg);
+    if (!engine.getState(slug)) {
+      engine.initChange(slug, {
+        title: arg,
+        templatesDir: TEMPLATES_DIR,
+        profile: createProfile,
+      });
+      createdSlug = slug;
+      arg = slug;
+    }
+  }
+
+  const result = runScenario(engine, taiyiRoot, scenario, arg);
+  const text = createdSlug
+    ? `已创建 ${createProfile} 变更: ${createdSlug}\n\n${result.text}`
+    : result.text;
+  if (plain) {
+    return { ok: result.ok, text, result: { ...result, slug: createdSlug ?? result.slug } };
+  }
+  return { ok: result.ok, result: { ...result, slug: createdSlug ?? result.slug } };
+}
+
+function normalizeFlowTopic(topic: string): ScenarioId {
+  const map: Record<string, ScenarioId> = {
+    feature: "feature",
+    bug: "bug",
+    mvp: "mvp",
+    spike: "mvp",
+    micro: "micro",
+    nano: "nano",
+    quick: "nano",
+    service: "service",
+    api: "service",
+    "design-system": "design-system",
+    design: "design-system",
+    ui: "design-system",
+    ci: "ci",
+    devops: "ci",
+  };
+  return map[topic.toLowerCase()] ?? "feature";
+}
+
+export function taiyiFlow(
+  workspaceDir: string,
+  args?: string,
+  options?: { plain?: boolean },
+) {
+  const plain = options?.plain !== false;
+  const taiyiRoot = resolveTaiyiRoot(workspaceDir);
+  const engine = createEngine(workspaceDir);
+  const parts = args?.trim().split(/\s+/).filter(Boolean) ?? [];
+  const first = parts[0]?.toLowerCase();
+  const knownTopics = new Set([
+    "feature",
+    "bug",
+    "mvp",
+    "spike",
+    "micro",
+    "nano",
+    "quick",
+    "service",
+    "api",
+    "design-system",
+    "design",
+    "ui",
+    "ci",
+    "devops",
+  ]);
+  const result =
+    parts.length === 0
+      ? runFlowScenario(engine, taiyiRoot)
+      : first && knownTopics.has(first)
+        ? runScenario(
+            engine,
+            taiyiRoot,
+            normalizeFlowTopic(first),
+            parts.slice(1).join(" ").trim() || undefined,
+          )
+        : runFlowScenario(engine, taiyiRoot, first);
+  if (plain) return { ok: result.ok, text: result.text, result };
+  return { ok: result.ok, result: { ...result, text: result.text } };
+}
+
+export function taiyiMvp(
+  workspaceDir: string,
+  args?: string,
+  options?: { plain?: boolean; create?: boolean },
+) {
+  return taiyiScenarioInternal(workspaceDir, "mvp", args, options);
+}
+
+export function taiyiMicro(
+  workspaceDir: string,
+  args?: string,
+  options?: { plain?: boolean; create?: boolean },
+) {
+  return taiyiScenarioInternal(workspaceDir, "micro", args, options);
+}
+
+export function taiyiNano(
+  workspaceDir: string,
+  args?: string,
+  options?: { plain?: boolean; create?: boolean },
+) {
+  return taiyiScenarioInternal(workspaceDir, "nano", args, options);
+}
+
+export function taiyiService(
+  workspaceDir: string,
+  args?: string,
+  options?: { plain?: boolean; create?: boolean },
+) {
+  return taiyiScenarioInternal(workspaceDir, "service", args, options);
+}
+
+export function taiyiDesignSystem(
+  workspaceDir: string,
+  args?: string,
+  options?: { plain?: boolean; create?: boolean },
+) {
+  return taiyiScenarioInternal(workspaceDir, "design-system", args, options);
+}
+
+export function taiyiCiScenario(
+  workspaceDir: string,
+  args?: string,
+  options?: { plain?: boolean },
+) {
+  return taiyiScenarioInternal(workspaceDir, "ci", args, { ...options, create: false });
 }
 
 export function taiyiStopMode(

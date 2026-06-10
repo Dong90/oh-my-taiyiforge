@@ -1,5 +1,6 @@
 import fs from "node:fs";
 import path from "node:path";
+import { loadProjectConfig } from "../project-config.js";
 
 type ConsumerPackageTaiyi = {
   taiyi?: {
@@ -7,10 +8,13 @@ type ConsumerPackageTaiyi = {
   };
 };
 
-/** 消费方 package.json 可选字段 `taiyi.deliveryVerifyCmd`（低于 env 优先级） */
+/** 消费方交付验证命令：env > .taiyi/config.json > package.json */
 export function resolveDeliveryVerifyCmd(workspaceDir: string, env = process.env): string | undefined {
   const fromEnv = env.TAIYI_DELIVERY_VERIFY_CMD?.trim();
   if (fromEnv) return fromEnv;
+
+  const fromConfig = loadProjectConfig(workspaceDir).deliveryVerifyCmd?.trim();
+  if (fromConfig) return fromConfig;
 
   const pkgPath = path.join(workspaceDir, "package.json");
   if (!fs.existsSync(pkgPath)) return undefined;

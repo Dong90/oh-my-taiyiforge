@@ -13,7 +13,7 @@ describe("cli-hints", () => {
     expect(r.ok).toBe(false);
     if (!r.ok) {
       expect(r.error).toMatch(/notreal/);
-      expect(r.error).toMatch(/full, api, ui, lite/);
+      expect(r.error).toMatch(/full, api, ui, lite, spike, micro, nano/);
     }
   });
 

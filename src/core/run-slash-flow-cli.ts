@@ -31,10 +31,14 @@ export const EXPECTED_CHANGE_ARTIFACTS = [
 ] as const;
 
 const ARTIFACT_PHASE_MAP: Record<string, PhaseId> = {
+  "CHANGE.md": "change",
+  "REQUIREMENT.md": "requirement",
   "UI-DESIGN.md": "ui-design",
   "DESIGN.md": "design",
   "TASK.md": "task",
   "REVIEW.md": "review",
+  "TEST.md": "test",
+  "CHANGELOG.md": "integration",
   "health-report.md": "review",
 };
 

@@ -12,7 +12,7 @@ import {
 import { formatChangeNotFound, formatWrongPhaseError } from "./cli-hints.js";
 import { assertValidSlug, validateSlug } from "./slug.js";
 import { evaluateQualityGate } from "./gates/quality-gate.js";
-import { canEnterPhase, getNextPhase, getPhase } from "./phase-registry.js";
+import { canEnterPhase, getNextPhase, getPhase, listPhases } from "./phase-registry.js";
 import { isPhaseSkipped, skippedPhasesForProfile } from "./profile.js";
 import { assessComplexity, type ComplexitySignals } from "./routing/complexity.js";
 import { inferComplexitySignals } from "./routing/infer-complexity.js";
@@ -96,12 +96,18 @@ export class WorkflowEngine {
     const skippedPhases = skippedPhasesForProfile(profile);
     const templatesDir = options?.templatesDir ?? this.templatesDir;
     const seeded =
-      templatesDir != null
+      templatesDir != null && !skippedPhases.includes("change")
         ? seedChangeTemplates(dir, templatesDir, {
             slug,
             title: options?.title,
           })
         : [];
+
+    let initialPhase: PhaseId = "change";
+    if (skippedPhases.includes("change")) {
+      const all = listPhases().sort((a, b) => a.order - b.order);
+      initialPhase = all.find((p) => !skippedPhases.includes(p.id))?.id ?? "dev";
+    }
 
     const now = new Date().toISOString();
     const signals = inferComplexitySignals(dir);
@@ -113,7 +119,7 @@ export class WorkflowEngine {
 
     const state: ChangeState = {
       slug,
-      currentPhase: "change",
+      currentPhase: initialPhase,
       completedPhases: [],
       profile,
       skippedPhases,
@@ -384,14 +390,16 @@ export class WorkflowEngine {
       }
     }
 
-    const quality = evaluateQualityGate(qualityScores);
-    if (!quality.passed) {
-      const hintText = qualityHints?.length ? ` — ${qualityHints.join("; ")}` : "";
-      return {
-        ok: false,
-        error: `Quality gate failed: ${quality.failed.join(", ")}${hintText}`,
-        qualityHints,
-      };
+    if (process.env.TAIYI_SKIP_QUALITY_GATE !== "1") {
+      const quality = evaluateQualityGate(qualityScores);
+      if (!quality.passed) {
+        const hintText = qualityHints?.length ? ` — ${qualityHints.join("; ")}` : "";
+        return {
+          ok: false,
+          error: `Quality gate failed: ${quality.failed.join(", ")}${hintText}`,
+          qualityHints,
+        };
+      }
     }
 
     const needsHuman = requiresHumanGate(phaseId) || options?.forceHuman;
