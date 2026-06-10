@@ -17,14 +17,10 @@ _别记阶段顺序。说 `/taiyi:new`，引擎告诉你下一步。_
 
 <br />
 
-<img
-  src="./docs/diagrams/visual/taiyiforge-architecture-ai-v023-full-4k.png"
-  alt="TaiyiForge 架构全景 v0.23.0 — 六大标准 × 入口层 × 九阶段 × 23 Skill × 三重门禁 · 四端通用"
-  width="100%"
-/>
+![TaiyiForge 架构图 — 六大标准 × 工作流引擎 × 九阶段 × Skill 全景 × 三重门禁](docs/diagrams/visual/taiyiforge-architecture-ai-v023-full-4k.png)
 
 <sub>
-  v0.23.0 架构海报 · 可编辑真源
+  4K 视觉海报（非技术真源）· 可编辑真源
   <a href="./docs/taiyiforge-architecture.svg">SVG</a> ·
   <a href="./docs/c4/containers.md">C4</a>
 </sub>
