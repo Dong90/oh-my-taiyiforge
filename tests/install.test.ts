@@ -87,6 +87,23 @@ describe("install", () => {
     expect(fs.readFileSync(configPath, "utf8").match(/TAIYI-FORGE:DEVELOPER-INSTRUCTIONS:START/g)?.length).toBe(1);
   });
 
+  it("installCodexDeveloperInstructions inserts before [features] not inside it", () => {
+    const configPath = path.join(tmp, "codex-features", "config.toml");
+    fs.mkdirSync(path.dirname(configPath), { recursive: true });
+    fs.writeFileSync(
+      configPath,
+      'model = "gpt-4"\n\n[features]\njs_repl = false\n',
+      "utf8",
+    );
+    installCodexDeveloperInstructions(configPath);
+    const raw = fs.readFileSync(configPath, "utf8");
+    const featuresIdx = raw.indexOf("[features]");
+    const devIdx = raw.indexOf("developer_instructions");
+    expect(devIdx).toBeGreaterThan(-1);
+    expect(featuresIdx).toBeGreaterThan(devIdx);
+    expect(raw.slice(featuresIdx)).not.toContain("developer_instructions");
+  });
+
   it("installCodexDeveloperInstructions replaces legacy developer_instructions", () => {
     const configPath = path.join(tmp, "codex-legacy", "config.toml");
     fs.mkdirSync(path.dirname(configPath), { recursive: true });
