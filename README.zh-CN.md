@@ -125,7 +125,7 @@ node scripts/taiyi-forge.sh install --claude --cursor
 ### 方式 C：跑通演示工程
 
 ```bash
-cd examples/minimal-project
+cd examples/commands-smoke
 npm install
 npm run chat-demo          # 聊天动词：new / status / check / continue
 npm run walkthrough-e2e    # 九阶段 shell E2E + 铁三角
@@ -271,8 +271,8 @@ npm run check:docs     # 文档与 commands.yaml 同步校验
 |------|------|
 | [examples/full-flow-demo](examples/full-flow-demo/README.md) | 九阶段 + 斜杠 E2E |
 | [examples/commands-smoke](examples/commands-smoke/) | 命令冒烟 |
-| [examples/ci/github-actions](examples/ci/github-actions/) | CI 模板 |
-| [examples/minimal-project](examples/minimal-project/) | 最小接入演示 |
+| [examples/browser-e2e-smoke](examples/browser-e2e-smoke/) | CI 模板 |
+| [examples/verification-suite](examples/verification-suite/) | 最小接入演示 |
 
 CI：[`.github/workflows/ci.yml`](.github/workflows/ci.yml) · 平台冒烟在 4×ubuntu matrix 跑全四端。
 

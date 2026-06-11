@@ -128,7 +128,7 @@ node scripts/taiyi-forge.sh install --all --skip-deps
 ### Option C: Run the demo projects
 
 ```bash
-cd examples/minimal-project
+cd examples/commands-smoke
 npm install
 npm run chat-demo          # Chat verbs: new / status / check / continue
 npm run walkthrough-e2e    # Nine-stage shell E2E + iron-triangle
@@ -275,8 +275,8 @@ npm run check:docs     # doc-vs-commands.yaml sync check
 |-----------|---------|
 | [examples/full-flow-demo](examples/full-flow-demo/README.md) | Nine-stage + slash E2E |
 | [examples/commands-smoke](examples/commands-smoke/) | Command smoke tests |
-| [examples/ci/github-actions](examples/ci/github-actions/) | CI templates |
-| [examples/minimal-project](examples/minimal-project/) | Minimal integration demo |
+| [examples/browser-e2e-smoke](examples/browser-e2e-smoke/) | CI templates |
+| [examples/verification-suite](examples/verification-suite/) | Minimal integration demo |
 
 CI: [`.github/workflows/ci.yml`](.github/workflows/ci.yml) — platform smoke runs across a 4 × ubuntu matrix.
 
