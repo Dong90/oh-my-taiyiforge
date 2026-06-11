@@ -13,7 +13,10 @@ v28 是 **推荐命名 + help/catalog 收敛**，不是运行时菜单裁剪：
 | 层 | 现状 |
 |----|------|
 | **文档 / help** | `/taiyi:help`、`canonical-commands.md` 只推荐 28 条顶栏 |
-| **Cursor `/` 菜单** | `install --cursor` 仍同步 **全部** `prompts/taiyi-*.md`（legacy 仍可见） |
+| **Cursor `/` 菜单** | `install --cursor` 同步 **全部** `prompts/taiyi-*.md` → `~/.cursor/commands/` |
+| **Claude `/` 菜单** | `install --claude` 同步同源 → `~/.claude/commands/` |
+| **Codex `$taiyi-*`** | `install --codex` 同步同源 → `~/.codex/prompts/` |
+| **OpenCode `/` 菜单** | `install --opencode` 同步同源 → `~/.config/opencode/commands/` |
 | **伞形斜杠** | 如 `/taiyi:test smoke` **尚无**独立 `taiyi-test.md`；Agent 按本节 [伞形地图](#伞形命令--子命令地图) 加载 legacy prompt |
 | **引擎 CLI** | 子命令分发（token/test/workflow 等）仍走既有 `taiyi-forge.sh` 与 legacy 斜杠 |
 

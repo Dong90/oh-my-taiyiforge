@@ -9,7 +9,7 @@ export function taiyiControlPlaneBody(platform: "cursor" | "claude"): string {
   const chatIntro =
     platform === "cursor"
       ? "在 Cursor 输入 / 可选 taiyi-status 等（等同 /taiyi:status）；或直接打字 /taiyi:continue。"
-      : "Claude Code：加载 `taiyi-forge` Skill；用户说 **/taiyi:handoff**、**/taiyi:cancel** 时用 Bash 代跑引擎。";
+      : "Claude Code：输入 `/` 可选 taiyi-status 等（等同 /taiyi:status）；或加载 `taiyi-forge` Skill 代跑引擎。";
 
   const skillBlock =
     platform === "cursor"

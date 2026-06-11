@@ -25,8 +25,11 @@ describe("taiyi-forge-install CLI", () => {
     prevEnv = {
       HOME: process.env.HOME,
       OPENCODE_SKILLS_DIR: process.env.OPENCODE_SKILLS_DIR,
+      OPENCODE_COMMANDS_DIR: process.env.OPENCODE_COMMANDS_DIR,
       CLAUDE_SKILLS_DIR: process.env.CLAUDE_SKILLS_DIR,
+      CLAUDE_COMMANDS_DIR: process.env.CLAUDE_COMMANDS_DIR,
       CODEX_SKILLS_DIR: process.env.CODEX_SKILLS_DIR,
+      CODEX_PROMPTS_DIR: process.env.CODEX_PROMPTS_DIR,
       CURSOR_SKILLS_DIR: process.env.CURSOR_SKILLS_DIR,
       CURSOR_COMMANDS_DIR: process.env.CURSOR_COMMANDS_DIR,
       TAIYI_FORGE_SKIP_OPENCODE_CONFIG: process.env.TAIYI_FORGE_SKIP_OPENCODE_CONFIG,
@@ -35,8 +38,11 @@ describe("taiyi-forge-install CLI", () => {
 
     process.env.HOME = fakeHome;
     process.env.OPENCODE_SKILLS_DIR = path.join(fakeHome, ".config/opencode/skills");
+    process.env.OPENCODE_COMMANDS_DIR = path.join(fakeHome, ".config/opencode/commands");
     process.env.CLAUDE_SKILLS_DIR = path.join(fakeHome, ".claude/skills");
+    process.env.CLAUDE_COMMANDS_DIR = path.join(fakeHome, ".claude/commands");
     process.env.CODEX_SKILLS_DIR = path.join(fakeHome, ".codex/skills");
+    process.env.CODEX_PROMPTS_DIR = path.join(fakeHome, ".codex/prompts");
     process.env.CURSOR_SKILLS_DIR = path.join(fakeHome, ".cursor/skills");
     process.env.CURSOR_COMMANDS_DIR = path.join(fakeHome, ".cursor/commands");
     process.env.TAIYI_FORGE_SKIP_OPENCODE_CONFIG = "1";
@@ -50,6 +56,27 @@ describe("taiyi-forge-install CLI", () => {
     }
     fs.rmSync(tmp, { recursive: true, force: true });
   });
+
+  it("--claude --codex --cursor --skip-deps 写入 skills + chat commands", () => {
+    const r = spawnSync(
+      "node",
+      [INSTALL_CLI, "--claude", "--codex", "--cursor", "--skip-deps"],
+      { cwd: tmp, encoding: "utf8", env: process.env },
+    );
+    expect(r.status, `${r.stdout}\n${r.stderr}`).toBe(0);
+
+    for (const [skillsDir, commandsDir] of [
+      [process.env.CLAUDE_SKILLS_DIR!, process.env.CLAUDE_COMMANDS_DIR!],
+      [process.env.CODEX_SKILLS_DIR!, process.env.CODEX_PROMPTS_DIR!],
+      [process.env.CURSOR_SKILLS_DIR!, process.env.CURSOR_COMMANDS_DIR!],
+    ]) {
+      expect(fs.existsSync(path.join(skillsDir, "taiyi-forge", "SKILL.md"))).toBe(true);
+      const cmds = fs
+        .readdirSync(commandsDir)
+        .filter((f) => f.startsWith("taiyi-") && f.endsWith(".md"));
+      expect(cmds.length).toBeGreaterThan(70);
+    }
+  }, 60_000);
 
   it("--cursor --skip-deps 子进程 exit 0 且写入 skills + commands", () => {
     const r = spawnSync(

@@ -4,7 +4,7 @@ argument-hint: "[optional topic: scenarios|delivery|autonomous|gstack|superpower
 ---
 User invoked **$taiyi-help** (= `/taiyi:help` 或 `/taiyi:flow help`)。**输出 v28 推荐顶栏（28 条）+ legacy 兼容清单**（真源：`docs/taiyi/commands.yaml` → `canonical_v28` · `slash_catalog`；表格由 `npm run generate:docs` 生成）。
 
-**Cursor 输入**：文档写 `/taiyi:xxx`；Cursor `/` 菜单用 **`/taiyi-xxx`**（连字符，无冒号）。
+**Cursor 输入**：文档写 `/taiyi:xxx`；四端 `/` 菜单均用 **`/taiyi-xxx`**（连字符，无冒号）— install 同步同源 `prompts/taiyi-*.md`。
 
 若 `$ARGUMENTS` 为 `scenarios` | `delivery` | `autonomous` | `gstack` | `superpowers` | `canonical` | `engine`，**只展开对应节**；否则 **完整输出** + 建议 `/taiyi:status --json --compact`。
 
