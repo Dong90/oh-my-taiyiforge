@@ -207,7 +207,7 @@ export function formatReviewLoopOutput(
       result.text,
       "",
       "审查完成，无 blocking 项；本会话 review 循环结束。",
-      "→ 请用户确认后: npx taiyi complete <slug> review --approver \"审批人\"",
+      "→ 请用户确认后: /taiyi:continue <slug> review --approver \"审批人\"",
     ].join("\n");
   }
   return result.text;

@@ -122,9 +122,9 @@ export function formatWalkthroughPlain(r: WalkthroughResult): string {
   }
   if (r.ok) {
     lines.push("\n─── 常用命令 ───");
-    lines.push(`  npx taiyi next ${r.slug}`);
-    lines.push("  npx taiyi list");
-    lines.push(`  npx taiyi complete ${r.slug} change   # 填好 CHANGE.md 后`);
+    lines.push(`  /taiyi:continue ${r.slug}   # 填好 CHANGE.md 后`);
+    lines.push("  /taiyi:list");
+    // (replaced by /taiyi:continue on the line above)
     lines.push("\n完整九阶段 E2E: examples/minimal-project → npm run walkthrough-e2e（别名 walkthrough）");
     lines.push("（注意: /taiyi:run 仅 doctor+init+下一步；默认 walkthrough-demo 演示结束后自动删除）");
   } else if (r.error) {

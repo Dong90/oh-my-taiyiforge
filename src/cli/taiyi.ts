@@ -325,7 +325,7 @@ function tryCompletePhase(
     return {
       ok: false,
       error: humanResolved.error.includes("approver")
-        ? `阶段 ${phaseId} 需人工审批。使用 --approver "你的名字"，例如: npx taiyi complete ${slug} ${phaseId} --approver "你的名字"`
+        ? `阶段 ${phaseId} 需人工审批。使用 --approver "你的名字"，例如: /taiyi:continue ${slug} ${phaseId} --approver "你的名字"`
         : humanResolved.error,
     };
   }

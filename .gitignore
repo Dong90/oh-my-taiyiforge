@@ -7,3 +7,4 @@ dist/
 .gstack/
 .cursor/
 garden-gpt-image-2/
+garden-output/

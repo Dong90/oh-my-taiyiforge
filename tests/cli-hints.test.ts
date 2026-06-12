@@ -31,7 +31,8 @@ describe("cli-hints", () => {
     expect(msg).toMatch(/7 个进行中/);
     expect(msg).toMatch(/a, b, c/);
     expect(msg).toMatch(/另有 4 个/);
-    expect(msg).toMatch(/npx taiyi list/);
+    expect(msg).toMatch(/\/taiyi:list/);
+    expect(msg).not.toMatch(/npx taiyi/);
   });
 
   it("formatChangeNotFound includes recovery hints", () => {

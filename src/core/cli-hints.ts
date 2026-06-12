@@ -46,7 +46,7 @@ export function formatMultipleActiveChanges(slugs: string[], maxShow = 5): strin
   const rest = slugs.length - shown.length;
   const list = shown.join(", ");
   const suffix = rest > 0 ? ` … 另有 ${rest} 个` : "";
-  return `有 ${slugs.length} 个进行中的变更（${list}${suffix}），请指定 slug：/taiyi:continue <slug>\n查看全部: npx taiyi list`;
+  return `有 ${slugs.length} 个进行中的变更（${list}${suffix}），请指定 slug：/taiyi:continue <slug>\n查看全部: /taiyi:list`;
 }
 
 export function formatUnknownHarnessHook(hookRef: string, available: string[]): string {
