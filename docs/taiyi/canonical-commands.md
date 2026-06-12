@@ -6,9 +6,11 @@
 
 **原则**：聊天推荐 **28 条顶栏**；引擎能力与旧 prompt **不删**，见 [Legacy 兼容](#legacy-兼容)。融合分层见 [skill-fusion-principles.md](./skill-fusion-principles.md)。
 
-### Phase 1 说明（当前）
+### Phase 2 说明（umbrella 顶层 prompt 已落）
 
-v28 是 **推荐命名 + help/catalog 收敛**，不是运行时菜单裁剪：
+v28 是 **推荐命名 + help/catalog 收敛** + **Phase 2 umbrella 顶层 prompt**。
+Phase 1（v0.23.0）：推荐命名 + help/catalog 收敛 · 不裁菜单
+Phase 2（本变更）：6 umbrella 顶层 prompt 已落（`prompts/taiyi-{token,test,review,diagram,mode,workflow}.md`）+ `commands.yaml` 注册 + `install --<harness>` 同步到四端：
 
 | 层 | 现状 |
 |----|------|
@@ -17,10 +19,12 @@ v28 是 **推荐命名 + help/catalog 收敛**，不是运行时菜单裁剪：
 | **Claude `/` 菜单** | `install --claude` 同步同源 → `~/.claude/commands/` |
 | **Codex `$taiyi-*`** | `install --codex` 同步同源 → `~/.codex/prompts/` |
 | **OpenCode `/` 菜单** | `install --opencode` 同步同源 → `~/.config/opencode/commands/` |
-| **伞形斜杠** | 如 `/taiyi:test smoke` **尚无**独立 `taiyi-test.md`；Agent 按本节 [伞形地图](#伞形命令--子命令地图) 加载 legacy prompt |
+| **伞形斜杠（Phase 2）** | 6 umbrella 顶层 prompt 已落（`prompts/taiyi-{token,test,review,diagram,mode,workflow}.md`）· 注册 `commands.yaml umbrellas` · `install --<harness>` 同步到四端菜单 |
 | **引擎 CLI** | 子命令分发（token/test/workflow 等）仍走既有 `taiyi-forge.sh` 与 legacy 斜杠 |
 
-`canonical_v28` 与 `slash_catalog.recommended_v28` 须保持一致；`npm run generate:docs` 与测试会校验。Phase 2（可选）：伞形 prompt 或 install 过滤，真正缩短 IDE 菜单。
+`canonical_v28` 与 `slash_catalog.recommended_v28` 须保持一致；`npm run generate:docs` 与测试会校验。
+**Phase 2（umbrella 顶层 prompt）已完成**：`prompts/taiyi-{token,test,review,diagram,mode,workflow}.md` 6 文件 + `commands.yaml` 6 处 `prompt_file` 注册。
+Phase 3（可选）：`install --<harness>` 过滤（仅同步 umbrella 顶层而非所有 legacy 提示），真正缩短 IDE 菜单。
 
 ## v28 一览（28 条）
 

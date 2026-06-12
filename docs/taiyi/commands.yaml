@@ -509,6 +509,8 @@ profiles:
               record: token record
               scan: token scan
               compress: token compress
+            phase: 2
+            prompt_file: "prompts/taiyi-token.md"
           - slash: "/taiyi:test smoke|e2e|qa|ui|security"
             legacy_map:
               smoke: /taiyi:browser-smoke
@@ -516,12 +518,16 @@ profiles:
               qa: /taiyi:gstack qa
               ui: /taiyi:ui-test
               security: /taiyi:security
+            phase: 2
+            prompt_file: "prompts/taiyi-test.md"
           - slash: "/taiyi:review loop|check|health|gstack"
             legacy_map:
               loop: /taiyi:review-loop
               check: /taiyi:review-check
               health: /taiyi:health
               gstack: /taiyi:gstack review
+            phase: 2
+            prompt_file: "prompts/taiyi-review.md"
           - slash: "/taiyi:diagram pipeline|c4|arch|render|flow"
             legacy_map:
               pipeline: /taiyi:diagram-pipeline
@@ -529,6 +535,8 @@ profiles:
               arch: /taiyi:diagram-arch
               render: /taiyi:diagram-render
               flow: /taiyi:diagram-flow
+            phase: 2
+            prompt_file: "prompts/taiyi-diagram.md"
           - slash: "/taiyi:mode ralph|autopilot|daemon|team|ultrawork|agent|step|stop|list|keyword|preflight"
             legacy_map:
               ralph: /taiyi:ralph
@@ -542,6 +550,8 @@ profiles:
               list: /taiyi:modes
               keyword: /taiyi:keyword
               preflight: /taiyi:preflight
+            phase: 2
+            prompt_file: "prompts/taiyi-mode.md"
           - slash: "/taiyi:workflow plan|ralplan|loop|check|run|sync|ccg|sciomc|deepinit|remember|ultraqa|…"
             legacy_map:
               plan: /taiyi:plan
@@ -560,6 +570,8 @@ profiles:
               visual-verdict: /taiyi:visual-verdict
               ai-slop-cleaner: /taiyi:ai-slop-cleaner
               ecomode: /taiyi:ecomode
+            phase: 2
+            prompt_file: "prompts/taiyi-workflow.md"
 
   slash_catalog:
     description: |
