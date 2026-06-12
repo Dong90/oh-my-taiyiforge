@@ -55,11 +55,15 @@ export function runDoctorWorkspace(
 
   const wrapper = path.join(workspaceDir, "scripts", "taiyi-forge.sh");
   const pkgRoot = resolvePackageRoot(templatesMetaUrl);
+  const isPkgRoot = path.resolve(workspaceDir) === path.resolve(pkgRoot);
   const wrapperCheck = isProjectWrapperStale(workspaceDir, pkgRoot);
+  // pkg root 自己是引擎真源：scripts/taiyi-forge.sh 是完整 wrapper（非 stale consumer wrapper）
   checks.push({
     id: "project-wrapper",
-    ok: fs.existsSync(wrapper) && !wrapperCheck.stale,
-    detail: fs.existsSync(wrapper) ? wrapperCheck.detail : wrapperCheck.detail,
+    ok: fs.existsSync(wrapper) && (!wrapperCheck.stale || isPkgRoot),
+    detail: isPkgRoot
+      ? `pkg root 真源（scripts/taiyi-forge.sh = engine 完整 wrapper，177 行）`
+      : fs.existsSync(wrapper) ? wrapperCheck.detail : wrapperCheck.detail,
   });
 
   const localPkg = path.join(workspaceDir, "node_modules", "oh-my-taiyiforge", "dist", "cli", "taiyi.js");
@@ -71,9 +75,11 @@ export function runDoctorWorkspace(
       : fs.existsSync(forgeRootFile)
         ? fs.readFileSync(forgeRootFile, "utf8").trim()
         : "";
+  const pkgRootDistCli = fs.existsSync(path.join(pkgRoot, "dist", "cli", "taiyi.js"));
   const cliResolvable =
     fs.existsSync(localPkg) ||
-    (forgeRoot !== "" && fs.existsSync(path.join(forgeRoot, "dist", "cli", "taiyi.js")));
+    (forgeRoot !== "" && fs.existsSync(path.join(forgeRoot, "dist", "cli", "taiyi.js"))) ||
+    (isPkgRoot && pkgRootDistCli);
   checks.push({
     id: "consumer-cli-resolvable",
     ok: cliResolvable,
