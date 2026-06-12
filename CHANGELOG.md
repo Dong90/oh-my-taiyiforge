@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.23.1] - 2026-06-12
+
+### Changed
+
+- **README 重写为 5 段式**(问题 → 方案 → 证据 → 快速上手 → 参考),中英两版同构对齐
+- **v28 收敛**:`v28 canonical` badge、Slash Catalog 28 条表、6 umbrella 速查、Legacy 兼容表全量补齐;中文版之前对 v28 是 0% 落地,本次同步到位
+- **`/taiyi:mode` umbrella 补齐 11 个子命令**(`agent` / `step` / `stop` / `list` 补上),与 `commands.yaml` / `canonical-commands.md` 完全一致
+- **措辞修正**:v28 段从暗示"Cursor/Claude 菜单只剩 28"改为"v28 = 推荐命名 + 顶栏收敛,Cursor/Claude 仍装全 prompt;Phase 2(IDE 菜单裁剪)未做",与 `canonical-commands.md` L11 措辞对齐
+- **结构收敛**:`Quick Start` + `Your First Change` 合并为 4 Option;`Core Capabilities` 段删除(8 条 bullet 全部已在 Why / Nine-stage / Architecture 体现);Legacy 表从 9 行压到 6 行
+- **CLI 风格统一**:用户入口 = 斜杠(`/taiyi:*`),Agent 跑引擎 = `npx taiyi` / `scripts/taiyi-forge.sh`,不再混 `npx taiyi-forge-install` / `npm run`
+
 ## [0.23.0] - 2026-06-09
 
 ### Added
