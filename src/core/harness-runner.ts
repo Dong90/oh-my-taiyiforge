@@ -72,7 +72,7 @@ function runShellCommand(
     return { ok: true, detail: "openspec 未安装，已跳过" };
   }
   if (cmd.startsWith("taiyi archive ") || cmd === `taiyi archive ${slug}`) {
-    return { ok: true, detail: "请用 npx taiyi archive（集成在 complete 后钩子）" };
+    return { ok: true, detail: "请用 /taiyi:archive（集成在 complete 后钩子）" };
   }
 
   const parts = tokenizeHarnessCommand(cmd);

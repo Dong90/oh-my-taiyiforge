@@ -61,5 +61,5 @@ export function formatUnknownHarnessHook(hookRef: string, available: string[]): 
 }
 
 export function formatUnknownWorkflowSkill(skill: string, available: string[]): string {
-  return `未知 workflow skill: ${skill}\n可用: ${available.join(", ")}\n示例: npx taiyi plan <slug> 或 /taiyi:ralplan`;
+  return `未知 workflow skill: ${skill}\n可用: ${available.join(", ")}\n示例: /taiyi:ralplan <slug> 或 /taiyi:plan`;
 }

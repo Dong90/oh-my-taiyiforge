@@ -3,6 +3,7 @@ import {
   formatChangeNotFound,
   formatInvalidProfile,
   formatMultipleActiveChanges,
+  formatUnknownWorkflowSkill,
   formatWrongPhaseError,
   parseProfileFlag,
 } from "../src/core/cli-hints.js";
@@ -51,5 +52,13 @@ describe("cli-hints", () => {
     expect(msg).toMatch(/complete dev/);
     expect(msg).toMatch(/\/taiyi:status my-slug/);
     expect(msg).toMatch(/\/taiyi:continue my-slug/);
+  });
+
+  it("formatUnknownWorkflowSkill uses /taiyi: slash form, not npx", () => {
+    const msg = formatUnknownWorkflowSkill("foo", ["plan", "ralplan"]);
+    expect(msg).toMatch(/未知 workflow skill: foo/);
+    expect(msg).toMatch(/plan, ralplan/);
+    expect(msg).toMatch(/\/taiyi:/);
+    expect(msg).not.toMatch(/npx taiyi/);
   });
 });

@@ -105,7 +105,7 @@ exit 0
         env: { ...process.env, TAIYI_FORGE_ROOT: REPO },
       });
       expect(r.status).toBe(1);
-      expect(`${r.stdout}${r.stderr}`).toMatch(/2 个进行中的变更|多个进行中的变更|请指定 slug|npx taiyi list/);
+      expect(`${r.stdout}${r.stderr}`).toMatch(/2 个进行中的变更|多个进行中的变更|请指定 slug|\/taiyi:list/);
     });
   });
 
