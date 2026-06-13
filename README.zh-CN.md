@@ -37,7 +37,7 @@
 
 ![真实终端演示](docs/diagrams/demo.gif)
 
-<sub>27 秒真实终端录制 · <a href="docs/diagrams/demo.cast">asciicast 源</a>(可在 <a href="https://asciinema.org">asciinema.org</a> 播放,或本地 `asciinema play docs/diagrams/demo.cast`)</sub>
+<sub>21 秒真实终端录制(5 阶段 + 28 v28 顶栏斜杠) · <a href="docs/diagrams/demo.cast">asciicast 源</a>(可在 <a href="https://asciinema.org">asciinema.org</a> 播放,或本地 `asciinema play docs/diagrams/demo.cast`)</sub>
 
 每个用 AI 做严肃项目的团队,都踩过这些坑:
 
@@ -293,7 +293,7 @@ scripts/taiyi-forge.sh audit --json --compact
 | [AGENTS.md](AGENTS.md) | Agent 的读态入口 | 配置 Agent |
 | [CONTRIBUTING.md](CONTRIBUTING.md) | 贡献指南 | 开 PR 之前 |
 | [CHANGELOG.md](CHANGELOG.md) | 发布说明 | 查更新 |
-| [docs/diagrams/demo.gif](docs/diagrams/demo.gif) | 真实终端录制(27s) | 快速感受引擎 |
+| [docs/diagrams/demo.gif](docs/diagrams/demo.gif) | 真实终端录制(21s · 5 阶段 + 28 v28) | 快速感受引擎 |
 | [README.md](README.md) | English | English users |
 
 ### 5.2 · 开发与验证
