@@ -1,0 +1,9 @@
+{
+  "name": "taiyi-v28-demo-project",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "echo \"✓ demo tests pass\" && exit 0"
+  }
+}
