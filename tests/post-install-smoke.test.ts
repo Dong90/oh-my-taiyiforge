@@ -8,9 +8,10 @@ import { defaultCursorCommandsDir } from "../src/install/sync-cursor-commands.js
 import { defaultCursorRulesPath } from "../src/install/cursor-rules.js";
 import { codexPromptsDir, codexConfigPath, claudeConfigDir } from "../src/install/paths.js";
 import { skillSourceRoot } from "../src/install/paths.js";
+import { CHAT_COMMAND_MARKER } from "../src/install/sync-chat-commands.js";
 
 const REPO = path.join(path.dirname(fileURLToPath(import.meta.url)), "..");
-const COMMAND_MARKER = "TAIYI-FORGE:CURSOR-COMMAND";
+const COMMAND_MARKER = CHAT_COMMAND_MARKER;
 const RULE_MARKER = "TAIYI-FORGE:CURSOR-RULE";
 
 function countTaiyiSkills(dir: string): number {
