@@ -37,7 +37,7 @@
 
 ![Real terminal demo](docs/diagrams/demo.gif)
 
-<sub>21-second real terminal recording (5 phases + 28 v28 top-bar slashes) · <a href="docs/diagrams/demo.cast">asciicast source</a> (playable on <a href="https://asciinema.org">asciinema.org</a> or locally with `asciinema play docs/diagrams/demo.cast`)</sub>
+<sub>27-second real terminal recording · <a href="docs/diagrams/demo.cast">asciicast source</a> (playable on <a href="https://asciinema.org">asciinema.org</a> or locally with `asciinema play docs/diagrams/demo.cast`)</sub>
 
 Every team using AI for serious work has hit some version of these:
 
@@ -298,7 +298,7 @@ scripts/taiyi-forge.sh audit --json --compact
 | [AGENTS.md](AGENTS.md) | Agent's read-state entry point | Configuring Agents |
 | [CONTRIBUTING.md](CONTRIBUTING.md) | Contribution guide | Before opening a PR |
 | [CHANGELOG.md](CHANGELOG.md) | Release notes | Checking for updates |
-| [docs/diagrams/demo.gif](docs/diagrams/demo.gif) | Real terminal recording (21s · 5 phases + 28 v28) | Quick feel of the engine |
+| [docs/diagrams/demo.gif](docs/diagrams/demo.gif) | Real terminal recording (27s) | Quick feel of the engine |
 | [README.zh-CN.md](README.zh-CN.md) | 简体中文版 | 中文用户 |
 
 ### 5.2 · Development & Verification
