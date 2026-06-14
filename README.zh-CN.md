@@ -1,10 +1,10 @@
 <div align="center">
 
-**[English](README.md)** · [简体中文](README.zh-CN.md)
+**[English](README.zh-CN.md)** · [简体中文](README.md)
 
-# TaiyiForge(太一炉)
+# TaiyiForge
 
-**把六套 AI 工程标准,变成一条可执行、可审计的九阶段研发流水线**
+**Turn six AI engineering standards into a single executable nine-stage R&D workflow**
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Node](https://img.shields.io/badge/node-%3E%3D20-brightgreen)](package.json)
@@ -17,99 +17,100 @@
 [![CI](https://img.shields.io/github/actions/workflow/status/Dong90/oh-my-taiyiforge/ci.yml?branch=main&label=CI)](https://github.com/Dong90/oh-my-taiyiforge/actions/workflows/ci.yml)
 [![Platforms](https://img.shields.io/badge/platforms-OpenCode%20%7C%20Claude%20%7C%20Codex%20%7C%20Cursor-8a2be2)](docs/QUICKSTART.md)
 
-**用文档驱动 AI 研发,用门控代替玄学。**
+**Document-driven AI R&D with gates, not vibes.**
 
-> 不用背阶段顺序。说一句 `/taiyi:new`,引擎告诉你下一步。
+> Stop memorizing the phase order. Say `/taiyi:new` and the engine tells you what's next.
 
-[快速上手](#快速上手) · [使用指南](docs/USAGE.md) · [架构](docs/ARCHITECTURE.md) · [命令参考](docs/taiyi/canonical-commands.md) · [完整流程](docs/taiyi/full-oss-flow.md) · [贡献](CONTRIBUTING.md)
+[Quick Start](#quick-start) · [Usage Guide](docs/USAGE.md) · [Architecture](docs/ARCHITECTURE.md) · [Command Reference](docs/taiyi/canonical-commands.md) · [Full Flow](docs/taiyi/full-oss-flow.md) · [Contributing](CONTRIBUTING.md)
 
 <br />
 
-![TaiyiForge 架构 — 六套标准 × 工作流引擎 × 九阶段 × Skill 宇宙 × 三层门控](docs/diagrams/visual/taiyiforge-architecture-ai-v023-full-4k.png)
+![TaiyiForge Architecture — Six standards × Workflow engine × Nine stages × Skill universe × Three-layer gates](docs/diagrams/visual/taiyiforge-architecture-ai-v023-full-4k.png)
 
-<sub>4K 视觉海报(非技术源) · 可编辑源: <a href="docs/taiyiforge-architecture.svg">SVG</a> · <a href="docs/c4/containers.md">C4</a></sub>
+<sub>4K visual poster (non-technical source) · Editable source: <a href="docs/taiyiforge-architecture.svg">SVG</a> · <a href="docs/c4/containers.md">C4</a></sub>
 
 </div>
 
 ---
 
-## 1 · 问题
+## 1 · The Problem
 
-![真实终端演示](docs/diagrams/demo.gif)
+![Real terminal demo](docs/diagrams/demo.gif)
 
-<sub>27 秒真实终端录制 · <a href="docs/diagrams/demo.cast">asciicast 源</a>(可在 <a href="https://asciinema.org">asciinema.org</a> 播放,或本地 `asciinema play docs/diagrams/demo.cast`)</sub>
+<sub>27-second real terminal recording · <a href="docs/diagrams/demo.cast">asciicast source</a> (playable on <a href="https://asciinema.org">asciinema.org</a> or locally with `asciinema play docs/diagrams/demo.cast`)</sub>
 
-每个用 AI 做严肃项目的团队,都踩过这些坑:
+Every team using AI for serious work has hit some version of these:
 
-| 踩过的坑 | 为什么痛 |
-|---------|---------|
-| Agent 中途忘掉阶段顺序,跳到写代码 | 设计半成品、需求丢失、review 重做 |
-| 长会话上下文爆炸,需求/设计/代码全丢 | 跨天/跨会话无法续上,只能推倒重来 |
-| OpenCode / Claude / Codex / Cursor 各自一套流程 | 同一特性四种仪式,新人按工具入职而不是按团队 |
-| 改个 typo 也要走完九阶段 | 死板流水线吃光小修复的节奏 |
-| 关键节点不敢让 AI 拍板 | 没有 `--approver` 的人类门控,review 形同虚设 |
-| 装好的 Skill 到底在干啥没人说得清 | 文档和实际行为漂移,出问题没审计 |
-| 想跟 OMC / OMX 共存 | 锁死单一编排器就丢掉了可组合性 |
+| Pain you've hit | Why it bites |
+|-----------------|--------------|
+| Agent forgets the phase order mid-task and jumps to code | Lost context, half-baked designs, untested changes — review has to redo the work |
+| Context explodes mid-change, requirements / design / code all lost | Long sessions die; resume from chat is impossible |
+| Each of OpenCode / Claude / Codex / Cursor has its own ad-hoc flow | Same feature, four different rituals — onboarding is per-tool, not per-team |
+| Even a typo fix has to go through nine stages | Rigid pipelines kill momentum on small fixes |
+| Don't dare let AI decide at critical nodes | "Looks good" review without a human sign-off is gambling with prod |
+| Don't know what the installed Skills are actually doing | Drift between docs and installed behavior, no audit trail |
+| Want to coexist with OMC / OMX | Lock-in to one orchestrator stack kills composability |
 
-TaiyiForge 对每个问题的回答都在 [§2 方案](#2--方案)。
+TaiyiForge's answer to every one of these is in [§2 The Solution](#2--the-solution).
 
 ---
 
-## 2 · 方案
+## 2 · The Solution
 
-**一条九阶段工件契约** + **28 条 v28 顶栏 slash + 6 个 umbrella** + **一套 `/taiyi:*`
-词汇表**,在四套 AI 终端里行为完全一致。
+A **single nine-stage artifact contract** + **28 v28 slashes + 6 umbrellas** + **one
+`/taiyi:*` vocabulary** that works the same on all four AI harnesses.
 
 > **v28 = 推荐命名 + 顶栏收敛,Cursor/Claude 仍装全 prompt。Phase 2(IDE 菜单裁剪)未做,见 [canonical-commands.md](docs/taiyi/canonical-commands.md)。**
 
-TaiyiForge 不发明新标准——它把 Harness · OpenSpec · GStack · Superpowers · OMO ·
-Spec-Kit **编排成一台状态机**。装了什么用什么,其余自动跳过。
+TaiyiForge does not invent standards — it **orchestrates Harness · OpenSpec · GStack ·
+Superpowers · OMO · Spec-Kit into one state machine**. Use what you have installed;
+everything else is auto-skipped as optional.
 
-### 2.1 · 九阶段主流程
+### 2.1 · The Nine-Stage Workflow
 
-一个 change = 一个 slug,顺序执行,产出固定。**人类门控**必须带 `--approver`
-才能放行。
+One change = one slug, sequential execution, fixed artifacts. **Human gates** require
+`--approver` before the engine lets you pass.
 
-| # | 阶段 | 类别 | Skill | 产出 | 备注 |
-|---|------|------|-------|------|------|
-| 1 | change | 人类门控 | `taiyi-change` | `CHANGE.md` | 3-5 段方案 + 范围 |
-| 2 | requirement | 自动 | `taiyi-requirement` | `REQUIREMENT.md` | 验收标准 + AC 复选框 |
-| 3 | design | 人类门控 | `taiyi-design` | `DESIGN.md` | ≥2 方案对比 + 决策 |
-| 4 | ui-design | 自动 | `taiyi-ui-design` | `UI-DESIGN.md` | 仅触 UI 的 change |
-| 5 | task | 自动 | `taiyi-task` | `TASK.md` | 切成可独立 PR 的片段 |
-| 6 | dev | 自动 | `taiyi-dev` | TDD 测试 + 最小实现 | **强制 TDD**——先红后绿 |
-| 7 | test | 自动 | `taiyi-test` | `TEST.md` | 留摘要,E2E 跑 CI |
-| 8 | review | 人类门控 | `taiyi-review` | `REVIEW.md` | 跨 AI 评审 + 高危必改 |
-| 9 | integration | 自动 | `taiyi-integration` | `CHANGELOG.md` 合并 | 交付门控: `audit` + `deliveryVerifyCmd` |
-| — | archive | 收尾 | `taiyi-integration` | `.taiyi/archive/` | 九阶段全过后才执行 |
+| # | Phase | Category | Skill | Artifact | Notes |
+|---|-------|----------|-------|----------|-------|
+| 1 | change | Human gate | `taiyi-change` | `CHANGE.md` | 3-5 paragraph proposal with scope |
+| 2 | requirement | Auto | `taiyi-requirement` | `REQUIREMENT.md` | Acceptance criteria + AC checkbox |
+| 3 | design | Human gate | `taiyi-design` | `DESIGN.md` | ≥2 options compared + decision |
+| 4 | ui-design | Auto | `taiyi-ui-design` | `UI-DESIGN.md` | Only for changes that touch UI |
+| 5 | task | Auto | `taiyi-task` | `TASK.md` | Slice into independently-PR-able pieces |
+| 6 | dev | Auto | `taiyi-dev` | TDD test + minimal impl | **TDD forced** — red first, then green |
+| 7 | test | Auto | `taiyi-test` | `TEST.md` | Summary kept; E2E runs in CI |
+| 8 | review | Human gate | `taiyi-review` | `REVIEW.md` | Cross-AI review + high-severity must-fix |
+| 9 | integration | Auto | `taiyi-integration` | `CHANGELOG.md` merged | Delivery gate: `audit` + `deliveryVerifyCmd` |
+| — | archive | Cleanup | `taiyi-integration` | `.taiyi/archive/` | Only after all nine stages pass |
 
-完整命令表 → **[canonical-commands.md](docs/taiyi/canonical-commands.md)** · 工件布局 → **[artifact-layout.md](docs/taiyi/artifact-layout.md)**
+Full command list → **[canonical-commands.md](docs/taiyi/canonical-commands.md)** · Artifact layout → **[artifact-layout.md](docs/taiyi/artifact-layout.md)**
 
-### 2.2 · v28 顶栏命令(28 条)
+### 2.2 · v28 Slash Catalog (28)
 
-真源: [canonical-commands.md](docs/taiyi/canonical-commands.md) → `canonical_v28`。
-旧 slash 仍可用,见 [Legacy 兼容](#legacy-兼容)。
+Source of truth: [canonical-commands.md](docs/taiyi/canonical-commands.md) →
+`canonical_v28`. Legacy slashes still work, see [Legacy 兼容](#legacy-兼容).
 
-| # | 分组 | Slash | 用途 |
-|---|------|-------|------|
-| 1–6 | 主链 | `new` · `status` · `write` · `continue` · `apply` · `archive` | 日常最短路径 |
-| 7–10 | 会话 | `handoff` · `resume` · `cancel` · `list` | 跨会话 |
-| 11–13 | 排查 | `doctor` · `audit` · `verify` | 自检 + 交付门控 |
-| 14–17 | 交付 | `commit` · `ship` · `land` · `release` | gstack 交付链 |
-| 18–19 | 路由 | `gstack <skill>` · `sp <skill>` | 外部 harness 路由 |
-| 20–22 | 阶段捷径 | `explore` · `tdd plan\|dev` · `flow` | 跳过九阶段 |
-| 23–28 | **Umbrellas(6)** | `token …` · `test …` · `review …` · `diagram …` · `mode …` · `workflow …` | 领域多子命令 |
+| # | Group | Slash | Purpose |
+|---|------|------|---------|
+| 1–6 | Main chain | `new` · `status` · `write` · `continue` · `apply` · `archive` | Daily shortest path |
+| 7–10 | Session | `handoff` · `resume` · `cancel` · `list` | Cross-session |
+| 11–13 | Diagnose | `doctor` · `audit` · `verify` | Self-check + delivery gate |
+| 14–17 | Delivery | `commit` · `ship` · `land` · `release` | gstack delivery chain |
+| 18–19 | Routing | `gstack <skill>` · `sp <skill>` | External harness routing |
+| 20–22 | Stage shortcuts | `explore` · `tdd plan\|dev` · `flow` | Skip the nine-stage |
+| 23–28 | **Umbrellas (6)** | `token …` · `test …` · `review …` · `diagram …` · `mode …` · `workflow …` | Domain multi-subcommand |
 
-**日常最短路径**:
+**Daily shortest path**:
 
 ```text
 /taiyi:new → /taiyi:write → /taiyi:continue → /taiyi:apply → … → /taiyi:commit → /taiyi:continue integration → /taiyi:archive
 ```
 
-**Umbrella 速查**(完整地图见 [canonical-commands.md §伞形命令·子命令地图](docs/taiyi/canonical-commands.md)):
+**Umbrella quick map** (full map in [canonical-commands.md §伞形命令·子命令地图](docs/taiyi/canonical-commands.md)):
 
-| Umbrella | 子命令 | 数量 |
-|----------|-------|----:|
+| Umbrella | Sub-commands | Count |
+|----------|--------------|------:|
 | `/taiyi:token` | `status` · `record` · `scan` · `compress` | 4 |
 | `/taiyi:test` | `smoke` · `e2e` · `qa` · `ui` · `security` | 5 |
 | `/taiyi:review` | `loop` · `check` · `health` · `gstack` | 4 |
@@ -119,11 +120,11 @@ Spec-Kit **编排成一台状态机**。装了什么用什么,其余自动跳过
 
 ### 2.3 · Legacy 兼容
 
-旧 slash & CLI **仍可用**——完整列表见
-[canonical-commands.md §Legacy 兼容](docs/taiyi/canonical-commands.md)。不要在
-v28 umbrella 之外再添新的顶栏重复。
+Legacy slashes & CLI **still work** — listed in
+[canonical-commands.md §Legacy 兼容](docs/taiyi/canonical-commands.md). Don't add new
+top-bar duplicates of v28 umbrellas.
 
-| 旧 / legacy | v28 现用 |
+| 曾用 / legacy | v28 现用 |
 |------|----------|
 | `/taiyi:pause` | `/taiyi:handoff` |
 | `/taiyi:state` · `/taiyi:state-read` | `/taiyi:status` |
@@ -134,65 +135,67 @@ v28 umbrella 之外再添新的顶栏重复。
 
 ---
 
-## 3 · 证据
+## 3 · The Evidence
 
-### 3.1 · 一套 Skill,四端共享
+### 3.1 · One Skill Set, Four Harnesses
 
-一条 `node scripts/taiyi-forge.sh install --all` 同步到四端,缺哪端就跳过哪端。
-28 条 v28 顶栏 slash 相同,`taiyi-*` Skill 相同——每端的聊天语法和 MCP 暴露不同:
+One `node scripts/taiyi-forge.sh install --all` syncs to all four harnesses; missing
+ones are auto-skipped. Same 28 v28 顶栏 slashes, same `taiyi-*` Skills — different
+chat syntax & MCP surface per harness:
 
-| Harness | 聊天入口 | 引擎入口 | MCP | Hook / 关键词 | 详见 |
-|---------|---------|---------|-----|---------------|------|
-| **Claude Code** | `/taiyi:new … /taiyi:archive` + Skill + `~/.claude/commands/taiyi-*.md` | Agent 跑 Bash | `taiyi_doctor` · `taiyi_audit` | keyword hook | [control-plane.md §四端对照](docs/taiyi/control-plane.md) |
-| **Codex** | `$taiyi-new` … `$taiyi-archive`(`prompts/taiyi-*.md`——**不是** `/taiyi:*`) | Agent 跑 `scripts/taiyi-forge.sh` | 无(靠 shell) | `codex-keyword-preflight.mjs` + `developer_instructions`(`~/.codex/config.toml`) | [control-plane.md §Codex](docs/taiyi/control-plane.md) |
-| **Cursor** | `/taiyi:new … /taiyi:status` + `taiyiforge.mdc` 规则 + `~/.cursor/commands/taiyi-*.md` | Agent 终端 / MCP | `taiyi_doctor` · `taiyi_audit` | keyword hook | [mcp-setup.md](docs/taiyi/mcp-setup.md) |
-| **OpenCode** | `taiyi_new` / `taiyi_*` 插件工具 + `~/.config/opencode/commands/taiyi-*.md` | plugin + `/taiyi-*` 斜杠 | (插件内置) | 插件自管 | [control-plane.md §OpenCode](docs/taiyi/control-plane.md) |
+| Harness | Chat entry | Engine entry | MCP | Hook / keyword | Read more |
+|---------|-----------|-------------|-----|----------------|-----------|
+| **Claude Code** | `/taiyi:new … /taiyi:archive` + Skill + `~/.claude/commands/taiyi-*.md` | Agent Bash | `taiyi_doctor` · `taiyi_audit` | keyword hook | [control-plane.md §四端对照](docs/taiyi/control-plane.md) |
+| **Codex** | `$taiyi-new` … `$taiyi-archive`（`prompts/taiyi-*.md` — **not** `/taiyi:*`） | Agent 跑 `scripts/taiyi-forge.sh` | 无（靠 shell） | `codex-keyword-preflight.mjs` + `developer_instructions`（`~/.codex/config.toml`） | [control-plane.md §Codex](docs/taiyi/control-plane.md) |
+| **Cursor** | `/taiyi:new … /taiyi:status` + `taiyiforge.mdc` rule + `~/.cursor/commands/taiyi-*.md` | Agent 终端 / MCP | `taiyi_doctor` · `taiyi_audit` | keyword hook | [mcp-setup.md](docs/taiyi/mcp-setup.md) |
+| **OpenCode** | `taiyi_new` / `taiyi_*` plugin tools + `~/.config/opencode/commands/taiyi-*.md` | plugin + `/taiyi-*` 斜杠 | （插件内置） | plugin 自管 | [control-plane.md §OpenCode](docs/taiyi/control-plane.md) |
 
-> **Codex 注意**:聊天入口是 `$taiyi-*` 关键词(不是 `/taiyi:*`),通过
-> `codex-keyword-preflight.mjs` 和 `developer_instructions` 路由。见
-> [control-plane.md](docs/taiyi/control-plane.md)。
+> **Codex 注意**：chat entry is the `$taiyi-*` keyword (not `/taiyi:*`), routed via
+> `codex-keyword-preflight.mjs` and `developer_instructions`. See
+> [control-plane.md](docs/taiyi/control-plane.md).
 
-### 3.2 · 聊天轨 vs 引擎轨
+### 3.2 · Chat Track vs Engine Track
 
-| 表面 | 谁在用 | 干啥 | 例子 |
-|------|-------|------|------|
-| **聊天 slash** | 开发者 / Agent | 写工件、跑 TDD、加载专用 Skill | `/taiyi:write` · `/taiyi:apply` · `/taiyi:tdd dev` |
-| **引擎 CLI** | Agent / CI(代用户跑) | 校验工件、放行门控、推进阶段 | `npx taiyi continue <slug>` · `npx taiyi complete <slug> change --approver "…"` |
-| **Shell 入口** | Agent / CI | 等价于 CLI;安装到消费项目后写入 | `scripts/taiyi-forge.sh status --json --compact` |
-| **MCP** | Cursor 等 | 只读排障 | `taiyi_doctor` · `taiyi_audit` |
+| Surface | Used by | Does what | Example |
+|---------|---------|-----------|---------|
+| **Chat slash** | Developer / Agent | Write artifact, run TDD, load specialized Skill | `/taiyi:write` · `/taiyi:apply` · `/taiyi:tdd dev` |
+| **Engine CLI** | Agent / CI (run **for** you) | Validate artifact, gates, advance phase | `npx taiyi continue <slug>` · `npx taiyi complete <slug> change --approver "…"` |
+| **Shell entry** | Agent / CI | Equivalent to CLI; written into consumer project after install | `scripts/taiyi-forge.sh status --json --compact` |
+| **MCP** | Cursor etc. | Read-only troubleshooting | `taiyi_doctor` · `taiyi_audit` |
 
-**原则**:用户只说 `/taiyi:*`;**绝不**让用户手打 `taiyi-forge.sh`。Agent 读
-`status --json --compact` 的 `engineTruth`;不要把整份工件塞进聊天。
+**Principle**: Users only say `/taiyi:*`; **never** make the user type
+`taiyi-forge.sh` by hand. Agents read `status --json --compact` `engineTruth`;
+never dump full artifacts into chat.
 
-### 3.3 · 架构一图
+### 3.3 · Architecture at a Glance
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│  入口: taiyi CLI · taiyi-forge.sh · OpenCode plugin · MCP    │
+│  Entry: taiyi CLI · taiyi-forge.sh · OpenCode plugin · MCP    │
 └───────────────────────────┬─────────────────────────────────┘
                             ▼
 ┌─────────────────────────────────────────────────────────────┐
-│  workflow-engine — 意图分析 · token 预算 · 路由 · 门控 │
+│  workflow-engine — intent analysis · token budget · routing · gates │
 └───────────────────────────┬─────────────────────────────────┘
                             ▼
 ┌─────────────────────────────────────────────────────────────┐
-│  .taiyi/changes/<slug>/  — CHANGE … CHANGELOG(真源)         │
+│  .taiyi/changes/<slug>/  — CHANGE … CHANGELOG (source of truth)  │
 └─────────────────────────────────────────────────────────────┘
-   聊天加载 taiyi-* Skill 写工件 ↑   ↓ 引擎校验并推进阶段
+         chat loads taiyi-* Skill to write artifacts ↑   ↓ engine validates & advances phase
 ```
 
-- 代码布局 → **[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)**
-- C4 源 → **[docs/c4/](docs/c4/)**
-- 视觉海报(README 顶部)→ [docs/diagrams/visual/](docs/diagrams/visual/)
+- Code layout → **[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)**
+- C4 source → **[docs/c4/](docs/c4/)**
+- Visual poster (top of README) → [docs/diagrams/visual/](docs/diagrams/visual/)
 
 ---
 
-## 4 · 快速上手
+## 4 · Quick Start
 
-> **状态说明**:v0.23.0 **尚未发布到 npm**。当前唯一的安装方式是 **从源码**。CI 已绿,
-> npm 紧随其后;badge 届时自动切换。
+> **Status note**: v0.23.0 **is not yet published to npm**. The only install path right
+> now is **from source**. CI is green, npm will follow; badges will switch automatically.
 
-### 方式 A · 源码安装(推荐,现成可用)
+### Option A · Source install (recommended, ready now)
 
 ```bash
 git clone https://github.com/Dong90/oh-my-taiyiforge.git
@@ -200,75 +203,77 @@ cd oh-my-taiyiforge
 npm install && npm run build && npm test
 ```
 
-### 方式 B · 装到本项目(同样源码路径)
+### Option B · Install into your project (also source)
 
 ```bash
 git clone https://github.com/Dong90/oh-my-taiyiforge.git
 cd oh-my-taiyiforge
 npm install && npm run build
 
-# 一键装到四端 + 可选铁三角
+# Install to all four harnesses + optional triangles
 # (OpenSpec / gstack / Superpowers / web-quality-skills)
 node scripts/taiyi-forge.sh install --all
 
-# 或一次一端:
+# Or one harness at a time:
 node scripts/taiyi-forge.sh install --cursor
 node scripts/taiyi-forge.sh install --claude --cursor
-# 跳过可选依赖:
+# Skip optional deps:
 node scripts/taiyi-forge.sh install --all --skip-deps
 ```
 
-### 方式 C · 跑通示例工程(零安装,快速体验)
+### Option C · Run the example projects (zero-install quick feel)
 
 ```bash
 cd examples/commands-smoke
 npm install
-npm run chat-demo          # 聊天动词: new / status / check / continue
-npm run walkthrough-e2e    # 九阶段 shell E2E + 铁三角
-# /taiyi:doctor           # 工作区 + 安装自检(聊天 slash)
+npm run chat-demo          # Chat verbs: new / status / check / continue
+npm run walkthrough-e2e    # Nine-stage shell E2E + iron-triangle
+# /taiyi:doctor           # Workspace + install self-check (chat slash)
 ```
 
-| 示例 | 用途 |
-|------|------|
-| [examples/full-flow-demo](examples/full-flow-demo/README.md) | 九阶段 + slash E2E |
-| [examples/commands-smoke](examples/commands-smoke/) | 命令冒烟测试 |
-| [examples/browser-e2e-smoke](examples/browser-e2e-smoke/) | CI 模板 |
-| [examples/verification-suite](examples/verification-suite/) | 极简集成验证 |
+| Example | Purpose |
+|---------|---------|
+| [examples/full-flow-demo](examples/full-flow-demo/README.md) | Nine-stage + slash E2E |
+| [examples/commands-smoke](examples/commands-smoke/) | Command smoke tests |
+| [examples/browser-e2e-smoke](examples/browser-e2e-smoke/) | CI templates |
+| [examples/verification-suite](examples/verification-suite/) | Minimal integration demo |
 
-> 想用 `npm install oh-my-taiyiforge`?等 [Releases](https://github.com/Dong90/oh-my-taiyiforge/releases)
-> 公告,这里会先亮。
+> Want `npm install oh-my-taiyiforge`? Wait for the
+> [Releases](https://github.com/Dong90/oh-my-taiyiforge/releases) announcement — it'll
+> light up here first.
 
-### 方式 D · 第一个 change(5 分钟)
+### Option D · Your first change (5 minutes)
 
 ```bash
-# 推荐入口: 自动 slug + 引擎引导
+# Recommended entry: auto-slug + engine guidance
 npx taiyi walkthrough
-npx taiyi new "优化登录流程"     # 写到 .taiyi/changes/<slug>/
-npx taiyi status                   # 当前阶段 + 推荐 Skill + 下一步
+npx taiyi new "Add login optimization"  # writes to .taiyi/changes/<slug>/
+npx taiyi status                         # current phase + recommended Skill + next step
 
-# 编辑 .taiyi/changes/<slug>/CHANGE.md,然后:
-npx taiyi complete <slug> change --approver "你的名字"   # 人类门控
-npx taiyi continue <slug>                                # 自动门控
+# Edit .taiyi/changes/<slug>/CHANGE.md, then:
+npx taiyi complete <slug> change --approver "your-name"   # human gate
+npx taiyi continue <slug>                                 # auto gate
 
-# 在聊天里(OpenCode / Claude / Cursor——Codex 用 `$taiyi-*` 关键词):
-/taiyi:new "<feature title>"              # 落 CHANGE.md 模板
-/taiyi:status                             # 当前阶段 + 推荐 Skill + 下一步
-/taiyi:write                              # 写当前阶段工件(覆盖 9 阶段)
-/taiyi:continue --approver "你的名字"     # 人类门控(change / design / review)
+# In chat (OpenCode / Claude / Cursor — Codex uses `$taiyi-*` keywords instead):
+/taiyi:new "<feature title>"              # lay CHANGE.md template
+/taiyi:status                             # current phase + recommended Skill + next step
+/taiyi:write                              # write current phase artifact (handles 9 stages)
+/taiyi:continue --approver "your-name"    # human gate (change / design / review)
 /taiyi:apply                              # dev/test harness checklist
-/taiyi:commit                             # dev 后带 Taiyi-Change trailer 的提交
-/taiyi:archive                            # 九阶段全过后归档
+/taiyi:commit                             # post-dev commit with Taiyi-Change trailer
+/taiyi:archive                            # archive after all nine stages
 
-# 常用 umbrella 一行:
-/taiyi:doctor                             # 安装 + 工作区自检
-/taiyi:token compress <slug>              # 长会话 → CONTEXT-COMPACT.md
-/taiyi:test smoke                         # Playwright 内置冒烟
-/taiyi:flow bug <slug>                    # 小修复走 lite 路径
+# Common umbrella picks:
+/taiyi:doctor                             # install + workspace self-check
+/taiyi:token compress <slug>              # long-session → CONTEXT-COMPACT.md
+/taiyi:test smoke                         # Playwright built-in smoke
+/taiyi:flow bug <slug>                    # lite path for small fixes
 ```
 
-就这些。**阶段顺序、工件模板、门控校验全是引擎的活**。你只管写 Markdown 和代码。
+That's it. **Phase order, artifact templates, gate validation are the engine's job**.
+You write Markdown and code.
 
-Agent 排障:
+Agent-priority troubleshooting:
 
 ```bash
 scripts/taiyi-forge.sh doctor --json --compact
@@ -277,28 +282,28 @@ scripts/taiyi-forge.sh audit --json --compact
 
 ---
 
-## 5 · 参考
+## 5 · Reference
 
-### 5.1 · 文档导航
+### 5.1 · Documentation
 
-| 文档 | 覆盖什么 | 何时读 |
-|------|---------|-------|
-| [docs/QUICKSTART.md](docs/QUICKSTART.md) | 5 分钟走通 | 首次安装 |
-| [docs/USAGE.md](docs/USAGE.md) | 场景 · 日常节奏 · 交付链 | 走通之后 |
-| [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | 架构概览 + 代码布局 | 改引擎 / 排障 |
-| [docs/taiyi/canonical-commands.md](docs/taiyi/canonical-commands.md) | v28 slash 命令表 | 查命令 |
-| [docs/taiyi/control-plane.md](docs/taiyi/control-plane.md) | Agent 纪律 + token 纪律 | 给 Agent 做 onboarding |
-| [docs/taiyi/full-oss-flow.md](docs/taiyi/full-oss-flow.md) | Superpowers + 全插件演示 | 想看完整端到端 |
-| [docs/taiyi/integrations.md](docs/taiyi/integrations.md) | 铁三角 + 插件集成 | 装可选件 |
-| [AGENTS.md](AGENTS.md) | Agent 的读态入口 | 配置 Agent |
-| [CONTRIBUTING.md](CONTRIBUTING.md) | 贡献指南 | 开 PR 之前 |
-| [CHANGELOG.md](CHANGELOG.md) | 发布说明 | 查更新 |
-| [docs/diagrams/demo.gif](docs/diagrams/demo.gif) | 真实终端录制(27s) | 快速感受引擎 |
-| [README.md](README.md) | English | English users |
+| Document | What it covers | When to read |
+|----------|---------------|--------------|
+| [docs/QUICKSTART.md](docs/QUICKSTART.md) | 5-minute walkthrough | First install |
+| [docs/USAGE.md](docs/USAGE.md) | Scenarios · daily rhythm · delivery chain | After the walkthrough |
+| [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | Architecture overview + code layout | Hacking the engine / debugging |
+| [docs/taiyi/canonical-commands.md](docs/taiyi/canonical-commands.md) | v28 slash command table | Looking up a command |
+| [docs/taiyi/control-plane.md](docs/taiyi/control-plane.md) | Agent discipline + token discipline | Onboarding an Agent |
+| [docs/taiyi/full-oss-flow.md](docs/taiyi/full-oss-flow.md) | Superpowers + all-plugins demo | Want a full end-to-end |
+| [docs/taiyi/integrations.md](docs/taiyi/integrations.md) | Iron triangle + plugin integrations | Installing optional pieces |
+| [AGENTS.md](AGENTS.md) | Agent's read-state entry point | Configuring Agents |
+| [CONTRIBUTING.md](CONTRIBUTING.md) | Contribution guide | Before opening a PR |
+| [CHANGELOG.md](CHANGELOG.md) | Release notes | Checking for updates |
+| [docs/diagrams/demo.gif](docs/diagrams/demo.gif) | Real terminal recording (27s) | Quick feel of the engine |
+| [README.zh-CN.md](README.zh-CN.md) | 简体中文版 | 中文用户 |
 
-### 5.2 · 开发与验证
+### 5.2 · Development & Verification
 
-**贡献者克隆:**
+**Contributor clone:**
 
 ```bash
 git clone https://github.com/Dong90/oh-my-taiyiforge.git
@@ -307,45 +312,46 @@ npm install && npm run build && npm test
 node scripts/taiyi-forge.sh install --all
 ```
 
-**常用命令:**
+**Common commands:**
 
 ```bash
-npm test               # Vitest 契约 + 九阶段 E2E
-npm run test:watch     # 监听模式
+npm test               # Vitest contracts + nine-stage E2E
+npm run test:watch     # watch mode
 npm run build          # TypeScript → dist/
-npm run dogfood        # 根仓库自吃狗粮演示
-npm run ci:platforms   # 四端冒烟(opencode/claude/codex/cursor)
-npm run check:docs     # doc-vs-commands.yaml 同步校验
+npm run dogfood        # root repo demo (eat your own dog food)
+npm run ci:platforms   # four-platform smoke (opencode/claude/codex/cursor)
+npm run check:docs     # doc-vs-commands.yaml sync check
 ```
 
-CI: [`.github/workflows/ci.yml`](.github/workflows/ci.yml)——平台冒烟跑 4 × ubuntu
-矩阵。
+CI: [`.github/workflows/ci.yml`](.github/workflows/ci.yml) — platform smoke runs across
+a 4 × ubuntu matrix.
 
-### 5.3 · 路线图与状态
+### 5.3 · Roadmap & Status
 
-| 版本 | 状态 | 关键里程碑 |
-|------|------|----------|
-| v0.23.0 | ✅ 已发布 | **canonical v28**: 28 顶栏 slashes + 6 umbrellas(`token`/`test`/`review`/`diagram`/`mode`/`workflow`) + `skill-fusion-principles.md` + `validateV28CatalogSync` gate |
-| v0.24.x | 🚧 进行中 | 首次 npm 发布 · `oh-my-taiyiforge` 零构建安装 · README v28 收敛(本次重写) · umbrella Phase 2(真 IDE 菜单裁剪)延后 |
-| v1.0.0 | ⏳ 计划 | 锁定 9 阶段 API · 四端 parity · 外部案例收集 |
+| Version | Status | Key milestones |
+|---------|--------|----------------|
+| v0.23.0 | ✅ Released | **canonical v28**: 28 顶栏 slashes + 6 umbrellas (`token`/`test`/`review`/`diagram`/`mode`/`workflow`) + `skill-fusion-principles.md` + `validateV28CatalogSync` gate |
+| v0.24.x | 🚧 In progress | First npm release · `oh-my-taiyiforge` zero-build install · README v28 收敛 (this rewrite) · umbrella Phase 2 (real IDE menu trim) deferred |
+| v1.0.0 | ⏳ Planned | Lock 9-stage API · 4-platform parity · external case-study collection |
 
-**已就绪**: 完整九阶段流水线 · 四端共享 Skill · 强制 TDD · token 压缩 · 平台冒烟 CI
-**未就绪**: 一行 npm 安装(v0.24 目标) · 生产级 SLA · 完整 i18n
+**Ready today**: full nine-stage pipeline · four-harness shared Skills · forced TDD ·
+token compression · platform-smoke CI
+**Not yet**: one-line npm install (v0.24 target) · production-grade SLA · full i18n
 
-### 5.4 · 社区与贡献
+### 5.4 · Community & Contributing
 
-- 🐛 **报告 Bug**: [GitHub Issues](https://github.com/Dong90/oh-my-taiyiforge/issues/new) · `bug` 标签
-- 💡 **想法 / RFC**: [Discussions](https://github.com/Dong90/oh-my-taiyiforge/discussions)
-- 🔧 **开 PR**: 先读 [CONTRIBUTING.md](CONTRIBUTING.md);`npm test` + `npm run check:docs` 必须绿
-- ⭐ **Star / Watch**: 点个星,下次发布就收到通知
-- 🧵 **Codex 用户**: 搜 `$taiyi-*` 关键词;四端入口决策树在 [docs/taiyi/invoke.yaml](docs/taiyi/invoke.yaml)
+- 🐛 **Report a bug**: [GitHub Issues](https://github.com/Dong90/oh-my-taiyiforge/issues/new) · `bug` label
+- 💡 **Idea / RFC**: [Discussions](https://github.com/Dong90/oh-my-taiyiforge/discussions)
+- 🔧 **Open a PR**: read [CONTRIBUTING.md](CONTRIBUTING.md) first; `npm test` + `npm run check:docs` must be green
+- ⭐ **Star / Watch**: drop a star to get notified on the next release
+- 🧵 **Codex users**: search for `$taiyi-*` keywords; four-harness entry decision tree in [docs/taiyi/invoke.yaml](docs/taiyi/invoke.yaml)
 
-行为准则: 遵循 [Contributor Covenant](https://www.contributor-covenant.org/) 精神——批评想法,不批评人。
+Code of conduct: follow the [Contributor Covenant](https://www.contributor-covenant.org/) spirit — critique ideas, not people.
 
-### 5.5 · 许可证
+### 5.5 · License
 
 [MIT](LICENSE) © 2026 TaiyiForge contributors
 
-### 5.6 · 致谢
+### 5.6 · Acknowledgments
 
-灵感来自: [oh-my-claudecode](https://github.com/Yeachan-Heo/oh-my-claudecode) · [oh-my-codex](https://github.com/Yeachan-Heo/oh-my-codex) · Harness Engineering · OpenSpec · GStack · Superpowers · OMO · Spec-Kit。
+Inspired by: [oh-my-claudecode](https://github.com/Yeachan-Heo/oh-my-claudecode) · [oh-my-codex](https://github.com/Yeachan-Heo/oh-my-codex) · Harness Engineering · OpenSpec · GStack · Superpowers · OMO · Spec-Kit.
