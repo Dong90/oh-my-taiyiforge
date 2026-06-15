@@ -10,7 +10,7 @@ import { codexPromptsDir, codexConfigPath, claudeConfigDir } from "../src/instal
 import { skillSourceRoot } from "../src/install/paths.js";
 
 const REPO = path.join(path.dirname(fileURLToPath(import.meta.url)), "..");
-const COMMAND_MARKER = "TAIYI-FORGE:CURSOR-COMMAND";
+const COMMAND_MARKER = "TAIYI-FORGE:CHAT-COMMAND";
 const RULE_MARKER = "TAIYI-FORGE:CURSOR-RULE";
 
 function countTaiyiSkills(dir: string): number {

@@ -25,9 +25,9 @@
 
 <br />
 
-![TaiyiForge 架构 — 六套标准 × 工作流引擎 × 九阶段 × Skill 宇宙 × 三层门控](docs/diagrams/visual/taiyiforge-architecture-ai-v023-full-4k.png)
+![TaiyiForge 架构 — 六套标准 × 工作流引擎 × 九阶段 × Skill 宇宙 × 三层门控](docs/taiyiforge-architecture.svg)
 
-<sub>4K 视觉海报(非技术源) · 可编辑源: <a href="docs/taiyiforge-architecture.svg">SVG</a> · <a href="docs/c4/containers.md">C4</a></sub>
+<sub>架构 SVG（矢量 · 55KB · GitHub 秒渲染）· <a href="docs/c4/containers.md">C4 真源</a> · <a href="docs/diagrams/visual/taiyiforge-architecture-ai-v023-full-4k.png">4K PNG 海报</a></sub>
 
 </div>
 
