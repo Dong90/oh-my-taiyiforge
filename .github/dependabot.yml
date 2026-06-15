@@ -10,8 +10,7 @@ updates:
       timezone: Asia/Shanghai
     target-branch: develop
     open-pull-requests-limit: 10
-    reviewers:
-      - Dong90
+    # reviewers 字段已被 GitHub deprecated，改用 CODEOWNERS 自动分派
     labels:
       - dependencies
       - npm
@@ -40,8 +39,7 @@ updates:
       timezone: Asia/Shanghai
     target-branch: develop
     open-pull-requests-limit: 5
-    reviewers:
-      - Dong90
+    # reviewers 字段已被 GitHub deprecated，改用 CODEOWNERS 自动分派
     labels:
       - dependencies
       - github-actions

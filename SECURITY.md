@@ -6,15 +6,13 @@
 
 ### 私下披露渠道
 
-请通过以下方式之一**私下**报告：
+请通过 **GitHub Security Advisories** 私下报告：
 
-1. **GitHub Security Advisories**（推荐）
-   - 访问 https://github.com/Dong90/oh-my-taiyiforge/security/advisories/new
-   - GitHub 会全程加密，只有维护者能看到
+- 访问 https://github.com/Dong90/oh-my-taiyiforge/security/advisories/new
+- GitHub 会全程加密，只有维护者能看到
+- 提交后维护者会在 advisory 下与你讨论细节
 
-2. **邮件**
-   - 发送至维护者邮箱（在 [`AGENTS.md`](./AGENTS.md) 或 GitHub Profile 找到）
-   - 标题以 `[SECURITY]` 开头
+如果你无法访问 GitHub，可在公开 Issue 留下「我发现一个安全问题，请联系我」的简短信息（**不要披露漏洞细节**），维护者会通过 GitHub 私信回复。
 
 ### 报告内容
 
