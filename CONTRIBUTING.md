@@ -133,7 +133,7 @@ npm run dogfood
 npm test
 npm run check:docs
 npm run taiyi -- phases
-npx taiyi doctor --strict-workspace
+npm run taiyi:doctor      # 等价于 npx taiyi doctor --strict-workspace，但用仓库内 tsx 跑
 ```
 
 ## 新增 Skill

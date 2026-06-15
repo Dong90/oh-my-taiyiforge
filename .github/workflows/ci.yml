@@ -6,6 +6,10 @@ on:
   pull_request:
     branches: [main, develop]
 
+# 最小权限原则 — workflow 默认只读 repo 内容
+permissions:
+  contents: read
+
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
@@ -15,6 +19,7 @@ jobs:
   typecheck:
     name: TypeScript typecheck
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -28,8 +33,9 @@ jobs:
   # 主测试 — Node 20 / 22 矩阵 × ubuntu / macos 双 OS
   # engines.node: ">=20" → 至少覆盖 20 + 22
   test:
-    name: test (node ${{ matrix.node }} · ${{ matrix.os }})
+    name: test (node ${{ matrix.node }} / ${{ matrix.os }})
     runs-on: ${{ matrix.os }}
+    timeout-minutes: 20
     strategy:
       fail-fast: false
       matrix:
@@ -47,9 +53,11 @@ jobs:
       - run: npm run ci:verify
 
   # 测试覆盖率 — 单跑一次，结果上传到 GitHub Summary
+  # 没有 continue-on-error：coverage 跑挂等于真挂，让信号清晰
   coverage:
     name: test coverage
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -59,7 +67,6 @@ jobs:
       - run: npm ci
       - name: vitest with coverage
         run: npx vitest run --coverage --reporter=default --coverage.reporter=text --coverage.reporter=json-summary
-        continue-on-error: true
       - name: 上传 coverage 到 PR summary
         if: always()
         run: |
@@ -89,6 +96,7 @@ jobs:
   platform-smoke:
     name: platform-smoke (${{ matrix.platform }})
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     strategy:
       fail-fast: false
       matrix:
@@ -105,9 +113,15 @@ jobs:
 
   # 真装包验证 — npm pack 出 tgz → 全新临时目录 install → CLI smoke
   # 这是 0.23.1 那种「prepublishOnly 都过了但装出来跑不起来」bug 的最后防线
+  # ubuntu + macos 双 OS（review #4：真覆盖 macOS 装包路径）
   pack-smoke:
-    name: pack & install smoke
-    runs-on: ubuntu-latest
+    name: pack & install smoke (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -119,10 +133,11 @@ jobs:
 
       - name: 打 tgz
         id: pack
+        # wc -c 跨 BSD/GNU 兼容；stat -c%s 仅 GNU（Linux），stat -f%z 仅 BSD（macOS）
         run: |
           TGZ=$(npm pack --silent --pack-destination /tmp)
           echo "tgz=/tmp/$TGZ" >> "$GITHUB_OUTPUT"
-          SIZE=$(stat -c%s "/tmp/$TGZ")
+          SIZE=$(wc -c < "/tmp/$TGZ" | tr -d ' ')
           SIZE_KB=$((SIZE / 1024))
           echo "size_kb=$SIZE_KB" >> "$GITHUB_OUTPUT"
           echo "📦 包大小: ${SIZE_KB} KB"
@@ -138,18 +153,19 @@ jobs:
           else
             echo "✅ 包体积正常: ${SIZE_KB} KB"
           fi
-          echo "## 📦 包体积" >> "$GITHUB_STEP_SUMMARY"
+          echo "## 📦 包体积 (${{ matrix.os }})" >> "$GITHUB_STEP_SUMMARY"
           echo "- 当前: **${SIZE_KB} KB**" >> "$GITHUB_STEP_SUMMARY"
           echo "- 预算: < 1024 KB（推荐）· < 2048 KB（硬上限）" >> "$GITHUB_STEP_SUMMARY"
 
       - name: 全新临时目录装包 + CLI smoke
+        # 用 TAIYI_FORGE_SKIP_POSTINSTALL=1 精准跳过本包 postinstall（避免改 runner $HOME）
+        # 而不是 --ignore-scripts —— 后者会顺带跳过所有依赖的 install scripts
         run: |
           TGZ="${{ steps.pack.outputs.tgz }}"
           TMP=$(mktemp -d)
           cd "$TMP"
           npm init -y > /dev/null
-          # --ignore-scripts: postinstall 会改 $HOME 真实配置，CI 隔离环境不该跑
-          npm install "$TGZ" --ignore-scripts --no-audit --no-fund
+          TAIYI_FORGE_SKIP_POSTINSTALL=1 npm install "$TGZ" --no-audit --no-fund
           echo ""
           echo "=== bin: taiyi ==="
           npx --no taiyi --version 2>&1 | head -5
@@ -158,17 +174,67 @@ jobs:
           npx --no taiyi-forge --help 2>&1 | head -5
           echo ""
           echo "=== bin: taiyi-mcp（MCP server stdio）==="
-          timeout 5 bash -c 'echo "{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"tools/list\",\"params\":{}}" | npx --no taiyi-mcp 2>&1' | head -3
+          # macOS 默认无 GNU coreutils 的 timeout；BSD coreutils 装 GNU timeout 路径不一定可达
+          # 用 perl 的 alarm 实现跨平台 5 秒 timeout
+          echo "{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"tools/list\",\"params\":{}}" | \
+            perl -e 'use IPC::Open2; alarm 5; open2(my $out, my $in, "npx", "--no", "taiyi-mcp"); print $in <STDIN>; close $in; while (<$out>) { print }' 2>&1 | head -3
           echo ""
           echo "=== bin: taiyi-forge-install --help ==="
           npx --no taiyi-forge-install --help 2>&1 | head -3
           echo ""
           echo "✅ 4 个 bin 全部能起"
 
+  # postinstall smoke — 隔离 $HOME 跑全套 postinstall，验本包 postinstall.mjs 不挂
+  # 补 pack-smoke 跳过 postinstall 留下的盲点（review #14）
+  postinstall-smoke:
+    name: postinstall smoke (isolated HOME)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+
+      - name: 打 tgz
+        id: pack
+        run: |
+          TGZ=$(npm pack --silent --pack-destination /tmp)
+          echo "tgz=/tmp/$TGZ" >> "$GITHUB_OUTPUT"
+
+      - name: 隔离 HOME 装包 — 跑完整 postinstall.mjs
+        # 用 fake HOME 隔离 runner，避免真改 ~/.cursor、~/.claude 等
+        # 不传 TAIYI_FORGE_SKIP_POSTINSTALL，让 postinstall.mjs 真跑
+        # 但传 TAIYI_FORGE_SKIP_DEPS=1，跳过下载 OpenSpec/gstack 等大依赖（CI 装不上 / 太慢）
+        run: |
+          TGZ="${{ steps.pack.outputs.tgz }}"
+          TMP=$(mktemp -d)
+          FAKE_HOME=$(mktemp -d)
+          cd "$TMP"
+          npm init -y > /dev/null
+          HOME="$FAKE_HOME" \
+          TAIYI_FORGE_SKIP_DEPS=1 \
+          TAIYI_FORGE_SKIP_MCP=1 \
+          TAIYI_FORGE_SKIP_PKG_SCRIPTS=1 \
+          npm install "$TGZ" --no-audit --no-fund 2>&1 | tee install.log
+          echo ""
+          echo "=== postinstall 是否写入 fake HOME ==="
+          find "$FAKE_HOME" -name "taiyi-*" -type d 2>/dev/null | head -10
+          echo ""
+          if grep -qi "error" install.log; then
+            echo "::error::postinstall 出现 error，详见日志"
+            exit 1
+          fi
+          echo "✅ postinstall.mjs 在隔离 HOME 下成功执行"
+
   # prepublishOnly dry-run — PR 阶段就模拟发版流程，避免发版当天才发现挂
   publish-dry-run:
     name: npm publish --dry-run
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4

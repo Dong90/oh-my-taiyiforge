@@ -31,10 +31,12 @@ jobs:
             revert
           # scope 可选；不强制必须有 scope
           requireScope: false
-          # PR title 不允许以大写开头（Conventional Commits 规范）
+          # subject 不允许以大写 A-Z 开头（Conventional Commits 规范，鼓励小写动词）
+          # 注意：中文字符不算 A-Z，所以 `feat: 加日志` 这种中文 PR title 会通过 —— 这是项目语言习惯，刻意保留
           subjectPattern: ^[^A-Z].+
           subjectPatternError: |
-            PR 标题主体（: 后面的部分）应以小写字母开头。
+            PR 标题主体（: 后面的部分）应以小写字母或中文字符开头。
             例如：
               ✅ feat(cli): add --json flag
+              ✅ feat(cli): 加 --json 选项
               ❌ feat(cli): Add --json flag
