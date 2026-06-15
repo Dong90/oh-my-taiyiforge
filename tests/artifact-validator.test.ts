@@ -142,4 +142,35 @@ Low — config only
     expect(r.scores.consistency).toBe(true);
     expect(r.scores.verifiability).toBe(true);
   });
+
+  it("allows Out of Scope: none without pending-language hint", () => {
+    const body = `# REQUIREMENT: Demo
+
+## User Stories
+
+| ID | As a… | I want… | So that… |
+|----|--------|---------|----------|
+| US-1 | user | login | access app |
+
+## Acceptance Criteria (Given / When / Then)
+
+### US-1
+
+- **Given** user on login page with valid account
+- **When** user submits correct credentials
+- **Then** user lands on dashboard home screen
+
+## Traceability
+
+| AC | Links to CHANGE.md |
+|----|-------------------|
+| US-1 | Motivation |
+
+## Out of Scope
+
+none
+`;
+    const r = validateArtifactContent("requirement", body);
+    expect(r.hints.some((h) => /待补|TODO/i.test(h))).toBe(false);
+  });
 });

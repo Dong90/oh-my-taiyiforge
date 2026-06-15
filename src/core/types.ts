@@ -36,7 +36,7 @@ export type GateInput = {
   human: HumanApproval;
 };
 
-export type ChangeProfile = "full" | "api" | "ui" | "lite";
+export type ChangeProfile = "full" | "api" | "ui" | "lite" | "spike" | "micro" | "nano";
 
 export type WorkflowStatus = "active" | "completed" | "aborted";
 

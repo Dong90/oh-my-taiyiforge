@@ -3,9 +3,9 @@
 > C4 真源：[`../c4/containers.md`](../c4/containers.md) · Context：[`../c4/context.md`](../c4/context.md) · 证据说明：[`../c4/README.md`](../c4/README.md)  
 > **产品全景海报**（Flow-X）：[`../taiyiforge-architecture.svg`](../taiyiforge-architecture.svg) · [`../taiyiforge-architecture.png`](../taiyiforge-architecture.png)  
 > **流水线**：[`pipeline.md`](pipeline.md) · C4 预览 SVG：[`../c4/png/`](../c4/png/)  
-> **视觉架构稿**：[`visual/taiyiforge-architecture-ai-4k.png`](visual/taiyiforge-architecture-ai-4k.png)（4K · gpt-image-2）· [`visual/taiyiforge-architecture-ai.png`](visual/taiyiforge-architecture-ai.png) · [`visual/architecture-vercel-mesh.png`](visual/architecture-vercel-mesh.png)  
-> 源文件：[`architecture-vercel-mesh.html`](visual/architecture-vercel-mesh.html) · [`architecture-poster.html`](visual/architecture-poster.html)  
-> 重生成海报：`python3 scripts/generate-architecture-svg.py` · 重导 PNG：`node scripts/capture-poster.mjs <url> <out.png>`
+> **README 架构海报（v0.23.0）**：[`visual/taiyiforge-architecture-ai-v023-full-4k.png`](visual/taiyiforge-architecture-ai-v023-full-4k.png)  
+> **风格样张（旧版内容）**：[`visual/taiyiforge-architecture-ai-4k.png`](visual/taiyiforge-architecture-ai-4k.png)  
+> 重生成 SVG/PNG 海报：`python3 scripts/generate-architecture-svg.py`
 
 更新：2026-06-08 · 本文只维护 **工程补充图**；C4 L1/L2 不重复，见 `docs/c4/`
 

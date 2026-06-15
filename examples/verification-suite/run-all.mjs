@@ -22,6 +22,11 @@ run("L0 build", "npm", ["run", "build"]);
 run("L0–L3 + L4 无头契约（全量 vitest）", "npm", ["test"]);
 run("L1 examples 就地落盘", "node", ["examples/full-flow-demo/scripts/run-inplace-verify.mjs"]);
 
+console.log("\n→ 可选 browser E2E（/taiyi:e2e 等价）:");
+console.log("  /taiyi:browser-smoke  →  scripts/taiyi-forge.sh browser-smoke");
+console.log("  node examples/browser-e2e-smoke/run-verify.mjs");
+console.log("  npm test -- tests/browser-e2e-smoke.test.ts");
+
 console.log("\n✓ 自动化验证完成（419+ 项 vitest + 就地落盘）");
 console.log("→ 可选真机: TAIYI_VERIFY_REAL_INSTALL=1 npm test -- tests/post-install-smoke.test.ts");
 console.log("→ 仅剩人工: IDE 内 Hook 触发时机、LLM 工件内容质量（抽样 UAT）");

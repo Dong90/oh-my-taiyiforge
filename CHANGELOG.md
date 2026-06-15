@@ -1,5 +1,59 @@
 # Changelog
 
+## [0.23.1] - 2026-06-12
+
+### Changed
+
+- **README 重写为 5 段式**(问题 → 方案 → 证据 → 快速上手 → 参考),中英两版同构对齐
+- **v28 收敛**:`v28 canonical` badge、Slash Catalog 28 条表、6 umbrella 速查、Legacy 兼容表全量补齐;中文版之前对 v28 是 0% 落地,本次同步到位
+- **`/taiyi:mode` umbrella 补齐 11 个子命令**(`agent` / `step` / `stop` / `list` 补上),与 `commands.yaml` / `canonical-commands.md` 完全一致
+- **措辞修正**:v28 段从暗示"Cursor/Claude 菜单只剩 28"改为"v28 = 推荐命名 + 顶栏收敛,Cursor/Claude 仍装全 prompt;Phase 2(IDE 菜单裁剪)未做",与 `canonical-commands.md` L11 措辞对齐
+- **结构收敛**:`Quick Start` + `Your First Change` 合并为 4 Option;`Core Capabilities` 段删除(8 条 bullet 全部已在 Why / Nine-stage / Architecture 体现);Legacy 表从 9 行压到 6 行
+- **CLI 风格统一**:用户入口 = 斜杠(`/taiyi:*`),Agent 跑引擎 = `npx taiyi` / `scripts/taiyi-forge.sh`,不再混 `npx taiyi-forge-install` / `npm run`
+
+## [0.23.0] - 2026-06-09
+
+### Added
+
+- **canonical v28**：聊天推荐顶栏收敛为 28 条（主链 / 会话 / 排查 / 交付 / 路由 / 捷径 / 伞形）；legacy 斜杠与 prompt 保留
+- **skill-fusion-principles.md**：主链 / harness / 禁止三层融合原则
+- **catalog 校验**：`validateV28CatalogSync` + `generate:docs` 门禁；`legacy_map` / `token engine_map` → prompt 对账测试
+
+### Changed
+
+- **commands.yaml**：`canonical_v28` + `slash_catalog.recommended_v28` + `legacy_slash` 结构化真源
+- **canonical-commands.md** / **taiyi-help**：v28 叙事 + Phase 1 说明（文档收敛 ≠ Cursor 菜单裁剪）
+- **scenario-shortcuts**：场景剧本改用 v28 伞形推荐路径（`test smoke`、`mode ralph` 等）
+
+## [0.22.2] - 2026-06-09
+
+### Fixed
+
+- **archive**：OpenSpec CLI 失败且 integration 已完成时降级 Taiyi-only 归档（S3/S4）；Taiyi 移动失败不再误报 `ok: true`
+- **daemon dry-run**：轮末兜底早停，避免 blocked 变更空转 max-rounds
+- **handoff**：dated archive 目录（`2026-06-09-<slug>`）noop exit 0
+
+### Added
+
+- **probe-triage**：S0–S10 冒烟矩阵与 S3/S4 archive 根因说明
+- **`/taiyi:help`**：补 `list --archived`、`bug --create`、`smoke-reset` 说明
+- **探测脚本**：`scripts/probes/` + `npm run probe:fullflow` / `probe:postfix`（修正 C1 `--force`、slug 推导、smoke-reset 分通道断言）
+
+## [0.22.1] - 2026-06-09
+
+### Fixed
+
+- **archive 幂等**：支持 dated 归档目录名（如 `2026-06-09-<slug>`）；二次 `archive` exit 0 并输出「已归档 / 幂等 no-op」
+- **消费方 wrapper**：薄 shim 转发 `list "$@"`、`prune`、`smoke-reset` 等；`sync-wrapper` 强制迁移
+- **daemon dry-run**：blocked 变更首轮早停，避免打满 max-rounds 空转
+- **step 完成态**：九阶段已完成 / 已归档时 `step` exit 0
+- **list `--archived`**：仅列 `.taiyi/archive/`；`--all --archived` 才合并 changes+archive
+
+### Added
+
+- **`validateSlug`**：拒绝 NUL 字节，CLI 可读错误
+- **文档**：`docs/taiyi/probe-triage.md`（十轮探测归类）；Skill 补 `list --archived` / `prune --aborted` / `bug --create`
+
 ## [0.22.0] - 2026-06-07
 
 ### Added

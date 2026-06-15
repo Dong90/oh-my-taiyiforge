@@ -6,6 +6,7 @@ import { execSync } from "node:child_process";
 import {
   deliveryGateEnabled,
   evaluateDeliveryGate,
+  isChangeScopedDirtyPath,
 } from "../src/core/gates/delivery-gate.js";
 
 describe("delivery-gate", () => {
@@ -17,7 +18,7 @@ describe("delivery-gate", () => {
     fs.rmSync(dir, { recursive: true, force: true });
   });
 
-  it("fails when no commits ahead of base", () => {
+  it("passes for single-commit repo with clean tree", () => {
     const dir = fs.mkdtempSync(path.join(os.tmpdir(), "taiyi-git-"));
     execSync("git init -b main", { cwd: dir });
     execSync("git config user.email t@test.com", { cwd: dir });
@@ -25,8 +26,18 @@ describe("delivery-gate", () => {
     fs.writeFileSync(path.join(dir, "README.md"), "hi\n");
     execSync("git add README.md && git commit -m init", { cwd: dir, shell: "/bin/bash" });
     const r = evaluateDeliveryGate(dir);
+    expect(r.passed).toBe(true);
+    fs.rmSync(dir, { recursive: true, force: true });
+  });
+
+  it("fails when no commits on branch", () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), "taiyi-git-empty-"));
+    execSync("git init -b main", { cwd: dir });
+    execSync("git config user.email t@test.com", { cwd: dir });
+    execSync("git config user.name test", { cwd: dir });
+    const r = evaluateDeliveryGate(dir);
     expect(r.passed).toBe(false);
-    expect(r.reason).toMatch(/无新 commit/);
+    expect(r.reason).toMatch(/无新 commit|无法比较/);
     fs.rmSync(dir, { recursive: true, force: true });
   });
 
@@ -96,6 +107,38 @@ EOF
     });
     const r = evaluateDeliveryGate(dir);
     expect(r.passed).toBe(true);
+    fs.rmSync(dir, { recursive: true, force: true });
+  });
+
+  it("ignores dirty files from other slugs when slug scoped", () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), "taiyi-scope-dirty-"));
+    execSync("git init -b main", { cwd: dir });
+    execSync("git config user.email t@test.com", { cwd: dir });
+    execSync("git config user.name test", { cwd: dir });
+    fs.writeFileSync(path.join(dir, "README.md"), "init\n");
+    execSync("git add README.md && git commit -m init", { cwd: dir, shell: "/bin/bash" });
+    fs.mkdirSync(path.join(dir, ".taiyi", "changes", "other"), { recursive: true });
+    fs.writeFileSync(path.join(dir, ".taiyi", "changes", "other", "HANDOFF.md"), "handoff\n");
+    fs.mkdirSync(path.join(dir, ".taiyi", "ci-prompts"), { recursive: true });
+    fs.writeFileSync(path.join(dir, ".taiyi", "ci-prompts", "other-integration.txt"), "x\n");
+    expect(isChangeScopedDirtyPath(".taiyi/changes/other/HANDOFF.md", "mine")).toBe(false);
+    const r = evaluateDeliveryGate(dir, { slug: "mine" });
+    expect(r.passed).toBe(true);
+    fs.rmSync(dir, { recursive: true, force: true });
+  });
+
+  it("fails on dirty files scoped to current slug", () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), "taiyi-scope-dirty-fail-"));
+    execSync("git init -b main", { cwd: dir });
+    execSync("git config user.email t@test.com", { cwd: dir });
+    execSync("git config user.name test", { cwd: dir });
+    fs.writeFileSync(path.join(dir, "README.md"), "init\n");
+    execSync("git add README.md && git commit -m init", { cwd: dir, shell: "/bin/bash" });
+    fs.mkdirSync(path.join(dir, ".taiyi", "changes", "mine"), { recursive: true });
+    fs.writeFileSync(path.join(dir, ".taiyi", "changes", "mine", "HANDOFF.md"), "dirty\n");
+    const r = evaluateDeliveryGate(dir, { slug: "mine" });
+    expect(r.passed).toBe(false);
+    expect(r.reason).toMatch(/mine/);
     fs.rmSync(dir, { recursive: true, force: true });
   });
 });

@@ -1,6 +1,26 @@
 import type { PhaseGuide } from "./phase-guide.js";
 import type { ChangeSummary } from "./list-changes.js";
-import { getPhase } from "./phase-registry.js";
+import type { PhaseId } from "./types.js";
+import { listPhases } from "./phase-registry.js";
+
+function profilePhaseOrdinal(
+  skippedPhases: PhaseId[] | undefined,
+  phaseId: PhaseId,
+): { index: number; total: number } {
+  const skipped = new Set(skippedPhases ?? []);
+  const chain = listPhases().filter((p) => !skipped.has(p.id));
+  const idx = chain.findIndex((p) => p.id === phaseId);
+  return {
+    index: idx >= 0 ? idx + 1 : chain.length,
+    total: chain.length,
+  };
+}
+
+function workflowPhaseLabel(total: number): string {
+  if (total === 5) return "五阶段";
+  if (total === 9) return "九阶段";
+  return `${total} 阶段`;
+}
 
 function formatIntentLine(guide: PhaseGuide): string | null {
   const s = guide.intentSignals;
@@ -25,13 +45,37 @@ export function formatPhaseProgressLine(guide: PhaseGuide): string {
     return `阶段: 已完成 ✓ (${guide.completedCount}/${guide.totalPhases}) → /taiyi:archive`;
   }
   if (guide.earlyCodeWarning && guide.currentPhase !== "dev" && guide.currentPhase !== "test") {
-    const order = getPhase(guide.currentPhase).order;
-    return `当前: ${guide.currentPhase}（${order}/${guide.totalPhases}）| ⚠ dev 前有业务代码改动`;
+    const { index, total } = profilePhaseOrdinal(guide.skippedPhases, guide.currentPhase);
+    return `当前: ${guide.currentPhase}（${index}/${total}）| ⚠ dev 前有业务代码改动`;
   }
-  const order = getPhase(guide.currentPhase).order;
+  const { index, total } = profilePhaseOrdinal(guide.skippedPhases, guide.currentPhase);
   const impl = guide.currentPhase === "dev" || guide.currentPhase === "test";
   const verb = impl ? "/taiyi:apply" : "/taiyi:continue";
-  return `当前: ${guide.currentPhase}（${order}/${guide.totalPhases}）| Skill: ${guide.skill} | 推进: ${verb}`;
+  return `当前: ${guide.currentPhase}（${index}/${total}）| Skill: ${guide.skill} | 推进: ${verb}`;
+}
+
+/** /taiyi:status --compact — Agent/终端短输出（无 footer） */
+export function formatStatusCompact(guide: PhaseGuide): string {
+  const lines: string[] = [`# ${guide.slug}`, formatPhaseProgressLine(guide)];
+  if (guide.workflowCompleted) {
+    lines.push("→ /taiyi:archive");
+    return lines.join("\n");
+  }
+  const artifactStatus = guide.qualityReady
+    ? "ready"
+    : guide.artifactIsSeed
+      ? "seed"
+      : "!ready";
+  lines.push(`artifact=${guide.artifact} (${artifactStatus}) | ${guide.nextAction}`);
+  if (guide.stepBlockers?.length) {
+    lines.push(`blockers: ${guide.stepBlockers.join("; ")}`);
+  }
+  if (guide.earlyCodeWarning) {
+    lines.push(`⚠ ${guide.earlyCodeWarning}`);
+  } else if (guide.qualityHints.length && !guide.qualityReady) {
+    lines.push(`hints: ${guide.qualityHints.slice(0, 2).join("; ")}`);
+  }
+  return lines.join("\n");
 }
 
 /** /taiyi:status 人类可读摘要 */
@@ -52,7 +96,7 @@ export function formatStatusPlain(guide: PhaseGuide): string {
   }
   lines.push("");
   if (guide.workflowCompleted) {
-    lines.push("九阶段已全部完成。归档: /taiyi:archive");
+    lines.push(`${workflowPhaseLabel(guide.totalPhases)}已全部完成。归档: /taiyi:archive`);
     return lines.join("\n");
   }
   const artifactStatus = guide.qualityReady
@@ -167,11 +211,12 @@ export function formatGuidePlain(guide: PhaseGuide): string {
 }
 
 export function formatChangeListPlain(changes: ChangeSummary[]): string {
-  if (changes.length === 0) return "（无变更 → /taiyi:new <名称>）";
+  if (changes.length === 0) return "（无匹配变更 → /taiyi:new；归档用 list --archived，全量用 list --all [--archived]）";
   return changes
     .map((c) => {
       const phase = c.workflowCompleted ? "completed" : c.workflowAborted ? "aborted" : c.currentPhase;
-      return `${c.slug}\t${phase}\t${c.completed}/${c.total}\t${c.profile}${c.complexity ? `\t${c.complexity}` : ""}`;
+      const tag = c.archived ? "\t[archived]" : "";
+      return `${c.slug}\t${phase}\t${c.completed}/${c.total}\t${c.profile}${c.complexity ? `\t${c.complexity}` : ""}${tag}`;
     })
     .join("\n");
 }

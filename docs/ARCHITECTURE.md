@@ -26,8 +26,8 @@
 
 <p align="center">
   <img
-    src="./taiyiforge-architecture.png"
-    alt="TaiyiForge 架构图 — 六大标准 × 中心引擎 × 九阶段 × 20 Skill × 三重门禁"
+    src="taiyiforge-architecture.png"
+    alt="TaiyiForge 架构图 — 六大标准 × 中心引擎 × 九阶段 × 23 Skill × 三重门禁"
     width="960"
   />
 </p>

@@ -1,7 +1,7 @@
 import type { PhaseId } from "./types.js";
 import type { WorkflowEngine } from "./workflow-engine.js";
 import { requiresHumanGate } from "./gates/human-gate-config.js";
-import { isWorkflowCompleted } from "./change-status.js";
+import { isWorkflowCompleted, completedWorkflowMessage } from "./change-status.js";
 import { buildPhaseGuide } from "./phase-guide.js";
 import { formatGuidePlain, formatPhaseProgressLine } from "./format-guide.js";
 import { defaultLoopMax } from "./repeat-parse.js";
@@ -37,7 +37,7 @@ function attemptContinueOnce(
   const state = engine.getState(slug);
   if (!state) return { advanced: false, phase: "change", message: `Change not found: ${slug}` };
   if (isWorkflowCompleted(state)) {
-    return { advanced: true, phase: state.currentPhase, message: "九阶段已全部完成" };
+    return { advanced: true, phase: state.currentPhase, message: completedWorkflowMessage(state) };
   }
 
   const phaseId = state.currentPhase as PhaseId;
@@ -177,7 +177,9 @@ export function formatLoopResultPlain(
   const lines: string[] = [];
 
   if (result.stopReason === "completed") {
-    lines.push("✓ 循环结束：九阶段已全部完成 → /taiyi:archive");
+    const state = engine.getState(result.slug);
+    const doneMsg = state ? completedWorkflowMessage(state) : "工作流已全部完成";
+    lines.push(`✓ 循环结束：${doneMsg} → /taiyi:archive`);
     if (result.attempts.length > 0) {
       lines.push(`  本轮连续过关 ${result.attempts.length} 次`);
     }

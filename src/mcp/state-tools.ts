@@ -1,6 +1,6 @@
 import path from "node:path";
 import fs from "node:fs";
-import { resolveActiveSlug } from "../core/active-slug.js";
+import { resolveActiveSlug, resolveChangeSlug } from "../core/active-slug.js";
 import { buildEngineTruth } from "../core/engine-truth.js";
 import { buildPhaseGuide } from "../core/phase-guide.js";
 import { handoffExists, writeHandoff } from "../core/handoff.js";
@@ -13,7 +13,10 @@ import { loadTokenBudgetConfig } from "../core/token/budget-config.js";
 import { WorkflowEngine } from "../core/workflow-engine.js";
 import type { ChangeState } from "../core/types.js";
 import type { EngineTruth } from "../core/engine-truth.js";
-import { taiyiStep, taiyiStopMode, taiyiModes, taiyiKeyword, taiyiRemember, taiyiWorkflowSkill } from "../plugin/handlers.js";
+import { taiyiStep, taiyiStopMode, taiyiModes, taiyiKeyword, taiyiRemember, taiyiWorkflowSkill, taiyiDoctor, taiyiAudit } from "../plugin/handlers.js";
+import { buildDoctorJsonCompact, type DoctorJsonCompact } from "../core/doctor.js";
+import { buildAuditJsonCompact, type AuditJsonCompact } from "../core/workflow-audit.js";
+import { resolvePackageRoot } from "../core/package-root.js";
 
 export type StateListActiveResult = {
   changes: ReturnType<typeof listChanges>;
@@ -103,7 +106,7 @@ export function taiyiStateCancel(
   slug?: string,
 ): { ok: true; slug: string; workflowStatus: "aborted" } | { ok: false; error: string } {
   const taiyiRoot = resolveTaiyiRoot(workspaceDir);
-  const resolved = resolveActiveSlug(taiyiRoot, slug);
+  const resolved = resolveChangeSlug(taiyiRoot, slug);
   if (!resolved.ok) return { ok: false, error: resolved.error };
 
   const engine = new WorkflowEngine(taiyiRoot, resolveTemplatesDir(import.meta.url));
@@ -219,4 +222,20 @@ export function taiyiRunWorkflow(
     result: "result" in r ? r.result : undefined,
     step: "step" in r ? r.step : undefined,
   };
+}
+
+/** MCP slim — 对齐 `doctor --json --compact` */
+export function taiyiDoctorCompact(
+  workspaceDir: string,
+  options?: { strictWorkspace?: boolean },
+): DoctorJsonCompact {
+  const pkgRoot = resolvePackageRoot(import.meta.url);
+  const r = taiyiDoctor(pkgRoot, workspaceDir, options);
+  return buildDoctorJsonCompact(r);
+}
+
+/** MCP slim — 对齐 `audit --json --compact` */
+export function taiyiAuditCompact(workspaceDir: string, slug?: string): AuditJsonCompact {
+  const r = taiyiAudit(workspaceDir, { slug, plain: false });
+  return buildAuditJsonCompact(r.report);
 }

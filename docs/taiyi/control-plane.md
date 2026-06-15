@@ -18,8 +18,22 @@
 | 端 | 聊天入口 | 引擎入口 |
 |----|----------|----------|
 | Codex | `$taiyi-new` … `$taiyi-archive`（`prompts/taiyi-*.md`） | Agent 跑 `taiyi-forge.sh` |
-| Claude | `/taiyi:new` … `/taiyi:archive` + Skill | Agent Bash |
-| Cursor | `/taiyi:new` … `/taiyi:status` + rules | Agent 终端 / MCP 读状态 |
-| OpenCode | `taiyi_new` / `taiyi_*` tools | 同左（plugin，无需 shell） |
+| Claude | `/taiyi:new` … `/taiyi:archive` + Skill + **`~/.claude/commands/taiyi-*.md`** | Agent Bash |
+| Cursor | `/taiyi:new` … `/taiyi:status` + rules + **`~/.cursor/commands/taiyi-*.md`** | Agent 终端 / MCP 读状态 |
+| OpenCode | `taiyi_new` / `taiyi_*` tools + **`~/.config/opencode/commands/taiyi-*.md`** | plugin + `/taiyi-*` 斜杠 |
 
 完整九阶段路径：`docs/taiyi/workflow.md` · 详见 `docs/taiyi/invoke.yaml`。
+
+## Token 纪律（Agent）
+
+| 动作 | 命令 | 目的 |
+|------|------|------|
+| 清 slug | `/taiyi:archive` · `/taiyi:cancel … --remove-dir` · `prune --aborted` | 对话只带 1 个 active |
+| 压缩 | `/taiyi:token compress <slug>` | 读 `CONTEXT-COMPACT.md`，勿全量工件 |
+| E2E | CI / 后台跑 `playwright` · `npm test` · probe | 聊天只写 TEST.md 证据，不灌日志 |
+
+详见 `prompts/inc/stage-protocol.md` · Skill `taiyi-compress`。
+
+## 探测与回归
+
+十轮 / 多角度探测的归类、BY DESIGN 项与脚本误报修正见 **[probe-triage.md](./probe-triage.md)**。

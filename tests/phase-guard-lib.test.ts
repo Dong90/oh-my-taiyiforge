@@ -48,4 +48,30 @@ describe("phase-guard-lib", () => {
     expect(guardMode({})).toBe("deny");
     expect(guardMode({ TAIYI_EARLY_CODE_BLOCK: "0" })).toBe("ask");
   });
+
+  it("allows tests/ and package.json when ralph mode active", () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), "taiyi-pg-"));
+    fs.mkdirSync(path.join(dir, ".taiyi", "changes", "demo", "runtime"), { recursive: true });
+    fs.mkdirSync(path.join(dir, ".taiyi", "runtime"), { recursive: true });
+    fs.writeFileSync(
+      path.join(dir, ".taiyi", "changes", "demo", "state.json"),
+      JSON.stringify({
+        slug: "demo",
+        currentPhase: "change",
+        workflowStatus: "active",
+        updatedAt: "2026-01-01T00:00:00Z",
+      }),
+    );
+    fs.writeFileSync(
+      path.join(dir, ".taiyi", "runtime", "ralph-mode.json"),
+      JSON.stringify({ active: true, slug: "demo" }),
+    );
+    const r = evaluatePhaseGuard(
+      { tool_name: "Write", tool_input: { path: "tests/smoke.mjs" } },
+      dir,
+      { TAIYI_PHASE_GUARD: "deny" },
+    );
+    expect(r.action).toBe("allow");
+    fs.rmSync(dir, { recursive: true, force: true });
+  });
 });

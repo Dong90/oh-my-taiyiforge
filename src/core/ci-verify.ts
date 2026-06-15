@@ -2,10 +2,12 @@ import fs from "node:fs";
 import path from "node:path";
 import type { ChangeState } from "./types.js";
 import { normalizeState } from "./normalize-state.js";
-import { listChanges } from "./list-changes.js";
+import { listChanges, type ChangeSummary } from "./list-changes.js";
 import { buildPhaseGuide } from "./phase-guide.js";
 import { buildHarnessPlan } from "./harness-runner.js";
 import { getNextPhase } from "./phase-registry.js";
+import { resolveChangeDir } from "./taiyi-archive.js";
+import { expectedPhaseCount, isWorkflowCompleted } from "./change-status.js";
 
 export type CiChangeReport = {
   slug: string;
@@ -61,10 +63,38 @@ export function verifyWorkspaceCi(
     };
   }
 
-  const summaries = listChanges(taiyiRoot);
-  const targets = options?.slug
+  const listOpts = {
+    includeAll: true,
+    includeArchived: Boolean(options?.slug),
+  };
+  const summaries = listChanges(taiyiRoot, listOpts);
+  let targets = options?.slug
     ? summaries.filter((c) => c.slug === options.slug)
-    : summaries;
+    : summaries.filter((c) => c.workflowActive || c.archived);
+
+  if (options?.slug && targets.length === 0) {
+    const archivedDir = resolveChangeDir(taiyiRoot, options.slug);
+    if (archivedDir) {
+      const state = loadState(archivedDir);
+      if (state) {
+        targets = [
+          {
+            slug: options.slug,
+            currentPhase: state.currentPhase,
+            workflowCompleted: isWorkflowCompleted(state),
+            workflowAborted: state.workflowStatus === "aborted",
+            workflowActive: false,
+            profile: state.profile ?? "full",
+            completed: state.completedPhases.length,
+            total: expectedPhaseCount(state),
+            updatedAt: state.updatedAt ?? "",
+            archived: true,
+          },
+        ];
+        notes.push(`${options.slug}: 已在 .taiyi/archive/（归档后 verify）`);
+      }
+    }
+  }
 
   if (options?.slug && targets.length === 0) {
     return {
@@ -80,13 +110,13 @@ export function verifyWorkspaceCi(
   const reports: CiChangeReport[] = [];
 
   for (const s of targets) {
-    const changeDir = path.join(changesDir, s.slug);
+    const changeDir = resolveChangeDir(taiyiRoot, s.slug) ?? path.join(changesDir, s.slug);
     const state = loadState(changeDir);
     if (!state) continue;
 
     const guide = buildPhaseGuide(taiyiRoot, s.slug, state, workspaceDir);
     const plan = buildHarnessPlan(workspaceDir, taiyiRoot, state);
-    const blockers = [...plan.blockers];
+    const blockers = isWorkflowCompleted(state) ? [] : [...plan.blockers];
 
     if (!guide.qualityReady && !isIntegrationDone(state)) {
       blockers.push(`当前阶段 ${guide.currentPhase} 工件未通过质量校验`);
@@ -96,8 +126,9 @@ export function verifyWorkspaceCi(
     }
 
     const next = getNextPhase(state.currentPhase, state.skippedPhases ?? []);
+    const phaseTotal = expectedPhaseCount(state);
     if (isIntegrationDone(state) && next === null) {
-      notes.push(`${s.slug}: 九阶段已完成`);
+      notes.push(`${s.slug}: ${phaseTotal} 阶段已完成${s.archived ? "（已归档）" : ""}`);
     }
 
     reports.push({
@@ -107,8 +138,8 @@ export function verifyWorkspaceCi(
       autoHarness: state.autoHarness ?? false,
       qualityReady: guide.qualityReady,
       artifactExists: guide.artifactExists,
-      completed: s.completed,
-      total: s.total,
+      completed: state.completedPhases.length,
+      total: expectedPhaseCount(state),
       blockers,
       ok: blockers.length === 0,
     });

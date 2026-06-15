@@ -1,5 +1,5 @@
 import type { WorkflowEngine } from "./workflow-engine.js";
-import { isWorkflowCompleted } from "./change-status.js";
+import { isWorkflowCompleted, completedWorkflowMessage } from "./change-status.js";
 import { buildPhaseGuide } from "./phase-guide.js";
 import { formatGuidePlain, formatPhaseProgressLine } from "./format-guide.js";
 import { formatPhaseAgentsPlain } from "./agent-roles.js";
@@ -65,7 +65,7 @@ export function runAutopilotGuide(
   ];
 
   if (done) {
-    lines.push("", "✓ 九阶段已完成 → /taiyi:archive");
+    lines.push("", `✓ ${completedWorkflowMessage(state)} → /taiyi:archive`);
   } else {
     lines.push("", "当前指引:", formatGuidePlain(guide));
   }

@@ -3,10 +3,19 @@ import path from "node:path";
 
 /** 源 prompt 中可写此占位符；安装时替换为 prompts/inc/stage-protocol.md */
 export const STAGE_PROTOCOL_PLACEHOLDER = "{{TAIYI_STAGE_PROTOCOL}}";
+export const SLASH_CATALOG_PLACEHOLDER = "{{SLASH_CATALOG}}";
 export const GSTACK_INVOKE_PLACEHOLDER = "{{GSTACK_INVOKE}}";
 export const SUPERPOWERS_INVOKE_PLACEHOLDER = "{{SUPERPOWERS_INVOKE}}";
 
 const INLINE_PROTOCOL_RE = /\n## Agent 协议（必须遵守）\n[\s\S]*$/;
+
+export function loadSlashCatalog(promptsDir: string): string {
+  const file = path.join(promptsDir, "inc", "slash-catalog.generated.md");
+  if (!fs.existsSync(file)) {
+    throw new Error(`missing slash catalog: ${file} — run npm run generate:docs`);
+  }
+  return fs.readFileSync(file, "utf8").trimEnd();
+}
 
 export function loadStageProtocol(promptsDir: string): string {
   const file = path.join(promptsDir, "inc", "stage-protocol.md");
@@ -55,6 +64,10 @@ export function renderTaiyiPrompt(filename: string, body: string, promptsDir: st
   const superpowers = loadSuperpowersInvoke(promptsDir);
   if (superpowers && out.includes(SUPERPOWERS_INVOKE_PLACEHOLDER)) {
     out = out.replaceAll(SUPERPOWERS_INVOKE_PLACEHOLDER, superpowers);
+  }
+
+  if (out.includes(SLASH_CATALOG_PLACEHOLDER)) {
+    out = out.replaceAll(SLASH_CATALOG_PLACEHOLDER, loadSlashCatalog(promptsDir));
   }
 
   return out;

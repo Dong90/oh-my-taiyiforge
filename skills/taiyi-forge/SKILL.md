@@ -1,6 +1,6 @@
 ---
 name: taiyi-forge
-description: TaiyiForge 引擎控制面 — 用户只说 /taiyi:* 斜杠，Agent 代跑 scripts/taiyi-forge.sh（100% 斜杠面）
+description: TaiyiForge 引擎控制面 — 用户只说 /taiyi:* 斜杠，Agent 代跑 scripts/taiyi-forge.sh
 ---
 
 # taiyi-forge（引擎 Skill）
@@ -8,58 +8,37 @@ description: TaiyiForge 引擎控制面 — 用户只说 /taiyi:* 斜杠，Agent
 ## 原则
 
 - **用户只说 `/taiyi:*`**（Codex：`$taiyi-*`）；你代跑 `scripts/taiyi-forge.sh`，禁止让用户手打 shell。
-- 写 CHANGE/DESIGN 等工件 → 加载 `taiyi-change` … `taiyi-integration`，不是本 Skill。
+- 读状态默认：**`status [slug] --json --compact`** → 解析 **`engineTruth`**。
+- 写工件 → **`/taiyi:write`**，再加载当前阶段 `taiyi-change` … `taiyi-integration` Skill。
 
-## 主流程
+## 主流程（仅这五条）
 
-| 斜杠 | 含义 |
+| 斜杠 | 引擎 |
 |------|------|
-| `/taiyi:new 功能名` | 新建变更 |
-| `/taiyi:status` | 阶段进度、Skill、工件 |
-| `/taiyi:continue` | 过关当前阶段 |
-| `/taiyi:apply` | dev/test 实现清单 |
-| `/taiyi:archive` | 归档 |
+| `/taiyi:new` | `new` |
+| `/taiyi:status` | `status --json --compact` |
+| `/taiyi:write` | `write` |
+| `/taiyi:continue` | `continue` |
+| `/taiyi:apply` | `apply`（dev/test） |
+| `/taiyi:archive` | `archive` |
 
-## 常用辅助
+**其余斜杠**（doctor、audit、ralph、token、gstack 交付链等）→ [`docs/taiyi/canonical-commands.md`](../../docs/taiyi/canonical-commands.md) · [`docs/taiyi/commands.yaml`](../../docs/taiyi/commands.yaml)
 
-`/taiyi:doctor` · `/taiyi:audit` · `/taiyi:verify` · `/taiyi:list` · `/taiyi:check` · `/taiyi:sync` · `/taiyi:handoff` · `/taiyi:cancel` · `/taiyi:loop` · `/taiyi:review-loop` · `/taiyi:review-check` · `/taiyi:token *` · `/taiyi:commit-trailers`
+## Token 纪律
 
-## 引擎斜杠（原 CLI-only）
+| # | 动作 |
+|---|------|
+| 1 | **清 slug** — archive / `cancel --remove-dir`；只保留 1 个 active |
+| 2 | **archive 闭环** — integration 后立刻 archive |
+| 3 | **compress** — `/taiyi:token compress <slug>` → 读 `CONTEXT-COMPACT.md` |
+| 4 | **E2E 别在对话跑** — CI/后台；聊天只写 TEST.md 摘要 |
 
-`/taiyi:init` · `/taiyi:complete` · `/taiyi:mark-aux` · `/taiyi:assess` · `/taiyi:harness-check` · `/taiyi:phases` · `/taiyi:guide` · `/taiyi:state` · `/taiyi:state-read` · `/taiyi:next` · `/taiyi:done` · `/taiyi:ci platform` · `/taiyi:ci prompt`
-
-## 交付链（gstack · 见 docs/taiyi/delivery-slash.md）
-
-| 斜杠 | gstack Skill |
-|------|--------------|
-| `/taiyi:commit` | commit-trailers + git |
-| `/taiyi:ship` | ship |
-| `/taiyi:land` | land-and-deploy |
-| `/taiyi:gstack review` | review |
-| `/taiyi:gstack qa` | qa |
-| `/taiyi:gstack <skill>` | design-shotgun · autoplan · canary · gstack-upgrade … |
-| `/taiyi:release` | document-release |
-
-## 扩展斜杠
-
-| 斜杠 | 用途 |
-|------|------|
-| `/taiyi:sp <skill>` | Superpowers（writing-skills …） |
-| `/taiyi:security` | semgrep + trivy |
-| `/taiyi:e2e` | Playwright E2E |
-| `/taiyi:resume` | HANDOFF + status |
-| `/taiyi:help` | 斜杠总览 |
-
-## 无 shell 子命令（仅 Skill）
-
-`/taiyi:explore` · `/taiyi:flow` · `/taiyi:full-flow` · `/taiyi:tdd plan|dev` · `/taiyi:gstack *` · `/taiyi:sp *`
-
-完整列表：`docs/taiyi/commands.yaml` → `slash_catalog`
+细节：Skill **`taiyi-compress`** · [`docs/taiyi/control-plane.md`](../../docs/taiyi/control-plane.md)
 
 ## Agent 代跑
 
 ```bash
-scripts/taiyi-forge.sh <cmd> ...   # 映射自用户斜杠
+scripts/taiyi-forge.sh <cmd> ...
 ```
 
-示例：用户 `/taiyi:continue` → `taiyi-forge.sh continue [slug] [--approver 名]`
+示例：`/taiyi:continue` → `taiyi-forge.sh continue [slug] [--approver 名]`

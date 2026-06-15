@@ -27,7 +27,7 @@ describe("commit-trailer", () => {
   it("skips when disabled or non-git", () => {
     const dir = fs.mkdtempSync(path.join(os.tmpdir(), "taiyi-trailer-"));
     expect(evaluateCommitTrailers(dir, "x").skipped).toBe(true);
-    expect(commitTrailersEnabled({ TAIYI_COMMIT_TRAILERS: "0" })).toBe(false);
+    expect(commitTrailersEnabled(undefined, { TAIYI_COMMIT_TRAILERS: "0" })).toBe(false);
     fs.rmSync(dir, { recursive: true, force: true });
   });
 

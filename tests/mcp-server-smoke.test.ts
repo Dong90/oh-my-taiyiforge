@@ -66,9 +66,11 @@ describe("mcp server stdio smoke", () => {
     expect(names).toContain("taiyi_state_get_status");
     expect(names).toContain("taiyi_state_list_active");
     expect(names).toContain("taiyi_state_handoff");
+    expect(names).toContain("taiyi_doctor");
+    expect(names).toContain("taiyi_audit");
     expect(names).toContain("taiyi_mode_list");
     expect(names).toContain("taiyi_lsp_goto_definition");
-    expect(names.length).toBeGreaterThanOrEqual(12);
+    expect(names.length).toBeGreaterThanOrEqual(14);
   });
 
   it("CallTool taiyi_state_get_status 返回 engineTruth", async () => {
@@ -105,5 +107,25 @@ describe("mcp server stdio smoke", () => {
     const body = parseToolText(result);
     expect(body.ok).toBe(true);
     expect(String(body.text ?? "")).toMatch(/ralph/i);
+  });
+
+  it("CallTool taiyi_doctor 返回 slim JSON", async () => {
+    const result = await client.callTool({ name: "taiyi_doctor", arguments: {} });
+    const body = parseToolText(result);
+    expect(body.version).toMatch(/^\d+\.\d+\.\d+$/);
+    expect(Array.isArray(body.failed)).toBe(true);
+    expect(body).not.toHaveProperty("report");
+  });
+
+  it("CallTool taiyi_audit 返回 slim JSON", async () => {
+    const result = await client.callTool({
+      name: "taiyi_audit",
+      arguments: { slug: "mcp-demo" },
+    });
+    const body = parseToolText(result);
+    expect(typeof body.ok).toBe("boolean");
+    expect(typeof body.changes).toBe("number");
+    expect(Array.isArray(body.findings)).toBe(true);
+    expect(body.findings.every((f: { severity?: string }) => f.severity === "high")).toBe(true);
   });
 });

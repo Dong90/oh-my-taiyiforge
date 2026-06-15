@@ -2,8 +2,8 @@ import { execSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
 import type { WorkflowEngine } from "./workflow-engine.js";
-import { resolveDeliveryVerifyCmd } from "./gates/consumer-config.js";
 import { formatAgentRalphProtocol, ralphSlash } from "./ralph-invoke.js";
+import { resolveRalphVerifyCmd } from "./ralph-verify-cmd.js";
 import {
   bumpRalphRound,
   clearRalphState,
@@ -11,6 +11,7 @@ import {
   readRalphState,
   type RalphStateFile,
 } from "./ralph-state.js";
+import { getPhaseOrder } from "./phase-registry.js";
 import { checkRalplanGate } from "./runtime/ralplan-gate.js";
 import { activateMode, deactivateMode } from "./runtime/mode-state.js";
 import type { PhaseId } from "./types.js";
@@ -29,22 +30,6 @@ export type RalphRunResult = {
   skipReason?: string;
 };
 
-function resolveRalphVerifyCmd(workspaceDir: string, env = process.env): string | undefined {
-  const fromDelivery = resolveDeliveryVerifyCmd(workspaceDir, env);
-  if (fromDelivery) return fromDelivery;
-
-  const pkgPath = path.join(workspaceDir, "package.json");
-  if (!fs.existsSync(pkgPath)) return env.TAIYI_RALPH_VERIFY_CMD?.trim() || undefined;
-
-  try {
-    const pkg = JSON.parse(fs.readFileSync(pkgPath, "utf8")) as { scripts?: { test?: string } };
-    if (pkg.scripts?.test?.trim()) return "npm test";
-  } catch {
-    /* ignore */
-  }
-
-  return env.TAIYI_RALPH_VERIFY_CMD?.trim() || undefined;
-}
 
 function runVerifyCmd(workspaceDir: string, cmd: string): number {
   const unsafe = validateRalphVerifyCmd(cmd);
@@ -110,6 +95,34 @@ export function runRalphVerify(
   const changeDir = engine.changeDir(slug);
   const phase = state.currentPhase as PhaseId;
 
+  if (getPhaseOrder(phase) < getPhaseOrder("dev")) {
+    const prev = readRalphState(changeDir);
+    return {
+      ok: false,
+      slug,
+      phase,
+      verifyCmd: "",
+      exitCode: 0,
+      round: prev?.round ?? 0,
+      maxRounds: prev?.maxRounds ?? defaultRalphMaxRounds(),
+      skipped: true,
+      skipReason: "before-dev",
+      text: [
+        `Ralph 不适用于规划阶段 ${phase}（dev 前只写 .taiyi 工件）`,
+        "  须先 harness-check / mark-aux / 人工门 → /taiyi:continue",
+        "  到 dev 后再 scripts/taiyi-forge.sh ralph",
+      ].join("\n"),
+      loopState:
+        prev ??
+        ({
+          slug,
+          round: 0,
+          maxRounds: defaultRalphMaxRounds(),
+          updatedAt: new Date().toISOString(),
+        } satisfies RalphStateFile),
+    };
+  }
+
   const gate = checkRalplanGate(changeDir, phase);
   if (!gate.ok) {
     const prev = readRalphState(changeDir);
@@ -152,7 +165,7 @@ export function runRalphVerify(
       text: [
         "⚠ 未配置 Ralph 验证命令",
         "  设置 package.json → taiyi.deliveryVerifyCmd 或 TAIYI_DELIVERY_VERIFY_CMD / TAIYI_RALPH_VERIFY_CMD",
-        "  或确保 package.json scripts.test 存在（将使用 npm test）",
+        "  或确保 scripts/taiyi-forge.sh 存在（将回退 doctor/verify）",
       ].join("\n"),
       loopState:
         prev ??

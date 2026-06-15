@@ -2,6 +2,7 @@ import type { WorkflowEngine } from "./workflow-engine.js";
 import { getPhase, listPhases } from "./phase-registry.js";
 import { buildPhaseGuide } from "./phase-guide.js";
 import { requiresHumanGate } from "./gates/human-gate-config.js";
+import { isWorkflowCompleted, completedWorkflowMessage } from "./change-status.js";
 import type { PhaseId } from "./types.js";
 import { resolveTaiyiRoot } from "./paths.js";
 
@@ -30,7 +31,7 @@ export const PHASE_WRITE_HINTS: Record<PhaseId, PhaseWriteHint> = {
     auxiliary: [],
     external: ["openspec change show <slug>"],
     slashExtras: [],
-    notes: ["User Stories + Given/When/Then AC；须追溯 CHANGE"],
+    notes: ["User Stories + Given/When/Then AC（各 ≥8 字符）；须追溯 CHANGE"],
   },
   design: {
     superpowers: [],
@@ -50,7 +51,7 @@ export const PHASE_WRITE_HINTS: Record<PhaseId, PhaseWriteHint> = {
       "/taiyi:diagram-render",
       "/taiyi:diagram-flow",
     ],
-    notes: ["≥2 方案 + 推荐方案；人工门；架构图流水线见 /taiyi:diagram-pipeline"],
+    notes: ["≥2 方案表格行 | A | / | B | + Decision；ADR 须在 .taiyi/changes/<slug>/adr/"],
   },
   "ui-design": {
     superpowers: [],
@@ -58,7 +59,7 @@ export const PHASE_WRITE_HINTS: Record<PhaseId, PhaseWriteHint> = {
     auxiliary: ["taiyi-restyle"],
     external: ["/taiyi:gstack plan-design-review"],
     slashExtras: [],
-    notes: ["UI 契约 + 无障碍；api profile 跳过本阶段"],
+    notes: ["UI 契约 + 无障碍；无 UI 也须 ## Links 指向 DESIGN/REQUIREMENT"],
   },
   task: {
     superpowers: ["writing-plans", "test-driven-development"],
@@ -66,7 +67,7 @@ export const PHASE_WRITE_HINTS: Record<PhaseId, PhaseWriteHint> = {
     auxiliary: ["taiyi-diagram-flow"],
     external: [],
     slashExtras: ["/taiyi:tdd plan", "/taiyi:diagram-flow"],
-    notes: ["独立可 PR 切片；每切片测试策略；可选 flows 追溯"],
+    notes: ["独立可 PR 切片；Checklist 须含测试先行/RED/npm test"],
   },
   dev: {
     superpowers: ["test-driven-development"],
@@ -94,13 +95,13 @@ export const PHASE_WRITE_HINTS: Record<PhaseId, PhaseWriteHint> = {
     auxiliary: ["taiyi-health"],
     external: ["/taiyi:security", "/taiyi:gstack review"],
     slashExtras: ["/taiyi:review-loop", "/taiyi:health"],
-    notes: ["REVIEW.md + 机器审查；人工门"],
+    notes: ["Verdict 须 - [x] **Approve**（勿写 PASS 文本）；人工门"],
   },
   integration: {
     superpowers: ["finishing-a-development-branch", "verification-before-completion"],
     superpowersOptional: [],
     auxiliary: [],
-    external: ["/taiyi:release", "/taiyi:gstack document-release"],
+    external: ["/taiyi:release"],
     slashExtras: ["/taiyi:commit", "/taiyi:verify", "/taiyi:archive"],
     notes: ["CHANGELOG + 交付门（git commit + 干净工作区）"],
   },
@@ -186,6 +187,24 @@ export function runPhaseWriteGuide(
   const def = getPhase(phase);
   const hints = PHASE_WRITE_HINTS[phase];
   const guide = buildPhaseGuide(taiyiRoot, slug, state, workspaceDir);
+
+  if (isWorkflowCompleted(state)) {
+    return {
+      ok: false,
+      slug,
+      phase: current,
+      targetPhase: phase,
+      skill: def.skill,
+      artifact: def.artifact,
+      text: [
+        `变更 ${slug} 已完成（${completedWorkflowMessage(state)}）`,
+        `  勿写 ${phase} 工件；只读: scripts/taiyi-forge.sh verify ${slug}`,
+        "  若未物理归档: scripts/taiyi-forge.sh archive " + slug,
+      ].join("\n"),
+      skipped: true,
+    };
+  }
+
   const skipped = (guide.skippedPhases ?? []).includes(phase);
   const mismatch = phase !== current;
 
@@ -205,7 +224,7 @@ export function runPhaseWriteGuide(
 
   if (mismatch) {
     lines.push("  ⚠ 阶段不一致：优先写当前阶段工件，或先 /taiyi:continue 推进");
-    lines.push(`  当前应写: /taiyi:${PHASE_SLASH_VERB[current]} 或 /taiyi:write`);
+    lines.push(`  当前应写: /taiyi:write`);
     lines.push("");
   }
 

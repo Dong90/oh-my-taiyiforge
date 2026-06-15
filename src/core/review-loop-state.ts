@@ -57,7 +57,9 @@ export function markReviewLoopStarted(changeDir: string, slug: string): ReviewLo
     slug,
     round: prev?.slug === slug ? prev.round : 0,
     maxRounds: prev?.maxRounds ?? defaultReviewLoopMaxRounds(),
-    loopStartedAt: now,
+    // 同一会话内保留首次 loopStartedAt，避免每轮 review-loop 都把 REVIEW.md 判为过期
+    loopStartedAt:
+      prev?.slug === slug && prev.loopStartedAt ? prev.loopStartedAt : now,
     updatedAt: now,
   };
   fs.writeFileSync(path.join(changeDir, FILE), JSON.stringify(next, null, 2), "utf8");

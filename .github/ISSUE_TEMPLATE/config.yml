@@ -1,0 +1,12 @@
+# GitHub Issue 引导 — 严肃开源的标准做法
+blank_issues_enabled: false
+contact_links:
+  - name: 💬 社区讨论 / 想法 / RFC
+    url: https://github.com/Dong90/oh-my-taiyiforge/discussions
+    about: 先讨论再提 Issue，避免重复劳动
+  - name: 📖 阅读文档
+    url: https://github.com/Dong90/oh-my-taiyiforge#documentation
+    about: QUICKSTART / ARCHITECTURE / canonical-commands.md
+  - name: 🔒 安全漏洞
+    url: https://github.com/Dong90/oh-my-taiyiforge/security/advisories/new
+    about: 私密披露，勿公开 Issue

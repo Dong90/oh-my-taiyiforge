@@ -1,5 +1,7 @@
 # Superpowers 主轴流程
 
+> **何时读本文**：日常九阶段 + Superpowers 铁三角；外挂从简即可。要跑**全部**开源工具链 → [full-oss-flow.md](./full-oss-flow.md)。只要命令表 → [canonical-commands.md](./canonical-commands.md)。
+
 > TaiyiForge 九阶段由 **Superpowers 全技能**驱动；**gstack / OpenSpec / web-quality-skills** 等为可选外挂。  
 > **要跑通全部开源工具**：见 [**full-oss-flow.md**](./full-oss-flow.md) · `/taiyi:full-flow`  
 > **单一真源**：[`workflow-manifest.yaml`](./workflow-manifest.yaml)

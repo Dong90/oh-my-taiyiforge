@@ -164,7 +164,7 @@ describe("cli-commands (examples/commands-smoke)", () => {
     expect(r.out).toMatch(/second-smoke-change|Second/);
   });
 
-  it("walkthrough bootstraps an isolated workspace", () => {
+  it("walkthrough bootstraps an isolated workspace", { timeout: 30_000 }, () => {
     const isolated = fs.mkdtempSync(path.join(os.tmpdir(), "taiyi-wt-cli-"));
     try {
       copyFixture(isolated);

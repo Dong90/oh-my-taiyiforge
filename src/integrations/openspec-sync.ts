@@ -41,6 +41,23 @@ export function syncTaiyiToOpenspec(
     };
   }
 
+  if (status.archivedExists && !options?.force) {
+    const rel = status.archivedPath
+      ? path.relative(path.resolve(workspaceDir), status.archivedPath)
+      : "openspec/changes/archive/";
+    const hint = status.changeExists
+      ? `误建了 openspec/changes/${slug}/ — 删除后勿再 sync，或 --force 覆盖`
+      : "已 archive 后不应再写 active 目录";
+    return {
+      ok: false,
+      skipped: true,
+      reason: `OpenSpec 已归档于 ${rel}；${hint}`,
+      copied: [],
+      skippedFiles: [],
+      changePath: status.changePath,
+    };
+  }
+
   let changePath = status.changePath;
   if (!changePath && options?.createChangeDir) {
     changePath = path.join(workspaceDir, "openspec", "changes", slug);

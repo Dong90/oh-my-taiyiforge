@@ -39,6 +39,20 @@ function stripComments(text: string): string {
   return text.replace(/<!--[\s\S]*?-->/g, "").trim();
 }
 
+function stripSection(text: string, heading: string): string {
+  const idx = text.indexOf(heading);
+  if (idx < 0) return text;
+  const rest = text.slice(idx + heading.length);
+  const next = rest.search(/\n## /);
+  if (next < 0) return text.slice(0, idx);
+  return text.slice(0, idx) + rest.slice(next);
+}
+
+function hasPendingLanguage(text: string): boolean {
+  const withoutOutOfScope = stripSection(text, "## Out of Scope");
+  return /TODO|TBD|待补|占位/i.test(withoutOutOfScope);
+}
+
 const ELLIPSIS = /…|\.\.\.(?!\w)/;
 
 function cellSubstantive(text: string, min = 3): boolean {
@@ -202,7 +216,7 @@ export function validateArtifactContent(
   if (phaseId === "design") {
     if (!designHasRealOptions(content)) {
       placeholderContent = true;
-      hints.push("Options 须至少 2 个方案且 Summary 已填写");
+      hints.push("Options 须为 markdown 表格行（| A | … | 与 | B | … |），勿用 ### Option A 标题");
     }
     if (!designHasRealDecision(content)) {
       placeholderContent = true;
@@ -251,13 +265,13 @@ export function validateArtifactContent(
     hints.push("REQUIREMENT 应包含 Traceability 或指向 CHANGE");
   }
 
-  const hasPendingLanguage = /TODO|TBD|待补|占位/i.test(text);
+  const hasPendingLanguageFlag = hasPendingLanguage(text);
   let engineering_quality: boolean =
     phaseId === "review"
-      ? !hasPendingLanguage
-      : !hasPendingLanguage || text.length > 120;
+      ? !hasPendingLanguageFlag
+      : !hasPendingLanguageFlag || text.length > 120;
   if (placeholderContent) engineering_quality = false;
-  if (!engineering_quality) hints.push("含 TODO/TBD/待补 等待定用语");
+  if (!engineering_quality && hasPendingLanguageFlag) hints.push("含 TODO/TBD/待补 等待定用语");
 
   let machineReviewOk = true;
   if (phaseId === "review") {

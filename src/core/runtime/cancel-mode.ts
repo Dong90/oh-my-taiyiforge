@@ -58,15 +58,36 @@ function cancelOneMode(taiyiRoot: string, mode: TaiyiModeId): { preserved: boole
   return { preserved: false, message: MODE_SUCCESS[mode] };
 }
 
-/** 对标 OMC /cancel skill — 停止运行时模式（非 abort 变更） */
+/** 停止运行时模式（非 abort 变更）；mode 指定时只停一种 */
 export function cancelRuntimeModes(
   taiyiRoot: string,
-  options?: { force?: boolean; slug?: string },
+  options?: { force?: boolean; slug?: string; mode?: TaiyiModeId },
 ): CancelModeResult {
   const force = Boolean(options?.force);
   const messages: string[] = [];
   const cancelled: TaiyiModeId[] = [];
   const preserved: TaiyiModeId[] = [];
+
+  if (options?.mode) {
+    const state = readModeState(taiyiRoot, options.mode);
+    if (options.slug && state?.slug && state.slug !== options.slug) {
+      return {
+        ok: true,
+        cancelled: [],
+        preserved: [],
+        messages: [`${options.mode} 活跃 slug=${state.slug}，与指定 ${options.slug} 不符`],
+        force,
+        idle: true,
+      };
+    }
+    const r = cancelOneMode(taiyiRoot, options.mode);
+    if (!r.message.includes("未激活")) {
+      cancelled.push(options.mode);
+      if (r.preserved) preserved.push(options.mode);
+    }
+    messages.push(r.message);
+    return { ok: true, cancelled, preserved, messages, force, idle: cancelled.length === 0 };
+  }
 
   const active = listActiveModes(taiyiRoot);
   const filtered = options?.slug

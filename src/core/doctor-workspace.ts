@@ -8,6 +8,9 @@ import { formatPhaseProgressLine } from "./format-guide.js";
 import { handoffExists } from "./handoff.js";
 import { WorkflowEngine } from "./workflow-engine.js";
 import { resolveTemplatesDir } from "./package-root.js";
+import { resolvePackageRoot } from "./package-root.js";
+import { isProjectWrapperStale } from "../install/sync-project-wrapper.js";
+import { listOrphanChangeDirs } from "./prune-changes.js";
 
 /** 工作区流程检查 — 对标 omc-doctor 的 active mode / state 诊断 */
 export function runDoctorWorkspace(
@@ -51,13 +54,52 @@ export function runDoctorWorkspace(
   }
 
   const wrapper = path.join(workspaceDir, "scripts", "taiyi-forge.sh");
+  const pkgRoot = resolvePackageRoot(templatesMetaUrl);
+  const isPkgRoot = path.resolve(workspaceDir) === path.resolve(pkgRoot);
+  const wrapperCheck = isProjectWrapperStale(workspaceDir, pkgRoot);
+  // pkg root 自己是引擎真源：scripts/taiyi-forge.sh 是完整 wrapper（非 stale consumer wrapper）
   checks.push({
     id: "project-wrapper",
-    ok: fs.existsSync(wrapper),
-    detail: fs.existsSync(wrapper)
-      ? wrapper
-      : "缺少 scripts/taiyi-forge.sh — 运行 npx taiyi-forge-install --cursor",
+    ok: fs.existsSync(wrapper) && (!wrapperCheck.stale || isPkgRoot),
+    detail: isPkgRoot
+      ? `pkg root 真源（scripts/taiyi-forge.sh = engine 完整 wrapper，177 行）`
+      : fs.existsSync(wrapper) ? wrapperCheck.detail : wrapperCheck.detail,
   });
+
+  const localPkg = path.join(workspaceDir, "node_modules", "oh-my-taiyiforge", "dist", "cli", "taiyi.js");
+  const forgeRootFile = path.join(taiyiRoot, "forge-root");
+  const envRoot = process.env.TAIYI_FORGE_ROOT?.trim();
+  const forgeRoot =
+    envRoot && fs.existsSync(path.join(envRoot, "dist", "cli", "taiyi.js"))
+      ? envRoot
+      : fs.existsSync(forgeRootFile)
+        ? fs.readFileSync(forgeRootFile, "utf8").trim()
+        : "";
+  const pkgRootDistCli = fs.existsSync(path.join(pkgRoot, "dist", "cli", "taiyi.js"));
+  const cliResolvable =
+    fs.existsSync(localPkg) ||
+    (forgeRoot !== "" && fs.existsSync(path.join(forgeRoot, "dist", "cli", "taiyi.js"))) ||
+    (isPkgRoot && pkgRootDistCli);
+  checks.push({
+    id: "consumer-cli-resolvable",
+    ok: cliResolvable,
+    detail: cliResolvable
+      ? envRoot
+        ? `TAIYI_FORGE_ROOT=${envRoot}`
+        : fs.existsSync(localPkg)
+          ? localPkg
+          : `.taiyi/forge-root → ${forgeRoot}`
+      : "无法解析 taiyi CLI：npm install oh-my-taiyiforge 或 npx taiyi-forge-install --cursor",
+  });
+
+  const orphans = listOrphanChangeDirs(taiyiRoot);
+  if (orphans.length > 0) {
+    checks.push({
+      id: "workflow-orphan-dirs",
+      ok: false,
+      detail: `${orphans.length} 个无 state.json 的 orphan 目录 — 运行 taiyi prune`,
+    });
+  }
 
   const resolved = resolveActiveSlug(taiyiRoot);
   if (!resolved.ok) {

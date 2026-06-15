@@ -17,6 +17,32 @@ function writePkgTest(workspace: string, exitCode: number): void {
   );
 }
 
+function writeRealPkgTest(workspace: string, exitCode: number): void {
+  fs.writeFileSync(
+    path.join(workspace, "package.json"),
+    JSON.stringify({
+      scripts: {
+        test: `node --eval "process.exit(${exitCode})"`,
+      },
+    }),
+  );
+}
+
+function advanceToDev(engine: WorkflowEngine, slug: string): void {
+  const dir = engine.changeDir(slug);
+  const filler = "x".repeat(100);
+  fs.writeFileSync(path.join(dir, "REQUIREMENT.md"), `# Requirement\n${filler}\n`);
+  fs.writeFileSync(path.join(dir, "TASK.md"), `# Task\n${filler}\n`);
+  const statePath = path.join(dir, "state.json");
+  const state = JSON.parse(fs.readFileSync(statePath, "utf8")) as {
+    currentPhase: string;
+    completedPhases: string[];
+  };
+  state.currentPhase = "dev";
+  state.completedPhases = ["change", "requirement"];
+  fs.writeFileSync(statePath, JSON.stringify(state));
+}
+
 describe("ralph-runner", () => {
   let workspace: string;
   let taiyiRoot: string;
@@ -34,7 +60,8 @@ describe("ralph-runner", () => {
   });
 
   it("passes when npm test exits 0 and clears ralph state", () => {
-    writePkgTest(workspace, 0);
+    advanceToDev(engine, "ralph-demo");
+    writeRealPkgTest(workspace, 0);
     const r = runRalphVerify(engine, workspace, "ralph-demo");
     expect(r.ok).toBe(true);
     expect(r.verifyCmd).toBe("npm test");
@@ -44,7 +71,8 @@ describe("ralph-runner", () => {
   });
 
   it("fails and bumps round when npm test exits non-zero", () => {
-    writePkgTest(workspace, 1);
+    advanceToDev(engine, "ralph-demo");
+    writeRealPkgTest(workspace, 1);
     const r = runRalphVerify(engine, workspace, "ralph-demo");
     expect(r.ok).toBe(false);
     expect(r.exitCode).toBe(1);
@@ -52,14 +80,26 @@ describe("ralph-runner", () => {
     expect(r.text).toContain("Ralph 验证失败");
   });
 
+  it("skips placeholder npm test and uses forge doctor when wrapper exists", () => {
+    advanceToDev(engine, "ralph-demo");
+    writePkgTest(workspace, 1);
+    fs.mkdirSync(path.join(workspace, "scripts"), { recursive: true });
+    fs.writeFileSync(path.join(workspace, "scripts", "taiyi-forge.sh"), "#!/bin/bash\nexit 0\n", {
+      mode: 0o755,
+    });
+    const r = runRalphVerify(engine, workspace, "ralph-demo");
+    expect(r.verifyCmd).toBe("bash scripts/taiyi-forge.sh doctor");
+  });
+
   it("returns not found for missing slug", () => {
-    writePkgTest(workspace, 0);
+    writeRealPkgTest(workspace, 0);
     const r = runRalphVerify(engine, workspace, "missing");
     expect(r.ok).toBe(false);
     expect(r.text).toContain("Change not found");
   });
 
   it("rejects unsafe TAIYI_RALPH_VERIFY_CMD", () => {
+    advanceToDev(engine, "ralph-demo");
     fs.writeFileSync(path.join(workspace, "package.json"), JSON.stringify({ name: "ralph-unsafe" }));
     const prev = process.env.TAIYI_RALPH_VERIFY_CMD;
     process.env.TAIYI_RALPH_VERIFY_CMD = "npm test; rm -rf /";
@@ -73,5 +113,13 @@ describe("ralph-runner", () => {
       if (prev === undefined) delete process.env.TAIYI_RALPH_VERIFY_CMD;
       else process.env.TAIYI_RALPH_VERIFY_CMD = prev;
     }
+  });
+
+  it("skips verify before dev phase", () => {
+    writeRealPkgTest(workspace, 0);
+    const r = runRalphVerify(engine, workspace, "ralph-demo");
+    expect(r.skipped).toBe(true);
+    expect(r.skipReason).toBe("before-dev");
+    expect(r.text).toContain("规划阶段");
   });
 });

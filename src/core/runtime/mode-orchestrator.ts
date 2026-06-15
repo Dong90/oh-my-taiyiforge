@@ -2,11 +2,24 @@ import type { WorkflowEngine } from "../workflow-engine.js";
 import { buildPhaseGuide } from "../phase-guide.js";
 import { buildHarnessPlan, formatHarnessPlanPlain } from "../harness-runner.js";
 import { formatGuidePlain, formatPhaseProgressLine } from "../format-guide.js";
-import { isWorkflowCompleted } from "../change-status.js";
+import { isWorkflowCompleted, workflowPhaseLabelFromState } from "../change-status.js";
 import { requiresHumanGate } from "../gates/human-gate-config.js";
 import { runRalphVerify } from "../ralph-runner.js";
 import { runReviewMachineCheck } from "../review-loop-runner.js";
-import { activateMode, listActiveModes, type TaiyiModeId } from "./mode-state.js";
+import {
+  activateMode,
+  type TaiyiModeId,
+} from "./mode-state.js";
+import { isTaiyiArchived } from "../taiyi-archive.js";
+import {
+  pruneOrphanRuntimeModes,
+  listOrphanRuntimeModes,
+  listStepDriverModes,
+  listWorkflowProtocolModes,
+  clearMisphasedWorkflowModes,
+  clearRuntimeForSlug,
+  STEP_DRIVER_MODE_ORDER,
+} from "./orphan-runtime.js";
 import { buildSpawnPlan, formatSpawnPlanPlain, formatUltraworkTaskProtocol } from "./spawn-delegation.js";
 import { readTaskMd, ensureTeamMode, formatTeamPipelinePlain } from "./team-state.js";
 import type { PhaseId } from "../types.js";
@@ -28,33 +41,25 @@ export type ModeStepResult = {
   action: ModeStepAction;
   text: string;
   verifyExitCode?: number;
+  /** CLI exit: 0=通过/完成, 1=验证或人工门, 2=阻塞/模式冲突 */
+  exitCode?: number;
 };
-
-const MODE_PRIORITY: TaiyiModeId[] = [
-  "autopilot",
-  "ralph",
-  "ultraqa",
-  "ultrawork",
-  "team",
-  "ralplan",
-  "plan",
-];
 
 function resolvePrimaryMode(
   taiyiRoot: string,
   explicit?: TaiyiModeId,
 ): { mode: TaiyiModeId | "none"; slug?: string } {
+  const drivers = listStepDriverModes(taiyiRoot);
   if (explicit) {
-    const active = listActiveModes(taiyiRoot).find((m) => m.mode === explicit);
-    return { mode: explicit, slug: active?.slug };
+    const hit = drivers.find((m) => m.mode === explicit);
+    return { mode: explicit, slug: hit?.slug };
   }
-  const active = listActiveModes(taiyiRoot);
-  if (active.length === 0) return { mode: "none" };
-  for (const id of MODE_PRIORITY) {
-    const hit = active.find((a) => a.mode === id);
+  if (drivers.length === 0) return { mode: "none" };
+  for (const id of STEP_DRIVER_MODE_ORDER) {
+    const hit = drivers.find((a) => a.mode === id);
     if (hit) return { mode: id, slug: hit.slug };
   }
-  return { mode: active[0].mode, slug: active[0].slug };
+  return { mode: drivers[0]!.mode, slug: drivers[0]!.slug };
 }
 
 function tryAutoContinue(
@@ -65,7 +70,7 @@ function tryAutoContinue(
 ): { advanced: boolean; text: string } {
   const state = engine.getState(slug);
   if (!state || isWorkflowCompleted(state)) {
-    return { advanced: true, text: "九阶段已完成" };
+    return { advanced: true, text: state ? `${workflowPhaseLabelFromState(state)}已完成` : "工作流已完成" };
   }
   const phase = state.currentPhase as PhaseId;
   if (requiresHumanGate(phase)) {
@@ -106,19 +111,65 @@ export function runModeStep(
   slug: string,
   explicitMode?: TaiyiModeId,
 ): ModeStepResult {
+  return withStepExitCode(runModeStepCore(engine, workspaceDir, taiyiRoot, slug, explicitMode));
+}
+
+export function resolveModeStepExitCode(step: Omit<ModeStepResult, "exitCode">): number {
+  if (step.ok && (step.action === "done" || step.action === "advanced")) return 0;
+  if (step.action === "blocked") return 2;
+  return 1;
+}
+
+function withStepExitCode(step: Omit<ModeStepResult, "exitCode">): ModeStepResult {
+  return { ...step, exitCode: resolveModeStepExitCode(step) };
+}
+
+function runModeStepCore(
+  engine: WorkflowEngine,
+  workspaceDir: string,
+  taiyiRoot: string,
+  slug: string,
+  explicitMode?: TaiyiModeId,
+): ModeStepResult {
   const state = engine.getState(slug);
   if (!state) {
+    const cleared = pruneOrphanRuntimeModes(taiyiRoot, { slug });
+    const hint =
+      cleared.length > 0
+        ? `\n已清除 ${cleared.length} 个指向 ${slug} 的孤儿 runtime 模式（${cleared.map((c) => c.mode).join(", ")}）。`
+        : "";
+    const orphanOthers = listOrphanRuntimeModes(taiyiRoot);
+    const otherHint =
+      orphanOthers.length > 0
+        ? `\n仍有 ${orphanOthers.length} 个其它孤儿 runtime：./scripts/taiyi-forge.sh prune 或 stop-mode --force`
+        : "";
     return {
       ok: false,
       mode: "none",
       slug,
       phase: "change",
       action: "blocked",
-      text: `Change not found: ${slug}`,
+      text: `Change not found: ${slug}${hint}${otherHint}\n修复: init ${slug} --force 或 /taiyi:new`,
     };
   }
 
   const phase = state.currentPhase as PhaseId;
+  clearMisphasedWorkflowModes(taiyiRoot, slug, phase);
+
+  if (isWorkflowCompleted(state) || isTaiyiArchived(taiyiRoot, slug)) {
+    clearRuntimeForSlug(taiyiRoot, slug);
+    return {
+      ok: true,
+      mode: "none",
+      slug,
+      phase,
+      action: "done",
+      text: isTaiyiArchived(taiyiRoot, slug)
+        ? `✓ 变更已归档（${workflowPhaseLabelFromState(state)}）→ 无需 step；探测清理用 prune / stop-mode --force`
+        : `✓ ${workflowPhaseLabelFromState(state)}已完成 → /taiyi:archive · /taiyi:stop-mode`,
+    };
+  }
+
   const resolved = resolvePrimaryMode(taiyiRoot, explicitMode);
   let mode = resolved.mode;
 
@@ -150,13 +201,14 @@ export function runModeStep(
   }
 
   if (isWorkflowCompleted(state)) {
+    clearRuntimeForSlug(taiyiRoot, slug);
     return {
       ok: true,
       mode,
       slug,
       phase,
       action: "done",
-      text: "✓ 九阶段已完成 → /taiyi:archive · /taiyi:stop-mode",
+      text: `✓ ${workflowPhaseLabelFromState(state)}已完成 → /taiyi:archive · /taiyi:stop-mode`,
     };
   }
 
@@ -172,6 +224,16 @@ export function runModeStep(
         text: ralph.text,
       };
     }
+    if (ralph.skipped && ralph.skipReason === "before-dev") {
+      return {
+        ok: false,
+        mode,
+        slug,
+        phase,
+        action: "harness",
+        text: ralph.text,
+      };
+    }
     if (ralph.ok) {
       return {
         ok: true,
@@ -184,7 +246,7 @@ export function runModeStep(
           "",
           mode === "ultraqa"
             ? "UltraQA：验收仍须 /taiyi:gstack qa · AC 对照"
-            : "Ralph 验证已通过 → /taiyi:continue 或 /taiyi:stop-mode",
+            : "Ralph 测试已通过；仍须 harness/人工门 → /taiyi:continue 或 step",
         ].join("\n"),
         verifyExitCode: 0,
       };
@@ -342,7 +404,31 @@ export function runModeStep(
 }
 
 export function formatActiveModesBanner(taiyiRoot: string): string {
-  const active = listActiveModes(taiyiRoot);
-  if (active.length === 0) return "";
-  return active.map((a) => `[${a.mode}${a.slug ? `:${a.slug}` : ""}]`).join(" ");
+  const drivers = listStepDriverModes(taiyiRoot);
+  const protocol = listWorkflowProtocolModes(taiyiRoot);
+  const orphan = listOrphanRuntimeModes(taiyiRoot).filter((o) => o.active);
+  if (drivers.length === 0 && protocol.length === 0 && orphan.length === 0) return "";
+
+  const primary = resolvePrimaryMode(taiyiRoot);
+  const parts: string[] = [];
+
+  if (drivers.length > 0) {
+    parts.push(
+      drivers
+        .map((a) => {
+          const tag = `${a.mode}${a.slug ? `:${a.slug}` : ""}`;
+          return primary.mode === a.mode ? `[${tag}·driver]` : `[${tag}]`;
+        })
+        .join(" "),
+    );
+  }
+  if (protocol.length > 0) {
+    parts.push(
+      `protocol:${protocol.map((a) => `${a.mode}:${a.slug ?? "?"}`).join(",")}`,
+    );
+  }
+  if (orphan.length > 0) {
+    parts.push(`orphan:${orphan.map((o) => `${o.mode}:${o.slug}`).join(",")}→prune`);
+  }
+  return parts.join(" · ");
 }

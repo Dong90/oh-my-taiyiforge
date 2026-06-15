@@ -15,4 +15,4 @@ node node_modules/oh-my-taiyiforge/scripts/codex-mode-reminder.mjs
 # if output → scripts/taiyi-forge.sh step
 ```
 
-Equivalent: `scripts/taiyi-forge.sh keyword` · `modes` · `step`.
+Equivalent: `scripts/taiyi-forge.sh keyword "$ARGUMENTS"` · `/taiyi:keyword` · `modes` · `step`.

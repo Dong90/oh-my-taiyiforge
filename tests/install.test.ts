@@ -15,6 +15,7 @@ import { installCodexMcpConfig } from "../src/install/sync-user-mcp.js";
 import { syncCodexPrompts } from "../src/install/sync-codex-prompts.js";
 import { syncTaiyiSkills } from "../src/install/sync-skills.js";
 import { parseInstallCli, parseInstallTargets } from "../src/install/run.js";
+import { installProjectWrapper } from "../src/install/sync-project-wrapper.js";
 import { PLUGIN_NAME } from "../src/install/types.js";
 import { fileURLToPath } from "node:url";
 
@@ -86,6 +87,23 @@ describe("install", () => {
     expect(fs.readFileSync(configPath, "utf8").match(/TAIYI-FORGE:DEVELOPER-INSTRUCTIONS:START/g)?.length).toBe(1);
   });
 
+  it("installCodexDeveloperInstructions inserts before [features] not inside it", () => {
+    const configPath = path.join(tmp, "codex-features", "config.toml");
+    fs.mkdirSync(path.dirname(configPath), { recursive: true });
+    fs.writeFileSync(
+      configPath,
+      'model = "gpt-4"\n\n[features]\njs_repl = false\n',
+      "utf8",
+    );
+    installCodexDeveloperInstructions(configPath);
+    const raw = fs.readFileSync(configPath, "utf8");
+    const featuresIdx = raw.indexOf("[features]");
+    const devIdx = raw.indexOf("developer_instructions");
+    expect(devIdx).toBeGreaterThan(-1);
+    expect(featuresIdx).toBeGreaterThan(devIdx);
+    expect(raw.slice(featuresIdx)).not.toContain("developer_instructions");
+  });
+
   it("installCodexDeveloperInstructions replaces legacy developer_instructions", () => {
     const configPath = path.join(tmp, "codex-legacy", "config.toml");
     fs.mkdirSync(path.dirname(configPath), { recursive: true });
@@ -147,7 +165,7 @@ describe("install", () => {
     expect(raw).toContain("taiyi-forge");
     expect(raw).toContain("/taiyi:handoff");
     expect(raw).toContain("/taiyi:cancel");
-    expect(raw).toContain("100% 斜杠");
+    expect(raw).toContain("canonical_commands");
   });
 
   it("writes cursor mcp.json template when missing", () => {
@@ -246,5 +264,34 @@ describe("install", () => {
     expect(settings.hooks.Stop?.some((g: { hooks?: { command?: string }[] }) =>
       g.hooks?.some((h) => h.command?.includes("taiyi-mode-stop")),
     )).toBe(true);
+  });
+
+  it("syncs project wrapper shim delegating to node_modules", () => {
+    const consumer = path.join(tmp, "consumer-wrapper");
+    fs.mkdirSync(consumer, { recursive: true });
+    fs.writeFileSync(path.join(consumer, "package.json"), JSON.stringify({ name: "wrapper-test" }));
+    const r = installProjectWrapper(consumer, pkgRoot);
+    expect(r.action).toBe("updated");
+    const script = fs.readFileSync(path.join(consumer, "scripts", "taiyi-forge.sh"), "utf8");
+    expect(script).toContain("resolve_upstream_wrapper");
+    expect(script).toContain("node_modules/oh-my-taiyiforge/scripts/taiyi-forge.sh");
+    expect(script).toContain("TAIYI-FORGE:PROJECT-WRAPPER");
+  });
+
+  it("migrates legacy full wrapper to shim", () => {
+    const consumer = path.join(tmp, "consumer-legacy");
+    fs.mkdirSync(path.join(consumer, "scripts"), { recursive: true });
+    fs.writeFileSync(path.join(consumer, "package.json"), JSON.stringify({ name: "legacy" }));
+    fs.writeFileSync(
+      path.join(consumer, "scripts", "taiyi-forge.sh"),
+      "#!/bin/bash\ncase \"$1\" in list) echo ok ;; *) exit 2 ;; esac\n",
+      "utf8",
+    );
+    const r = installProjectWrapper(consumer, pkgRoot);
+    expect(r.action).toBe("updated");
+    expect(r.detail).toMatch(/迁移|shim/i);
+    expect(fs.readFileSync(path.join(consumer, "scripts", "taiyi-forge.sh"), "utf8")).toContain(
+      "resolve_upstream_wrapper",
+    );
   });
 });

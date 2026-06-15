@@ -1,7 +1,8 @@
 import fs from "node:fs";
 import path from "node:path";
-import { listActiveModes, readModeState, type TaiyiModeId } from "./mode-state.js";
+import { listActiveModes, readModeState, type TaiyiModeId, deactivateModesForSlug } from "./mode-state.js";
 import { readRalphState } from "../ralph-state.js";
+import { isSlugWorkflowCompleted } from "../change-status.js";
 
 export type StopReinforcement = {
   block: boolean;
@@ -26,7 +27,7 @@ const REINFORCE: Partial<Record<TaiyiModeId, (slug?: string) => string>> = {
   autopilot: (slug) =>
     [
       "[AUTOPILOT MODE]",
-      "九阶段未完成。继续 autopilot 步进：",
+      "工作流未完成。继续 autopilot 步进：",
       slug ? `scripts/taiyi-forge.sh step ${slug}` : "scripts/taiyi-forge.sh step",
       "或加载 @taiyi-orchestrator 写当前阶段工件",
     ].join("\n"),
@@ -52,6 +53,11 @@ export function buildStopReinforcement(
 
   const slug = primary.slug;
   const mode = primary.mode;
+
+  if (slug && isSlugWorkflowCompleted(taiyiRoot, slug)) {
+    deactivateModesForSlug(taiyiRoot, slug);
+    return { block: false, followup: "", mode: "none" };
+  }
 
   if (mode === "ralph" && changeDir) {
     const rs = readRalphState(changeDir);

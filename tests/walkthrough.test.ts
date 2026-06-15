@@ -16,7 +16,9 @@ describe("walkthrough", () => {
 
     const text = formatWalkthroughPlain(r);
     expect(text).toContain("TaiyiForge");
-    expect(text).toContain("npx taiyi next");
+    expect(text).toContain("/taiyi:continue");
+    expect(text).toContain("/taiyi:list");
+    expect(text).not.toContain("npx taiyi");
   });
 
   it("reuses existing slug on second run", () => {

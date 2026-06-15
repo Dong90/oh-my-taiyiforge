@@ -5,11 +5,14 @@ import { resolveTaiyiRoot } from "./paths.js";
 import { resolveTemplatesDir, resolvePackageRoot } from "./package-root.js";
 import { buildPhaseGuide } from "./phase-guide.js";
 import { formatGuidePlain } from "./format-guide.js";
+import fs from "node:fs";
 
 export type WalkthroughOptions = {
   slug?: string;
   profile?: ChangeProfile;
   title?: string;
+  /** 默认 slug walkthrough-demo 完成后自动 abort，避免污染 active 变更 */
+  keepDemoChange?: boolean;
 };
 
 export type WalkthroughStep = {
@@ -42,6 +45,7 @@ export function runWalkthrough(
   const taiyiRoot = resolveTaiyiRoot(workspaceDir);
   const engine = new WorkflowEngine(taiyiRoot, templatesDir);
   const existing = engine.getState(slug);
+  const createdNew = !existing;
 
   if (!existing) {
     const doctorReport = runDoctor(pkgRoot);
@@ -86,6 +90,23 @@ export function runWalkthrough(
   const nextText = formatGuidePlain(guide);
   steps.push({ label: "next", ok: true });
 
+  if (createdNew && slug === DEFAULT_SLUG && !opts.keepDemoChange) {
+    const changeDir = engine.changeDir(slug);
+    const aborted = engine.abortChange(slug);
+    try {
+      fs.rmSync(changeDir, { recursive: true, force: true });
+    } catch {
+      /* best effort */
+    }
+    steps.push({
+      label: "cleanup",
+      ok: aborted.ok,
+      detail: aborted.ok
+        ? `${slug} 已删除（演示变更，不占用 list）`
+        : aborted.error,
+    });
+  }
+
   return { ok: true, workspaceDir, slug, steps, nextText };
 }
 
@@ -101,11 +122,11 @@ export function formatWalkthroughPlain(r: WalkthroughResult): string {
   }
   if (r.ok) {
     lines.push("\n─── 常用命令 ───");
-    lines.push(`  npx taiyi next ${r.slug}`);
-    lines.push("  npx taiyi list");
-    lines.push(`  npx taiyi complete ${r.slug} change   # 填好 CHANGE.md 后`);
+    lines.push(`  /taiyi:continue ${r.slug}   # 填好 CHANGE.md 后`);
+    lines.push("  /taiyi:list");
+    // (replaced by /taiyi:continue on the line above)
     lines.push("\n完整九阶段 E2E: examples/minimal-project → npm run walkthrough-e2e（别名 walkthrough）");
-    lines.push("（注意: npx taiyi walkthrough / /taiyi:run 仅 doctor+init+下一步，不跑九阶段）");
+    lines.push("（注意: /taiyi:run 仅 doctor+init+下一步；默认 walkthrough-demo 演示结束后自动删除）");
   } else if (r.error) {
     lines.push(`\n✗ ${r.error}`);
   }

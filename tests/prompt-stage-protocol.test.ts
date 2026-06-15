@@ -35,7 +35,7 @@ describe("prompt-stage-protocol", () => {
       promptsDir,
     );
     expect(out).not.toContain("1. old rule");
-    expect(out).toContain("以 `/taiyi:status` 引擎输出为准");
+    expect(out).toContain("以 `/taiyi:status` 的 Skill/artifact 为准");
   });
 
   it("appends to taiyi prompts without protocol", () => {

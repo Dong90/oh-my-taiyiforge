@@ -22,6 +22,8 @@ import {
   taiyiProjectRemember,
   taiyiDetectKeyword,
   taiyiRunWorkflow,
+  taiyiDoctorCompact,
+  taiyiAuditCompact,
 } from "./state-tools.js";
 import {
   taiyiLspDiagnostics,
@@ -175,6 +177,33 @@ server.setRequestHandler(ListToolsRequestSchema, async () => ({
       },
     },
     {
+      name: "taiyi_doctor",
+      description:
+        "Install + workspace workflow health (slim JSON). Aligns with doctor --json --compact. Prefer over full doctor dump.",
+      inputSchema: {
+        type: "object",
+        properties: {
+          strictWorkspace: {
+            type: "boolean",
+            description: "Treat workspace blockers as FAIL (CI gate)",
+          },
+          workspace: { type: "string", description: "Project root" },
+        },
+      },
+    },
+    {
+      name: "taiyi_audit",
+      description:
+        "Workflow/delivery audit (slim JSON, high findings only). Aligns with audit --json --compact.",
+      inputSchema: {
+        type: "object",
+        properties: {
+          slug: { type: "string", description: "Change slug; omit for all changes" },
+          workspace: { type: "string", description: "Project root" },
+        },
+      },
+    },
+    {
       name: "taiyi_lsp_diagnostics",
       description: "Lightweight diagnostics via npm typecheck/lint/tsc (OMC lsp_diagnostics parity). Set TAIYI_LSP=off to skip.",
       inputSchema: {
@@ -219,6 +248,7 @@ server.setRequestHandler(CallToolRequestSchema, async (req) => {
     workspace?: string;
     mode?: string;
     force?: boolean;
+    strictWorkspace?: boolean;
     prompt?: string;
     skill?: string;
     symbol?: string;
@@ -381,6 +411,23 @@ server.setRequestHandler(CallToolRequestSchema, async (req) => {
           },
         ],
         isError: !r.ok,
+      };
+    }
+
+    if (req.params.name === "taiyi_doctor") {
+      const strictWorkspace = args.strictWorkspace === true;
+      const compact = taiyiDoctorCompact(workspace, { strictWorkspace });
+      return {
+        content: [{ type: "text", text: JSON.stringify(compact, null, 2) }],
+        isError: !compact.ok,
+      };
+    }
+
+    if (req.params.name === "taiyi_audit") {
+      const compact = taiyiAuditCompact(workspace, args.slug);
+      return {
+        content: [{ type: "text", text: JSON.stringify(compact, null, 2) }],
+        isError: !compact.ok,
       };
     }
 
