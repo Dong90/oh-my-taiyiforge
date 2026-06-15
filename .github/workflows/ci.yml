@@ -1,8 +1,10 @@
 name: CI
 
 on:
+  # push 只跑 main（develop 已由 PR 覆盖；merge 进 develop 后的 push 重复跑会触发 dogfood-e2e 的
+  # 「integration 需在实现代码 commit 之后」检查 fail，因为 merge commit 相对 origin/develop 无 ahead）
   push:
-    branches: [main, develop]
+    branches: [main]
   pull_request:
     branches: [main, develop]
 
