@@ -20,5 +20,5 @@ if (!sub) {
 }
 
 const args = ["ci", sub, ...rest];
-const r = spawnSync("node", [taiyi, ...args], { cwd: process.cwd(), encoding: "utf8", stdio: "inherit" });
+const r = spawnSync(process.execPath, [taiyi, ...args], { cwd: process.cwd(), encoding: "utf8", stdio: "inherit" });
 process.exit(r.status ?? 1);

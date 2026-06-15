@@ -1,6 +1,6 @@
 <div align="center">
 
-[English](README.zh-CN.md) · **[简体中文](README.md)**
+[English](README.en.md) · **[简体中文](README.md)**
 
 # TaiyiForge(太一炉)
 
@@ -12,7 +12,7 @@
 [![npm version](https://img.shields.io/npm/v/oh-my-taiyiforge.svg)](https://www.npmjs.com/package/oh-my-taiyiforge)
 [![npm downloads](https://img.shields.io/npm/dm/oh-my-taiyiforge.svg)](https://www.npmjs.com/package/oh-my-taiyiforge)
 -->
-[![Version](https://img.shields.io/badge/version-0.23.1-orange)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-0.23.2-orange)](CHANGELOG.md)
 [![v28 canonical](https://img.shields.io/badge/v28-28%20slashes%20%C2%B7%206%20umbrellas-blue)](docs/taiyi/canonical-commands.md)
 [![CI](https://img.shields.io/github/actions/workflow/status/Dong90/oh-my-taiyiforge/ci.yml?branch=main&label=CI)](https://github.com/Dong90/oh-my-taiyiforge/actions/workflows/ci.yml)
 [![Platforms](https://img.shields.io/badge/platforms-OpenCode%20%7C%20Claude%20%7C%20Codex%20%7C%20Cursor-8a2be2)](docs/QUICKSTART.md)
@@ -294,7 +294,7 @@ scripts/taiyi-forge.sh audit --json --compact
 | [CONTRIBUTING.md](CONTRIBUTING.md) | 贡献指南 | 开 PR 之前 |
 | [CHANGELOG.md](CHANGELOG.md) | 发布说明 | 查更新 |
 | [docs/diagrams/demo.gif](docs/diagrams/demo.gif) | 真实终端录制(27s) | 快速感受引擎 |
-| [README.zh-CN.md](README.zh-CN.md) | English | English users |
+| [README.en.md](README.en.md) | English | English users |
 
 ### 5.2 · 开发与验证
 
