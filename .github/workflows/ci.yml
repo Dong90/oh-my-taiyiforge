@@ -23,8 +23,8 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
         with:
           node-version: "22"
           cache: npm
@@ -44,8 +44,8 @@ jobs:
         os: [ubuntu-latest, macos-latest]
         node: ["20", "22"]
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
         with:
           node-version: ${{ matrix.node }}
           cache: npm
@@ -61,8 +61,8 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
         with:
           node-version: "22"
           cache: npm
@@ -87,7 +87,7 @@ jobs:
           fi
       - name: 上传 coverage HTML report
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: coverage-html
           path: coverage/
@@ -104,8 +104,8 @@ jobs:
       matrix:
         platform: [opencode, claude, codex, cursor]
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
         with:
           node-version: "22"
           cache: npm
@@ -115,7 +115,7 @@ jobs:
 
   # 真装包验证 — npm pack 出 tgz → 全新临时目录 install → CLI smoke
   # 这是 0.23.1 那种「prepublishOnly 都过了但装出来跑不起来」bug 的最后防线
-  # ubuntu + macos 双 OS（review #4：真覆盖 macOS 装包路径）
+  # ubuntu + macos 双 OS 真覆盖 macOS 装包路径
   pack-smoke:
     name: pack & install smoke (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
@@ -125,8 +125,8 @@ jobs:
       matrix:
         os: [ubuntu-latest, macos-latest]
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
         with:
           node-version: "22"
           cache: npm
@@ -179,7 +179,13 @@ jobs:
           # macOS 默认无 GNU coreutils 的 timeout；BSD coreutils 装 GNU timeout 路径不一定可达
           # 用 perl 的 alarm 实现跨平台 5 秒 timeout
           echo "{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"tools/list\",\"params\":{}}" | \
-            perl -e 'use IPC::Open2; alarm 5; open2(my $out, my $in, "npx", "--no", "taiyi-mcp"); print $in <STDIN>; close $in; while (<$out>) { print }' 2>&1 | head -3
+            perl -e 'use IPC::Open2; alarm 5; open2(my $out, my $in, "npx", "--no", "taiyi-mcp"); print $in <STDIN>; close $in; while (<$out>) { print }' > /tmp/mcp-resp.txt 2>&1
+          head -3 /tmp/mcp-resp.txt
+          if ! grep -q '"tools"' /tmp/mcp-resp.txt; then
+            echo "::error::MCP tools/list 未返回有效响应（缺少 tools 字段）"
+            exit 1
+          fi
+          echo "✅ MCP server 响应有效"
           echo ""
           echo "=== bin: taiyi-forge-install --help ==="
           npx --no taiyi-forge-install --help 2>&1 | head -3
@@ -187,14 +193,14 @@ jobs:
           echo "✅ 4 个 bin 全部能起"
 
   # postinstall smoke — 隔离 $HOME 跑全套 postinstall，验本包 postinstall.mjs 不挂
-  # 补 pack-smoke 跳过 postinstall 留下的盲点（review #14）
+  # 补 pack-smoke 跳过 postinstall 留下的盲点
   postinstall-smoke:
     name: postinstall smoke (isolated HOME)
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
         with:
           node-version: "22"
           cache: npm
@@ -217,6 +223,7 @@ jobs:
           FAKE_HOME=$(mktemp -d)
           cd "$TMP"
           npm init -y > /dev/null
+          set -o pipefail
           HOME="$FAKE_HOME" \
           TAIYI_FORGE_SKIP_DEPS=1 \
           TAIYI_FORGE_SKIP_MCP=1 \
@@ -224,10 +231,15 @@ jobs:
           npm install "$TGZ" --no-audit --no-fund 2>&1 | tee install.log
           echo ""
           echo "=== postinstall 是否写入 fake HOME ==="
+          SKILL_COUNT=$(find "$FAKE_HOME" -name "taiyi-*" -type d 2>/dev/null | wc -l | tr -d ' ')
           find "$FAKE_HOME" -name "taiyi-*" -type d 2>/dev/null | head -10
           echo ""
-          if grep -qi "error" install.log; then
-            echo "::error::postinstall 出现 error，详见日志"
+          if [ "$SKILL_COUNT" -lt 4 ]; then
+            echo "::error::postinstall 未安装足够的 taiyi skills: 找到 ${SKILL_COUNT} 个（期望 >=4）"
+            exit 1
+          fi
+          if grep -qiE "(npm ERR!|npm error|Error:)" install.log; then
+            echo "::error::postinstall 出现错误，详见日志"
             exit 1
           fi
           echo "✅ postinstall.mjs 在隔离 HOME 下成功执行"
@@ -238,8 +250,8 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
         with:
           node-version: "22"
           cache: npm
