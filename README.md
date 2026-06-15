@@ -25,9 +25,9 @@
 
 <br />
 
-![TaiyiForge 架构 — 六套标准 × 工作流引擎 × 九阶段 × Skill 宇宙 × 三层门控](docs/taiyiforge-architecture.svg)
+![TaiyiForge 架构 — 六套标准 × 工作流引擎 × 九阶段 × Skill 宇宙 × 三层门控](docs/diagrams/visual/taiyiforge-architecture-ai-v023-full-4k-zh-v2-fix.png)
 
-<sub>架构 SVG（矢量 · 55KB · GitHub 秒渲染）· <a href="docs/c4/containers.md">C4 真源</a> · <a href="docs/diagrams/visual/taiyiforge-architecture-ai-v023-full-4k.png">4K PNG 海报</a></sub>
+<sub>4K 架构海报（v0.23.1 · AI 视觉稿）· <a href="docs/taiyiforge-architecture.svg">矢量 SVG</a> · <a href="docs/c4/containers.md">C4 真源</a> · <a href="docs/diagrams/visual/taiyiforge-architecture-ai-v023-full-4k-en-v2.png">English poster</a></sub>
 
 </div>
 
@@ -294,7 +294,7 @@ scripts/taiyi-forge.sh audit --json --compact
 | [CONTRIBUTING.md](CONTRIBUTING.md) | 贡献指南 | 开 PR 之前 |
 | [CHANGELOG.md](CHANGELOG.md) | 发布说明 | 查更新 |
 | [docs/diagrams/demo.gif](docs/diagrams/demo.gif) | 真实终端录制(27s) | 快速感受引擎 |
-| [README.md](README.md) | English | English users |
+| [README.zh-CN.md](README.zh-CN.md) | English | English users |
 
 ### 5.2 · 开发与验证
 
