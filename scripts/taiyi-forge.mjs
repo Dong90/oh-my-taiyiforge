@@ -8,7 +8,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 /** 与 scripts/taiyi-forge.sh 对齐的 legacy 别名（CLI 直调时也生效） */
-const WRAPPER_ALIASES: Record<string, string> = {
+const WRAPPER_ALIASES = {
   ls: "list",
   n: "next",
   go: "next",
@@ -24,7 +24,7 @@ const rawArgs = process.argv.slice(2);
 const args =
   rawArgs[0] && WRAPPER_ALIASES[rawArgs[0]] ? [WRAPPER_ALIASES[rawArgs[0]], ...rawArgs.slice(1)] : rawArgs;
 
-function resolveTaiyiJs(): string {
+function resolveTaiyiJs() {
   if (process.env.TAIYI_FORGE_ROOT) {
     const p = path.join(process.env.TAIYI_FORGE_ROOT, "dist/cli/taiyi.js");
     if (fs.existsSync(p)) return p;

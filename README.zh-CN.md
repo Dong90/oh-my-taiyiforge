@@ -25,9 +25,9 @@
 
 <br />
 
-![TaiyiForge Architecture — Six standards × Workflow engine × Nine stages × Skill universe × Three-layer gates](docs/diagrams/visual/taiyiforge-architecture-ai-v023-full-4k.png)
+![TaiyiForge Architecture — Six standards × Workflow engine × Nine stages × Skill universe × Three-layer gates](docs/taiyiforge-architecture.svg)
 
-<sub>4K visual poster (non-technical source) · Editable source: <a href="docs/taiyiforge-architecture.svg">SVG</a> · <a href="docs/c4/containers.md">C4</a></sub>
+<sub>Architecture SVG (vector · 55KB · GitHub instant render) · <a href="docs/c4/containers.md">C4 source</a> · <a href="docs/diagrams/visual/taiyiforge-architecture-ai-v023-full-4k.png">4K PNG poster</a></sub>
 
 </div>
 
