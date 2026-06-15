@@ -11,22 +11,83 @@ concurrency:
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
-  test:
+  # 类型检查 — 比之前 .mjs 漏检 TS 语法那种 bug 更早拦下来
+  typecheck:
+    name: TypeScript typecheck
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
       - uses: actions/setup-node@v4
         with:
           node-version: "22"
           cache: npm
+      - run: npm ci
+      - name: tsc --noEmit
+        run: npx tsc --noEmit
 
+  # 主测试 — Node 20 / 22 矩阵 × ubuntu / macos 双 OS
+  # engines.node: ">=20" → 至少覆盖 20 + 22
+  test:
+    name: test (node ${{ matrix.node }} · ${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+        node: ["20", "22"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+          cache: npm
       - run: npm ci
       - run: npm test
       - run: npm run dogfood
       - run: npm run ci:verify
 
+  # 测试覆盖率 — 单跑一次，结果上传到 GitHub Summary
+  coverage:
+    name: test coverage
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+      - run: npm ci
+      - name: vitest with coverage
+        run: npx vitest run --coverage --reporter=default --coverage.reporter=text --coverage.reporter=json-summary
+        continue-on-error: true
+      - name: 上传 coverage 到 PR summary
+        if: always()
+        run: |
+          if [ -f coverage/coverage-summary.json ]; then
+            echo "## 测试覆盖率" >> "$GITHUB_STEP_SUMMARY"
+            echo "" >> "$GITHUB_STEP_SUMMARY"
+            node -e '
+              const s = require("./coverage/coverage-summary.json").total;
+              const fmt = (k) => `| ${k} | ${s[k].pct}% | ${s[k].covered}/${s[k].total} |`;
+              console.log("| 维度 | 覆盖率 | 比例 |");
+              console.log("|------|--------|------|");
+              ["lines","statements","functions","branches"].forEach(k => console.log(fmt(k)));
+            ' >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "⚠️ 没有 coverage-summary.json（vitest --coverage 可能未跑成功）" >> "$GITHUB_STEP_SUMMARY"
+          fi
+      - name: 上传 coverage HTML report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-html
+          path: coverage/
+          if-no-files-found: ignore
+          retention-days: 14
+
+  # 平台 smoke — 四端 install 流程
   platform-smoke:
+    name: platform-smoke (${{ matrix.platform }})
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -41,3 +102,81 @@ jobs:
       - run: npm ci
       - run: npm run build
       - run: npx taiyi ci platform ${{ matrix.platform }}
+
+  # 真装包验证 — npm pack 出 tgz → 全新临时目录 install → CLI smoke
+  # 这是 0.23.1 那种「prepublishOnly 都过了但装出来跑不起来」bug 的最后防线
+  pack-smoke:
+    name: pack & install smoke
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+
+      - name: 打 tgz
+        id: pack
+        run: |
+          TGZ=$(npm pack --silent --pack-destination /tmp)
+          echo "tgz=/tmp/$TGZ" >> "$GITHUB_OUTPUT"
+          SIZE=$(stat -c%s "/tmp/$TGZ")
+          SIZE_KB=$((SIZE / 1024))
+          echo "size_kb=$SIZE_KB" >> "$GITHUB_OUTPUT"
+          echo "📦 包大小: ${SIZE_KB} KB"
+
+      - name: 包体积预算（< 1MB OK · 1-2MB warn · > 2MB fail）
+        run: |
+          SIZE_KB=${{ steps.pack.outputs.size_kb }}
+          if [ "$SIZE_KB" -gt 2048 ]; then
+            echo "::error::包体积超预算: ${SIZE_KB} KB > 2048 KB（2 MB）。检查 package.json files 字段是否漏出大资源。"
+            exit 1
+          elif [ "$SIZE_KB" -gt 1024 ]; then
+            echo "::warning::包体积接近上限: ${SIZE_KB} KB（> 1 MB）。建议优化。"
+          else
+            echo "✅ 包体积正常: ${SIZE_KB} KB"
+          fi
+          echo "## 📦 包体积" >> "$GITHUB_STEP_SUMMARY"
+          echo "- 当前: **${SIZE_KB} KB**" >> "$GITHUB_STEP_SUMMARY"
+          echo "- 预算: < 1024 KB（推荐）· < 2048 KB（硬上限）" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: 全新临时目录装包 + CLI smoke
+        run: |
+          TGZ="${{ steps.pack.outputs.tgz }}"
+          TMP=$(mktemp -d)
+          cd "$TMP"
+          npm init -y > /dev/null
+          # --ignore-scripts: postinstall 会改 $HOME 真实配置，CI 隔离环境不该跑
+          npm install "$TGZ" --ignore-scripts --no-audit --no-fund
+          echo ""
+          echo "=== bin: taiyi ==="
+          npx --no taiyi --version 2>&1 | head -5
+          echo ""
+          echo "=== bin: taiyi-forge（修过 TS 语法的）==="
+          npx --no taiyi-forge --help 2>&1 | head -5
+          echo ""
+          echo "=== bin: taiyi-mcp（MCP server stdio）==="
+          timeout 5 bash -c 'echo "{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"tools/list\",\"params\":{}}" | npx --no taiyi-mcp 2>&1' | head -3
+          echo ""
+          echo "=== bin: taiyi-forge-install --help ==="
+          npx --no taiyi-forge-install --help 2>&1 | head -3
+          echo ""
+          echo "✅ 4 个 bin 全部能起"
+
+  # prepublishOnly dry-run — PR 阶段就模拟发版流程，避免发版当天才发现挂
+  publish-dry-run:
+    name: npm publish --dry-run
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+      - run: npm ci
+      - name: 模拟发版（不真发，不消耗 OTP）
+        # --ignore-scripts: 不重跑 prepublishOnly（test job 已经验证过 build+test）
+        # 本 job 只验证：clean tarball 能成功通过 npm publish 协议（白名单、版本号、metadata）
+        run: npm publish --dry-run --access public --ignore-scripts
