@@ -1,0 +1,21 @@
+# CODEOWNERS — 自动指派 reviewer
+# 格式: <pattern>  @owner
+# 顺序很重要（最后一条规则生效）
+
+# 默认：所有变更须 maintainer 审批
+*                               @Dong90
+
+# 文档：maintainer + 任何有 docs 写权限的 contributor
+# （第二个 owner 候补：v0.24+ 招募 doc 维护者时填入）
+/docs/                          @Dong90
+/CHANGELOG.md                   @Dong90
+/CONTRIBUTING.md                @Dong90
+/AGENTS.md                      @Dong90
+/README.md                      @Dong90
+
+# 九阶段核心契约 — 任何变更必须 maintainer 过目
+/docs/taiyi/phases.yaml         @Dong90
+/docs/taiyi/quality-gate.yaml   @Dong90
+/docs/taiyi/commands.yaml       @Dong90
+/src/core/phase-registry.ts     @Dong90
+/src/core/quality-gate.ts       @Dong90

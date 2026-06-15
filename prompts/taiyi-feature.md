@@ -8,6 +8,6 @@ User invoked **$taiyi-feature** (= `/taiyi:feature`). **Full feature scenario** 
 scripts/taiyi-forge.sh feature $ARGUMENTS
 ```
 
-If no change yet: `/taiyi:new <标题>` then follow playbook. Use `/taiyi:write` or phase slashes (`/taiyi:change` …) each step. Overview: `/taiyi:flow`.
+If no change yet: `/taiyi:new <标题>` then follow playbook. Each phase: **`/taiyi:write`** → load Skill from engine output. Overview: `/taiyi:flow`.
 
 {{TAIYI_STAGE_PROTOCOL}}

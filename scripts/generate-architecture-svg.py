@@ -11,6 +11,8 @@ from pathlib import Path
 
 OUT = Path(__file__).resolve().parent.parent / "docs" / "taiyiforge-architecture.svg"
 PNG = OUT.with_suffix(".png")
+ROOT = OUT.parent.parent
+SKILL_COUNT = len(list((ROOT / "skills").glob("*/SKILL.md")))
 
 # Native canvas (Flow-X proportions: wide poster)
 W, H = 2800, 1880
@@ -216,7 +218,7 @@ def build() -> str:
         T(
             W // 2,
             152,
-            "6 大工程规范融合  ×  20 Skill 协同执行  ×  四端统一  ×  OMC 原生控制面",
+            f"6 大工程规范融合  ×  {SKILL_COUNT} Skill 协同执行  ×  四端统一  ×  OMC 原生控制面",
             16,
             DIM,
             400,

@@ -1,5 +1,7 @@
 # TaiyiForge 快速开始
 
+> **何时读本文**：第一次安装或跑通 `new → status → continue → archive` 时。**命令全集** → [canonical-commands.md](./taiyi/canonical-commands.md) · **工件目录** → [artifact-layout.md](./taiyi/artifact-layout.md)
+
 5 分钟跑通 **OpenCode / Claude / Codex / Cursor** 任一端。
 
 ## 最快路径（推荐）
@@ -70,7 +72,7 @@ npx taiyi list
 
 ## dev 后 commit + integration 交付门
 
-实现并 `complete dev/test` 后，**integration 前**须有带 trailer 的 git commit：
+实现并 `complete dev/test` 后，**integration 前**须有带 trailer 的 git commit。聊天推荐 **`/taiyi:commit`**；脚本可用：
 
 ```bash
 npx taiyi commit-trailers my-first "feat: export large files"

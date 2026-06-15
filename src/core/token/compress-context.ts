@@ -55,6 +55,11 @@ export function compressChangeContext(
     costPerMillion?: number;
   },
 ): CompressResult {
+  if (!fs.existsSync(changeDir) || !fs.statSync(changeDir).isDirectory()) {
+    throw new Error(
+      `无法压缩：变更目录不存在或不可写（${changeDir}）。归档变更请用 token status/scan，勿 compress。`,
+    );
+  }
   const maxSectionChars = options?.maxSectionChars ?? 600;
   const scan = scanArtifactTokens(changeDir);
   const inputTokens = scan.total;

@@ -23,6 +23,31 @@ const MARKER_BLOCK_RE = new RegExp(
   `${MARKER_START.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}[\\s\\S]*?${MARKER_END.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\n?`,
 );
 
+const LEGACY_DEVELOPER_INSTRUCTIONS_RE =
+  /^developer_instructions\s*=\s*(?:"""[\s\S]*?"""|'''[\s\S]*?'''|"[\s\S]*?"|'[\s\S]*?')\s*\n?/m;
+
+/** First `[section]` header — developer_instructions must stay above this (top-level TOML). */
+const FIRST_SECTION_RE = /^\[[^\]]+\]/m;
+
+function stripDeveloperInstructions(raw: string): string {
+  return raw.replace(MARKER_BLOCK_RE, "").replace(LEGACY_DEVELOPER_INSTRUCTIONS_RE, "").trimEnd();
+}
+
+/** Insert block before the first TOML table header so it is not parsed under `[features]` etc. */
+function insertDeveloperInstructionsBlock(raw: string, block: string): string {
+  const stripped = stripDeveloperInstructions(raw);
+  const sectionMatch = FIRST_SECTION_RE.exec(stripped);
+  if (!sectionMatch || sectionMatch.index === undefined) {
+    return stripped.length > 0 ? `${stripped}\n\n${block}\n` : `${block}\n`;
+  }
+  const head = stripped.slice(0, sectionMatch.index).trimEnd();
+  const tail = stripped.slice(sectionMatch.index).trimStart();
+  if (head.length === 0) {
+    return `${block}\n\n${tail}\n`;
+  }
+  return `${head}\n\n${block}\n\n${tail}\n`;
+}
+
 /** Merge TaiyiForge developer_instructions into ~/.codex/config.toml */
 export function installCodexDeveloperInstructions(configPath: string): InstallResult {
   const block = buildDeveloperInstructionsBlock(codexDeveloperInstructions());
@@ -44,23 +69,17 @@ export function installCodexDeveloperInstructions(configPath: string): InstallRe
   }
 
   const raw = fs.readFileSync(configPath, "utf8");
-  let next: string;
   let detail = "developer_instructions → $taiyi-preflight";
 
-  if (raw.includes(MARKER_START) && raw.includes(MARKER_END)) {
-    next = raw.replace(MARKER_BLOCK_RE, `${block}\n`);
-  } else if (/^developer_instructions\s*=/m.test(raw)) {
-    const stripped = raw
-      .replace(/^developer_instructions\s*=\s*"""[\s\S]*?"""\s*\n?/m, "")
-      .replace(/^developer_instructions\s*=\s*'''[\s\S]*?'''\s*\n?/m, "")
-      .replace(/^developer_instructions\s*=\s*"[\s\S]*?"\s*\n?/m, "")
-      .replace(/^developer_instructions\s*=\s*'[\s\S]*?'\s*\n?/m, "")
-      .trimEnd();
-    next = `${stripped}\n\n${block}\n`;
+  const hadMarker = raw.includes(MARKER_START) && raw.includes(MARKER_END);
+  const hadLegacy = LEGACY_DEVELOPER_INSTRUCTIONS_RE.test(raw);
+  if (hadLegacy && !hadMarker) {
     detail = "replaced legacy developer_instructions with marked TaiyiForge block";
-  } else {
-    next = `${raw.trimEnd()}\n\n${block}\n`;
+  } else if (hadMarker && /^\[[^\]]+\][\s\S]*developer_instructions/m.test(raw)) {
+    detail = "moved developer_instructions out of nested TOML section";
   }
+
+  const next = insertDeveloperInstructionsBlock(raw, block);
 
   fs.writeFileSync(configPath, next, "utf8");
   return {

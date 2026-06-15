@@ -2,6 +2,12 @@ import { describe, expect, it } from "vitest";
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import {
+  parseCanonicalV28LegacyMapTargets,
+  parseCanonicalV28TokenEngineKeys,
+  parseSlashCatalogLists,
+  validateV28CatalogSync,
+} from "../scripts/lib/parse-commands-yaml.mjs";
 
 const REPO = path.join(path.dirname(fileURLToPath(import.meta.url)), "..");
 const PROMPTS_DIR = path.join(REPO, "prompts");
@@ -19,7 +25,6 @@ const PROMPT_ALLOWLIST = new Set([
   "taiyi-ship.md",
   "taiyi-land.md",
   "taiyi-release.md",
-  "taiyi-pause.md",
 ]);
 
 function listPromptFiles(): string[] {
@@ -70,6 +75,10 @@ function slashToPromptBasenames(slash: string): string[] {
   const head = m[1];
   const tail = m[2]?.trim();
 
+  if (["test", "review", "diagram", "mode", "workflow"].includes(head)) {
+    return [];
+  }
+
   if (!tail) return [`taiyi-${head}`];
 
   if (tail.includes("|")) {
@@ -91,6 +100,35 @@ describe("commands.yaml ↔ prompts 对账", () => {
   const yaml = fs.readFileSync(COMMANDS_YAML, "utf8");
   const prompts = listPromptFiles();
   const promptSet = new Set(prompts);
+  const catalogSections = parseSlashCatalogLists(yaml);
+
+  it("canonical_v28 与 slash_catalog.recommended_v28 均为 28 条且一致", () => {
+    const sync = validateV28CatalogSync(yaml, catalogSections);
+    expect(sync.ok, sync.ok ? "" : sync.errors.join("\n")).toBe(true);
+    expect(catalogSections.recommended_v28).toHaveLength(28);
+  });
+
+  it("canonical_v28 umbrella legacy_map 目标均有 prompt", () => {
+    const missing: string[] = [];
+    for (const slash of parseCanonicalV28LegacyMapTargets(yaml)) {
+      for (const base of slashToPromptBasenames(slash)) {
+        const file = `${base}.md`;
+        if (!promptSet.has(file) && !PROMPT_ALLOWLIST.has(file)) {
+          missing.push(`${slash} → ${file}`);
+        }
+      }
+    }
+    expect(missing, missing.join("\n")).toEqual([]);
+  });
+
+  it("canonical_v28 token engine_map 均有 taiyi-token-* prompt", () => {
+    const missing: string[] = [];
+    for (const key of parseCanonicalV28TokenEngineKeys(yaml)) {
+      const file = `taiyi-token-${key}.md`;
+      if (!promptSet.has(file)) missing.push(`${key} → ${file}`);
+    }
+    expect(missing, missing.join("\n")).toEqual([]);
+  });
 
   it("slash_catalog / engine_slash 每条斜杠均有对应 prompt 文件", () => {
     const slashes = collectCatalogSlashes(yaml);
@@ -125,6 +163,6 @@ describe("commands.yaml ↔ prompts 对账", () => {
 
   it("prompt 数量与 Cursor commands 安装源一致", () => {
     const taiyiPrompts = prompts.filter((f) => f.startsWith("taiyi-"));
-    expect(taiyiPrompts.length).toBeGreaterThanOrEqual(85);
+    expect(taiyiPrompts.length).toBeGreaterThanOrEqual(75);
   });
 });

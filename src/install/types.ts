@@ -14,6 +14,8 @@ export type InstallResult = {
     | "codex-agents"
     | "codex-config"
     | "codex-prompts"
+    | "claude-commands"
+    | "opencode-commands"
     | "cursor-commands"
     | "cursor-hooks"
     | "claude-hooks"

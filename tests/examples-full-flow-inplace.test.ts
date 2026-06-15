@@ -40,7 +40,9 @@ describe("examples/full-flow-demo — 就地生成 .taiyi 工件", () => {
       }
 
       expect(result.generatedFiles.length).toBe(EXPECTED_CHANGE_ARTIFACTS.length);
-      expect(fs.existsSync(path.join(WORKSPACE, ".taiyi/changes", result.slug))).toBe(true);
+      const inChanges = fs.existsSync(path.join(WORKSPACE, ".taiyi/changes", result.slug));
+      const inArchive = fs.existsSync(path.join(WORKSPACE, ".taiyi/archive", result.slug));
+      expect(inChanges || inArchive, "归档后应在 changes/ 或 archive/").toBe(true);
     },
     300_000,
   );

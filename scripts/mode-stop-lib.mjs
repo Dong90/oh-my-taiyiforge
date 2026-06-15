@@ -8,6 +8,60 @@ export function resolveTaiyiRoot(cwd) {
   return path.join(path.resolve(base), ".taiyi");
 }
 
+function workflowPhaseLabelFromState(st) {
+  const skipped = st.skippedPhases?.length ?? 0;
+  const n = 9 - skipped;
+  if (n === 5) return "五阶段";
+  if (n === 9) return "九阶段";
+  return `${n} 阶段`;
+}
+
+function workflowIncompleteLabel(taiyiRoot, slug) {
+  if (!slug) return "工作流未完成";
+  const st = readChangeState(taiyiRoot, slug);
+  if (st) return `${workflowPhaseLabelFromState(st)}未完成`;
+  return "工作流未完成";
+}
+
+function readChangeState(taiyiRoot, slug) {
+  for (const base of ["changes", "archive"]) {
+    const p = path.join(taiyiRoot, base, slug, "state.json");
+    if (!fs.existsSync(p)) continue;
+    try {
+      return JSON.parse(fs.readFileSync(p, "utf8"));
+    } catch {
+      return null;
+    }
+  }
+  const archiveRoot = path.join(taiyiRoot, "archive");
+  if (fs.existsSync(archiveRoot)) {
+    for (const ent of fs.readdirSync(archiveRoot)) {
+      if (ent === slug || ent.startsWith(`${slug}-`)) {
+        const p = path.join(archiveRoot, ent, "state.json");
+        if (fs.existsSync(p)) {
+          try {
+            return JSON.parse(fs.readFileSync(p, "utf8"));
+          } catch {
+            return null;
+          }
+        }
+      }
+    }
+  }
+  return null;
+}
+
+function isSlugCompleted(taiyiRoot, slug) {
+  const st = readChangeState(taiyiRoot, slug);
+  if (!st) return false;
+  const skipped = st.skippedPhases?.length ?? 0;
+  const total = 9 - skipped;
+  return (
+    st.completedPhases?.includes("integration") &&
+    (st.completedPhases.length >= total || st.workflowStatus === "completed")
+  );
+}
+
 export function listActiveModes(taiyiRoot) {
   const dir = path.join(taiyiRoot, "runtime");
   if (!fs.existsSync(dir)) return [];
@@ -45,6 +99,11 @@ export function buildModeStopFollowup(active, taiyiRoot) {
     active.find((a) => a.mode === "autopilot") ??
     active[0];
   const slug = primary.slug;
+
+  if (slug && isSlugCompleted(taiyiRoot, slug)) {
+    return null;
+  }
+
   const cmd = slug ? `scripts/taiyi-forge.sh step ${slug}` : "scripts/taiyi-forge.sh step";
 
   if (primary.mode === "ralph" && slug) {
@@ -59,7 +118,7 @@ export function buildModeStopFollowup(active, taiyiRoot) {
   }
 
   const lines = {
-    autopilot: `[AUTOPILOT] 九阶段未完成。代跑: ${cmd}`,
+    autopilot: `[AUTOPILOT] ${workflowIncompleteLabel(taiyiRoot, slug)}。代跑: ${cmd}`,
     ultraqa: `[ULTRAQA] 继续 QA: ${cmd} · /taiyi:gstack qa`,
     ultrawork: `[ULTRAWORK] 切片未完成。${cmd}`,
     team: `[TEAM] 泳道未完成。${cmd}`,

@@ -1,6 +1,8 @@
 import fs from "node:fs";
 import path from "node:path";
 
+import { TAIYI_SEED_MARKER, isSeedTemplate } from "./seed-marker.js";
+
 export type RootChangelogSyncResult = {
   ok: boolean;
   action: "created" | "appended" | "skipped";
@@ -18,9 +20,13 @@ export function syncRootChangelog(workspaceDir: string, slug: string): RootChang
 
   const dest = path.join(workspaceDir, "CHANGELOG.md");
   const marker = `<!-- taiyi:${slug} -->`;
-  const body = fs.readFileSync(src, "utf8").trim();
+  const raw = fs.readFileSync(src, "utf8").trim();
+  const body = raw.replace(TAIYI_SEED_MARKER, "").trim();
+  if (!body || isSeedTemplate(raw) || body.length < 12) {
+    return { ok: true, action: "skipped", reason: "change CHANGELOG 无实质内容" };
+  }
   const date = new Date().toISOString().slice(0, 10);
-  const entry = `\n\n${marker} ${date}\n${body}\n`;
+  const entry = `\n\n${marker} ${date}\n${raw}\n`;
 
   if (!fs.existsSync(dest)) {
     fs.writeFileSync(dest, `# Changelog\n${entry}`, "utf8");

@@ -2,7 +2,7 @@ version: 2
 description: |
   TaiyiForge 双轨调用说明（对齐 oh-my-codex skills-catalog invoke 块）
 
-# 聊天面 = 100% /taiyi:* 斜杠 + 阶段 Skill；引擎面 = Agent 代跑 taiyi-forge.sh
+# 聊天面 = 推荐 /taiyi:* 斜杠 + 阶段 Skill；引擎面 = Agent 代跑 taiyi-forge.sh
 
 invoke:
   repo_root: 在项目根目录执行
@@ -30,7 +30,7 @@ invoke:
 # 四端入口决策树 — Agent 选路用（人类可读版见 omc-reference.md §入口决策）
 entry_decision:
   read_state:
-    all: "/taiyi:status（人类）· /taiyi:state（JSON，≈ MCP get_status）"
+    all: "/taiyi:status（人类；JSON 用 status --json 或 MCP get_status）"
   advance_phase:
     all: "写当前阶段工件 → /taiyi:continue（OpenCode: taiyi_continue）"
   implement_dev_test:
@@ -40,7 +40,7 @@ entry_decision:
   abort_change:
     all: "/taiyi:cancel（≈ MCP taiyi_state_cancel）"
   pre_integration_commit:
-    all: "/taiyi:commit-trailers → git commit → /taiyi:continue integration"
+    all: "/taiyi:commit → /taiyi:continue integration"
   self_check:
     all: "/taiyi:doctor（消费方 npm run taiyi:doctor 仍可用）"
   pr_ci_gate:

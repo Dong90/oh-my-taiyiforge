@@ -11,24 +11,18 @@ const SLASH_PROMPTS: Record<string, string> = {
   "taiyi-new.md": "/taiyi:new",
   "taiyi-init.md": "/taiyi:init",
   "taiyi-status.md": "/taiyi:status",
-  "taiyi-state.md": "/taiyi:state",
-  "taiyi-state-read.md": "/taiyi:state-read",
   "taiyi-continue.md": "/taiyi:continue",
   "taiyi-complete.md": "/taiyi:complete",
-  "taiyi-done.md": "/taiyi:done",
-  "taiyi-next.md": "/taiyi:next",
   "taiyi-apply.md": "/taiyi:apply",
   "taiyi-archive.md": "/taiyi:archive",
   "taiyi-cancel.md": "/taiyi:cancel",
   "taiyi-handoff.md": "/taiyi:handoff",
-  "taiyi-pause.md": "/taiyi:pause",
   "taiyi-list.md": "/taiyi:list",
   "taiyi-check.md": "/taiyi:check",
   "taiyi-harness-check.md": "/taiyi:harness-check",
   "taiyi-mark-aux.md": "/taiyi:mark-aux",
   "taiyi-assess.md": "/taiyi:assess",
   "taiyi-phases.md": "/taiyi:phases",
-  "taiyi-guide.md": "/taiyi:guide",
   "taiyi-doctor.md": "/taiyi:doctor",
   "taiyi-audit.md": "/taiyi:audit",
   "taiyi-verify.md": "/taiyi:verify",
@@ -45,10 +39,10 @@ const SLASH_PROMPTS: Record<string, string> = {
   "taiyi-review-check.md": "/taiyi:review-check",
   "taiyi-ralph.md": "/taiyi:ralph",
   "taiyi-autopilot.md": "/taiyi:autopilot",
+  "taiyi-daemon.md": "/taiyi:daemon",
   "taiyi-team.md": "/taiyi:team",
   "taiyi-ultrawork.md": "/taiyi:ultrawork",
   "taiyi-agent.md": "/taiyi:agent",
-  "taiyi-commit-trailers.md": "/taiyi:commit-trailers",
   "taiyi-token-status.md": "/taiyi:token status",
   "taiyi-token-record.md": "/taiyi:token record",
   "taiyi-token-scan.md": "/taiyi:token scan",
@@ -64,6 +58,7 @@ const SLASH_PROMPTS: Record<string, string> = {
   "taiyi-sp.md": "/taiyi:sp",
   "taiyi-security.md": "/taiyi:security",
   "taiyi-e2e.md": "/taiyi:e2e",
+  "taiyi-browser-smoke.md": "/taiyi:browser-smoke",
   "taiyi-resume.md": "/taiyi:resume",
   "taiyi-help.md": "/taiyi:help",
   "taiyi-release.md": "/taiyi:release",
@@ -72,15 +67,6 @@ const SLASH_PROMPTS: Record<string, string> = {
   "taiyi-full-flow.md": "/taiyi:full-flow",
   "taiyi-tdd.md": "/taiyi:tdd",
   "taiyi-write.md": "/taiyi:write",
-  "taiyi-change.md": "/taiyi:change",
-  "taiyi-requirement.md": "/taiyi:requirement",
-  "taiyi-design.md": "/taiyi:design",
-  "taiyi-ui-design.md": "/taiyi:ui-design",
-  "taiyi-task.md": "/taiyi:task",
-  "taiyi-dev.md": "/taiyi:dev",
-  "taiyi-test.md": "/taiyi:test",
-  "taiyi-review.md": "/taiyi:review",
-  "taiyi-integration.md": "/taiyi:integration",
   "taiyi-feature.md": "/taiyi:feature",
   "taiyi-bug.md": "/taiyi:bug",
   "taiyi-ui-test.md": "/taiyi:ui-test",
@@ -100,6 +86,7 @@ const SLASH_PROMPTS: Record<string, string> = {
   "taiyi-deepinit.md": "/taiyi:deepinit",
   "taiyi-external-context.md": "/taiyi:external-context",
   "taiyi-preflight.md": "/taiyi:preflight",
+  "taiyi-keyword.md": "/taiyi:keyword",
 };
 
 describe("slash commands", () => {
@@ -112,8 +99,8 @@ describe("slash commands", () => {
     }
   });
 
-  it("has at least 70 taiyi-* prompt files for slash coverage", () => {
+  it("has at least 65 taiyi-* prompt files for slash coverage", () => {
     const files = fs.readdirSync(promptsDir).filter((f) => f.startsWith("taiyi-") && f.endsWith(".md"));
-    expect(files.length).toBeGreaterThanOrEqual(70);
+    expect(files.length).toBeGreaterThanOrEqual(65);
   });
 });

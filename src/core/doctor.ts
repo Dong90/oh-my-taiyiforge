@@ -142,3 +142,26 @@ export function runDoctor(pkgRoot: string): DoctorReport {
   const ok = checks.filter((c) => required.has(c.id)).every((c) => c.ok);
   return { ok, version: readPackageVersion(pkgRoot), checks };
 }
+
+export type DoctorJsonCompact = {
+  ok: boolean;
+  version: string;
+  installOk: boolean;
+  workspaceOk?: boolean;
+  failed: Array<{ id: string; detail: string }>;
+};
+
+/** doctor --json --compact — Agent 读法：仅失败项 + 汇总 */
+export function buildDoctorJsonCompact(result: {
+  ok: boolean;
+  report: DoctorReport;
+}): DoctorJsonCompact {
+  const all = [...result.report.checks, ...(result.report.workspaceChecks ?? [])];
+  return {
+    ok: result.ok,
+    version: result.report.version,
+    installOk: result.report.ok,
+    workspaceOk: result.report.workspaceOk,
+    failed: all.filter((c) => !c.ok).map((c) => ({ id: c.id, detail: c.detail })),
+  };
+}

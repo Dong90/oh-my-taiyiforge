@@ -43,6 +43,8 @@ import {
   taiyiRemember,
   taiyiWorkflowSkill,
 } from "./handlers.js";
+import { buildDoctorJsonCompact } from "../core/doctor.js";
+import { buildAuditJsonCompact } from "../core/workflow-audit.js";
 import { resolvePackageRoot } from "../core/package-root.js";
 
 /**
@@ -62,7 +64,7 @@ const TaiyiForgePlugin: Plugin = async () => {
             .optional()
             .describe("Human-readable change title for templates"),
           profile: tool.schema
-            .enum(["full", "api", "ui", "lite"])
+            .enum(["full", "api", "ui", "lite", "spike", "micro"])
             .optional()
             .describe("full=9 phases; api=skip ui-design; lite=5 phases"),
           strictDev: tool.schema
@@ -90,7 +92,7 @@ const TaiyiForgePlugin: Plugin = async () => {
         args: {
           title: tool.schema.string().describe("Human-readable change title, e.g. User login"),
           profile: tool.schema
-            .enum(["full", "api", "ui", "lite"])
+            .enum(["full", "api", "ui", "lite", "spike", "micro"])
             .optional()
             .describe("full=9 phases; api=skip ui-design; lite=5 phases"),
           strictDev: tool.schema
@@ -233,16 +235,16 @@ const TaiyiForgePlugin: Plugin = async () => {
       }),
       taiyi_doctor: tool({
         description:
-          "Check TaiyiForge install (skills, plugin, templates) and optional workspace flow blockers.",
+          "Install + workspace health (slim JSON). Aligns with doctor --json --compact. Use strict for CI workspace gate.",
         args: {
           strict: tool.schema
             .boolean()
             .optional()
-            .describe("Strict workspace checks (multiple active changes, etc.) — aligns with doctor --strict-workspace"),
+            .describe("Strict workspace checks — aligns with doctor --strict-workspace"),
         },
         async execute(args, ctx) {
           const r = taiyiDoctor(undefined, ctx.directory, { strictWorkspace: args.strict });
-          return JSON.stringify(r, null, 2);
+          return JSON.stringify(buildDoctorJsonCompact(r), null, 2);
         },
       }),
       taiyi_list: tool({
@@ -456,13 +458,13 @@ const TaiyiForgePlugin: Plugin = async () => {
       }),
       taiyi_audit: tool({
         description:
-          "Workflow/delivery audit: legacy state, artifact drift, ahead-of-phase files, CHANGE↔CHANGELOG, git delivery gaps.",
+          "Workflow/delivery audit (slim JSON, high findings only). Aligns with audit --json --compact.",
         args: {
           slug: tool.schema.string().optional().describe("Change slug; omit to audit all changes"),
         },
         async execute(args, ctx) {
-          const r = taiyiAudit(ctx.directory, { slug: args.slug, plain: true });
-          return "text" in r && r.text ? r.text : JSON.stringify(r.report ?? r, null, 2);
+          const r = taiyiAudit(ctx.directory, { slug: args.slug, plain: false });
+          return JSON.stringify(buildAuditJsonCompact(r.report), null, 2);
         },
       }),
       taiyi_health: tool({

@@ -24,7 +24,7 @@ const TAIYI_PROMPTS = new Set(
 
 /** workflow-manifest.yaml 引用的 Skill / prompt / 阶段工件 均可在仓库解析 */
 describe("workflow-manifest integrity", () => {
-  it("九阶段 taiyi_skill 均有 skills/ + prompts/ 对应物", () => {
+  it("九阶段 taiyi_skill 均有 skills/ 对应物（写工件聊天入口统一 /taiyi:write）", () => {
     resetWorkflowManifestCache();
     const m = getWorkflowManifest();
     const missing: string[] = [];
@@ -34,16 +34,12 @@ describe("workflow-manifest integrity", () => {
       if (!TAIYI_SKILLS.has(skillId)) {
         missing.push(`${phaseId}: skills/${skillId}`);
       }
-      const promptId = skillId; // taiyi-change → taiyi-change.md
-      if (!TAIYI_PROMPTS.has(promptId)) {
-        missing.push(`${phaseId}: prompts/${promptId}.md`);
-      }
       if (phase.artifact && !phase.artifact.includes("(")) {
-        // 简单文件名如 CHANGE.md — 由 phase-write / template 负责，此处只验非空
         expect(phase.artifact.length, phaseId).toBeGreaterThan(3);
       }
     }
 
+    expect(TAIYI_PROMPTS.has("taiyi-write")).toBe(true);
     expect(missing, missing.join("\n")).toEqual([]);
     expect(Object.keys(m.phases)).toHaveLength(9);
   });

@@ -8,8 +8,8 @@ TaiyiForge **不依赖、也不引导安装** [oh-my-claudecode (OMC)](https://g
 
 | 参考来源（OMC） | TaiyiForge 实现 | 怎么用 |
 |------------------|-----------------|--------|
-| `state_get_status` | `/taiyi:status` · `/taiyi:state` · MCP `taiyi_state_get_status` | 用户说斜杠；Agent 代跑引擎 |
-| `state_read` | `/taiyi:state-read` · MCP `taiyi_state_read` | 读原始 `state.json` |
+| `state_get_status` | `/taiyi:status` · MCP `taiyi_state_get_status` · `status --json` | 用户说斜杠；Agent 代跑引擎 |
+| `state_read` | MCP `taiyi_state_read` · 读 `state.json` | 无聊天斜杠 |
 | `state_list_active` | `/taiyi:list` · MCP `taiyi_state_list_active` | slug 不明时先列变更 |
 | notepad / checkpoint | `/taiyi:handoff` → `HANDOFF.md` | 跨会话恢复 |
 | project-memory | `/taiyi:remember` → `.taiyi/project-memory.json` | 跨变更模式/决策 |
@@ -17,7 +17,7 @@ TaiyiForge **不依赖、也不引导安装** [oh-my-claudecode (OMC)](https://g
 | cancel skill（模式） | `/taiyi:stop-mode` · 关键词 `stopomc` | 停止 ralph/autopilot/team 等 |
 | 活跃模式列表 | `/taiyi:modes` | 读 `.taiyi/runtime/*-mode.json` |
 | `omc doctor` | `/taiyi:doctor` | 升级后自检 |
-| commit trailers | `/taiyi:commit-trailers` · delivery-gate | integration 前 commit |
+| commit trailers | `/taiyi:commit` · delivery-gate | integration 前 commit |
 | 交付门（须 commit 再关单） | `evaluateDeliveryGate` | `/taiyi:continue` integration 时启用 |
 | OMC ralph + ralplan-first | `/taiyi:ralph` · `/taiyi:ralplan` | 验证循环 + 计划门禁 |
 | OMC autopilot | `/taiyi:autopilot` | 九阶段 + orchestrator（须 `--auto`） |
@@ -45,18 +45,18 @@ TaiyiForge **不依赖、也不引导安装** [oh-my-claudecode (OMC)](https://g
 → review → git commit（带 Taiyi-Change trailer）→ integration → archive
 ```
 
-Cursor 里用户说 **`/taiyi:status`** 或 **`/taiyi:state`**；Agent 也可调 MCP（等价，非用户必记）。
+Cursor 里用户说 **`/taiyi:status`**；机器/MCP 用 `status --json` 或 MCP（非用户必记）。
 
 ## 入口决策（四端 — 用户只说斜杠）
 
 | 意图 | 用户说 |
 |------|--------|
-| 读状态 | `/taiyi:status` · `/taiyi:state` |
+| 读状态 | `/taiyi:status` |
 | 过关 | `/taiyi:continue` |
 | 暂停 | `/taiyi:handoff` |
 | 放弃变更 | `/taiyi:cancel` |
 | 停止模式 | `/taiyi:stop-mode` |
-| integration 前 commit | `/taiyi:commit-trailers` |
+| integration 前 commit | `/taiyi:commit` |
 | 自检 | `/taiyi:doctor` |
 | PR/CI | `/taiyi:verify` |
 

@@ -1,6 +1,10 @@
+.DS_Store
 node_modules/
 dist/
 .taiyi/
 .flow-x/
 *.log
 .gstack/
+.cursor/
+garden-gpt-image-2/
+garden-output/

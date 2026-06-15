@@ -15,7 +15,8 @@ import {
 import { inferComplexitySignals } from "./routing/infer-complexity.js";
 import type { ComplexitySignals } from "./routing/complexity.js";
 import { requiresHumanGate } from "./gates/human-gate-config.js";
-import { expectedPhaseCount, isChangeAborted, isWorkflowCompleted } from "./change-status.js";
+import { resolveChangeDir } from "./taiyi-archive.js";
+import { expectedPhaseCount, isChangeAborted, isWorkflowCompleted, workflowPhaseLabelFromState } from "./change-status.js";
 import { buildTokenBudgetSummary } from "./token-runner.js";
 import { normalizeState } from "./normalize-state.js";
 import { formatSkillFlowPlain } from "../integrations/skill-flow.js";
@@ -76,7 +77,7 @@ export function buildPhaseGuide(
   rawState: ChangeState,
   workspaceDir?: string,
 ): PhaseGuide {
-  const changeDir = path.join(taiyiRoot, "changes", slug);
+  const changeDir = resolveChangeDir(taiyiRoot, slug) ?? path.join(taiyiRoot, "changes", slug);
   const sync = syncChangeState(changeDir, normalizeState(rawState));
   if (sync.changed) {
     fs.writeFileSync(
@@ -213,7 +214,7 @@ export function buildPhaseGuide(
       qualityReady: true,
       qualityHints: [],
       nextAction:
-        "九阶段已完成 → /taiyi:archive（可选 sync-openspec）",
+        `${workflowPhaseLabelFromState(state)}已完成 → /taiyi:archive（可选 sync-openspec）`,
       nextPhase: null,
       nextSkill: null,
       requiresHumanGate: false,

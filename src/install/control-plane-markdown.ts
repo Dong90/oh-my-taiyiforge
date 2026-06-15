@@ -9,7 +9,7 @@ export function taiyiControlPlaneBody(platform: "cursor" | "claude"): string {
   const chatIntro =
     platform === "cursor"
       ? "在 Cursor 输入 / 可选 taiyi-status 等（等同 /taiyi:status）；或直接打字 /taiyi:continue。"
-      : "Claude Code：加载 `taiyi-forge` Skill；用户说 **/taiyi:handoff**、**/taiyi:cancel** 时用 Bash 代跑引擎。";
+      : "Claude Code：输入 `/` 可选 taiyi-status 等（等同 /taiyi:status）；或加载 `taiyi-forge` Skill 代跑引擎。";
 
   const skillBlock =
     platform === "cursor"
@@ -29,7 +29,7 @@ export function taiyiControlPlaneBody(platform: "cursor" | "claude"): string {
 4. **一步一 continue**：只写当前阶段工件；**禁止**跳步创建后续阶段 md 或改业务代码（dev 前）。
 5. **以 /taiyi:status 为准**：文件写了但 status 未就绪 → 跑 /taiyi:status 看「已自动对齐 / 顺序冲突」提示，勿重复劳动。
 6. **跨会话**：暂停前 /taiyi:handoff；恢复先 /taiyi:status。
-7. **100% 斜杠**：用户只说 /taiyi:*；你代跑 \`scripts/taiyi-forge.sh\`。完整列表见 \`docs/taiyi/commands.yaml\` → \`slash_catalog\`。
+7. **推荐斜杠**：每条职责一个入口；重复别名已移除。见 \`docs/taiyi/canonical-commands.md\` 与 \`commands.yaml\` → \`canonical_commands\`。
 ${hookLine}
 
 ## 状态同步（v0.22+）
@@ -37,19 +37,26 @@ ${hookLine}
 - /taiyi:status / /taiyi:continue 会自动：从磁盘同步 mark-aux（如已有 CONTEXT.md）、去掉已填好内容的 seed 标记。
 - 若出现「顺序冲突 / 超前工件」：删除未来阶段 md，或先 complete 当前阶段，**不可跳步**。
 
+## Token 纪律（Agent 必守 · 明显省 token）
+
+1. **清 slug**：同时只服务 **1 个 active**；完成后 \`/taiyi:archive\`，废弃 \`/taiyi:cancel <slug> --remove-dir\`，探针 slug 勿留对话里。
+2. **archive 闭环**：integration 过关即 archive，再 \`/taiyi:new\`；completed 变更勿继续聊。
+3. **token compress**：长阶段或 dev 前 \`/taiyi:token compress <slug>\`，读 \`CONTEXT-COMPACT.md\`，勿全量工件进聊天。
+4. **E2E 别在对话跑**：Playwright / \`npm test\` / walkthrough / probe → CI 或后台终端；聊天只写 TEST.md 证据摘要。
+
 ## 聊天命令（用户只说斜杠，见 docs/taiyi/commands.yaml）
 
 ${chatIntro}
 
 **主流程：** /taiyi:new · /taiyi:status · /taiyi:continue · /taiyi:apply · /taiyi:archive
 
-**常用辅助：** /taiyi:doctor · /taiyi:audit · /taiyi:verify · /taiyi:list · /taiyi:check · /taiyi:sync · /taiyi:handoff · /taiyi:cancel · /taiyi:loop · /taiyi:write · /taiyi:change … /taiyi:integration · /taiyi:feature · /taiyi:bug · /taiyi:ralph · /taiyi:autopilot · /taiyi:team · /taiyi:ultrawork · /taiyi:agent · /taiyi:review-loop · /taiyi:review-check · /taiyi:token * · /taiyi:commit-trailers
+**常用辅助：** /taiyi:doctor · /taiyi:audit · /taiyi:verify · /taiyi:list · /taiyi:check · /taiyi:sync · /taiyi:handoff · /taiyi:cancel · /taiyi:loop · /taiyi:write · /taiyi:feature · /taiyi:bug · /taiyi:ralph · /taiyi:autopilot · /taiyi:team · /taiyi:ultrawork · /taiyi:agent · /taiyi:review-loop · /taiyi:review-check · /taiyi:token *
 
 **引擎斜杠（原 engine-only）：** /taiyi:init · /taiyi:complete · … · /taiyi:ci platform · /taiyi:ci prompt
 
 **交付链（gstack）：** /taiyi:commit · /taiyi:ship · /taiyi:land · /taiyi:gstack review · /taiyi:gstack qa · /taiyi:release
 
-九阶段写工件仍用 \`taiyi-change\` … \`taiyi-integration\` Skill，见 docs/taiyi/workflow.md
+九阶段写工件：聊天用 **/taiyi:write**；仍加载 \`taiyi-change\` … \`taiyi-integration\` Skill，见 docs/taiyi/workflow.md
 
 Codex：$taiyi-* prompts（与 /taiyi:* 一一对应）
 

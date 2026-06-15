@@ -2,6 +2,8 @@
 
 与《AI 驱动研发流程与工具选型指南》对齐：TaiyiForge 管**九阶段工件 + 双门禁**，下列工具管各自专长，**可并存**。
 
+**什么能进主链、什么只能 harness、什么禁止** → [skill-fusion-principles.md](./skill-fusion-principles.md)
+
 **Superpowers 主轴流程**（九阶段 × 14 技能 + 可选外挂）：见 [superpowers-flow.md](./superpowers-flow.md)。  
 **TDD 专页**（Superpowers + 引擎 `.dev-complete`）：见 [tdd-workflow.md](./tdd-workflow.md)。
 

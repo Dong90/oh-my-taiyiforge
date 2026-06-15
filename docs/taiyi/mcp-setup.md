@@ -97,7 +97,7 @@ Monorepo / 本地开发：
 }
 ```
 
-重启 Cursor 后，Agent 应能看到 **14 个** MCP 工具（状态 5 + 模式 3 + remember/keyword/workflow + LSP 3）。
+重启 Cursor 后，Agent 应能看到 **16 个** MCP 工具（状态 5 + 排查 2 + 模式 3 + remember/keyword/workflow + LSP 3）。
 
 ## 工具
 
@@ -110,6 +110,13 @@ Monorepo / 本地开发：
 | `taiyi_state_list_active` | 全部变更 + active |
 | `taiyi_state_handoff` | 写 HANDOFF.md |
 | `taiyi_state_cancel` | 中止变更 |
+
+### 排查（2）— slim JSON，对齐 CLI `--json --compact`
+
+| MCP | CLI 等价 | 说明 |
+|-----|----------|------|
+| `taiyi_doctor` | `doctor --json --compact` | 安装 + 工作区；`strictWorkspace: true` 作 CI 门 |
+| `taiyi_audit` | `audit --json --compact` | 流程/交付；仅 high findings |
 
 ### 模式（3）— 与 OpenCode `taiyi_step` / `taiyi_stop_mode` / `taiyi_modes` 对齐
 
@@ -165,7 +172,8 @@ Monorepo / 本地开发：
 
 | 场景 | 用户说 | Agent 代跑 |
 |------|--------|------------|
-| 读状态 | `/taiyi:status` · `/taiyi:state` | `taiyi-forge.sh status` |
+| 读状态 | `/taiyi:status` · MCP `taiyi_state_get_status` | `taiyi-forge.sh status [--json] [--compact]` |
+| 安装/交付排查 | `/taiyi:doctor` · `/taiyi:audit` · MCP `taiyi_doctor` / `taiyi_audit` | `doctor|audit --json --compact` |
 | handoff / cancel | `/taiyi:handoff` · `/taiyi:cancel` | 同左映射 |
 | 过关 / 门禁 | `/taiyi:continue` · `/taiyi:complete` | `taiyi-forge.sh …` |
 | CI（无聊天） | — | `taiyi ci verify` |

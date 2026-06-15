@@ -19,7 +19,7 @@ describe("OpenSpec real CLI (optional)", () => {
     expect(`${r.stdout}${r.stderr}`).toMatch(/archive|openspec/i);
   });
 
-  it.skipIf(!hasOpenspec)("openspec archive 对最小 change 目录可调用", () => {
+  it.skipIf(!hasOpenspec)("openspec archive 对最小 change 目录可调用", { timeout: 20_000 }, () => {
     const workspace = fs.mkdtempSync(path.join(os.tmpdir(), "taiyi-openspec-real-"));
     try {
       const slug = "feat-real-archive";

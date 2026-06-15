@@ -37,7 +37,6 @@ providers:
     skill_install:
       - npm install oh-my-taiyiforge && ./scripts/install-skills.sh codex
       - 将 AGENTS.md 链入项目根或 ~/.codex/AGENTS.md
-      - 将 AGENTS.md 链入项目根或 ~/.codex/AGENTS.md
     invoke:
       per_phase: "加载 skills/taiyi-<phase>/SKILL.md 作为阶段契约"
       example: "codex exec -- 按 taiyi-dev 完成当前 slug 的 dev 阶段"

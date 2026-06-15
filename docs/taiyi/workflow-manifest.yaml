@@ -12,6 +12,10 @@ profiles:
     skip_phases: []
   lite:
     skip_phases: [design, ui-design, task, review]
+  spike:
+    skip_phases: [requirement, design, ui-design, task, review]
+  micro:
+    skip_phases: [requirement, design, ui-design, task, test, review]
 
 gates:
   human_phases: [change, design, review]

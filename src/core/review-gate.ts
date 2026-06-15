@@ -105,7 +105,7 @@ export function formatReviewLoopPlain(
   if (round != null && round > 0) lines.push(`审查循环 · 第 ${round} 轮`);
   if (status.canStop) {
     lines.push("✓ 审查完成，无 blocking 项");
-    lines.push("→ review 循环可结束；正式过关: npx taiyi complete <slug> review --approver \"你的名字\"");
+    lines.push("→ review 循环可结束；正式过关: /taiyi:continue <slug> review --approver \"你的名字\"");
     return lines.join("\n");
   }
   lines.push("✗ 仍有 blocking 项，继续 review 循环");
@@ -129,7 +129,7 @@ export function formatMachineReviewPlain(
   if (round != null) lines.push(`机器审查 · 第 ${round} 轮`);
   if (result.passed) {
     lines.push("✓ 机器审查通过");
-    lines.push("→ 可执行: npx taiyi complete <slug> review --approver \"你的名字\"");
+    lines.push("→ 可执行: /taiyi:continue <slug> review --approver \"你的名字\"");
     return lines.join("\n");
   }
   lines.push("✗ 机器审查未通过");

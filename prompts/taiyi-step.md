@@ -15,4 +15,4 @@ scripts/taiyi-forge.sh step $ARGUMENTS
 3. If `harness` → load phase Skill · write artifacts · **step again**
 4. If `done` → `/taiyi:archive` · `/taiyi:stop-mode`
 
-Stop hook will reinforce if you try to finish early. Keywords `ralph` / `autopilot` auto-activate via hook after `npx taiyi-forge-install --cursor` or `--claude`. Codex: use `$taiyi-preflight` / `codex-keyword-preflight.mjs`.
+Stop hook will reinforce if you try to finish early. Keywords `ralph` / `autopilot` auto-activate via hook after `npx taiyi-forge-install --cursor` or `--claude`. Codex: `/taiyi:preflight` or `/taiyi:keyword`.

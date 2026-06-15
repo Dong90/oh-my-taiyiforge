@@ -174,6 +174,30 @@ Demo motivation with enough detail for validation.
     expect(engine.getState("to-cancel")?.workflowStatus).toBe("aborted");
   });
 
+  it("abortChange on missing slug uses formatChangeNotFound", () => {
+    const r = engine.abortChange("ghost-slug-xyz");
+    expect(r.ok).toBe(false);
+    expect(r.error).toMatch(/init ghost-slug-xyz --force/);
+  });
+
+  it("completePhase rejects wrong phase with actionable hint", () => {
+    engine.initChange("phase-mismatch");
+    const result = engine.completePhase("phase-mismatch", "dev", {
+      quality: {
+        completeness: true,
+        consistency: true,
+        verifiability: true,
+        traceability: true,
+        engineering_quality: true,
+      },
+      human: { approved: true, approver: "human" },
+    });
+    expect(result.ok).toBe(false);
+    expect(result.error).toMatch(/当前阶段为 change/);
+    expect(result.error).toMatch(/\/taiyi:status phase-mismatch/);
+    expect(result.error).toMatch(/\/taiyi:continue phase-mismatch/);
+  });
+
   it("completePhase rejects aborted change", () => {
     engine.initChange("aborted");
     engine.abortChange("aborted");

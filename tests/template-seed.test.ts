@@ -77,6 +77,30 @@ describe("template-seed", () => {
     );
   });
 
+  it("does not overwrite user-written artifact on seedPhaseTemplate", () => {
+    const templates = path.join(tmp, "templates");
+    const changeDir = path.join(tmp, "change");
+    fs.mkdirSync(templates);
+    fs.mkdirSync(changeDir);
+    fs.writeFileSync(
+      path.join(templates, "REQUIREMENT.md"),
+      "# REQUIREMENT: {{title}}\n",
+    );
+    fs.writeFileSync(
+      path.join(changeDir, "REQUIREMENT.md"),
+      "# REQUIREMENT\n\nUser wrote this before continue.\n",
+    );
+
+    const out = seedPhaseTemplate(changeDir, templates, "requirement", {
+      slug: "feat",
+      title: "Feat",
+    });
+    expect(out).toBeNull();
+    expect(fs.readFileSync(path.join(changeDir, "REQUIREMENT.md"), "utf8")).toContain(
+      "User wrote this before continue",
+    );
+  });
+
   it("does not overwrite existing artifacts", () => {
     const templates = path.join(tmp, "templates");
     const changeDir = path.join(tmp, "change");

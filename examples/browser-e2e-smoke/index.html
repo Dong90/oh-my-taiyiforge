@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <title>TaiyiForge browser smoke</title>
+    <style>
+      body {
+        font-family: system-ui, sans-serif;
+        max-width: 32rem;
+        margin: 3rem auto;
+        padding: 0 1rem;
+      }
+      button {
+        padding: 0.5rem 1rem;
+        font-size: 1rem;
+      }
+      #count {
+        font-variant-numeric: tabular-nums;
+        font-weight: 600;
+      }
+    </style>
+  </head>
+  <body>
+    <h1 id="title">TaiyiForge E2E Smoke</h1>
+    <p>用于验证 <code>/taiyi:e2e</code> 与 <code>/taiyi:gstack qa</code> 路径。</p>
+    <p>点击次数：<span id="count" data-testid="count">0</span></p>
+    <button id="increment" type="button" data-testid="increment">+1</button>
+    <script>
+      const countEl = document.getElementById("count");
+      const btn = document.getElementById("increment");
+      let n = 0;
+      btn.addEventListener("click", () => {
+        n += 1;
+        countEl.textContent = String(n);
+      });
+    </script>
+  </body>
+</html>
