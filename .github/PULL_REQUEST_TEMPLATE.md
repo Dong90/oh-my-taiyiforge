@@ -1,3 +1,6 @@
+> ⚠️ **base 分支必须是 `develop`**（不是 `main`）。点 GitHub PR 页面顶部的 `base:` 切换。
+> main 由维护者定期从 develop 合入并发版，外部 PR 直接打到 main 会被关闭。
+
 ## 变更说明
 
 <!-- 一句话说清改了什么 / 为什么 -->

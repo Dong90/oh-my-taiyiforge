@@ -25,9 +25,9 @@
 
 <br />
 
-![TaiyiForge Architecture — Six standards × Workflow engine × Nine stages × Skill universe × Three-layer gates](docs/diagrams/visual/taiyiforge-architecture-ai-v023-full-4k.png)
+![TaiyiForge Architecture — Six standards × Workflow engine × Nine stages × Skill universe × Three-layer gates](docs/diagrams/visual/taiyiforge-architecture-ai-v023-full-4k-en-v2.png)
 
-<sub>4K visual poster (non-technical source) · Editable source: <a href="docs/taiyiforge-architecture.svg">SVG</a> · <a href="docs/c4/containers.md">C4</a></sub>
+<sub>4K architecture poster (v0.23.1 · AI visual) · <a href="docs/taiyiforge-architecture.svg">vector SVG</a> · <a href="docs/c4/containers.md">C4 source</a> · <a href="docs/diagrams/visual/taiyiforge-architecture-ai-v023-full-4k-zh-v2-fix.png">中文海报</a></sub>
 
 </div>
 
@@ -60,7 +60,7 @@ TaiyiForge's answer to every one of these is in [§2 The Solution](#2--the-solut
 A **single nine-stage artifact contract** + **28 v28 slashes + 6 umbrellas** + **one
 `/taiyi:*` vocabulary** that works the same on all four AI harnesses.
 
-> **v28 = 推荐命名 + 顶栏收敛,Cursor/Claude 仍装全 prompt。Phase 2(IDE 菜单裁剪)未做,见 [canonical-commands.md](docs/taiyi/canonical-commands.md)。**
+> **v28 = recommended naming + top-bar convergence; Cursor/Claude still install full prompts. Phase 2 (IDE menu trim) not done — see [canonical-commands.md](docs/taiyi/canonical-commands.md).**
 
 TaiyiForge does not invent standards — it **orchestrates Harness · OpenSpec · GStack ·
 Superpowers · OMO · Spec-Kit into one state machine**. Use what you have installed;
@@ -89,7 +89,7 @@ Full command list → **[canonical-commands.md](docs/taiyi/canonical-commands.md
 ### 2.2 · v28 Slash Catalog (28)
 
 Source of truth: [canonical-commands.md](docs/taiyi/canonical-commands.md) →
-`canonical_v28`. Legacy slashes still work, see [Legacy 兼容](#legacy-兼容).
+`canonical_v28`. Legacy slashes still work, see [Legacy compatibility](#23--legacy-compatibility).
 
 | # | Group | Slash | Purpose |
 |---|------|------|---------|
@@ -118,19 +118,19 @@ Source of truth: [canonical-commands.md](docs/taiyi/canonical-commands.md) →
 | `/taiyi:mode` | `ralph` · `autopilot` · `daemon` · `team` · `ultrawork` · `agent` · `step` · `stop` · `list` · `keyword` · `preflight` | 11 |
 | `/taiyi:workflow` | `plan` · `ralplan` · `loop` · `check` · `run` · `sync` · `ccg` · `sciomc` · `deepinit` · `remember` · `ultraqa` | 11 |
 
-### 2.3 · Legacy 兼容
+### 2.3 · Legacy compatibility
 
 Legacy slashes & CLI **still work** — listed in
 [canonical-commands.md §Legacy 兼容](docs/taiyi/canonical-commands.md). Don't add new
 top-bar duplicates of v28 umbrellas.
 
-| 曾用 / legacy | v28 现用 |
-|------|----------|
+| Legacy | v28 now |
+|--------|---------|
 | `/taiyi:pause` | `/taiyi:handoff` |
 | `/taiyi:state` · `/taiyi:state-read` | `/taiyi:status` |
 | `/taiyi:next` · `/taiyi:done` | `/taiyi:status` + `/taiyi:continue` |
 | `/taiyi:change` … `/taiyi:integration` | `/taiyi:write` |
-| `/taiyi:ralph` 等 OMC | `/taiyi:mode ralph` |
+| `/taiyi:ralph` etc. OMC | `/taiyi:mode ralph` |
 | `npx taiyi new` · `npx taiyi walkthrough` | `/taiyi:new` · `/taiyi:flow help` |
 
 ---
@@ -140,17 +140,17 @@ top-bar duplicates of v28 umbrellas.
 ### 3.1 · One Skill Set, Four Harnesses
 
 One `node scripts/taiyi-forge.sh install --all` syncs to all four harnesses; missing
-ones are auto-skipped. Same 28 v28 顶栏 slashes, same `taiyi-*` Skills — different
+ones are auto-skipped. Same 28 v28 top-bar slashes, same `taiyi-*` Skills — different
 chat syntax & MCP surface per harness:
 
 | Harness | Chat entry | Engine entry | MCP | Hook / keyword | Read more |
 |---------|-----------|-------------|-----|----------------|-----------|
 | **Claude Code** | `/taiyi:new … /taiyi:archive` + Skill + `~/.claude/commands/taiyi-*.md` | Agent Bash | `taiyi_doctor` · `taiyi_audit` | keyword hook | [control-plane.md §四端对照](docs/taiyi/control-plane.md) |
-| **Codex** | `$taiyi-new` … `$taiyi-archive`（`prompts/taiyi-*.md` — **not** `/taiyi:*`） | Agent 跑 `scripts/taiyi-forge.sh` | 无（靠 shell） | `codex-keyword-preflight.mjs` + `developer_instructions`（`~/.codex/config.toml`） | [control-plane.md §Codex](docs/taiyi/control-plane.md) |
-| **Cursor** | `/taiyi:new … /taiyi:status` + `taiyiforge.mdc` rule + `~/.cursor/commands/taiyi-*.md` | Agent 终端 / MCP | `taiyi_doctor` · `taiyi_audit` | keyword hook | [mcp-setup.md](docs/taiyi/mcp-setup.md) |
-| **OpenCode** | `taiyi_new` / `taiyi_*` plugin tools + `~/.config/opencode/commands/taiyi-*.md` | plugin + `/taiyi-*` 斜杠 | （插件内置） | plugin 自管 | [control-plane.md §OpenCode](docs/taiyi/control-plane.md) |
+| **Codex** | `$taiyi-new` … `$taiyi-archive` (`prompts/taiyi-*.md` — **not** `/taiyi:*`) | Agent runs `scripts/taiyi-forge.sh` | None (shell) | `codex-keyword-preflight.mjs` + `developer_instructions` (`~/.codex/config.toml`) | [control-plane.md §Codex](docs/taiyi/control-plane.md) |
+| **Cursor** | `/taiyi:new … /taiyi:status` + `taiyiforge.mdc` rule + `~/.cursor/commands/taiyi-*.md` | Agent terminal / MCP | `taiyi_doctor` · `taiyi_audit` | keyword hook | [mcp-setup.md](docs/taiyi/mcp-setup.md) |
+| **OpenCode** | `taiyi_new` / `taiyi_*` plugin tools + `~/.config/opencode/commands/taiyi-*.md` | plugin + `/taiyi-*` slashes | (plugin built-in) | plugin-managed | [control-plane.md §OpenCode](docs/taiyi/control-plane.md) |
 
-> **Codex 注意**：chat entry is the `$taiyi-*` keyword (not `/taiyi:*`), routed via
+> **Codex note**: chat entry is the `$taiyi-*` keyword (not `/taiyi:*`), routed via
 > `codex-keyword-preflight.mjs` and `developer_instructions`. See
 > [control-plane.md](docs/taiyi/control-plane.md).
 
@@ -299,7 +299,7 @@ scripts/taiyi-forge.sh audit --json --compact
 | [CONTRIBUTING.md](CONTRIBUTING.md) | Contribution guide | Before opening a PR |
 | [CHANGELOG.md](CHANGELOG.md) | Release notes | Checking for updates |
 | [docs/diagrams/demo.gif](docs/diagrams/demo.gif) | Real terminal recording (27s) | Quick feel of the engine |
-| [README.zh-CN.md](README.zh-CN.md) | 简体中文版 | 中文用户 |
+| [README.md](README.md) | 简体中文版 | 中文用户 |
 
 ### 5.2 · Development & Verification
 

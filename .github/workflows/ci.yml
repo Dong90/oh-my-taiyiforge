@@ -1,39 +1,262 @@
 name: CI
 
 on:
+  # push 只跑 main（develop 已由 PR 覆盖；merge 进 develop 后的 push 重复跑会触发 dogfood-e2e 的
+  # 「integration 需在实现代码 commit 之后」检查 fail，因为 merge commit 相对 origin/develop 无 ahead）
   push:
     branches: [main]
   pull_request:
-    branches: [main]
+    branches: [main, develop]
+
+# 最小权限原则 — workflow 默认只读 repo 内容
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
-  test:
+  # 类型检查 — 比之前 .mjs 漏检 TS 语法那种 bug 更早拦下来
+  typecheck:
+    name: TypeScript typecheck
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     steps:
-      - uses: actions/checkout@v4
-
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
         with:
           node-version: "22"
           cache: npm
+      - run: npm ci
+      - name: tsc --noEmit
+        run: npx tsc --noEmit
 
+  # 主测试 — Node 20 / 22 矩阵 × ubuntu / macos 双 OS
+  # engines.node: ">=20" → 至少覆盖 20 + 22
+  test:
+    name: test (node ${{ matrix.node }} / ${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+        node: ["20", "22"]
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: ${{ matrix.node }}
+          cache: npm
       - run: npm ci
       - run: npm test
       - run: npm run dogfood
       - run: npm run ci:verify
 
-  platform-smoke:
+  # 测试覆盖率 — 单跑一次，结果上传到 GitHub Summary
+  # 没有 continue-on-error：coverage 跑挂等于真挂，让信号清晰
+  coverage:
+    name: test coverage
     runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "22"
+          cache: npm
+      - run: npm ci
+      - name: vitest with coverage
+        run: npx vitest run --coverage --reporter=default --coverage.reporter=text --coverage.reporter=json-summary
+      - name: 上传 coverage 到 PR summary
+        if: always()
+        run: |
+          if [ -f coverage/coverage-summary.json ]; then
+            echo "## 测试覆盖率" >> "$GITHUB_STEP_SUMMARY"
+            echo "" >> "$GITHUB_STEP_SUMMARY"
+            node -e '
+              const s = require("./coverage/coverage-summary.json").total;
+              const fmt = (k) => `| ${k} | ${s[k].pct}% | ${s[k].covered}/${s[k].total} |`;
+              console.log("| 维度 | 覆盖率 | 比例 |");
+              console.log("|------|--------|------|");
+              ["lines","statements","functions","branches"].forEach(k => console.log(fmt(k)));
+            ' >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "⚠️ 没有 coverage-summary.json（vitest --coverage 可能未跑成功）" >> "$GITHUB_STEP_SUMMARY"
+          fi
+      - name: 上传 coverage HTML report
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: coverage-html
+          path: coverage/
+          if-no-files-found: ignore
+          retention-days: 14
+
+  # 平台 smoke — 四端 install 流程
+  platform-smoke:
+    name: platform-smoke (${{ matrix.platform }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
     strategy:
       fail-fast: false
       matrix:
         platform: [opencode, claude, codex, cursor]
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
         with:
           node-version: "22"
           cache: npm
       - run: npm ci
       - run: npm run build
       - run: npx taiyi ci platform ${{ matrix.platform }}
+
+  # 真装包验证 — npm pack 出 tgz → 全新临时目录 install → CLI smoke
+  # 这是 0.23.1 那种「prepublishOnly 都过了但装出来跑不起来」bug 的最后防线
+  # ubuntu + macos 双 OS 真覆盖 macOS 装包路径
+  pack-smoke:
+    name: pack & install smoke (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "22"
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+
+      - name: 打 tgz
+        id: pack
+        # wc -c 跨 BSD/GNU 兼容；stat -c%s 仅 GNU（Linux），stat -f%z 仅 BSD（macOS）
+        run: |
+          TGZ=$(npm pack --silent --pack-destination /tmp)
+          echo "tgz=/tmp/$TGZ" >> "$GITHUB_OUTPUT"
+          SIZE=$(wc -c < "/tmp/$TGZ" | tr -d ' ')
+          SIZE_KB=$((SIZE / 1024))
+          echo "size_kb=$SIZE_KB" >> "$GITHUB_OUTPUT"
+          echo "📦 包大小: ${SIZE_KB} KB"
+
+      - name: 包体积预算（< 1MB OK · 1-2MB warn · > 2MB fail）
+        run: |
+          SIZE_KB=${{ steps.pack.outputs.size_kb }}
+          if [ "$SIZE_KB" -gt 2048 ]; then
+            echo "::error::包体积超预算: ${SIZE_KB} KB > 2048 KB（2 MB）。检查 package.json files 字段是否漏出大资源。"
+            exit 1
+          elif [ "$SIZE_KB" -gt 1024 ]; then
+            echo "::warning::包体积接近上限: ${SIZE_KB} KB（> 1 MB）。建议优化。"
+          else
+            echo "✅ 包体积正常: ${SIZE_KB} KB"
+          fi
+          echo "## 📦 包体积 (${{ matrix.os }})" >> "$GITHUB_STEP_SUMMARY"
+          echo "- 当前: **${SIZE_KB} KB**" >> "$GITHUB_STEP_SUMMARY"
+          echo "- 预算: < 1024 KB（推荐）· < 2048 KB（硬上限）" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: 全新临时目录装包 + CLI smoke
+        # 用 TAIYI_FORGE_SKIP_POSTINSTALL=1 精准跳过本包 postinstall（避免改 runner $HOME）
+        # 而不是 --ignore-scripts —— 后者会顺带跳过所有依赖的 install scripts
+        run: |
+          TGZ="${{ steps.pack.outputs.tgz }}"
+          TMP=$(mktemp -d)
+          cd "$TMP"
+          npm init -y > /dev/null
+          TAIYI_FORGE_SKIP_POSTINSTALL=1 npm install "$TGZ" --no-audit --no-fund
+          echo ""
+          echo "=== bin: taiyi ==="
+          npx --no taiyi --version 2>&1 | head -5
+          echo ""
+          echo "=== bin: taiyi-forge（修过 TS 语法的）==="
+          npx --no taiyi-forge --help 2>&1 | head -5
+          echo ""
+          echo "=== bin: taiyi-mcp（MCP server stdio）==="
+          # macOS 默认无 GNU coreutils 的 timeout；BSD coreutils 装 GNU timeout 路径不一定可达
+          # 用 perl 的 alarm 实现跨平台 5 秒 timeout
+          echo "{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"tools/list\",\"params\":{}}" | \
+            perl -e 'use IPC::Open2; alarm 5; open2(my $out, my $in, "npx", "--no", "taiyi-mcp"); print $in <STDIN>; close $in; while (<$out>) { print }' > /tmp/mcp-resp.txt 2>&1
+          head -3 /tmp/mcp-resp.txt
+          if ! grep -q '"tools"' /tmp/mcp-resp.txt; then
+            echo "::error::MCP tools/list 未返回有效响应（缺少 tools 字段）"
+            exit 1
+          fi
+          echo "✅ MCP server 响应有效"
+          echo ""
+          echo "=== bin: taiyi-forge-install --help ==="
+          npx --no taiyi-forge-install --help 2>&1 | head -3
+          echo ""
+          echo "✅ 4 个 bin 全部能起"
+
+  # postinstall smoke — 隔离 $HOME 跑全套 postinstall，验本包 postinstall.mjs 不挂
+  # 补 pack-smoke 跳过 postinstall 留下的盲点
+  postinstall-smoke:
+    name: postinstall smoke (isolated HOME)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "22"
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+
+      - name: 打 tgz
+        id: pack
+        run: |
+          TGZ=$(npm pack --silent --pack-destination /tmp)
+          echo "tgz=/tmp/$TGZ" >> "$GITHUB_OUTPUT"
+
+      - name: 隔离 HOME 装包 — 跑完整 postinstall.mjs
+        # 用 fake HOME 隔离 runner，避免真改 ~/.cursor、~/.claude 等
+        # 不传 TAIYI_FORGE_SKIP_POSTINSTALL，让 postinstall.mjs 真跑
+        # 但传 TAIYI_FORGE_SKIP_DEPS=1，跳过下载 OpenSpec/gstack 等大依赖（CI 装不上 / 太慢）
+        run: |
+          TGZ="${{ steps.pack.outputs.tgz }}"
+          TMP=$(mktemp -d)
+          FAKE_HOME=$(mktemp -d)
+          cd "$TMP"
+          npm init -y > /dev/null
+          set -o pipefail
+          HOME="$FAKE_HOME" \
+          TAIYI_FORGE_SKIP_DEPS=1 \
+          TAIYI_FORGE_SKIP_MCP=1 \
+          TAIYI_FORGE_SKIP_PKG_SCRIPTS=1 \
+          npm install "$TGZ" --no-audit --no-fund 2>&1 | tee install.log
+          echo ""
+          echo "=== postinstall 是否写入 fake HOME ==="
+          SKILL_COUNT=$(find "$FAKE_HOME" -name "taiyi-*" -type d 2>/dev/null | wc -l | tr -d ' ')
+          find "$FAKE_HOME" -name "taiyi-*" -type d 2>/dev/null | head -10
+          echo ""
+          if [ "$SKILL_COUNT" -lt 4 ]; then
+            echo "::error::postinstall 未安装足够的 taiyi skills: 找到 ${SKILL_COUNT} 个（期望 >=4）"
+            exit 1
+          fi
+          if grep -qiE "(npm ERR!|npm error|Error:)" install.log; then
+            echo "::error::postinstall 出现错误，详见日志"
+            exit 1
+          fi
+          echo "✅ postinstall.mjs 在隔离 HOME 下成功执行"
+
+  # prepublishOnly dry-run — PR 阶段就模拟发版流程，避免发版当天才发现挂
+  publish-dry-run:
+    name: npm publish --dry-run
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "22"
+          cache: npm
+      - run: npm ci
+      - name: 模拟发版（不真发，不消耗 OTP）
+        # --ignore-scripts: 不重跑 prepublishOnly（test job 已经验证过 build+test）
+        # 本 job 只验证：clean tarball 能成功通过 npm publish 协议（白名单、版本号、metadata）
+        run: npm publish --dry-run --access public --ignore-scripts

@@ -3,9 +3,11 @@
 > C4 真源：[`../c4/containers.md`](../c4/containers.md) · Context：[`../c4/context.md`](../c4/context.md) · 证据说明：[`../c4/README.md`](../c4/README.md)  
 > **产品全景海报**（Flow-X）：[`../taiyiforge-architecture.svg`](../taiyiforge-architecture.svg) · [`../taiyiforge-architecture.png`](../taiyiforge-architecture.png)  
 > **流水线**：[`pipeline.md`](pipeline.md) · C4 预览 SVG：[`../c4/png/`](../c4/png/)  
-> **README 架构海报（v0.23.0）**：[`visual/taiyiforge-architecture-ai-v023-full-4k.png`](visual/taiyiforge-architecture-ai-v023-full-4k.png)  
+> **README 架构海报（v0.23.1 · v2 修正稿）**：[`visual/taiyiforge-architecture-ai-v023-full-4k-zh-v2-fix.png`](visual/taiyiforge-architecture-ai-v023-full-4k-zh-v2-fix.png)（简体 · README.md）· [`visual/taiyiforge-architecture-ai-v023-full-4k-en-v2.png`](visual/taiyiforge-architecture-ai-v023-full-4k-en-v2.png)（English · README.zh-CN.md）  
+> **v2 初稿对照**：[`visual/taiyiforge-architecture-ai-v023-full-4k-zh-v2.png`](visual/taiyiforge-architecture-ai-v023-full-4k-zh-v2.png)  
+> **v1 对照**：[`visual/taiyiforge-architecture-ai-v023-full-4k-zh-fixed.png`](visual/taiyiforge-architecture-ai-v023-full-4k-zh-fixed.png) · [`visual/taiyiforge-architecture-ai-v023-full-4k-en.png`](visual/taiyiforge-architecture-ai-v023-full-4k-en.png) · [`visual/taiyiforge-architecture-ai-v023-full-4k.png`](visual/taiyiforge-architecture-ai-v023-full-4k.png)（初版错字）  
 > **风格样张（旧版内容）**：[`visual/taiyiforge-architecture-ai-4k.png`](visual/taiyiforge-architecture-ai-4k.png)  
-> 重生成 SVG/PNG 海报：`python3 scripts/generate-architecture-svg.py`
+> 重生成 Flow-X SVG 海报：`python3 scripts/generate-architecture-svg.py` · 程序化 v3（中英同版式）：`python3 scripts/generate-architecture-poster-v023.py`
 
 更新：2026-06-08 · 本文只维护 **工程补充图**；C4 L1/L2 不重复，见 `docs/c4/`
 

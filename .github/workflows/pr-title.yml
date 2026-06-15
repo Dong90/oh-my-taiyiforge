@@ -1,0 +1,42 @@
+name: PR title
+
+on:
+  pull_request_target:
+    types: [opened, edited, synchronize, reopened]
+
+permissions:
+  pull-requests: read
+
+jobs:
+  semantic:
+    name: Conventional Commits 校验
+    runs-on: ubuntu-latest
+    steps:
+      - uses: amannn/action-semantic-pull-request@v5
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          # 允许的 type 列表（与 CONTRIBUTING.md 对齐）
+          types: |
+            feat
+            fix
+            docs
+            chore
+            refactor
+            test
+            ci
+            perf
+            build
+            style
+            revert
+          # scope 可选；不强制必须有 scope
+          requireScope: false
+          # subject 不允许以大写 A-Z 开头（Conventional Commits 规范，鼓励小写动词）
+          # 注意：中文字符不算 A-Z，所以 `feat: 加日志` 这种中文 PR title 会通过 —— 这是项目语言习惯，刻意保留
+          subjectPattern: ^[^A-Z].+
+          subjectPatternError: |
+            PR 标题主体（: 后面的部分）应以小写字母或中文字符开头。
+            例如：
+              ✅ feat(cli): add --json flag
+              ✅ feat(cli): 加 --json 选项
+              ❌ feat(cli): Add --json flag
