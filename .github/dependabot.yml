@@ -1,0 +1,49 @@
+version: 2
+updates:
+  # npm 依赖：每周一扫，target develop（不是 main）
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      time: "09:00"
+      timezone: Asia/Shanghai
+    target-branch: develop
+    open-pull-requests-limit: 10
+    reviewers:
+      - Dong90
+    labels:
+      - dependencies
+      - npm
+    commit-message:
+      prefix: chore
+      include: scope
+    groups:
+      # devDependencies 一起升，省 PR 数量
+      dev-dependencies:
+        dependency-type: development
+      # production 依赖也归组（这个项目只有 2 个）
+      prod-dependencies:
+        dependency-type: production
+    ignore:
+      # major 升级人工把关（自动只允许 patch/minor）
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
+
+  # GitHub Actions 依赖：每周一扫
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      time: "09:00"
+      timezone: Asia/Shanghai
+    target-branch: develop
+    open-pull-requests-limit: 5
+    reviewers:
+      - Dong90
+    labels:
+      - dependencies
+      - github-actions
+    commit-message:
+      prefix: ci
