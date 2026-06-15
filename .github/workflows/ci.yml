@@ -231,7 +231,7 @@ jobs:
           npm install "$TGZ" --no-audit --no-fund 2>&1 | tee install.log
           echo ""
           echo "=== postinstall 是否写入 fake HOME ==="
-          SKILL_COUNT=$(find "$FAKE_HOME" -name "taiyi-*" -type d 2>/dev/null | wc -l | tr -d ' ')
+          SKILL_COUNT=$(find "$FAKE_HOME" -name "taiyi-*" -type d 2>/dev/null | wc -l | xargs)
           find "$FAKE_HOME" -name "taiyi-*" -type d 2>/dev/null | head -10
           echo ""
           if [ "$SKILL_COUNT" -lt 4 ]; then

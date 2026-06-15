@@ -6,7 +6,7 @@ import { isPlaceholderTestScript } from "../core/ralph-verify-cmd.js";
 const SCRIPTS: Record<string, string> = {
   "taiyi:doctor": "taiyi doctor --strict-workspace",
   "taiyi:verify": "taiyi verify",
-  "taiyi:smoke": "node -e \"process.exit(0)\"",
+  "taiyi:smoke": "node -e \"const{spawnSync}=require('child_process');const r=spawnSync(process.execPath,['dist/cli/taiyi.js','--version']);process.exit(r.status)\"",
 };
 
 const DEFAULT_TEST = 'node -e "process.exit(0)"';
