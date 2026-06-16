@@ -27,31 +27,25 @@ export const PHASE_WRITE_HINTS: Record<PhaseId, PhaseWriteHint> = {
   },
   requirement: {
     superpowers: [],
-    superpowersOptional: ["writing-plans"],
+    superpowersOptional: [],
     auxiliary: [],
-    external: ["openspec change show <slug>"],
+    external: [],
     slashExtras: [],
-    notes: ["User Stories + Given/When/Then AC（各 ≥8 字符）；须追溯 CHANGE"],
+    notes: [
+      "Schema 驱动：调用 executor.generateStageData(RequirementSchema) → persistAndRender 写 requirement.json + REQUIREMENT.md",
+      "禁止手写 MD：数据真源是 requirement.json，MD 由 Handlebars 自动渲染",
+    ],
   },
   design: {
     superpowers: [],
-    superpowersOptional: ["writing-plans"],
-    auxiliary: [
-      "taiyi-architect",
-      "taiyi-diagram-c4",
-      "taiyi-diagram-arch",
-      "taiyi-diagram-flow",
-      "taiyi-diagram-render",
-    ],
+    superpowersOptional: [],
+    auxiliary: ["taiyi-architect"],
     external: ["/taiyi:gstack plan-eng-review"],
-    slashExtras: [
-      "/taiyi:diagram-pipeline",
-      "/taiyi:diagram-c4",
-      "/taiyi:diagram-arch",
-      "/taiyi:diagram-render",
-      "/taiyi:diagram-flow",
+    slashExtras: ["/taiyi:diagram-pipeline"],
+    notes: [
+      "Schema 驱动：调用 executor.generateStageData(DesignSchema) → persistAndRender 写 design.json + DESIGN.md",
+      "禁止手写 MD：数据真源是 design.json，MD 由 Handlebars 自动渲染",
     ],
-    notes: ["≥2 方案表格行 | A | / | B | + Decision；ADR 须在 .taiyi/changes/<slug>/adr/"],
   },
   "ui-design": {
     superpowers: [],
