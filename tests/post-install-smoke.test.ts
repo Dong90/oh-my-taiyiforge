@@ -62,9 +62,11 @@ describe("post-install smoke (isolated HOME)", () => {
       CLAUDE_CONFIG_DIR: process.env.CLAUDE_CONFIG_DIR,
       TAIYI_FORGE_SKIP_OPENCODE_CONFIG: process.env.TAIYI_FORGE_SKIP_OPENCODE_CONFIG,
       TAIYI_FORGE_SKIP_PROJECT_WRAPPER: process.env.TAIYI_FORGE_SKIP_PROJECT_WRAPPER,
+      TAIYI_FORGE_ALL_PROMPTS: process.env.TAIYI_FORGE_ALL_PROMPTS,
     };
 
     process.env.HOME = fakeHome;
+    process.env.TAIYI_FORGE_ALL_PROMPTS = "1";
     process.env.OPENCODE_SKILLS_DIR = path.join(fakeHome, ".config/opencode/skills");
     process.env.CLAUDE_SKILLS_DIR = path.join(fakeHome, ".claude/skills");
     process.env.CODEX_SKILLS_DIR = path.join(fakeHome, ".codex/skills");

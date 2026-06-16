@@ -1,5 +1,25 @@
 # Changelog
 
+## [0.24.0] - 2026-06-16
+
+### Added
+
+- **v28 IDE 菜单裁剪**：`install --<harness>` 默认只同步 v28 28 条顶栏 prompt 到四端菜单（`TAIYI_FORGE_ALL_PROMPTS=1` 恢复全量 86 条）
+- **零构建安装**：`npx taiyi-forge-install --all` 一行装到四端，无需 clone 仓库
+
+### Changed
+
+- **README v28 收敛重写**：npm badge 启用 · 快速上手结构重组（一行安装优先）· 路线图更新 · 中英两版同步
+- **canonical-commands.md**：Phase 3（真 IDE 菜单裁剪）标记完成
+- **CI**：npm exit code 替代 grep 检测 postinstall 失败 · Dependabot 不再拦截 major 升级
+- **提示词**：autopilot prompt 改为 phase-driven 分支逻辑 · architecture poster v0.23 generator
+
+### Fixed
+
+- **smoke**：隔离 HOME 下 unset CI 环境变量解锁 skill 安装
+- **ci.mjs**：改用 `process.execPath` 替代 PATH `"node"` 避免运行时不一致
+- **CoC / 依赖**：CODE_OF_CONDUCT 去重措辞 + 私密报告渠道 · README.en.md 文件名修正
+
 ## [0.23.1] - 2026-06-12
 
 ### Changed

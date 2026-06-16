@@ -15,16 +15,16 @@ Phase 2（本变更）：6 umbrella 顶层 prompt 已落（`prompts/taiyi-{token
 | 层 | 现状 |
 |----|------|
 | **文档 / help** | `/taiyi:help`、`canonical-commands.md` 只推荐 28 条顶栏 |
-| **Cursor `/` 菜单** | `install --cursor` 同步 **全部** `prompts/taiyi-*.md` → `~/.cursor/commands/` |
-| **Claude `/` 菜单** | `install --claude` 同步同源 → `~/.claude/commands/` |
-| **Codex `$taiyi-*`** | `install --codex` 同步同源 → `~/.codex/prompts/` |
-| **OpenCode `/` 菜单** | `install --opencode` 同步同源 → `~/.config/opencode/commands/` |
+| **Cursor `/` 菜单** | `install --cursor` 默认 **v28 28 条** → `~/.cursor/commands/`（`TAIYI_FORGE_ALL_PROMPTS=1` 全量） |
+| **Claude `/` 菜单** | `install --claude` 默认 **v28 28 条** → `~/.claude/commands/` |
+| **Codex `$taiyi-*`** | `install --codex` 默认 **v28 28 条** → `~/.codex/prompts/` |
+| **OpenCode `/` 菜单** | `install --opencode` 默认 **v28 28 条** → `~/.config/opencode/commands/` |
 | **伞形斜杠（Phase 2）** | 6 umbrella 顶层 prompt 已落（`prompts/taiyi-{token,test,review,diagram,mode,workflow}.md`）· 注册 `commands.yaml umbrellas` · `install --<harness>` 同步到四端菜单 |
 | **引擎 CLI** | 子命令分发（token/test/workflow 等）仍走既有 `taiyi-forge.sh` 与 legacy 斜杠 |
 
 `canonical_v28` 与 `slash_catalog.recommended_v28` 须保持一致；`npm run generate:docs` 与测试会校验。
 **Phase 2（umbrella 顶层 prompt）已完成**：`prompts/taiyi-{token,test,review,diagram,mode,workflow}.md` 6 文件 + `commands.yaml` 6 处 `prompt_file` 注册。
-Phase 3（可选）：`install --<harness>` 过滤（仅同步 umbrella 顶层而非所有 legacy 提示），真正缩短 IDE 菜单。
+**Phase 3（v0.24 完成）**：`install --<harness>` 默认只同步 v28 28 条顶栏 prompt，IDE 菜单真正裁剪。设 `TAIYI_FORGE_ALL_PROMPTS=1` 恢复全量。
 
 ## v28 一览（28 条）
 

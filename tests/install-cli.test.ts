@@ -61,7 +61,7 @@ describe("taiyi-forge-install CLI", () => {
     const r = spawnSync(
       "node",
       [INSTALL_CLI, "--claude", "--codex", "--cursor", "--skip-deps"],
-      { cwd: tmp, encoding: "utf8", env: process.env },
+      { cwd: tmp, encoding: "utf8", env: { ...process.env, TAIYI_FORGE_ALL_PROMPTS: "1" } },
     );
     expect(r.status, `${r.stdout}\n${r.stderr}`).toBe(0);
 
@@ -82,7 +82,7 @@ describe("taiyi-forge-install CLI", () => {
     const r = spawnSync(
       "node",
       [INSTALL_CLI, "--cursor", "--skip-deps"],
-      { cwd: tmp, encoding: "utf8", env: process.env },
+      { cwd: tmp, encoding: "utf8", env: { ...process.env, TAIYI_FORGE_ALL_PROMPTS: "1" } },
     );
     expect(r.status, `${r.stdout}\n${r.stderr}`).toBe(0);
     expect(fs.existsSync(path.join(process.env.CURSOR_SKILLS_DIR!, "taiyi-forge", "SKILL.md"))).toBe(

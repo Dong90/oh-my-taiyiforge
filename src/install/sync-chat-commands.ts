@@ -10,6 +10,17 @@ export const CHAT_COMMAND_MARKER = "TAIYI-FORGE:CHAT-COMMAND";
 /** @deprecated 旧 Cursor 标记；新安装统一用 CHAT_COMMAND_MARKER */
 export const CURSOR_COMMAND_MARKER = "TAIYI-FORGE:CURSOR-COMMAND";
 
+/** v28 顶栏 28 提示词 — 默认只同步这 28 个到 IDE 菜单。设 TAIYI_FORGE_ALL_PROMPTS=1 恢复全量同步。 */
+export const V28_CANONICAL_PROMPTS: ReadonlySet<string> = new Set([
+  "taiyi-new.md", "taiyi-status.md", "taiyi-write.md", "taiyi-continue.md", "taiyi-apply.md", "taiyi-archive.md",
+  "taiyi-handoff.md", "taiyi-resume.md", "taiyi-cancel.md", "taiyi-list.md",
+  "taiyi-doctor.md", "taiyi-audit.md", "taiyi-verify.md",
+  "taiyi-commit.md", "taiyi-ship.md", "taiyi-land.md", "taiyi-release.md",
+  "taiyi-gstack.md", "taiyi-sp.md",
+  "taiyi-explore.md", "taiyi-tdd.md", "taiyi-flow.md",
+  "taiyi-token.md", "taiyi-test.md", "taiyi-review.md", "taiyi-diagram.md", "taiyi-mode.md", "taiyi-workflow.md",
+]);
+
 export type ChatCommandPlatform = "cursor" | "claude" | "codex" | "opencode";
 
 const PLATFORM_TARGETS: Record<ChatCommandPlatform, InstallResult["target"]> = {
@@ -71,8 +82,10 @@ export function syncTaiyiChatCommands(
 
   fs.mkdirSync(destDir, { recursive: true });
   let count = 0;
+  const allPrompts = process.env.TAIYI_FORGE_ALL_PROMPTS === "1";
   for (const ent of fs.readdirSync(promptsSrc, { withFileTypes: true })) {
     if (!ent.isFile() || !ent.name.startsWith("taiyi-") || !ent.name.endsWith(".md")) continue;
+    if (!allPrompts && !V28_CANONICAL_PROMPTS.has(ent.name)) continue;
     const src = path.join(promptsSrc, ent.name);
     const body = renderTaiyiPrompt(ent.name, fs.readFileSync(src, "utf8"), promptsSrc);
     fs.writeFileSync(path.join(destDir, ent.name), wrapChatCommandBody(ent.name, body), "utf8");

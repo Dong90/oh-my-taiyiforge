@@ -24,10 +24,8 @@ updates:
       # production 依赖也归组（这个项目只有 2 个）
       prod-dependencies:
         dependency-type: production
-    ignore:
-      # major 升级人工把关（自动只允许 patch/minor）
-      - dependency-name: "*"
-        update-types: ["version-update:semver-major"]
+    # 不拦截 major：安全补丁优先；open-pull-requests-limit 控制并发数
+    # Dependabot security alerts 独立于 version updates，不受影响
 
   # GitHub Actions 依赖：每周一扫
   - package-ecosystem: github-actions

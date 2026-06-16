@@ -148,6 +148,7 @@ describe("install", () => {
   });
 
   it("syncs codex prompts", () => {
+    process.env.TAIYI_FORGE_ALL_PROMPTS = "1";
     const src = path.join(tmp, "prompts");
     fs.mkdirSync(src, { recursive: true });
     fs.writeFileSync(path.join(src, "taiyi-forge.md"), "# forge");
@@ -155,6 +156,7 @@ describe("install", () => {
     const r = syncCodexPrompts(src, dest);
     expect(r.action).toBe("updated");
     expect(fs.existsSync(path.join(dest, "taiyi-forge.md"))).toBe(true);
+    delete process.env.TAIYI_FORGE_ALL_PROMPTS;
   });
 
   it("merges claude CLAUDE.md control block", () => {

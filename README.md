@@ -1,6 +1,6 @@
 <div align="center">
 
-[English](README.zh-CN.md) · **[简体中文](README.md)**
+[English](README.en.md) · **[简体中文](README.md)**
 
 # TaiyiForge(太一炉)
 
@@ -8,11 +8,9 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Node](https://img.shields.io/badge/node-%3E%3D20-brightgreen)](package.json)
-<!-- NPM-PUBLISH-TOGGLE: open the two lines below and remove this one after v0.24
 [![npm version](https://img.shields.io/npm/v/oh-my-taiyiforge.svg)](https://www.npmjs.com/package/oh-my-taiyiforge)
 [![npm downloads](https://img.shields.io/npm/dm/oh-my-taiyiforge.svg)](https://www.npmjs.com/package/oh-my-taiyiforge)
--->
-[![Version](https://img.shields.io/badge/version-0.23.1-orange)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-0.24.0-orange)](CHANGELOG.md)
 [![v28 canonical](https://img.shields.io/badge/v28-28%20slashes%20%C2%B7%206%20umbrellas-blue)](docs/taiyi/canonical-commands.md)
 [![CI](https://img.shields.io/github/actions/workflow/status/Dong90/oh-my-taiyiforge/ci.yml?branch=main&label=CI)](https://github.com/Dong90/oh-my-taiyiforge/actions/workflows/ci.yml)
 [![Platforms](https://img.shields.io/badge/platforms-OpenCode%20%7C%20Claude%20%7C%20Codex%20%7C%20Cursor-8a2be2)](docs/QUICKSTART.md)
@@ -27,7 +25,7 @@
 
 ![TaiyiForge 架构 — 六套标准 × 工作流引擎 × 九阶段 × Skill 宇宙 × 三层门控](docs/diagrams/visual/taiyiforge-architecture-ai-v023-full-4k-zh-v2-fix.png)
 
-<sub>4K 架构海报（v0.23.1 · AI 视觉稿）· <a href="docs/taiyiforge-architecture.svg">矢量 SVG</a> · <a href="docs/c4/containers.md">C4 真源</a> · <a href="docs/diagrams/visual/taiyiforge-architecture-ai-v023-full-4k-en-v2.png">English poster</a></sub>
+<sub>4K 架构海报（v0.24.0 · AI 视觉稿）· <a href="docs/taiyiforge-architecture.svg">矢量 SVG</a> · <a href="docs/c4/containers.md">C4 真源</a> · <a href="docs/diagrams/visual/taiyiforge-architecture-ai-v023-full-4k-en-v2.png">English poster</a></sub>
 
 </div>
 
@@ -60,7 +58,7 @@ TaiyiForge 对每个问题的回答都在 [§2 方案](#2--方案)。
 **一条九阶段工件契约** + **28 条 v28 顶栏 slash + 6 个 umbrella** + **一套 `/taiyi:*`
 词汇表**,在四套 AI 终端里行为完全一致。
 
-> **v28 = 推荐命名 + 顶栏收敛,Cursor/Claude 仍装全 prompt。Phase 2(IDE 菜单裁剪)未做,见 [canonical-commands.md](docs/taiyi/canonical-commands.md)。**
+> **v28 = 推荐命名 + 顶栏收敛。IDE 菜单已裁剪为 28 条（v0.24），设 `TAIYI_FORGE_ALL_PROMPTS=1` 恢复全量。详见 [canonical-commands.md](docs/taiyi/canonical-commands.md)。**
 
 TaiyiForge 不发明新标准——它把 Harness · OpenSpec · GStack · Superpowers · OMO ·
 Spec-Kit **编排成一台状态机**。装了什么用什么,其余自动跳过。
@@ -189,36 +187,29 @@ v28 umbrella 之外再添新的顶栏重复。
 
 ## 4 · 快速上手
 
-> **状态说明**:v0.23.0 **尚未发布到 npm**。当前唯一的安装方式是 **从源码**。CI 已绿,
-> npm 紧随其后;badge 届时自动切换。
+> **零构建安装**：v0.24.0 起支持 `npx taiyi-forge-install --all` 一键装到四端，无需 clone 仓库。源码安装仍可用。
 
-### 方式 A · 源码安装(推荐,现成可用)
+### 方式 A · 一行安装（推荐,v0.24+）
+
+```bash
+npx taiyi-forge-install --all          # 一键装到四端 + 可选铁三角
+npx taiyi-forge-install --cursor       # 只装到 Cursor
+npx taiyi-forge-install --claude --opencode
+
+# 装全量 prompt（默认只同步 v28 28 条顶栏）：
+TAIYI_FORGE_ALL_PROMPTS=1 npx taiyi-forge-install --all
+```
+
+### 方式 B · 源码安装
 
 ```bash
 git clone https://github.com/Dong90/oh-my-taiyiforge.git
 cd oh-my-taiyiforge
 npm install && npm run build && npm test
-```
-
-### 方式 B · 装到本项目(同样源码路径)
-
-```bash
-git clone https://github.com/Dong90/oh-my-taiyiforge.git
-cd oh-my-taiyiforge
-npm install && npm run build
-
-# 一键装到四端 + 可选铁三角
-# (OpenSpec / gstack / Superpowers / web-quality-skills)
 node scripts/taiyi-forge.sh install --all
-
-# 或一次一端:
-node scripts/taiyi-forge.sh install --cursor
-node scripts/taiyi-forge.sh install --claude --cursor
-# 跳过可选依赖:
-node scripts/taiyi-forge.sh install --all --skip-deps
 ```
 
-### 方式 C · 跑通示例工程(零安装,快速体验)
+### 方式 C · 跑通示例工程（零安装，快速体验）
 
 ```bash
 cd examples/commands-smoke
@@ -235,10 +226,9 @@ npm run walkthrough-e2e    # 九阶段 shell E2E + 铁三角
 | [examples/browser-e2e-smoke](examples/browser-e2e-smoke/) | CI 模板 |
 | [examples/verification-suite](examples/verification-suite/) | 极简集成验证 |
 
-> 想用 `npm install oh-my-taiyiforge`?等 [Releases](https://github.com/Dong90/oh-my-taiyiforge/releases)
-> 公告,这里会先亮。
+> 想用 `npm install oh-my-taiyiforge`？v0.24 已发布到 npm，直接装即可。
 
-### 方式 D · 第一个 change(5 分钟)
+### 方式 D · 第一个 change（5 分钟）
 
 ```bash
 # 推荐入口: 自动 slug + 引擎引导
@@ -294,7 +284,7 @@ scripts/taiyi-forge.sh audit --json --compact
 | [CONTRIBUTING.md](CONTRIBUTING.md) | 贡献指南 | 开 PR 之前 |
 | [CHANGELOG.md](CHANGELOG.md) | 发布说明 | 查更新 |
 | [docs/diagrams/demo.gif](docs/diagrams/demo.gif) | 真实终端录制(27s) | 快速感受引擎 |
-| [README.zh-CN.md](README.zh-CN.md) | English | English users |
+| [README.en.md](README.en.md) | English | English users |
 
 ### 5.2 · 开发与验证
 
@@ -326,11 +316,11 @@ CI: [`.github/workflows/ci.yml`](.github/workflows/ci.yml)——平台冒烟跑 
 | 版本 | 状态 | 关键里程碑 |
 |------|------|----------|
 | v0.23.0 | ✅ 已发布 | **canonical v28**: 28 顶栏 slashes + 6 umbrellas(`token`/`test`/`review`/`diagram`/`mode`/`workflow`) + `skill-fusion-principles.md` + `validateV28CatalogSync` gate |
-| v0.24.x | 🚧 进行中 | 首次 npm 发布 · `oh-my-taiyiforge` 零构建安装 · README v28 收敛(本次重写) · umbrella Phase 2(真 IDE 菜单裁剪)延后 |
+| v0.24.0 | ✅ 已发布 | 首次 npm 发布 · `npx taiyi-forge-install` 零构建安装 · README v28 收敛重写 · IDE 菜单裁剪为 28 条（umbrella Phase 2） |
 | v1.0.0 | ⏳ 计划 | 锁定 9 阶段 API · 四端 parity · 外部案例收集 |
 
-**已就绪**: 完整九阶段流水线 · 四端共享 Skill · 强制 TDD · token 压缩 · 平台冒烟 CI
-**未就绪**: 一行 npm 安装(v0.24 目标) · 生产级 SLA · 完整 i18n
+**已就绪**: 完整九阶段流水线 · 四端共享 Skill · 强制 TDD · token 压缩 · 平台冒烟 CI · 零构建一行安装(v0.24)
+**未就绪**: 生产级 SLA · 完整 i18n
 
 ### 5.4 · 社区与贡献
 
