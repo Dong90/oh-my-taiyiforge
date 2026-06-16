@@ -18,6 +18,22 @@ function renderStageMd(
   return Handlebars.compile(tpl)(data);
 }
 
+/** 从 Markdown 提取 checkbox 状态：{ "AC-01": true, "AC-02": false } */
+function parseCheckboxStates(md: string): Record<string, boolean> {
+  const re = /^- \[( |x)\] \*\*(AC-\S+)\*\*:.*$/gm;
+  const map: Record<string, boolean> = {};
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(md)) !== null) {
+    map[m[2]] = m[1] === "x";
+  }
+  return map;
+}
+
+/** 从 Markdown 中移除所有 checkbox 行 */
+function stripCheckboxLines(md: string): string {
+  return md.replace(/^- \[( |x)\] \*\*AC-.*$/gm, "");
+}
+
 /**
  * 检测 MD 变更是否仅包含 checkbox 勾选变更。
  * 如果是，直接从 MD 提取勾选状态并更新 JSON，返回 true。
@@ -40,26 +56,14 @@ async function bypassCheckboxToggle(
   const oldMd = renderStageMd(stage, json, templatesDir);
   if (oldMd === newMd) return false; // should not happen if hash differs
 
-  // Extract checkbox lines from both: "- [x] **AC-01**: desc" or "- [ ] **AC-01**: desc"
-  const re = /^- \[( |x)\] \*\*(AC-\S+)\*\*:(.*)$/gm;
-  const parseBoxes = (md: string) => {
-    const map: Record<string, boolean> = {};
-    let m: RegExpExecArray | null;
-    while ((m = re.exec(md)) !== null) {
-      map[m[2]] = m[1] === "x";
-    }
-    return map;
-  };
-
-  const oldBoxes = parseBoxes(oldMd);
-  const newBoxes = parseBoxes(newMd);
+  const oldBoxes = parseCheckboxStates(oldMd);
+  const newBoxes = parseCheckboxStates(newMd);
 
   // Must have checkbox lines to consider this a checkbox-only diff
   if (Object.keys(newBoxes).length === 0) return false;
 
   // Check if non-checkbox lines changed
-  const stripBoxes = (md: string) => md.replace(/^- \[( |x)\] \*\*AC-.*$/gm, "");
-  if (stripBoxes(oldMd) !== stripBoxes(newMd)) return false;
+  if (stripCheckboxLines(oldMd) !== stripCheckboxLines(newMd)) return false;
 
   // Check that only checkbox states differ (no new/removed ACs)
   const oldKeys = Object.keys(oldBoxes).sort();
@@ -117,24 +121,13 @@ export function autoSyncLocalEdits(
     const oldMd = renderStageMd(stage, json, templatesDir);
     if (oldMd === currentMd) return { synced: false, needsLlm: false, message: "" };
 
-    const re = /^- \[( |x)\] \*\*(AC-\S+)\*\*:(.*)$/gm;
-    const parseBoxes = (md: string) => {
-      const map: Record<string, boolean> = {};
-      let m: RegExpExecArray | null;
-      while ((m = re.exec(md)) !== null) {
-        map[m[2]] = m[1] === "x";
-      }
-      return map;
-    };
-
-    const oldBoxes = parseBoxes(oldMd);
-    const newBoxes = parseBoxes(currentMd);
+    const oldBoxes = parseCheckboxStates(oldMd);
+    const newBoxes = parseCheckboxStates(currentMd);
     if (Object.keys(newBoxes).length === 0) {
       return { synced: false, needsLlm: true, message: `⚠️ ${stage}.md 已修改，需 AI Agent 调用 reverse-sync` };
     }
 
-    const stripBoxes = (md: string) => md.replace(/^- \[( |x)\] \*\*AC-.*$/gm, "");
-    if (stripBoxes(oldMd) !== stripBoxes(currentMd)) {
+    if (stripCheckboxLines(oldMd) !== stripCheckboxLines(currentMd)) {
       return { synced: false, needsLlm: true, message: `⚠️ ${stage}.md 内容变更超出 checkbox，需 LLM reverse-sync` };
     }
 
@@ -230,7 +223,9 @@ JSON Patch 格式示例：[{"op": "replace", "path": "/title", "value": "新标�
   const raw = JSON.parse(response.toolCalls[0].arguments);
 
   let validData: T;
-  if (Array.isArray(raw) && raw.length > 0 && raw[0].op) {
+  const isPatch = Array.isArray(raw) && raw.length > 0 &&
+    typeof raw[0]?.op === 'string' && typeof raw[0]?.path === 'string';
+  if (isPatch) {
     // ── JSON Patch mode ──
     const existing = schema.parse(JSON.parse(oldJson));
     const patched = applyJsonPatches(

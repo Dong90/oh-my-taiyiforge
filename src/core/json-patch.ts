@@ -1,8 +1,7 @@
 export interface JsonPatchOp {
-  op: "add" | "remove" | "replace" | "move" | "copy";
+  op: "add" | "remove" | "replace";
   path: string;
   value?: unknown;
-  from?: string;
 }
 
 /** RFC 6902 JSON Patch: apply operations to a target object, returns mutated copy */

@@ -21,6 +21,7 @@ export async function generateStageData<T>(
             type: "function",
             function: {
               name: `commit_${stage}`,
+              // 空 schema — 实际结构由 call 时传入的 Zod schema 控制，此处仅声明函数签名
               parameters: {},
             },
           },
@@ -31,6 +32,9 @@ export async function generateStageData<T>(
         }
       );
 
+      if (!response.toolCalls?.length) {
+        throw new Error("LLM 未返回任何 tool call");
+      }
       const rawJson = response.toolCalls[0].arguments;
       return schema.parse(JSON.parse(rawJson));
     } catch (error: unknown) {
@@ -46,9 +50,13 @@ export async function generateStageData<T>(
         );
       }
 
+      const cleanMsg = errMsg
+        .replace(/at .+/gs, "")
+        .replace(/\/[\w\/.-]+:\d+:\d+/g, "")
+        .trim();
       messages.push({
         role: "user",
-        content: `数据校验失败，报错：${errMsg}\n请严格遵循 Schema 并重新输出。`,
+        content: `数据校验失败，报错：${cleanMsg}\n请严格遵循 Schema 并重新输出。`,
       });
     }
   }

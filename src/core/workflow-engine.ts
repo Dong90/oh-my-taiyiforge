@@ -363,8 +363,12 @@ export class WorkflowEngine {
 
     // ── 反向同步：本地上传人类 MD 修改 ──
     if (!options?.skipArtifactValidation && ZOD_PHASES.includes(phaseId) && this.templatesDir) {
-      const hbsTemplatesDir = path.join(path.dirname(this.templatesDir), "src", "templates");
-      if (fs.existsSync(hbsTemplatesDir)) {
+      const candidates = [
+        this.templatesDir ? path.join(path.dirname(this.templatesDir), "src", "templates") : null,
+        path.join(this.workspaceRoot, "..", "src", "templates"),
+      ].filter(Boolean) as string[];
+      const hbsTemplatesDir = candidates.find(d => fs.existsSync(d));
+      if (hbsTemplatesDir) {
         const syncResult = autoSyncLocalEdits(
           phaseId,
           this.changeDir(slug),

@@ -3,8 +3,9 @@
 ## Slices
 {{#each slices}}
 ### Slice {{id}}: {{label}}
-{{#if description}}{{/if}}
+{{#if description}}
 {{description}}
+{{/if}}
 {{#if test_command}}
 验证: `{{test_command}}`
 {{/if}}
