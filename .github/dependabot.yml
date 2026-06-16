@@ -21,6 +21,9 @@ updates:
       # devDependencies 一起升，省 PR 数量
       dev-dependencies:
         dependency-type: development
+        ignore:
+          - dependency-name: "@types/node"
+            update-types: ["version-update:semver-major"]
       # production 依赖也归组（这个项目只有 2 个）
       prod-dependencies:
         dependency-type: production
