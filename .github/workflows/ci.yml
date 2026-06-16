@@ -216,6 +216,7 @@ jobs:
       - name: 隔离 HOME 装包 — 跑完整 postinstall.mjs
         # 用 fake HOME 隔离 runner，避免真改 ~/.cursor、~/.claude 等
         # 不传 TAIYI_FORGE_SKIP_POSTINSTALL，让 postinstall.mjs 真跑
+        # CI="" 解锁 shouldRunPostinstall() 中的 CI 检查（不 unset 会跳过 postinstall）
         # 但传 TAIYI_FORGE_SKIP_DEPS=1，跳过下载 OpenSpec/gstack 等大依赖（CI 装不上 / 太慢）
         run: |
           TGZ="${{ steps.pack.outputs.tgz }}"
@@ -223,12 +224,14 @@ jobs:
           FAKE_HOME=$(mktemp -d)
           cd "$TMP"
           npm init -y > /dev/null
-          set -o pipefail
+          CI="" \
           HOME="$FAKE_HOME" \
           TAIYI_FORGE_SKIP_DEPS=1 \
           TAIYI_FORGE_SKIP_MCP=1 \
           TAIYI_FORGE_SKIP_PKG_SCRIPTS=1 \
-          npm install "$TGZ" --no-audit --no-fund 2>&1 | tee install.log
+          npm install "$TGZ" --no-audit --no-fund > install.log 2>&1
+          NPM_EXIT=$?
+          cat install.log
           echo ""
           echo "=== postinstall 是否写入 fake HOME ==="
           SKILL_COUNT=$(find "$FAKE_HOME" -name "taiyi-*" -type d 2>/dev/null | wc -l | xargs)
@@ -238,11 +241,11 @@ jobs:
             echo "::error::postinstall 未安装足够的 taiyi skills: 找到 ${SKILL_COUNT} 个（期望 >=4）"
             exit 1
           fi
-          if grep -qiE "(npm ERR!|npm error|Error:)" install.log; then
-            echo "::error::postinstall 出现错误，详见日志"
+          if [ "$NPM_EXIT" -ne 0 ]; then
+            echo "::error::npm install 失败，退出码 $NPM_EXIT，详见 install.log"
             exit 1
           fi
-          echo "✅ postinstall.mjs 在隔离 HOME 下成功执行"
+          echo "✅ postinstall.mjs 在隔离 HOME 下成功执行（$SKILL_COUNT 个 skill）"
 
   # prepublishOnly dry-run — PR 阶段就模拟发版流程，避免发版当天才发现挂
   publish-dry-run:
