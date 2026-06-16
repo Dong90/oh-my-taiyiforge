@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { validateArtifactContent } from "../src/core/artifact-validator.js";
+import { validateArtifactContent, validateArtifactFile } from "../src/core/artifact-validator.js";
 import { TAIYI_SEED_MARKER } from "../src/core/seed-marker.js";
 import { auxiliaryArtifactSatisfied } from "../src/core/auxiliary-artifacts.js";
 import fs from "node:fs";
@@ -37,47 +37,23 @@ describe("artifact-validator", () => {
     expect(r.hints.length).toBeGreaterThan(0);
   });
 
-  it("rejects placeholder REQUIREMENT template", () => {
-    const r = validateArtifactContent(
-      "requirement",
-      `# REQUIREMENT: Demo
-
-## User Stories
-| ID | As a… | I want… | So that… |
-|----|--------|---------|----------|
-| US-1 | | | |
-
-## Acceptance Criteria (Given / When / Then)
-### US-1
-- **Given** …
-- **When** …
-- **Then** …
-
-## Traceability
-| AC | Links to CHANGE.md |
-| US-1 | Motivation |
-`,
-    );
-    expect(r.scores.completeness).toBe(false);
-    expect(r.hints.some((h) => /User Stories/i.test(h))).toBe(true);
+  it("Zod phase REQUIREMENT without JSON → fails via validateArtifactFile", () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), "taiyi-av-"));
+    fs.writeFileSync(path.join(dir, "REQUIREMENT.md"), "content enough for 60 characters minimum fill text here more");
+    const r = validateArtifactFile(path.join(dir, "REQUIREMENT.md"), "requirement");
+    expect(r).not.toBeNull();
+    expect(r!.scores.completeness).toBe(false);
+    expect(r!.hints.some((h) => /缺少 requirement\.json/.test(h))).toBe(true);
+    fs.rmSync(dir, { recursive: true, force: true });
   });
 
-  it("rejects placeholder DESIGN template", () => {
-    const r = validateArtifactContent(
-      "design",
-      `# DESIGN: Demo
-
-## Options
-| Option | Summary | Pros | Cons | Cost |
-| A | | | | |
-| B | | | | |
-
-## Decision
-**Chosen:** Option …
-**Reason:** …
-`,
-    );
-    expect(r.scores.completeness).toBe(false);
+  it("Zod phase DESIGN without JSON → fails via validateArtifactFile", () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), "taiyi-av-"));
+    fs.writeFileSync(path.join(dir, "DESIGN.md"), "content enough for 60 characters minimum fill text here more longer");
+    const r = validateArtifactFile(path.join(dir, "DESIGN.md"), "design");
+    expect(r).not.toBeNull();
+    expect(r!.scores.completeness).toBe(false);
+    fs.rmSync(dir, { recursive: true, force: true });
   });
 
   it("rejects TASK without TDD plan cues", () => {
