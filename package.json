@@ -71,7 +71,10 @@
     "node": ">=20"
   },
   "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.29.0"
+    "@modelcontextprotocol/sdk": "^1.29.0",
+    "handlebars": "^4.7.9",
+    "zod": "^4.4.3",
+    "zod-to-json-schema": "^3.25.2"
   },
   "peerDependencies": {
     "@opencode-ai/plugin": ">=1.0.0"

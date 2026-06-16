@@ -5,6 +5,9 @@ import { getPhase } from "./phase-registry.js";
 import { evaluateMachineReview } from "./review-gate.js";
 import { isDevCompleteEvidence } from "./dev-complete.js";
 import { isSeedTemplate } from "./seed-marker.js";
+import { RequirementSchema } from "../schemas/requirement.js";
+import { DesignSchema } from "../schemas/design.js";
+import type { ZodSchema } from "zod";
 
 type SectionRule = { heading: string; minChars?: number };
 
@@ -296,13 +299,37 @@ export function validateArtifactContent(
   };
 }
 
+const ZOD_SCHEMAS: Partial<Record<PhaseId, ZodSchema>> = {
+  requirement: RequirementSchema,
+  design: DesignSchema,
+};
+
 export function validateArtifactFile(
   artifactPath: string,
   phaseId: PhaseId,
 ): { scores: QualityScores; hints: string[] } | null {
   if (!fs.existsSync(artifactPath)) return null;
   const content = fs.readFileSync(artifactPath, "utf8");
-  return validateArtifactContent(phaseId, content);
+  const result = validateArtifactContent(phaseId, content);
+
+  // Zod integration: validate companion JSON if schema exists
+  const zodSchema = ZOD_SCHEMAS[phaseId];
+  if (zodSchema) {
+    const jsonPath = path.join(path.dirname(artifactPath), `${phaseId}.json`);
+    if (fs.existsSync(jsonPath)) {
+      try {
+        const json = JSON.parse(fs.readFileSync(jsonPath, "utf-8"));
+        zodSchema.parse(json);
+      } catch (e: unknown) {
+        const msg = e instanceof Error ? e.message : String(e);
+        result.hints.push(`[Zod 校验失败] ${phaseId}.json 数据不合法: ${msg}`);
+        result.scores.completeness = false;
+        result.scores.consistency = false;
+      }
+    }
+  }
+
+  return result;
 }
 
 export function artifactPathForPhase(changeDir: string, phaseId: PhaseId): string {
