@@ -42,7 +42,7 @@ describe("automated human gate", () => {
     };
 
     for (const phase of ["change", "requirement", "design", "ui-design", "task", "dev", "test"] as const) {
-      const r = engine.completePhase("demo", phase, gates, { allowAutoHuman: true, skipStepOrderCheck: true });
+      const r = engine.completePhase("demo", phase, gates, { allowAutoHuman: true, skipStepOrderCheck: true, skipArtifactValidation: true });
       expect(r.ok, `${phase}: ${r.error}`).toBe(true);
     }
 

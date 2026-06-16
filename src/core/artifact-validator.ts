@@ -313,26 +313,80 @@ export function validateArtifactFile(
 ): { scores: QualityScores; hints: string[] } | null {
   if (!fs.existsSync(artifactPath)) return null;
   const content = fs.readFileSync(artifactPath, "utf8");
-  const result = validateArtifactContent(phaseId, content);
 
-  // Zod integration: validate companion JSON if schema exists
   const zodSchema = ZOD_SCHEMAS[phaseId];
+
   if (zodSchema) {
     const jsonPath = path.join(path.dirname(artifactPath), `${phaseId}.json`);
-    if (fs.existsSync(jsonPath)) {
-      try {
-        const json = JSON.parse(fs.readFileSync(jsonPath, "utf-8"));
-        zodSchema.parse(json);
-      } catch (e: unknown) {
-        const msg = e instanceof Error ? e.message : String(e);
-        result.hints.push(`[Zod 校验失败] ${phaseId}.json 数据不合法: ${msg}`);
-        result.scores.completeness = false;
-        result.scores.consistency = false;
-      }
+    const allFalse: QualityScores = {
+      completeness: false,
+      consistency: false,
+      verifiability: false,
+      traceability: false,
+      engineering_quality: false,
+    };
+
+    if (!fs.existsSync(jsonPath)) {
+      return {
+        scores: allFalse,
+        hints: [`[Zod 必检] 缺少 ${phaseId}.json，请用 /taiyi:write 生成结构化数据`],
+      };
     }
+
+    try {
+      const json = JSON.parse(fs.readFileSync(jsonPath, "utf-8"));
+      zodSchema.parse(json);
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : String(e);
+      return {
+        scores: allFalse,
+        hints: [`[Zod 校验失败] ${phaseId}.json 数据不合法: ${msg}`],
+      };
+    }
+
+    // Zod passed → run MD checks for seed template / placeholders / length
+    if (isSeedTemplate(content)) {
+      return {
+        scores: allFalse,
+        hints: ["仍为引擎模板占位，请用 /taiyi:write 填写内容"],
+      };
+    }
+    const cleanText = stripComments(content);
+    if (/\{\{title\}\}|\{\{slug\}\}/.test(content)) {
+      return {
+        scores: allFalse,
+        hints: ["仍含 {{title}} / {{slug}} 占位符"],
+      };
+    }
+    if (cleanText.length < 40) {
+      return {
+        scores: allFalse,
+        hints: [`MD 内容过短（${cleanText.length} 字符），请用 /taiyi:write 生成`],
+      };
+    }
+
+    return {
+      scores: {
+        completeness: true,
+        consistency: true,
+        verifiability: true,
+        traceability: true,
+        engineering_quality: true,
+      },
+      hints: [],
+    };
   }
 
-  return result;
+  // Non-Zod phases: use legacy heuristic
+  return validateLegacyArtifact(phaseId, content);
+}
+
+/** Legacy heuristic validation for non-Zod phases */
+function validateLegacyArtifact(
+  phaseId: PhaseId,
+  content: string,
+): { scores: QualityScores; hints: string[] } {
+  return validateArtifactContent(phaseId, content);
 }
 
 export function artifactPathForPhase(changeDir: string, phaseId: PhaseId): string {

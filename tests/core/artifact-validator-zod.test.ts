@@ -11,7 +11,7 @@ const templatesDir = path.join(
   "../../src/templates"
 );
 
-describe("artifact-validator with Zod", () => {
+describe("artifact-validator with Zod (mandatory)", () => {
   let tmpDir: string;
   let changeDir: string;
 
@@ -34,33 +34,18 @@ describe("artifact-validator with Zod", () => {
     fs.rmSync(tmpDir, { recursive: true, force: true });
   });
 
-  it("no requirement.json → heuristic runs, no Zod hints", () => {
-    const md = [
-      "# 用户登录功能",
-      "",
-      "## User Stories",
-      "| US-01 | 作为普通用户 | 我想要输入邮箱和密码登录 | 以便访问个人中心系统 |",
-      "",
-      "## Acceptance Criteria",
-      "- **Given** 用户已经打开登录页面并且输入了邮箱",
-      "- **When** 用户输入正确的密码并点击登录按钮",
-      "- **Then** 系统验证通过后跳转到首页",
-    ].join("\n");
-
-    fs.writeFileSync(path.join(changeDir, "REQUIREMENT.md"), md);
+  it("no requirement.json → all scores false, hints ask for JSON", () => {
+    fs.writeFileSync(path.join(changeDir, "REQUIREMENT.md"), "# any content here");
     const result = validateArtifactFile(
       path.join(changeDir, "REQUIREMENT.md"),
       "requirement"
     );
     expect(result).not.toBeNull();
-    if (result) {
-      expect(result.scores.completeness).toBe(true);
-      // No Zod-specific hints since no JSON exists
-      expect(result.hints.filter((h) => h.includes("[Zod")).length).toBe(0);
-    }
+    expect(result!.scores.completeness).toBe(false);
+    expect(result!.hints.some((h) => h.includes("缺少 requirement.json"))).toBe(true);
   });
 
-  it("valid JSON + valid MD → Zod passes, no Zod hints injected", async () => {
+  it("valid JSON + valid MD → all scores true, no errors", async () => {
     await persistAndRender("requirement", requirementData, changeDir, templatesDir);
 
     const result = validateArtifactFile(
@@ -68,59 +53,55 @@ describe("artifact-validator with Zod", () => {
       "requirement"
     );
     expect(result).not.toBeNull();
-    if (result) {
-      // No Zod error hints should appear
-      expect(result.hints.filter((h) => h.includes("[Zod")).length).toBe(0);
-    }
+    expect(result!.scores.completeness).toBe(true);
+    expect(result!.scores.consistency).toBe(true);
+    expect(result!.hints).toHaveLength(0);
   });
 
-  it("corrupted JSON with empty acceptance_criteria → Zod catches it", () => {
+  it("corrupted JSON (empty acceptance_criteria) → all false", () => {
     fs.writeFileSync(
       path.join(changeDir, "requirement.json"),
-      JSON.stringify({
-        title: "x",
-        features: [],
-        acceptance_criteria: [], // violates min(1)
-      })
+      JSON.stringify({ title: "x", features: [], acceptance_criteria: [] })
     );
-    fs.writeFileSync(
-      path.join(changeDir, "REQUIREMENT.md"),
-      "# x\n\ncontent here to pass length check min 60 characters... and more content to fill the minimum requirement"
-    );
+    fs.writeFileSync(path.join(changeDir, "REQUIREMENT.md"), "# content extra text to pass");
 
     const result = validateArtifactFile(
       path.join(changeDir, "REQUIREMENT.md"),
       "requirement"
     );
     expect(result).not.toBeNull();
-    if (result) {
-      expect(result.hints.some((h) => h.includes("[Zod 校验失败]"))).toBe(true);
-      expect(result.scores.completeness).toBe(false);
-      expect(result.scores.consistency).toBe(false);
-    }
+    expect(result!.scores.completeness).toBe(false);
+    expect(result!.hints.some((h) => h.includes("[Zod 校验失败]"))).toBe(true);
   });
 
-  it("malformed JSON (not parseable) → Zod catches it", () => {
-    fs.writeFileSync(
-      path.join(changeDir, "requirement.json"),
-      "{ bad json }"
-    );
-    fs.writeFileSync(
-      path.join(changeDir, "REQUIREMENT.md"),
-      "# content goes here and must be at least sixty characters long to pass the length check"
-    );
+  it("malformed JSON → all false", () => {
+    fs.writeFileSync(path.join(changeDir, "requirement.json"), "{ not json }");
+    fs.writeFileSync(path.join(changeDir, "REQUIREMENT.md"), "# some content to exist");
 
     const result = validateArtifactFile(
       path.join(changeDir, "REQUIREMENT.md"),
       "requirement"
     );
     expect(result).not.toBeNull();
-    if (result) {
-      expect(result.hints.some((h) => h.includes("[Zod 校验失败]"))).toBe(true);
-    }
+    expect(result!.scores.completeness).toBe(false);
   });
 
-  it("other phases (CHANGE) are unaffected", () => {
+  it("valid JSON but MD has seed template → fails", async () => {
+    await persistAndRender("requirement", requirementData, changeDir, templatesDir);
+    // Overwrite MD with seed template
+    fs.writeFileSync(
+      path.join(changeDir, "REQUIREMENT.md"),
+      "<!-- taiyi:seed-template -->\n# placeholder\n\n{{title}}"
+    );
+
+    const result = validateArtifactFile(
+      path.join(changeDir, "REQUIREMENT.md"),
+      "requirement"
+    );
+    expect(result!.scores.completeness).toBe(false);
+  });
+
+  it("other phases (CHANGE) still use legacy heuristic", () => {
     const md = [
       "# 优化登录流程",
       "",

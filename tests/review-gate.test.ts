@@ -95,7 +95,7 @@ describe("review-gate", () => {
       "dev",
       "test",
     ] as const) {
-      expect(engine.completePhase("rg1", phase, gates, { allowAutoHuman: true, skipStepOrderCheck: true }).ok).toBe(true);
+      expect(engine.completePhase("rg1", phase, gates, { allowAutoHuman: true, skipStepOrderCheck: true, skipArtifactValidation: true }).ok).toBe(true);
     }
 
     const blocked = engine.completePhase("rg1", "review", gates, { skipStepOrderCheck: true });

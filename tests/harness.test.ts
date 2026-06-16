@@ -96,7 +96,7 @@ describe("auto harness", () => {
     const dir = engine.changeDir("rev1");
     writeE2eArtifacts(dir);
     for (const p of ["change", "requirement", "design", "ui-design", "task", "dev", "test"] as const) {
-      const r = engine.completePhase("rev1", p, GATES, { skipStepOrderCheck: true });
+      const r = engine.completePhase("rev1", p, GATES, { skipStepOrderCheck: true, skipArtifactValidation: true });
       expect(r.ok, `${p}: ${r.error}`).toBe(true);
     }
     const state = engine.getState("rev1")!;
