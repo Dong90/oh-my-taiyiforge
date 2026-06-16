@@ -24,6 +24,14 @@ updates:
         ignore:
           - dependency-name: "@types/node"
             update-types: ["version-update:semver-major"]
+          - dependency-name: "typescript"
+            update-types: ["version-update:semver-major"]
+          - dependency-name: "vitest"
+            update-types: ["version-update:semver-major"]
+          - dependency-name: "@vitest/coverage-v8"
+            update-types: ["version-update:semver-major"]
+          - dependency-name: "@vitest/*"
+            update-types: ["version-update:semver-major"]
       # production 依赖也归组（这个项目只有 2 个）
       prod-dependencies:
         dependency-type: production
