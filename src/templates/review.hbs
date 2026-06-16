@@ -1,0 +1,16 @@
+# {{title}}
+
+## Verdict
+**{{verdict}}**
+
+{{#if findings}}
+## Findings
+{{#each findings}}
+- **{{id}}** `[{{severity}}]` {{#if resolved}}✅{{else}}❌{{/if}}: {{description}}
+{{/each}}
+{{/if}}
+
+{{#if summary}}
+## Summary
+{{summary}}
+{{/if}}

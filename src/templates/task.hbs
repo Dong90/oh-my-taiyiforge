@@ -1,0 +1,11 @@
+# {{title}}
+
+## Slices
+{{#each slices}}
+### Slice {{id}}: {{label}}
+{{#if description}}{{/if}}
+{{description}}
+{{#if test_command}}
+验证: `{{test_command}}`
+{{/if}}
+{{/each}}
