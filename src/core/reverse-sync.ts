@@ -83,6 +83,92 @@ async function bypassCheckboxToggle(
   return true;
 }
 
+/** 本地旁路同步：仅 hash 检测 + checkbox toggle，无 LLM。供引擎在 complete 前自动调用（同步版本）。 */
+export function autoSyncLocalEdits(
+  stage: string,
+  outputDir: string,
+  templatesDir: string
+): {
+  synced: boolean;
+  needsLlm: boolean;
+  message: string;
+} {
+  const mdPath = path.join(outputDir, `${stage.toUpperCase()}.md`);
+  const jsonPath = path.join(outputDir, `${stage}.json`);
+
+  if (!fsSync.existsSync(jsonPath) || !fsSync.existsSync(mdPath)) {
+    return { synced: false, needsLlm: false, message: "" };
+  }
+
+  const currentMd = fsSync.readFileSync(mdPath, "utf-8");
+  const currentHash = getHash(currentMd);
+
+  const snapshotDir = path.join(outputDir, ".taiyi", "snapshots");
+  const hashPath = path.join(snapshotDir, `${stage}.hash`);
+  const savedHash = fsSync.existsSync(hashPath) ? fsSync.readFileSync(hashPath, "utf-8") : "";
+
+  if (currentHash === savedHash) {
+    return { synced: false, needsLlm: false, message: "" };
+  }
+
+  // Try local bypass (synchronous)
+  try {
+    const json = JSON.parse(fsSync.readFileSync(jsonPath, "utf-8"));
+    const oldMd = renderStageMd(stage, json, templatesDir);
+    if (oldMd === currentMd) return { synced: false, needsLlm: false, message: "" };
+
+    const re = /^- \[( |x)\] \*\*(AC-\S+)\*\*:(.*)$/gm;
+    const parseBoxes = (md: string) => {
+      const map: Record<string, boolean> = {};
+      let m: RegExpExecArray | null;
+      while ((m = re.exec(md)) !== null) {
+        map[m[2]] = m[1] === "x";
+      }
+      return map;
+    };
+
+    const oldBoxes = parseBoxes(oldMd);
+    const newBoxes = parseBoxes(currentMd);
+    if (Object.keys(newBoxes).length === 0) {
+      return { synced: false, needsLlm: true, message: `⚠️ ${stage}.md 已修改，需 AI Agent 调用 reverse-sync` };
+    }
+
+    const stripBoxes = (md: string) => md.replace(/^- \[( |x)\] \*\*AC-.*$/gm, "");
+    if (stripBoxes(oldMd) !== stripBoxes(currentMd)) {
+      return { synced: false, needsLlm: true, message: `⚠️ ${stage}.md 内容变更超出 checkbox，需 LLM reverse-sync` };
+    }
+
+    const oldKeys = Object.keys(oldBoxes).sort();
+    const newKeys = Object.keys(newBoxes).sort();
+    if (oldKeys.join(",") !== newKeys.join(",")) {
+      return { synced: false, needsLlm: true, message: `⚠️ ${stage}.md AC 条目有增删，需 LLM reverse-sync` };
+    }
+
+    // Apply checkbox updates to JSON
+    const acList = json.acceptance_criteria as Array<{ id: string; is_checked: boolean }>;
+    let changed = false;
+    for (const ac of acList) {
+      const newState = newBoxes[ac.id];
+      if (newState !== undefined && newState !== ac.is_checked) {
+        ac.is_checked = newState;
+        changed = true;
+      }
+    }
+    if (!changed) return { synced: false, needsLlm: false, message: "" };
+
+    // Sync write: re-render MD and update hash
+    const newMd = renderStageMd(stage, json, templatesDir);
+    fsSync.writeFileSync(mdPath, newMd);
+    fsSync.writeFileSync(jsonPath, JSON.stringify(json, null, 2));
+    fsSync.mkdirSync(snapshotDir, { recursive: true });
+    fsSync.writeFileSync(hashPath, getHash(newMd));
+
+    return { synced: true, needsLlm: false, message: "⚡ 本地旁路完成（checkbox toggle）" };
+  } catch {
+    return { synced: false, needsLlm: true, message: `⚠️ ${stage}.md 同步异常，需 AI Agent 调用 reverse-sync` };
+  }
+}
+
 export async function checkAndSyncHumanEdits<T extends Record<string, unknown>>(
   stage: string,
   schema: ZodSchema<T>,
