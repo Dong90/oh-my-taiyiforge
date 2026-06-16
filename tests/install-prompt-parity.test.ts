@@ -36,6 +36,7 @@ describe("install prompt parity (四端 ↔ prompts/taiyi-*.md)", () => {
   };
 
   beforeEach(() => {
+    process.env.TAIYI_FORGE_ALL_PROMPTS = "1";
     tmp = fs.mkdtempSync(path.join(os.tmpdir(), "taiyi-prompt-parity-"));
     dirs.cursor = path.join(tmp, "cursor");
     dirs.claude = path.join(tmp, "claude");
@@ -48,6 +49,7 @@ describe("install prompt parity (四端 ↔ prompts/taiyi-*.md)", () => {
   });
 
   afterEach(() => {
+    delete process.env.TAIYI_FORGE_ALL_PROMPTS;
     fs.rmSync(tmp, { recursive: true, force: true });
   });
 
@@ -91,6 +93,7 @@ describe("install prompt parity (四端 ↔ prompts/taiyi-*.md)", () => {
   });
 
   it("syncTaiyiChatCommands 仅同步 taiyi-*.md（不含 ty.md / taiyi.md）", () => {
+    process.env.TAIYI_FORGE_ALL_PROMPTS = "1";
     const src = path.join(tmp, "prompts-only-taiyi");
     fs.mkdirSync(src, { recursive: true });
     fs.writeFileSync(path.join(src, "taiyi-forge.md"), "# forge\n");
@@ -99,5 +102,6 @@ describe("install prompt parity (四端 ↔ prompts/taiyi-*.md)", () => {
     const dest = path.join(tmp, "filtered");
     syncTaiyiChatCommands(src, dest, "codex");
     expect(fs.readdirSync(dest).sort()).toEqual(["taiyi-forge.md"]);
+    delete process.env.TAIYI_FORGE_ALL_PROMPTS;
   });
 });

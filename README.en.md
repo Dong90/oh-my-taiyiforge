@@ -8,11 +8,9 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Node](https://img.shields.io/badge/node-%3E%3D20-brightgreen)](package.json)
-<!-- NPM-PUBLISH-TOGGLE: open the two lines below and remove this one after v0.24
 [![npm version](https://img.shields.io/npm/v/oh-my-taiyiforge.svg)](https://www.npmjs.com/package/oh-my-taiyiforge)
 [![npm downloads](https://img.shields.io/npm/dm/oh-my-taiyiforge.svg)](https://www.npmjs.com/package/oh-my-taiyiforge)
--->
-[![Version](https://img.shields.io/badge/version-0.23.2-orange)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-0.24.0-orange)](CHANGELOG.md)
 [![v28 canonical](https://img.shields.io/badge/v28-28%20slashes%20%C2%B7%206%20umbrellas-blue)](docs/taiyi/canonical-commands.md)
 [![CI](https://img.shields.io/github/actions/workflow/status/Dong90/oh-my-taiyiforge/ci.yml?branch=main&label=CI)](https://github.com/Dong90/oh-my-taiyiforge/actions/workflows/ci.yml)
 [![Platforms](https://img.shields.io/badge/platforms-OpenCode%20%7C%20Claude%20%7C%20Codex%20%7C%20Cursor-8a2be2)](docs/QUICKSTART.md)
@@ -60,7 +58,7 @@ TaiyiForge's answer to every one of these is in [§2 The Solution](#2--the-solut
 A **single nine-stage artifact contract** + **28 v28 slashes + 6 umbrellas** + **one
 `/taiyi:*` vocabulary** that works the same on all four AI harnesses.
 
-> **v28 = recommended naming + top-bar convergence; Cursor/Claude still install full prompts. Phase 2 (IDE menu trim) not done — see [canonical-commands.md](docs/taiyi/canonical-commands.md).**
+> **v28 = recommended naming + top-bar convergence. IDE menus trimmed to 28 entries (v0.24). Set `TAIYI_FORGE_ALL_PROMPTS=1` to restore the full set. See [canonical-commands.md](docs/taiyi/canonical-commands.md).**
 
 TaiyiForge does not invent standards — it **orchestrates Harness · OpenSpec · GStack ·
 Superpowers · OMO · Spec-Kit into one state machine**. Use what you have installed;
@@ -192,33 +190,26 @@ never dump full artifacts into chat.
 
 ## 4 · Quick Start
 
-> **Status note**: v0.23.0 **is not yet published to npm**. The only install path right
-> now is **from source**. CI is green, npm will follow; badges will switch automatically.
+> **Zero-build install**: v0.24.0+ supports `npx taiyi-forge-install --all` one-liner to all four harnesses without cloning the repo. Source install still available.
 
-### Option A · Source install (recommended, ready now)
+### Option A · One-liner install (recommended, v0.24+)
+
+```bash
+npx taiyi-forge-install --all          # One-shot to all four harnesses + optional deps
+npx taiyi-forge-install --cursor       # Cursor only
+npx taiyi-forge-install --claude --opencode
+
+# Install all prompts (default is v28 28 top-bar entries only):
+TAIYI_FORGE_ALL_PROMPTS=1 npx taiyi-forge-install --all
+```
+
+### Option B · Source install
 
 ```bash
 git clone https://github.com/Dong90/oh-my-taiyiforge.git
 cd oh-my-taiyiforge
 npm install && npm run build && npm test
-```
-
-### Option B · Install into your project (also source)
-
-```bash
-git clone https://github.com/Dong90/oh-my-taiyiforge.git
-cd oh-my-taiyiforge
-npm install && npm run build
-
-# Install to all four harnesses + optional triangles
-# (OpenSpec / gstack / Superpowers / web-quality-skills)
 node scripts/taiyi-forge.sh install --all
-
-# Or one harness at a time:
-node scripts/taiyi-forge.sh install --cursor
-node scripts/taiyi-forge.sh install --claude --cursor
-# Skip optional deps:
-node scripts/taiyi-forge.sh install --all --skip-deps
 ```
 
 ### Option C · Run the example projects (zero-install quick feel)
@@ -238,9 +229,7 @@ npm run walkthrough-e2e    # Nine-stage shell E2E + iron-triangle
 | [examples/browser-e2e-smoke](examples/browser-e2e-smoke/) | CI templates |
 | [examples/verification-suite](examples/verification-suite/) | Minimal integration demo |
 
-> Want `npm install oh-my-taiyiforge`? Wait for the
-> [Releases](https://github.com/Dong90/oh-my-taiyiforge/releases) announcement — it'll
-> light up here first.
+> Want `npm install oh-my-taiyiforge`? v0.24 is published to npm — install directly.
 
 ### Option D · Your first change (5 minutes)
 
@@ -331,12 +320,12 @@ a 4 × ubuntu matrix.
 | Version | Status | Key milestones |
 |---------|--------|----------------|
 | v0.23.0 | ✅ Released | **canonical v28**: 28 顶栏 slashes + 6 umbrellas (`token`/`test`/`review`/`diagram`/`mode`/`workflow`) + `skill-fusion-principles.md` + `validateV28CatalogSync` gate |
-| v0.24.x | 🚧 In progress | First npm release · `oh-my-taiyiforge` zero-build install · README v28 收敛 (this rewrite) · umbrella Phase 2 (real IDE menu trim) deferred |
+| v0.24.0 | 🚧 Shipping | First npm release · `npx taiyi-forge-install` zero-build install · README v28 convergence rewrite · IDE menu trimmed to 28 entries (umbrella Phase 2) |
 | v1.0.0 | ⏳ Planned | Lock 9-stage API · 4-platform parity · external case-study collection |
 
 **Ready today**: full nine-stage pipeline · four-harness shared Skills · forced TDD ·
-token compression · platform-smoke CI
-**Not yet**: one-line npm install (v0.24 target) · production-grade SLA · full i18n
+token compression · platform-smoke CI · zero-build one-liner install (v0.24)
+**Not yet**: production-grade SLA · full i18n
 
 ### 5.4 · Community & Contributing
 
