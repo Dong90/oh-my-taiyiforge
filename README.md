@@ -316,7 +316,7 @@ CI: [`.github/workflows/ci.yml`](.github/workflows/ci.yml)——平台冒烟跑 
 | 版本 | 状态 | 关键里程碑 |
 |------|------|----------|
 | v0.23.0 | ✅ 已发布 | **canonical v28**: 28 顶栏 slashes + 6 umbrellas(`token`/`test`/`review`/`diagram`/`mode`/`workflow`) + `skill-fusion-principles.md` + `validateV28CatalogSync` gate |
-| v0.24.0 | 🚧 发布中 | 首次 npm 发布 · `npx taiyi-forge-install` 零构建安装 · README v28 收敛重写 · IDE 菜单裁剪为 28 条（umbrella Phase 2） |
+| v0.24.0 | ✅ 已发布 | 首次 npm 发布 · `npx taiyi-forge-install` 零构建安装 · README v28 收敛重写 · IDE 菜单裁剪为 28 条（umbrella Phase 2） |
 | v1.0.0 | ⏳ 计划 | 锁定 9 阶段 API · 四端 parity · 外部案例收集 |
 
 **已就绪**: 完整九阶段流水线 · 四端共享 Skill · 强制 TDD · token 压缩 · 平台冒烟 CI · 零构建一行安装(v0.24)

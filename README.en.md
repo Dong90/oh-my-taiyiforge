@@ -320,7 +320,7 @@ a 4 × ubuntu matrix.
 | Version | Status | Key milestones |
 |---------|--------|----------------|
 | v0.23.0 | ✅ Released | **canonical v28**: 28 顶栏 slashes + 6 umbrellas (`token`/`test`/`review`/`diagram`/`mode`/`workflow`) + `skill-fusion-principles.md` + `validateV28CatalogSync` gate |
-| v0.24.0 | 🚧 Shipping | First npm release · `npx taiyi-forge-install` zero-build install · README v28 convergence rewrite · IDE menu trimmed to 28 entries (umbrella Phase 2) |
+| v0.24.0 | ✅ Released | First npm release · `npx taiyi-forge-install` zero-build install · README v28 convergence rewrite · IDE menu trimmed to 28 entries (umbrella Phase 2) |
 | v1.0.0 | ⏳ Planned | Lock 9-stage API · 4-platform parity · external case-study collection |
 
 **Ready today**: full nine-stage pipeline · four-harness shared Skills · forced TDD ·
