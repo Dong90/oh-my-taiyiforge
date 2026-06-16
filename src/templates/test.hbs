@@ -1,0 +1,15 @@
+# {{title}}
+
+## Test Plan
+{{#each test_plan}}
+- **{{id}}**: {{description}} `[{{status}}]`
+{{/each}}
+
+{{#if summary}}
+## Summary
+{{summary}}
+{{/if}}
+{{#if coverage}}
+## Coverage
+{{coverage}}
+{{/if}}

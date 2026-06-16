@@ -1,0 +1,21 @@
+# {{title}}
+
+## Motivation
+{{motivation}}
+
+## Scope
+### In
+{{#each scope.includes}}
+- {{this}}
+{{/each}}
+{{#if scope.excludes}}
+### Out
+{{#each scope.excludes}}
+- {{this}}
+{{/each}}
+{{/if}}
+
+## Success Criteria
+{{#each success_criteria}}
+- [{{#if is_checked}}x{{else}} {{/if}}] **{{id}}**: {{description}}
+{{/each}}

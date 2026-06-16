@@ -118,6 +118,7 @@ describe("artifact-validator with Zod (mandatory)", () => {
     ].join("\n");
 
     fs.writeFileSync(path.join(changeDir, "CHANGE.md"), md);
+  fs.writeFileSync(path.join(changeDir, "change.json"), JSON.stringify({"title": "Demo", "motivation": "test reason", "scope": {"includes": ["x"]}, "success_criteria": [{"id": "SC-01", "description": "pass"}]}));
     const result = validateArtifactFile(
       path.join(changeDir, "CHANGE.md"),
       "change"
