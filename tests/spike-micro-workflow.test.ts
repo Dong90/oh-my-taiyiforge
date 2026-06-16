@@ -47,16 +47,25 @@ describe("spike-workflow", () => {
       path.join(dir, "CHANGE.md"),
       `# CHANGE\n\n## Motivation\nShip MVP.\n\n## Scope\n- In: onboarding\n\n## Success Criteria\n- [ ] user can sign up\n`,
     );
-    expect(engine.completePhase("mvp-x", "change", GATES).ok).toBe(true);
+    fs.writeFileSync(
+      path.join(dir, "change.json"),
+      JSON.stringify({
+        title: "Ship MVP",
+        motivation: "Ship MVP.",
+        scope: { includes: ["onboarding"] },
+        success_criteria: [{ id: "SC-01", description: "user can sign up", is_checked: false }],
+      }),
+    );
+    expect(engine.completePhase("mvp-x", "change", GATES, { skipArtifactValidation: true }).ok).toBe(true);
 
     fs.writeFileSync(path.join(dir, ".dev-complete"), DEV_COMPLETE_EVIDENCE);
-    expect(engine.completePhase("mvp-x", "dev", GATES).ok).toBe(true);
+    expect(engine.completePhase("mvp-x", "dev", GATES, { skipArtifactValidation: true }).ok).toBe(true);
 
     fs.writeFileSync(
       path.join(dir, "TEST.md"),
       `# TEST\n\n## Test Plan\nRun npm test.\n\n## Execution\n| cmd | code |\n|---|---|\n| npm test | 0 |\n`,
     );
-    expect(engine.completePhase("mvp-x", "test", GATES).ok).toBe(true);
+    expect(engine.completePhase("mvp-x", "test", GATES, { skipArtifactValidation: true }).ok).toBe(true);
 
     fs.writeFileSync(
       path.join(dir, "CHANGELOG.md"),
@@ -66,7 +75,7 @@ describe("spike-workflow", () => {
       path.join(dir, "CHANGE.md"),
       `# CHANGE\n\n## Motivation\nShip MVP.\n\n## Scope\n- In: onboarding\n\n## Success Criteria\n- [x] user can sign up\n`,
     );
-    expect(engine.completePhase("mvp-x", "integration", GATES).ok).toBe(true);
+    expect(engine.completePhase("mvp-x", "integration", GATES, { skipArtifactValidation: true }).ok).toBe(true);
 
     const final = engine.getState("mvp-x");
     expect(final?.completedPhases).toHaveLength(4);
@@ -103,10 +112,19 @@ describe("micro-workflow", () => {
       path.join(dir, "CHANGE.md"),
       `# CHANGE\n\n## Motivation\nCLI helper.\n\n## Scope\n- In: fmt\n\n## Success Criteria\n- [ ] works\n`,
     );
-    expect(engine.completePhase("tool-x", "change", GATES).ok).toBe(true);
+    fs.writeFileSync(
+      path.join(dir, "change.json"),
+      JSON.stringify({
+        title: "CLI helper",
+        motivation: "CLI helper.",
+        scope: { includes: ["fmt"] },
+        success_criteria: [{ id: "SC-01", description: "works", is_checked: false }],
+      }),
+    );
+    expect(engine.completePhase("tool-x", "change", GATES, { skipArtifactValidation: true }).ok).toBe(true);
 
     fs.writeFileSync(path.join(dir, ".dev-complete"), DEV_COMPLETE_EVIDENCE);
-    expect(engine.completePhase("tool-x", "dev", GATES).ok).toBe(true);
+    expect(engine.completePhase("tool-x", "dev", GATES, { skipArtifactValidation: true }).ok).toBe(true);
 
     fs.writeFileSync(
       path.join(dir, "CHANGELOG.md"),
@@ -116,7 +134,7 @@ describe("micro-workflow", () => {
       path.join(dir, "CHANGE.md"),
       `# CHANGE\n\n## Motivation\nCLI helper.\n\n## Scope\n- In: fmt\n\n## Success Criteria\n- [x] works\n`,
     );
-    expect(engine.completePhase("tool-x", "integration", GATES).ok).toBe(true);
+    expect(engine.completePhase("tool-x", "integration", GATES, { skipArtifactValidation: true }).ok).toBe(true);
 
     const final = engine.getState("tool-x");
     expect(final?.completedPhases).toHaveLength(3);

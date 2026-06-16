@@ -58,6 +58,15 @@ describe("review fixes F11-F26", () => {
         path.join(changeDir, "CHANGE.md"),
         `# CHANGE: Auto H\n\n## Motivation\nNeed auto human gate in CI.\n\n## Scope\n- In: test\n\n## Success Criteria\n- [ ] pass\n`,
       );
+      fs.writeFileSync(
+        path.join(changeDir, "change.json"),
+        JSON.stringify({
+          title: "Auto H",
+          motivation: "Need auto human gate in CI.",
+          scope: { includes: ["test"] },
+          success_criteria: [{ id: "SC-01", description: "pass", is_checked: false }],
+        }),
+      );
       const r = taiyiComplete(workspace, "auto-h", "change");
       expect(r.ok).toBe(true);
     } finally {
