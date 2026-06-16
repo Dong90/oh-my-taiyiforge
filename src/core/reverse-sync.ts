@@ -4,6 +4,7 @@ import path from "node:path";
 import type { ZodSchema } from "zod";
 import { getHash, persistAndRender } from "./state-manager.js";
 import type { LlmClient } from "./executor-types.js";
+import { applyJsonPatches, type JsonPatchOp } from "./json-patch.js";
 import Handlebars from "handlebars";
 
 /** 渲染模板但不落盘，返回 Markdown 字符串 */
@@ -122,7 +123,9 @@ ${oldJson}
 人类修改后的最新 Markdown：
 ${currentMd}
 
-请分析 Markdown 中的变更，并调用 commit_${stage} 输出合并后的完整 JSON，保持原结构完整。`;
+请分析 Markdown 中的变更。如果仅有少量字段变化，用 JSON Patch 格式输出；如果是大量结构性变化，输出完整 JSON。
+JSON Patch 格式示例：[{"op": "replace", "path": "/title", "value": "新标题"}]
+完整 JSON 格式：直接输出完整的 ${stage} 对象。`;
 
   const response = await llmClient.createChatCompletion(
     [{ role: "user", content: syncPrompt }],
@@ -138,8 +141,22 @@ ${currentMd}
     }
   );
 
-  const newJsonStr = response.toolCalls[0].arguments;
-  const validData = schema.parse(JSON.parse(newJsonStr));
+  const raw = JSON.parse(response.toolCalls[0].arguments);
+
+  let validData: T;
+  if (Array.isArray(raw) && raw.length > 0 && raw[0].op) {
+    // ── JSON Patch mode ──
+    const existing = schema.parse(JSON.parse(oldJson));
+    const patched = applyJsonPatches(
+      existing as Record<string, unknown>,
+      raw as JsonPatchOp[]
+    );
+    validData = schema.parse(patched);
+    console.log(`🔧 JSON Patch 应用完成（${raw.length} 条操作）。`);
+  } else {
+    // ── Full JSON mode ──
+    validData = schema.parse(raw);
+  }
 
   await persistAndRender(stage, validData as Record<string, unknown>, outputDir, templatesDir);
 
