@@ -304,6 +304,9 @@ const ZOD_SCHEMAS: Partial<Record<PhaseId, ZodSchema>> = {
   design: DesignSchema,
 };
 
+/** Phases that have Zod schemas and companion JSON files */
+export const ZOD_PHASES: PhaseId[] = Object.keys(ZOD_SCHEMAS) as PhaseId[];
+
 export function validateArtifactFile(
   artifactPath: string,
   phaseId: PhaseId,

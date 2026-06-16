@@ -22,7 +22,9 @@ import { seedChangeTemplates, seedPhaseTemplate } from "./template-seed.js";
 import {
   artifactPathForPhase,
   validateArtifactFile,
+  ZOD_PHASES,
 } from "./artifact-validator.js";
+import { autoSyncLocalEdits } from "./reverse-sync.js";
 import {
   enforceAutoHarnessBeforeComplete,
   runPostCompleteShellHooks,
@@ -358,6 +360,21 @@ export class WorkflowEngine {
 
     let qualityScores = { ...gates.quality };
     let qualityHints: string[] | undefined;
+
+    // ── 反向同步：本地上传人类 MD 修改 ──
+    if (!options?.skipArtifactValidation && ZOD_PHASES.includes(phaseId) && this.templatesDir) {
+      const hbsTemplatesDir = path.join(path.dirname(this.templatesDir), "src", "templates");
+      if (fs.existsSync(hbsTemplatesDir)) {
+        const syncResult = autoSyncLocalEdits(
+          phaseId,
+          this.changeDir(slug),
+          hbsTemplatesDir
+        );
+        if (syncResult.needsLlm) {
+          qualityHints = (qualityHints ?? []).concat(syncResult.message);
+        }
+      }
+    }
 
     if (!options?.skipArtifactValidation) {
       const artifactFile = artifactPathForPhase(this.changeDir(slug), phaseId);
