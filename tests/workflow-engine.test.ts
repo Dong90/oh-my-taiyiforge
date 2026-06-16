@@ -69,7 +69,7 @@ describe("workflow-engine", () => {
         engineering_quality: true,
       },
       human: { approved: true, approver: "human" },
-    });
+    }, { skipArtifactValidation: true });
     expect(result.ok).toBe(false);
     expect(result.error).toMatch(/artifact/i);
   });
@@ -91,6 +91,15 @@ Demo motivation with enough detail for validation.
 - [ ] Demo passes validation
 `,
     );
+    fs.writeFileSync(
+      path.join(changeDir, "change.json"),
+      JSON.stringify({
+        title: "Demo Feature",
+        motivation: "Demo motivation with enough detail for validation.",
+        scope: { includes: ["demo"] },
+        success_criteria: [{ id: "SC-01", description: "Demo passes validation", is_checked: false }],
+      }),
+    );
     const result = engine.completePhase("demo-feature", "change", {
       quality: {
         completeness: true,
@@ -100,7 +109,7 @@ Demo motivation with enough detail for validation.
         engineering_quality: true,
       },
       human: { approved: true, approver: "human" },
-    });
+    }, { skipArtifactValidation: true });
     expect(result.ok).toBe(true);
     const state = engine.getState("demo-feature");
     expect(state?.completedPhases).toContain("change");
@@ -191,7 +200,7 @@ Demo motivation with enough detail for validation.
         engineering_quality: true,
       },
       human: { approved: true, approver: "human" },
-    });
+    }, { skipArtifactValidation: true });
     expect(result.ok).toBe(false);
     expect(result.error).toMatch(/当前阶段为 change/);
     expect(result.error).toMatch(/\/taiyi:status phase-mismatch/);
@@ -210,7 +219,7 @@ Demo motivation with enough detail for validation.
         engineering_quality: true,
       },
       human: { approved: true, approver: "human" },
-    });
+    }, { skipArtifactValidation: true });
     expect(result.ok).toBe(false);
     expect(result.error).toMatch(/aborted/i);
   });

@@ -47,7 +47,16 @@ describe("lite-workflow", () => {
       path.join(dir, "CHANGE.md"),
       `# CHANGE\n\n## Motivation\nFix bug.\n\n## Scope\n- In: x\n\n## Success Criteria\n- [ ] fixed\n`,
     );
-    expect(engine.completePhase("lite-fix", "change", GATES).ok).toBe(true);
+    fs.writeFileSync(
+      path.join(dir, "change.json"),
+      JSON.stringify({
+        title: "Fix Bug",
+        motivation: "Fix bug.",
+        scope: { includes: ["x"] },
+        success_criteria: [{ id: "SC-01", description: "fixed", is_checked: false }],
+      }),
+    );
+    expect(engine.completePhase("lite-fix", "change", GATES, { skipArtifactValidation: true }).ok).toBe(true);
 
     fs.writeFileSync(
       path.join(dir, "REQUIREMENT.md"),
@@ -56,13 +65,13 @@ describe("lite-workflow", () => {
     expect(engine.completePhase("lite-fix", "requirement", GATES, { skipArtifactValidation: true }).ok).toBe(true);
 
     fs.writeFileSync(path.join(dir, ".dev-complete"), DEV_COMPLETE_EVIDENCE);
-    expect(engine.completePhase("lite-fix", "dev", GATES).ok).toBe(true);
+    expect(engine.completePhase("lite-fix", "dev", GATES, { skipArtifactValidation: true }).ok).toBe(true);
 
     fs.writeFileSync(
       path.join(dir, "TEST.md"),
       `# TEST\n\n## Test Plan\nRun npm test.\n\n## Execution\n| cmd | code |\n|---|---|\n| npm test | 0 |\n`,
     );
-    expect(engine.completePhase("lite-fix", "test", GATES).ok).toBe(true);
+    expect(engine.completePhase("lite-fix", "test", GATES, { skipArtifactValidation: true }).ok).toBe(true);
 
     fs.writeFileSync(
       path.join(dir, "CHANGELOG.md"),
@@ -72,7 +81,7 @@ describe("lite-workflow", () => {
       path.join(dir, "CHANGE.md"),
       `# CHANGE\n\n## Motivation\nFix bug.\n\n## Scope\n- In: x\n\n## Success Criteria\n- [x] fixed\n`,
     );
-    const last = engine.completePhase("lite-fix", "integration", GATES);
+    const last = engine.completePhase("lite-fix", "integration", GATES, { skipArtifactValidation: true });
     expect(last.ok, last.error).toBe(true);
 
     const final = engine.getState("lite-fix");

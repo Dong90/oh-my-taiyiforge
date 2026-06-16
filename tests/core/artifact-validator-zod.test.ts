@@ -34,7 +34,7 @@ describe("artifact-validator with Zod (mandatory)", () => {
     fs.rmSync(tmpDir, { recursive: true, force: true });
   });
 
-  it("no requirement.json → all scores false, hints ask for JSON", () => {
+  it("no requirement.json -> all scores false, hints ask for JSON", () => {
     fs.writeFileSync(path.join(changeDir, "REQUIREMENT.md"), "# any content here");
     const result = validateArtifactFile(
       path.join(changeDir, "REQUIREMENT.md"),
@@ -45,7 +45,7 @@ describe("artifact-validator with Zod (mandatory)", () => {
     expect(result!.hints.some((h) => h.includes("缺少 requirement.json"))).toBe(true);
   });
 
-  it("valid JSON + valid MD → all scores true, no errors", async () => {
+  it("valid JSON + valid MD -> all scores true, no errors", async () => {
     await persistAndRender("requirement", requirementData, changeDir, templatesDir);
 
     const result = validateArtifactFile(
@@ -58,7 +58,7 @@ describe("artifact-validator with Zod (mandatory)", () => {
     expect(result!.hints).toHaveLength(0);
   });
 
-  it("corrupted JSON (empty acceptance_criteria) → all false", () => {
+  it("corrupted JSON (empty acceptance_criteria) -> all false", () => {
     fs.writeFileSync(
       path.join(changeDir, "requirement.json"),
       JSON.stringify({ title: "x", features: [], acceptance_criteria: [] })
@@ -74,7 +74,7 @@ describe("artifact-validator with Zod (mandatory)", () => {
     expect(result!.hints.some((h) => h.includes("[Zod 校验失败]"))).toBe(true);
   });
 
-  it("malformed JSON → all false", () => {
+  it("malformed JSON -> all false", () => {
     fs.writeFileSync(path.join(changeDir, "requirement.json"), "{ not json }");
     fs.writeFileSync(path.join(changeDir, "REQUIREMENT.md"), "# some content to exist");
 
@@ -86,9 +86,8 @@ describe("artifact-validator with Zod (mandatory)", () => {
     expect(result!.scores.completeness).toBe(false);
   });
 
-  it("valid JSON but MD has seed template → fails", async () => {
+  it("valid JSON but MD has seed template -> fails", async () => {
     await persistAndRender("requirement", requirementData, changeDir, templatesDir);
-    // Overwrite MD with seed template
     fs.writeFileSync(
       path.join(changeDir, "REQUIREMENT.md"),
       "<!-- taiyi:seed-template -->\n# placeholder\n\n{{title}}"
@@ -101,29 +100,53 @@ describe("artifact-validator with Zod (mandatory)", () => {
     expect(result!.scores.completeness).toBe(false);
   });
 
-  it("other phases (CHANGE) still use legacy heuristic", () => {
-    const md = [
-      "# 优化登录流程",
-      "",
-      "## Motivation",
-      "用户反馈登录流程太慢，需要优化响应时间。",
-      "",
-      "## Scope",
-      "- 优化登录 API",
-      "- 添加加载状态提示",
-      "",
-      "## Success Criteria",
-      "- [ ] 登录响应时间 < 500ms",
-      "- [ ] 加载状态正确显示",
-    ].join("\n");
+  it("Zod CHANGE passes with valid JSON + MD", () => {
+    fs.writeFileSync(path.join(changeDir, "change.json"), JSON.stringify({
+      title: "优化登录流程",
+      motivation: "用户反馈登录流程太慢，需要优化响应时间。",
+      scope: { includes: ["优化登录 API", "添加加载状态提示"] },
+      success_criteria: [
+        { id: "SC-01", description: "登录响应时间 < 500ms" },
+        { id: "SC-02", description: "加载状态正确显示" },
+      ],
+    }));
+    fs.writeFileSync(path.join(changeDir, "CHANGE.md"), "content for 60 chars minimum requirement here more extra text for fill to pass");
 
-    fs.writeFileSync(path.join(changeDir, "CHANGE.md"), md);
-  fs.writeFileSync(path.join(changeDir, "change.json"), JSON.stringify({"title": "Demo", "motivation": "test reason", "scope": {"includes": ["x"]}, "success_criteria": [{"id": "SC-01", "description": "pass"}]}));
     const result = validateArtifactFile(
       path.join(changeDir, "CHANGE.md"),
       "change"
     );
     expect(result).not.toBeNull();
     expect(result!.scores.completeness).toBe(true);
+  });
+
+  it("Zod CHANGE fails without change.json", () => {
+    fs.writeFileSync(path.join(changeDir, "CHANGE.md"), "content for 60 chars minimum requirement here more extra text for fill to pass");
+
+    const result = validateArtifactFile(
+      path.join(changeDir, "CHANGE.md"),
+      "change"
+    );
+    expect(result).not.toBeNull();
+    expect(result!.scores.completeness).toBe(false);
+    expect(result!.hints.some((h) => /缺少 change\.json/.test(h))).toBe(true);
+  });
+
+  it("Zod CHANGE fails with empty success_criteria", () => {
+    fs.writeFileSync(path.join(changeDir, "change.json"), JSON.stringify({
+      title: "x",
+      motivation: "test",
+      scope: { includes: ["x"] },
+      success_criteria: [],
+    }));
+    fs.writeFileSync(path.join(changeDir, "CHANGE.md"), "content for 60 chars minimum requirement here more extra text for fill to pass");
+
+    const result = validateArtifactFile(
+      path.join(changeDir, "CHANGE.md"),
+      "change"
+    );
+    expect(result).not.toBeNull();
+    expect(result!.scores.completeness).toBe(false);
+    expect(result!.hints.some((h) => /Zod 校验失败/.test(h))).toBe(true);
   });
 });

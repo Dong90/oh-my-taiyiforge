@@ -56,6 +56,10 @@ Real motivation with enough text for validation checks.
 - [ ] Done when tests pass
 `,
     );
+    fs.writeFileSync(
+      path.join(changeDir, "change.json"),
+      JSON.stringify({ title: "X", motivation: "Real motivation with enough text for validation checks.", scope: { includes: ["a"] }, success_criteria: [{ id: "SC-01", description: "Done when tests pass" }] }),
+    );
 
     const state: ChangeState = {
       slug,

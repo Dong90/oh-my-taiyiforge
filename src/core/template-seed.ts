@@ -83,18 +83,19 @@ function seedZodJson(changeDir: string, phaseId: PhaseId): void {
   const jsonPath = path.join(changeDir, `${phaseId}.json`);
   if (fs.existsSync(jsonPath)) return;
 
-  const seedJson: Record<string, unknown> = {};
-  if (phaseId === "requirement") {
-    seedJson.title = "{{title}}";
-    seedJson.features = [];
-    seedJson.acceptance_criteria = [];
-  } else if (phaseId === "design") {
-    seedJson.title = "{{title}}";
-    seedJson.options = [];
-    seedJson.decision = { chosen: "", reason: "" };
-  }
+  const seeds: Record<string, Record<string, unknown>> = {
+    change: { title: "{{title}}", motivation: "", scope: { includes: [] }, success_criteria: [] },
+    requirement: { title: "{{title}}", features: [], acceptance_criteria: [] },
+    design: { title: "{{title}}", options: [], decision: { chosen: "", reason: "" } },
+    "ui-design": { title: "{{title}}", scope: "" },
+    task: { title: "{{title}}", slices: [] },
+    test: { title: "{{title}}", test_plan: [] },
+    review: { title: "{{title}}", verdict: "commented" },
+    integration: { title: "{{title}}", changelog_entries: [] },
+  };
 
-  fs.writeFileSync(jsonPath, JSON.stringify(seedJson, null, 2));
+  const seedJson = seeds[phaseId];
+  if (seedJson) fs.writeFileSync(jsonPath, JSON.stringify(seedJson, null, 2));
 }
 
 /** complete 过关后为下一阶段铺模板（若文件尚不存在）。 */
