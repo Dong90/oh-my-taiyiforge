@@ -1,0 +1,12 @@
+# {{title}}
+
+## 方案对比
+| 方案 | 名称 | 优点 | 缺点 |
+|------|------|------|------|
+{{#each options}}
+| {{id}} | {{name}} | {{#each pros}}{{this}}<br>{{/each}} | {{#each cons}}{{this}}<br>{{/each}} |
+{{/each}}
+
+## 决策
+- **Chosen**: {{decision.chosen}}
+- **Reason**: {{decision.reason}}

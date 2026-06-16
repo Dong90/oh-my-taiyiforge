@@ -1,0 +1,11 @@
+# {{title}}
+
+## 核心功能
+{{#each features}}
+* {{this}}
+{{/each}}
+
+## 验收标准
+{{#each acceptance_criteria}}
+- [{{#if is_checked}}x{{else}} {{/if}}] **{{id}}**: {{description}}
+{{/each}}
