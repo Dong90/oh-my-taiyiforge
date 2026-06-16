@@ -216,6 +216,7 @@ jobs:
       - name: 隔离 HOME 装包 — 跑完整 postinstall.mjs
         # 用 fake HOME 隔离 runner，避免真改 ~/.cursor、~/.claude 等
         # 不传 TAIYI_FORGE_SKIP_POSTINSTALL，让 postinstall.mjs 真跑
+        # CI="" 解锁 shouldRunPostinstall() 中的 CI 检查（不 unset 会跳过 postinstall）
         # 但传 TAIYI_FORGE_SKIP_DEPS=1，跳过下载 OpenSpec/gstack 等大依赖（CI 装不上 / 太慢）
         run: |
           TGZ="${{ steps.pack.outputs.tgz }}"
@@ -224,6 +225,7 @@ jobs:
           cd "$TMP"
           npm init -y > /dev/null
           set -o pipefail
+          CI="" \
           HOME="$FAKE_HOME" \
           TAIYI_FORGE_SKIP_DEPS=1 \
           TAIYI_FORGE_SKIP_MCP=1 \
