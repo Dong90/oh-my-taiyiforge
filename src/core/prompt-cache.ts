@@ -38,9 +38,11 @@ export function createCachedClient(base: BaseLlmClient): {
     ) => {
       stats.calls++;
 
-      // Detect cache-hit: same system prompt as last call
+      // Detect cache-hit: same system prompt + tools + toolChoice as last call
       const sysMsgs = messages.filter((m) => m.role === "system");
-      const sysHash = sysMsgs.map((m) => m.content).join("\n");
+      const toolsHash = JSON.stringify(tools);
+      const choiceHash = JSON.stringify(toolChoice);
+      const sysHash = sysMsgs.map((m) => m.content).join("\n") + toolsHash + choiceHash;
       const isCacheHit = sysHash === prevSystemHash;
       prevSystemHash = sysHash;
 

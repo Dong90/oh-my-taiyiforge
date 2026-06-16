@@ -20,7 +20,12 @@ export async function persistAndRender(
 
   // 2. Render Markdown view
   const tplPath = path.join(templatesDir, `${stage}.hbs`);
-  const tplContent = await fs.readFile(tplPath, "utf-8");
+  let tplContent: string;
+  try {
+    tplContent = await fs.readFile(tplPath, "utf-8");
+  } catch (e) {
+    throw new Error(`Template not found for stage "${stage}": ${tplPath}`);
+  }
   const markdown = Handlebars.compile(tplContent)(data);
   const mdPath = path.join(outputDir, `${stage.toUpperCase()}.md`);
   await fs.writeFile(mdPath, markdown);

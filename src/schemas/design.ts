@@ -5,7 +5,7 @@ export const DesignSchema = z.object({
   options: z
     .array(
       z.object({
-        id: z.string().describe("方案标识，如 A、B"),
+        id: z.string().min(1).describe("方案标识，如 A、B"),
         name: z.string().min(1).describe("方案名称"),
         pros: z.array(z.string()).describe("优点列表"),
         cons: z.array(z.string()).describe("缺点列表"),

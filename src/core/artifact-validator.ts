@@ -63,14 +63,14 @@ export function validateArtifactFile(
   const allFalse: QualityScores = { completeness: false, consistency: false, verifiability: false, traceability: false, engineering_quality: false };
   const jsonPath = path.join(path.dirname(artifactPath), `${phaseId}.json`);
 
-  if (!fs.existsSync(jsonPath)) {
-    return { scores: allFalse, hints: [`[Zod] 缺少 ${phaseId}.json，用 executor.generateStageData 生成`] };
-  }
-
   try {
     const json = JSON.parse(fs.readFileSync(jsonPath, "utf-8"));
     zodSchema.parse(json);
   } catch (e: unknown) {
+    const code = (e as NodeJS.ErrnoException).code;
+    if (code === 'ENOENT') {
+      return { scores: allFalse, hints: [`[Zod] 缺少 ${phaseId}.json，用 executor.generateStageData 生成`] };
+    }
     const msg = e instanceof Error ? e.message : String(e);
     return { scores: allFalse, hints: [`[Zod 校验失败] ${phaseId}.json: ${msg}`] };
   }

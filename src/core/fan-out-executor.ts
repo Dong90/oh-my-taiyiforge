@@ -23,6 +23,8 @@ export type FanOutPlan = {
 
 // ── Build workers ──
 
+const DEV_ROLES = ["executor", "test-engineer", "debugger"] as const;
+
 /** Build workers from TASK.json structured input. Falls back to role-based if no slices. */
 export function buildWorkers(task: TaskSpec, phase: PhaseId): DispatchWorker[] {
   if (task.slices.length === 0) {
@@ -36,7 +38,7 @@ export function buildWorkers(task: TaskSpec, phase: PhaseId): DispatchWorker[] {
   }
   return task.slices.slice(0, MAX_PARALLEL_AGENTS).map((s, i) => ({
     id: `w${i + 1}`,
-    role: i % 3 === 0 ? "executor" : i % 3 === 1 ? "test-engineer" : "debugger",
+    role: DEV_ROLES[i % DEV_ROLES.length],
     label: s.label,
     task: s.description ?? s.label,
     testCommand: s.test_command,
@@ -68,6 +70,7 @@ export function generateOpenCodeDispatch(plan: FanOutPlan): string {
     "",
   ];
   for (const w of plan.workers) {
+    const safeLabel = w.label.replace(/"/g, '\\"').replace(/`/g, '\\`').slice(0, 40);
     const prompt = [
       `TaiyiForge worker ${w.id} · slug=${plan.slug} · phase=${plan.phase}`,
       `Role: executor — ${w.label}`,
@@ -79,7 +82,7 @@ export function generateOpenCodeDispatch(plan: FanOutPlan): string {
       .filter(Boolean)
       .join("\n");
     lines.push(
-      `Task(subagent_type="general", description="taiyi ${w.id}: ${w.label.slice(0, 40)}", prompt="""`
+      `Task(subagent_type="general", description="taiyi ${w.id}: ${safeLabel}", prompt="""`
     );
     lines.push(prompt);
     lines.push(`""")`);
@@ -126,6 +129,7 @@ export function generateCursorDispatch(plan: FanOutPlan): string {
     "",
   ];
   for (const w of plan.workers) {
+    const safeLabel = w.label.replace(/"/g, '\\"').replace(/`/g, '\\`').slice(0, 40);
     const prompt = [
       `TaiyiForge worker ${w.id} · slug=${plan.slug} · phase=${plan.phase}`,
       `Role: /taiyi:agent executor`,
@@ -135,7 +139,7 @@ export function generateCursorDispatch(plan: FanOutPlan): string {
       "Done: summary + test results",
     ].join("\n");
     lines.push(
-      `Task(subagent_type="generalPurpose", description="taiyi ${w.id}: ${w.label.slice(0, 40)}", prompt="""`
+      `Task(subagent_type="generalPurpose", description="taiyi ${w.id}: ${safeLabel}", prompt="""`
     );
     lines.push(prompt);
     lines.push(`""")`);
