@@ -184,3 +184,67 @@ Step 4: 横向铺开 DESIGN / TASK / ...
 - `state.json` 格式不变
 - `<!-- taiyi:seed-template -->` 标记机制不变（改为模板内嵌）
 - CI 测试全部保留并通过
+
+## 进阶优化路线图
+
+### 1. Prompt Caching（提示词缓存）— 优先级：中
+
+**痛点**：长链路中，Zod Schema 结构、项目架构原则等「大头」内容每次 /taiyi:continue 都重复计算 Token。
+
+**方案**：利用 Anthropic / OpenAI 的 Prompt Caching 技术，将极少变动的背景信息（Schema JSON、项目规则）放在 Prompt 最前面并打 `cache_control` 标签，频繁变动的用户指令放后面。
+
+**效果**：缓存命中后输入 Token 成本降 90%，TTFB 从秒级降到百毫秒。
+
+**依赖**：需先接入真实 LLM API（当前仅 mock 客户端）。
+
+---
+
+### 2. Diff Router（旁路拦截）— 优先级：高 ⬅ 当前实施
+
+**痛点**：reverse-sync 机制对任何 MD 修改都呼叫 LLM，包括「勾选 checkbox」或「改错别字」这类无需 LLM 的微操作。浪费 Token 且有小概率被 LLM 篡改其他字段。
+
+**方案**：在 `checkAndSyncHumanEdits` 之前插入 Diff Router：
+
+```
+MD Hash 变化
+  ↓
+  本地文本 Diff（旧 MD vs 新 MD）
+  ↓
+  ┌─ 仅 checkbox 勾选变更 → 直接修改 JSON（is_checked），0 LLM 调用
+  ├─ 仅单行文本替换（标题/描述）→ 正则提取 + JSON 覆写
+  └─ 大段新增 / 语义变更      → 呼叫 mini LLM 深度合并
+```
+
+**效果**：99% 的 IDE 微操作绕过 LLM，反向同步几乎无延迟。
+
+**实现文件**：`src/core/reverse-sync.ts` 新增 `bypassLlmLite()` 本地处理器，在 `checkAndSyncHumanEdits` 中优先尝试。
+
+---
+
+### 3. JSON Patch（RFC 6902）输出 — 优先级：低
+
+**痛点**：大规模 DESIGN（如 50 个 API 接口）每次要求 LLM 输出全量 JSON，输出 Token 成本高、速度慢。
+
+**方案**：让 LLM 输出 JSON Patch 数组而非全量数据：
+
+```json
+[{"op": "replace", "path": "/features/2/description", "value": "修复了登录延迟"}]
+```
+
+引擎本地 Apply Patch 到 `.taiyi/design.json`。
+
+**效果**：输出 Token 断崖式下跌，响应近乎瞬时。
+
+**依赖**：需 LLM 支持 JSON Patch 输出格式；对小型项目（<10 字段）收益不大。
+
+---
+
+### 4. Fan-out / Fan-in 多 Agent 并发 — 优先级：低
+
+**痛点**：TASK 拆分 10 个独立任务后，单一 Agent 串行写代码。
+
+**方案**：基于强类型 JSON（`tasks: [{id: 1}, {id: 2}]`），引擎在 DEV 阶段并发唤起 N 个 Agent，各自携带独立 Task Context 并行实现，REVIEW 阶段 `Promise.all` 收集合并。
+
+**效果**：dev 时间从几十分钟压缩到几分钟。
+
+**依赖**：需多 Agent 基础设施（spawn_agent / Task 派发），当前引擎无此能力。
