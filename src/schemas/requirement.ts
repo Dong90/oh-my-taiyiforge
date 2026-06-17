@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { EvidenceSchema } from "./change.js";
 
 export const RequirementSchema = z.object({
   title: z.string().describe("用一句话概括核心需求"),
@@ -13,6 +14,7 @@ export const RequirementSchema = z.object({
     )
     .min(1)
     .describe("至少包含一条验收标准"),
+  evidence: EvidenceSchema.optional().describe("真验证记录,acceptance_criteria 标 is_checked=true 时必填"),
 });
 
 export type RequirementSpec = z.infer<typeof RequirementSchema>;
