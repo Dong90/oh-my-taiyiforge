@@ -706,6 +706,15 @@ switch (cmd) {
     break;
   }
   case "status": {
+    // 5s 防抖:避免连按 N 次重复跑同一查询(TAIYI_STATUS_DEBOUNCE=0 关闭)
+    const debounceMs = 5000;
+    const lastStatusCall = (globalThis as any).__taiyiLastStatusCall ?? 0;
+    const now = Date.now();
+    if (process.env.TAIYI_STATUS_DEBOUNCE !== "0" && now - lastStatusCall < debounceMs) {
+      console.error(`[taiyi] status 在 5s 内重复调用,跳过。设 TAIYI_STATUS_DEBOUNCE=0 关闭`);
+      break;
+    }
+    (globalThis as any).__taiyiLastStatusCall = now;
     const slug = requireSlug(args);
     const r = taiyiStatus(workspaceDir, slug);
     if (!r.ok) {

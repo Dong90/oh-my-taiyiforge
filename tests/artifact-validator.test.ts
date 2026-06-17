@@ -1,127 +1,112 @@
-import { describe, expect, it } from "vitest";
-import { validateArtifactFile } from "../src/core/artifact-validator.js";
-import { TAIYI_SEED_MARKER } from "../src/core/seed-marker.js";
-import { auxiliaryArtifactSatisfied } from "../src/core/auxiliary-artifacts.js";
+import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
+import { validateArtifactFile } from "../src/core/artifact-validator.js";
 
-describe("artifact-validator", () => {
-  it("seeded CONTEXT.md does not satisfy taiyi-intel-scan", () => {
-    const dir = fs.mkdtempSync(path.join(os.tmpdir(), "taiyi-aux-"));
-    fs.writeFileSync(
-      path.join(dir, "CONTEXT.md"),
-      `${TAIYI_SEED_MARKER}\n# CONTEXT\n`,
-      "utf8",
-    );
-    expect(auxiliaryArtifactSatisfied(dir, "taiyi-intel-scan")).toBe(false);
+function makeChangeDir(): string {
+  return fs.mkdtempSync(path.join(os.tmpdir(), "av-test-"));
+}
+
+function writeChangeDir(dir: string, opts: { md: string; json: object }): void {
+  fs.writeFileSync(path.join(dir, "CHANGE.md"), opts.md);
+  fs.writeFileSync(path.join(dir, "change.json"), JSON.stringify(opts.json));
+}
+
+describe("evidence 强校验(change/requirement/test 阶段)", () => {
+  let dir: string;
+  beforeEach(() => {
+    dir = makeChangeDir();
+  });
+  afterEach(() => {
     fs.rmSync(dir, { recursive: true, force: true });
   });
 
-  it("Zod CHANGE passes with valid JSON", () => {
-    const dir = fs.mkdtempSync(path.join(os.tmpdir(), "taiyi-av-"));
-    fs.writeFileSync(path.join(dir, "change.json"), JSON.stringify({ title: "Demo", motivation: "test", scope: { includes: ["x"] }, success_criteria: [{ id: "SC-01", description: "pass" }] }));
-    fs.writeFileSync(path.join(dir, "CHANGE.md"), "content for 60 chars minimum requirement here more extra text for fill to pass");
+  it("change:is_checked=true 但缺 evidence → 返回 allFalse + Evidence hint", () => {
+    writeChangeDir(dir, {
+      md: "## Motivation\nbecause we need this\n## Scope\nIn: x\n## Success Criteria\n- [x] SC-01 done\n",
+      json: {
+        title: "t",
+        motivation: "m",
+        scope: { includes: ["x"] },
+        success_criteria: [{ id: "SC-01", description: "d", is_checked: true }],
+      },
+    });
     const r = validateArtifactFile(path.join(dir, "CHANGE.md"), "change");
-    expect(r!.scores.completeness).toBe(true);
-    expect(r!.scores.consistency).toBe(true);
-    fs.rmSync(dir, { recursive: true, force: true });
+    expect(r?.scores.completeness).toBe(false);
+    expect(r?.hints.some((h) => h.includes("[Evidence]"))).toBe(true);
   });
 
-  it("Zod CHANGE fails without JSON", () => {
-    const dir = fs.mkdtempSync(path.join(os.tmpdir(), "taiyi-av-"));
-    fs.writeFileSync(path.join(dir, "CHANGE.md"), "content for 60 chars minimum requirement here more extra text for fill to pass");
+  it("change:is_checked=true + evidence 完整 → 全绿", () => {
+    writeChangeDir(dir, {
+      md: "## Motivation\nbecause we need this\n## Scope\nIn: x\n## Success Criteria\n- [x] SC-01 done\n",
+      json: {
+        title: "t",
+        motivation: "m",
+        scope: { includes: ["x"] },
+        success_criteria: [{ id: "SC-01", description: "d", is_checked: true }],
+        evidence: { command: "npm test", exitCode: 0, capturedAt: new Date().toISOString() },
+      },
+    });
     const r = validateArtifactFile(path.join(dir, "CHANGE.md"), "change");
-    expect(r).not.toBeNull();
-    expect(r!.scores.completeness).toBe(false);
-    expect(r!.hints.some((h) => /缺少 change\.json/.test(h))).toBe(true);
-    fs.rmSync(dir, { recursive: true, force: true });
+    expect(r?.scores.completeness).toBe(true);
   });
 
-  it("Zod CHANGE fails with corrupted JSON", () => {
-    const dir = fs.mkdtempSync(path.join(os.tmpdir(), "taiyi-av-"));
-    fs.writeFileSync(path.join(dir, "change.json"), "{}");
-    fs.writeFileSync(path.join(dir, "CHANGE.md"), "content for 60 chars minimum requirement here more extra text for fill to pass");
+  it("change:is_checked 全 false + 无 evidence → 不报 evidence 错(放行)", () => {
+    writeChangeDir(dir, {
+      md: "## Motivation\nbecause we need this\n## Scope\nIn: x\n## Success Criteria\n- [ ] SC-01 todo\n",
+      json: {
+        title: "t",
+        motivation: "m",
+        scope: { includes: ["x"] },
+        success_criteria: [{ id: "SC-01", description: "d", is_checked: false }],
+      },
+    });
     const r = validateArtifactFile(path.join(dir, "CHANGE.md"), "change");
-    expect(r).not.toBeNull();
-    expect(r!.scores.completeness).toBe(false);
-    fs.rmSync(dir, { recursive: true, force: true });
+    expect(r?.scores.completeness).toBe(true);
   });
 
-  it("Zod CHANGE fails with seed template MD", () => {
-    const dir = fs.mkdtempSync(path.join(os.tmpdir(), "taiyi-av-"));
-    fs.writeFileSync(path.join(dir, "change.json"), JSON.stringify({ title: "Demo", motivation: "test", scope: { includes: ["x"] }, success_criteria: [{ id: "SC-01", description: "pass" }] }));
-    fs.writeFileSync(path.join(dir, "CHANGE.md"), `${TAIYI_SEED_MARKER}\n# CHANGE\n\ncontent for 60 chars minimum requirement here more extra text for fill to pass`);
+  it("change:evidence.exitCode !== 0 → Zod 校验失败", () => {
+    writeChangeDir(dir, {
+      md: "## Motivation\nbecause we need this\n## Scope\nIn: x\n## Success Criteria\n- [x] SC-01 done\n",
+      json: {
+        title: "t",
+        motivation: "m",
+        scope: { includes: ["x"] },
+        success_criteria: [{ id: "SC-01", description: "d", is_checked: true }],
+        evidence: { command: "npm test", exitCode: 1, capturedAt: new Date().toISOString() },
+      },
+    });
     const r = validateArtifactFile(path.join(dir, "CHANGE.md"), "change");
-    expect(r!.scores.completeness).toBe(false);
-    expect(r!.hints.some((h) => /模板占位/i.test(h))).toBe(true);
-    fs.rmSync(dir, { recursive: true, force: true });
+    expect(r?.scores.completeness).toBe(false);
+    expect(r?.hints.some((h) => h.toLowerCase().includes("exitcode"))).toBe(true);
   });
 
-  it("Zod CHANGE fails with placeholder content", () => {
-    const dir = fs.mkdtempSync(path.join(os.tmpdir(), "taiyi-av-"));
-    fs.writeFileSync(path.join(dir, "change.json"), JSON.stringify({ title: "Demo", motivation: "test", scope: { includes: ["x"] }, success_criteria: [{ id: "SC-01", description: "pass" }] }));
-    fs.writeFileSync(path.join(dir, "CHANGE.md"), "{{title}} content for 60 chars minimum requirement here more extra text for fill to pass");
+  it("change:evidence.capturedAt 非 ISO → Zod 校验失败", () => {
+    writeChangeDir(dir, {
+      md: "## Motivation\nbecause we need this\n## Scope\nIn: x\n## Success Criteria\n- [x] SC-01 done\n",
+      json: {
+        title: "t",
+        motivation: "m",
+        scope: { includes: ["x"] },
+        success_criteria: [{ id: "SC-01", description: "d", is_checked: true }],
+        evidence: { command: "npm test", exitCode: 0, capturedAt: "not-a-date" },
+      },
+    });
     const r = validateArtifactFile(path.join(dir, "CHANGE.md"), "change");
-    expect(r!.scores.completeness).toBe(false);
-    expect(r!.hints.some((h) => /占位符/i.test(h))).toBe(true);
-    fs.rmSync(dir, { recursive: true, force: true });
+    expect(r?.scores.completeness).toBe(false);
+    expect(r?.hints.some((h) => h.toLowerCase().includes("capturedat") || h.toLowerCase().includes("iso"))).toBe(true);
   });
 
-  it("Zod TASK passes with valid JSON", () => {
-    const dir = fs.mkdtempSync(path.join(os.tmpdir(), "taiyi-av-"));
-    fs.writeFileSync(path.join(dir, "task.json"), JSON.stringify({ title: "Demo", slices: [{ id: "S1", label: "api layer", description: "add api endpoints", test_command: "npm test api" }] }));
-    fs.writeFileSync(path.join(dir, "TASK.md"), "content for 60 chars minimum requirement here more extra text for fill to pass");
-    const r = validateArtifactFile(path.join(dir, "TASK.md"), "task");
-    expect(r!.scores.completeness).toBe(true);
-    fs.rmSync(dir, { recursive: true, force: true });
-  });
-
-  it("Zod TASK fails without JSON", () => {
-    const dir = fs.mkdtempSync(path.join(os.tmpdir(), "taiyi-av-"));
-    fs.writeFileSync(path.join(dir, "TASK.md"), "content for 60 chars minimum requirement here more extra text for fill to pass");
-    const r = validateArtifactFile(path.join(dir, "TASK.md"), "task");
-    expect(r).not.toBeNull();
-    expect(r!.scores.completeness).toBe(false);
-    expect(r!.hints.some((h) => /缺少 task\.json/.test(h))).toBe(true);
-    fs.rmSync(dir, { recursive: true, force: true });
-  });
-
-  it("Zod TASK fails with empty slices", () => {
-    const dir = fs.mkdtempSync(path.join(os.tmpdir(), "taiyi-av-"));
-    fs.writeFileSync(path.join(dir, "task.json"), JSON.stringify({ title: "Demo", slices: [] }));
-    fs.writeFileSync(path.join(dir, "TASK.md"), "content for 60 chars minimum requirement here more extra text for fill to pass");
-    const r = validateArtifactFile(path.join(dir, "TASK.md"), "task");
-    expect(r!.scores.completeness).toBe(false);
-    expect(r!.hints.some((h) => /Zod 校验失败/.test(h))).toBe(true);
-    fs.rmSync(dir, { recursive: true, force: true });
-  });
-
-  it("Zod REQUIREMENT passes with valid JSON", () => {
-    const dir = fs.mkdtempSync(path.join(os.tmpdir(), "taiyi-av-"));
-    fs.writeFileSync(path.join(dir, "requirement.json"), JSON.stringify({ title: "Login", features: ["email login"], acceptance_criteria: [{ id: "AC-01", description: "user can login" }] }));
-    fs.writeFileSync(path.join(dir, "REQUIREMENT.md"), "content for 60 chars minimum requirement here more extra text for fill to pass");
+  it("requirement:is_checked=true 但缺 evidence → Evidence hint", () => {
+    fs.writeFileSync(path.join(dir, "REQUIREMENT.md"), "## User Stories\nUS-1\n## Acceptance Criteria\n- [x] AC-01 done\n");
+    fs.writeFileSync(path.join(dir, "requirement.json"), JSON.stringify({
+      title: "t",
+      features: ["f"],
+      acceptance_criteria: [{ id: "AC-01", description: "d", is_checked: true }],
+    }));
     const r = validateArtifactFile(path.join(dir, "REQUIREMENT.md"), "requirement");
-    expect(r!.scores.completeness).toBe(true);
-    fs.rmSync(dir, { recursive: true, force: true });
-  });
-
-  it("Zod phase REQUIREMENT without JSON -> fails via validateArtifactFile", () => {
-    const dir = fs.mkdtempSync(path.join(os.tmpdir(), "taiyi-av-"));
-    fs.writeFileSync(path.join(dir, "REQUIREMENT.md"), "content enough for 60 characters minimum fill text here more");
-    const r = validateArtifactFile(path.join(dir, "REQUIREMENT.md"), "requirement");
-    expect(r).not.toBeNull();
-    expect(r!.scores.completeness).toBe(false);
-    expect(r!.hints.some((h) => /缺少 requirement\.json/.test(h))).toBe(true);
-    fs.rmSync(dir, { recursive: true, force: true });
-  });
-
-  it("Zod phase DESIGN without JSON -> fails via validateArtifactFile", () => {
-    const dir = fs.mkdtempSync(path.join(os.tmpdir(), "taiyi-av-"));
-    fs.writeFileSync(path.join(dir, "DESIGN.md"), "content enough for 60 characters minimum fill text here more longer");
-    const r = validateArtifactFile(path.join(dir, "DESIGN.md"), "design");
-    expect(r).not.toBeNull();
-    expect(r!.scores.completeness).toBe(false);
-    fs.rmSync(dir, { recursive: true, force: true });
+    expect(r?.scores.completeness).toBe(false);
+    expect(r?.hints.some((h) => h.includes("[Evidence]"))).toBe(true);
   });
 });

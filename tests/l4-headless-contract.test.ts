@@ -19,7 +19,12 @@ function renderPrompt(name: string): string {
 
 function seedChangeHarness(workspace: string, slug: string): void {
   const changeDir = path.join(workspace, ".taiyi", "changes", slug);
-  fs.writeFileSync(path.join(changeDir, "CHANGE.md"), E2E_ARTIFACTS.change, "utf8");
+  fs.writeFileSync(path.join(changeDir, "CHANGE.md"), E2E_ARTIFACTS.change.md, "utf8");
+  fs.writeFileSync(
+    path.join(changeDir, "change.json"),
+    JSON.stringify(E2E_ARTIFACTS.change.json, null, 2),
+    "utf8",
+  );
   fs.writeFileSync(
     path.join(changeDir, "CONTEXT.md"),
     "# CONTEXT\n\n## Scan\nl4 headless\n",
@@ -110,11 +115,21 @@ describe("L4 headless contract (CLI + prompt 替代 IDE UAT)", () => {
     seedChangeHarness(workspace, SLUG);
     runForge(REPO, workspace, ["continue", SLUG, "--approver", "l4-headless"]);
 
-    fs.writeFileSync(path.join(changeDir, "REQUIREMENT.md"), E2E_ARTIFACTS.requirement, "utf8");
+    fs.writeFileSync(path.join(changeDir, "REQUIREMENT.md"), E2E_ARTIFACTS.requirement.md, "utf8");
+    fs.writeFileSync(
+      path.join(changeDir, "requirement.json"),
+      JSON.stringify(E2E_ARTIFACTS.requirement.json, null, 2),
+      "utf8",
+    );
     runForge(REPO, workspace, ["continue", SLUG]);
 
     // lite 跳过 task 阶段，但 ralplan-first 仍要求 TASK.md（或 RALPLAN.md）
-    fs.writeFileSync(path.join(changeDir, "TASK.md"), E2E_ARTIFACTS.task, "utf8");
+    fs.writeFileSync(path.join(changeDir, "TASK.md"), E2E_ARTIFACTS.task.md, "utf8");
+    fs.writeFileSync(
+      path.join(changeDir, "task.json"),
+      JSON.stringify(E2E_ARTIFACTS.task.json, null, 2),
+      "utf8",
+    );
 
     const state1 = JSON.parse(fs.readFileSync(path.join(changeDir, "state.json"), "utf8"));
     expect(state1.currentPhase).toBe("dev");

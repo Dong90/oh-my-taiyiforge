@@ -79,6 +79,26 @@ export function validateArtifactFile(
   if (/\{\{title\}\}|\{\{slug\}\}/.test(content)) return { scores: allFalse, hints: ["仍含占位符"] };
   if (stripComments(content).length < 40) return { scores: allFalse, hints: ["MD 过短"] };
 
+  // evidence 强校验:change/requirement/test 三阶段,success_criteria/acceptance_criteria 标 is_checked=true 时必填 evidence
+  if (phaseId === "change" || phaseId === "requirement" || phaseId === "test") {
+    try {
+      const json = JSON.parse(fs.readFileSync(jsonPath, "utf-8"));
+      const criteria = (json as { acceptance_criteria?: unknown[]; success_criteria?: unknown[] }).acceptance_criteria
+        ?? (json as { success_criteria?: unknown[] }).success_criteria;
+      const hasChecked = Array.isArray(criteria) && criteria.some((c: unknown) => {
+        return typeof c === "object" && c !== null && (c as { is_checked?: boolean }).is_checked === true;
+      });
+      if (hasChecked && !json.evidence) {
+        return {
+          scores: allFalse,
+          hints: ["[Evidence] acceptance_criteria/success_criteria 有 is_checked=true,必填 evidence{command, exitCode:0, capturedAt}"],
+        };
+      }
+    } catch {
+      /* jsonPath 已经在 try 块解析过,这里不重复 */
+    }
+  }
+
   return { scores: { completeness: true, consistency: true, verifiability: true, traceability: true, engineering_quality: true }, hints: [] };
 }
 

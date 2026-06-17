@@ -186,6 +186,22 @@ v28 umbrella 之外再添新的顶栏重复。
 ## 4 · 快速上手
 
 > **零构建安装**：v0.24.0 起支持 `npx taiyi-forge-install --all` 一键装到四端，无需 clone 仓库。源码安装仍可用。
+>
+> **v0.25.0 GitHub 安装**：v0.25.x 在 npm 上暂未发布（包名 24h 锁定期中），可从 GitHub tag 直装。详见 [方式 A0](#方式-a0--从-github-直接安装v025-新增)。
+
+### 方式 A0 · 从 GitHub 直接安装（v0.25 新增，npm 未发布时用）
+
+```bash
+# 直接从 GitHub tag 装到本地项目（任何用户工程里跑，不进 npm）
+# 必须用 git+ 前缀 —— 这样 npm 会 clone 仓库 + 跑 postinstall (npm run build)
+npm install 'git+https://github.com/Dong90/oh-my-taiyiforge.git#v0.25.0'
+# 或装到全局 / 用 npx 跑 bin
+npm install -g 'git+https://github.com/Dong90/oh-my-taiyiforge.git#v0.25.0'
+npx -p 'git+https://github.com/Dong90/oh-my-taiyiforge.git#v0.25.0' taiyi-forge-install --all
+```
+
+> 必须用 `git+` 前缀（不是 tarball URL），npm 才会 clone 仓库并触发 postinstall 自动 build dist。
+> 想换版本只改 tag：`#v0.25.0` → `#v0.25.1` → `#main` → `#<commit-sha>` 都可以。
 
 ### 方式 A · 一行安装（推荐,v0.24+）
 
@@ -224,7 +240,7 @@ npm run walkthrough-e2e    # 九阶段 shell E2E + 铁三角
 | [examples/browser-e2e-smoke](examples/browser-e2e-smoke/) | CI 模板 |
 | [examples/verification-suite](examples/verification-suite/) | 极简集成验证 |
 
-> 想用 `npm install oh-my-taiyiforge`？v0.24 已发布到 npm，直接装即可。
+> 想用 `npm install oh-my-taiyiforge`？v0.25 暂时只能从 GitHub 装（见[方式 A0](#方式-a0--从-github-直接安装v025-新增)），npm 重发布后会恢复 `npm i oh-my-taiyiforge`。
 
 ### 方式 D · 第一个 change（5 分钟）
 

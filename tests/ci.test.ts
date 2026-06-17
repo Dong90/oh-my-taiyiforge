@@ -32,7 +32,7 @@ describe("ci verify", () => {
     engine.initChange("ci-demo", { autoHarness: true });
     fs.writeFileSync(
       path.join(engine.changeDir("ci-demo"), "CHANGE.md"),
-      E2E_ARTIFACTS.change,
+      E2E_ARTIFACTS.change.md,
       "utf8",
     );
     const r = verifyWorkspaceCi(workspace, root);
