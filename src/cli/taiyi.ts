@@ -95,7 +95,7 @@ function usage(): void {
   npm run taiyi -- doctor [--strict-workspace] [--json] [--compact]
   npm run taiyi -- audit [slug] [--json] [--compact]
   npm run taiyi -- list                     列出 .taiyi/changes/ 下所有变更
-  npm run taiyi -- init <slug> [--profile api|lite|ui] [--strict-dev] [--auto] [--force] [--json]
+  npm run taiyi -- init <slug> [--profile full|lite|api|micro|nano|spike|ui] [--strict-dev] [--auto] [--force] [--json]
   npm run taiyi -- harness <slug>              全自动编排清单（铁三角→辅助→主流程）
   npm run taiyi -- harness-check <slug> <key>  铁三角步骤打卡（auto 模式）
   npm run taiyi -- new <标题>              /taiyi:new — 自动 slug（默认手动；--auto 全自动）
@@ -116,7 +116,7 @@ function usage(): void {
   npm run taiyi -- complete <slug> <phase> [--approver 名字]
   npm run taiyi -- sync [slug]              /taiyi:sync（别名 sync-openspec）
   npm run taiyi -- archive <slug>
-  npm run taiyi -- walkthrough [--slug name] [--profile api|lite]
+  npm run taiyi -- walkthrough [--slug name] [--profile full|lite|api|micro|nano|spike|ui]
   npm run taiyi -- browser-smoke [--json]     → /taiyi:browser-smoke — Playwright 浏览器冒烟
   npm run taiyi -- audit [slug] [--json] [--compact]   /taiyi:audit — 流程/交付排查
   npm run taiyi -- health [slug]            /taiyi:health — 输出 health Agent 协议（须 Skill 写报告 + mark-aux）
@@ -531,7 +531,7 @@ switch (cmd) {
   case "new": {
     const title = stripFlags(args).join(" ").trim();
     if (!title) {
-      console.error("用法: new <标题> [--profile api|lite]");
+      console.error("用法: new <标题> [--profile full|lite|api|micro|nano|spike|ui]");
       process.exit(1);
     }
     const slug = slugifyTitle(title);
@@ -706,6 +706,15 @@ switch (cmd) {
     break;
   }
   case "status": {
+    // 5s 防抖:避免连按 N 次重复跑同一查询(TAIYI_STATUS_DEBOUNCE=0 关闭)
+    const debounceMs = 5000;
+    const lastStatusCall = (globalThis as any).__taiyiLastStatusCall ?? 0;
+    const now = Date.now();
+    if (process.env.TAIYI_STATUS_DEBOUNCE !== "0" && now - lastStatusCall < debounceMs) {
+      console.error(`[taiyi] status 在 5s 内重复调用,跳过。设 TAIYI_STATUS_DEBOUNCE=0 关闭`);
+      break;
+    }
+    (globalThis as any).__taiyiLastStatusCall = now;
     const slug = requireSlug(args);
     const r = taiyiStatus(workspaceDir, slug);
     if (!r.ok) {
