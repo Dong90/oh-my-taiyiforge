@@ -1,0 +1,17 @@
+# {{title}}
+
+## Changelog
+{{#each changelog_entries}}
+- **{{type}}**: {{description}}
+{{/each}}
+
+{{#if breaking_changes}}
+## Breaking Changes
+{{#each breaking_changes}}
+- {{this}}
+{{/each}}
+{{/if}}
+
+{{#if release_version}}
+Version: `{{release_version}}`
+{{/if}}

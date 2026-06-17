@@ -62,6 +62,10 @@ Need feature A for users.
 - [ ] Users can use feature A
 `,
     );
+    fs.writeFileSync(
+      path.join(changeDir, "change.json"),
+      JSON.stringify({ title: "Feature A", motivation: "test", scope: { includes: ["core flow"] }, success_criteria: [{ id: "SC-01", description: "Users can use feature A" }] }),
+    );
     const done = taiyiComplete(workspace, "feat-a", "change", {
       human: { approved: true, approver: "reviewer@example.com" },
     });

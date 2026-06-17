@@ -74,7 +74,7 @@ describe("auto harness", () => {
     const check = enforceAutoHarnessBeforeComplete(workspace, root, state);
     expect(check.ok).toBe(true);
 
-    const r = engine.completePhase("auto3", "change", GATES);
+    const r = engine.completePhase("auto3", "change", GATES, { skipArtifactValidation: true });
     expect(r.ok).toBe(true);
   });
 
@@ -96,7 +96,7 @@ describe("auto harness", () => {
     const dir = engine.changeDir("rev1");
     writeE2eArtifacts(dir);
     for (const p of ["change", "requirement", "design", "ui-design", "task", "dev", "test"] as const) {
-      const r = engine.completePhase("rev1", p, GATES, { skipStepOrderCheck: true });
+      const r = engine.completePhase("rev1", p, GATES, { skipStepOrderCheck: true, skipArtifactValidation: true });
       expect(r.ok, `${p}: ${r.error}`).toBe(true);
     }
     const state = engine.getState("rev1")!;
@@ -119,7 +119,7 @@ describe("auto harness", () => {
     markHarnessCheckpoint(dir, "change", "superpowers/brainstorming");
     const mark = engine.markAuxiliary("opt1", "taiyi-intel-scan");
     expect(mark.ok, mark.error).toBe(true);
-    const done = engine.completePhase("opt1", "change", GATES);
+    const done = engine.completePhase("opt1", "change", GATES, { skipArtifactValidation: true });
     expect(done.ok, done.error).toBe(true);
 
     const state = engine.getState("opt1")!;

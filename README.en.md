@@ -25,8 +25,6 @@
 
 ![TaiyiForge Architecture — Six standards × Workflow engine × Nine stages × Skill universe × Three-layer gates](docs/diagrams/visual/taiyiforge-architecture-ai-v023-full-4k-en-v2.png)
 
-<sub>4K architecture poster (v0.24.0 · AI visual) · <a href="docs/taiyiforge-architecture.svg">vector SVG</a> · <a href="docs/c4/containers.md">C4 source</a> · <a href="docs/diagrams/visual/taiyiforge-architecture-ai-v023-full-4k-zh-v2-fix.png">中文海报</a></sub>
-
 </div>
 
 ---

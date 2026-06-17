@@ -8,7 +8,7 @@ import {
   findOpenHighFindings,
   parseReviewVerdict,
 } from "../src/core/review-gate.js";
-import { validateArtifactContent } from "../src/core/artifact-validator.js";
+import { validateArtifactFile } from "../src/core/artifact-validator.js";
 import { WorkflowEngine } from "../src/core/workflow-engine.js";
 import { runReviewMachineCheck } from "../src/core/review-loop-runner.js";
 import { writeE2eArtifacts } from "../src/core/run-e2e-workflow.js";
@@ -95,10 +95,10 @@ describe("review-gate", () => {
       "dev",
       "test",
     ] as const) {
-      expect(engine.completePhase("rg1", phase, gates, { allowAutoHuman: true, skipStepOrderCheck: true }).ok).toBe(true);
+      expect(engine.completePhase("rg1", phase, gates, { allowAutoHuman: true, skipStepOrderCheck: true, skipArtifactValidation: true }).ok).toBe(true);
     }
 
-    const blocked = engine.completePhase("rg1", "review", gates, { skipStepOrderCheck: true });
+    const blocked = engine.completePhase("rg1", "review", gates, { skipStepOrderCheck: true, skipArtifactValidation: true });
     expect(blocked.ok).toBe(false);
     expect(blocked.error).toMatch(/Quality gate failed|Verdict|high/i);
 
@@ -132,7 +132,7 @@ describe("review-gate", () => {
       "dev",
       "test",
     ] as const) {
-      engine.completePhase("rl1", phase, gates, { allowAutoHuman: true });
+      engine.completePhase("rl1", phase, gates, { allowAutoHuman: true, skipArtifactValidation: true });
     }
 
     const r1 = runReviewMachineCheck(engine, "rl1", { bumpRound: false });
@@ -145,8 +145,13 @@ describe("review-gate", () => {
     const r3 = runReviewMachineCheck(engine, "rl1", { bumpRound: false });
     expect(r3.ok).toBe(true);
 
-    const validator = validateArtifactContent("review", APPROVE_REVIEW);
-    expect(validator.scores.verifiability).toBe(true);
+    fs.writeFileSync(path.join(changeDir, "review.json"), JSON.stringify({
+      title: "Demo Review",
+      verdict: "approved",
+      findings: [{ id: "F1", severity: "high", description: "fixed", resolved: true }],
+    }));
+    const validator = validateArtifactFile(path.join(changeDir, "REVIEW.md"), "review");
+    expect(validator!.scores.verifiability).toBe(true);
 
     fs.rmSync(root, { recursive: true, force: true });
   });

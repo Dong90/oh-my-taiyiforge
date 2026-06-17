@@ -3,6 +3,7 @@ import path from "node:path";
 import type { PhaseId } from "./types.js";
 import { getPhase, listPhases } from "./phase-registry.js";
 import { isSeedTemplate, wrapSeedTemplate } from "./seed-marker.js";
+import { ZOD_PHASES } from "./artifact-validator.js";
 
 export type SeedVars = {
   slug: string;
@@ -77,6 +78,26 @@ export function seedChangeTemplates(
   return seeded;
 }
 
+/** Seed a minimal Zod JSON for schema-driven phases */
+function seedZodJson(changeDir: string, phaseId: PhaseId): void {
+  const jsonPath = path.join(changeDir, `${phaseId}.json`);
+  if (fs.existsSync(jsonPath)) return;
+
+  const seeds: Record<string, Record<string, unknown>> = {
+    change: { title: "{{title}}", motivation: "", scope: { includes: [] }, success_criteria: [] },
+    requirement: { title: "{{title}}", features: [], acceptance_criteria: [] },
+    design: { title: "{{title}}", options: [], decision: { chosen: "", reason: "" } },
+    "ui-design": { title: "{{title}}", scope: "" },
+    task: { title: "{{title}}", slices: [] },
+    test: { title: "{{title}}", test_plan: [] },
+    review: { title: "{{title}}", verdict: "commented" },
+    integration: { title: "{{title}}", changelog_entries: [] },
+  };
+
+  const seedJson = seeds[phaseId];
+  if (seedJson) fs.writeFileSync(jsonPath, JSON.stringify(seedJson, null, 2));
+}
+
 /** complete 过关后为下一阶段铺模板（若文件尚不存在）。 */
 export function seedPhaseTemplate(
   changeDir: string,
@@ -87,6 +108,12 @@ export function seedPhaseTemplate(
   if (!fs.existsSync(templatesDir)) return null;
   const phase = getPhase(phaseId);
   if (phase.kind !== "markdown") return null;
+
+  // Seed Zod JSON for schema-driven phases
+  if (ZOD_PHASES.includes(phaseId)) {
+    seedZodJson(changeDir, phaseId);
+  }
+
   return seedArtifactFile(changeDir, templatesDir, phase.artifact, vars)
     ? phase.artifact
     : null;

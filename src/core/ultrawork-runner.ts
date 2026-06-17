@@ -4,6 +4,8 @@ import type { WorkflowEngine } from "./workflow-engine.js";
 import { rolesForPhase } from "./agent-roles.js";
 import { activateMode } from "./runtime/mode-state.js";
 import { buildSpawnPlan, formatSpawnPlanPlain } from "./runtime/spawn-delegation.js";
+import { buildFanOutPlan, generateAllDispatches } from "./fan-out-executor.js";
+import type { TaskSpec } from "../schemas/task.js";
 import type { PhaseId } from "./types.js";
 
 export type UltraworkRunResult = {
@@ -18,6 +20,16 @@ function readTaskMd(changeDir: string): string | undefined {
   if (!fs.existsSync(p)) return undefined;
   try {
     return fs.readFileSync(p, "utf8");
+  } catch {
+    return undefined;
+  }
+}
+
+function readTaskJson(changeDir: string): TaskSpec | undefined {
+  const p = path.join(changeDir, "task.json");
+  if (!fs.existsSync(p)) return undefined;
+  try {
+    return JSON.parse(fs.readFileSync(p, "utf8")) as TaskSpec;
   } catch {
     return undefined;
   }
@@ -53,6 +65,31 @@ export function runUltraworkGuide(
 
   const changeDir = engine.changeDir(slug);
   const taskMd = readTaskMd(changeDir);
+  const taskJson = readTaskJson(changeDir);
+
+  // Prefer structured fan-out when TASK.json exists
+  let fanOutBlock = "";
+  if (taskJson && taskJson.slices.length > 0) {
+    const fanPlan = buildFanOutPlan(slug, phase, taskJson);
+    const dispatches = generateAllDispatches(fanPlan);
+    fanOutBlock = [
+      "",
+      "── 四端并行派发指令 ──",
+      "",
+      "## OpenCode",
+      dispatches.opencode,
+      "",
+      "## Claude Code",
+      dispatches.claude,
+      "",
+      "## Cursor",
+      dispatches.cursor,
+      "",
+      "## Codex",
+      dispatches.codex,
+    ].join("\n");
+  }
+
   const plan = buildSpawnPlan(slug, phase, taskMd);
   const roles = rolesForPhase(phase).map((r) => r.id).join(" · ");
 
@@ -62,6 +99,7 @@ export function runUltraworkGuide(
     `  状态: .taiyi/runtime/ultrawork-mode.json`,
     "",
     formatSpawnPlanPlain(plan),
+    fanOutBlock,
     "",
     "协议:",
     "  1. 按 spawn 计划派最多 6 路 Task subagent",

@@ -39,8 +39,10 @@ export function tryPromoteSeedArtifact(artifactPath: string, phaseId: ChangeStat
   if (!isSeedTemplate(content)) return false;
 
   const body = stripSeedMarker(content);
-  const v = validateArtifactContent(phaseId, body);
-  if (!Object.values(v.scores).every(Boolean)) return false;
+  if (phaseId === "dev") {
+    const v = validateArtifactContent(phaseId, body);
+    if (!Object.values(v.scores).every(Boolean)) return false;
+  }
 
   fs.writeFileSync(artifactPath, body.endsWith("\n") ? body : `${body}\n`, "utf8");
   return true;

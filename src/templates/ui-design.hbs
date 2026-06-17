@@ -1,0 +1,25 @@
+# {{title}}
+
+## Scope
+{{scope}}
+
+{{#if states}}
+## States
+{{#each states}}
+- **{{name}}**: {{description}}
+{{/each}}
+{{/if}}
+
+{{#if accessibility}}
+## Accessibility
+{{#each accessibility}}
+- [ ] {{this}}
+{{/each}}
+{{/if}}
+
+{{#if links}}
+## Links
+{{#each links}}
+- {{this}}
+{{/each}}
+{{/if}}

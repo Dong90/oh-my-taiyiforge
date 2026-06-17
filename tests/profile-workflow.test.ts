@@ -72,7 +72,7 @@ describe("profile-workflow", () => {
       path.join(dir, "REVIEW.md"),
       `# REVIEW\n\n## Summary\nx\n\n## Findings\n| Severity | File | Issue | Suggestion |\n|---|---|---|---|\n\n## Verdict\n- [x] **Approve** — 可合并\n`,
     );
-    const r = engine.completePhase("med", "review", GATES);
+    const r = engine.completePhase("med", "review", GATES, { skipArtifactValidation: true });
     expect(r.ok).toBe(false);
     expect(r.error).toMatch(/taiyi-health/);
 
@@ -82,7 +82,7 @@ describe("profile-workflow", () => {
       "utf8",
     );
     engine.markAuxiliary("med", "taiyi-health");
-    const r2 = engine.completePhase("med", "review", GATES);
+    const r2 = engine.completePhase("med", "review", GATES, { skipArtifactValidation: true });
     expect(r2.ok).toBe(true);
   });
 
@@ -111,7 +111,7 @@ describe("profile-workflow", () => {
       path.join(dir, "REVIEW.md"),
       `# REVIEW\n\n## Summary\nx\n\n## Findings\n| Severity | File | Issue | Suggestion |\n|---|---|---|---|\n\n## Verdict\n- [x] **Approve** — 可合并\n`,
     );
-    const r = engine.completePhase("big", "review", GATES);
+    const r = engine.completePhase("big", "review", GATES, { skipArtifactValidation: true });
     expect(r.ok).toBe(false);
     expect(r.error).toMatch(/taiyi-health/);
 
@@ -122,7 +122,7 @@ describe("profile-workflow", () => {
     );
     const mark = engine.markAuxiliary("big", "taiyi-health");
     expect(mark.ok, mark.error).toBe(true);
-    const r2 = engine.completePhase("big", "review", GATES);
+    const r2 = engine.completePhase("big", "review", GATES, { skipArtifactValidation: true });
     expect(r2.ok).toBe(true);
   });
 

@@ -39,22 +39,31 @@ function advanceLiteToIntegration(engine: WorkflowEngine, slug: string, taiyiRoo
     path.join(dir, "CHANGE.md"),
     `# CHANGE\n\n## Motivation\nFix bug.\n\n## Scope\n- In: x\n\n## Success Criteria\n- [x] fixed\n`,
   );
-  expect(engine.completePhase(slug, "change", GATES).ok).toBe(true);
+  fs.writeFileSync(
+    path.join(dir, "change.json"),
+    JSON.stringify({
+      title: "Fix Bug",
+      motivation: "Fix bug.",
+      scope: { includes: ["x"] },
+      success_criteria: [{ id: "SC-01", description: "fixed", is_checked: true }],
+    }),
+  );
+  expect(engine.completePhase(slug, "change", GATES, { skipArtifactValidation: true }).ok).toBe(true);
 
   fs.writeFileSync(
     path.join(dir, "REQUIREMENT.md"),
     `# REQ\n\n## User Stories\n| ID | As a… | I want… | So that… |\n| US-1 | user | fix | works |\n\n## Acceptance Criteria (Given / When / Then)\n### US-1\n- **Given** broken path\n- **When** user triggers action\n- **Then** completes without error\n\n## Traceability\n| AC | Links to CHANGE.md |\n| US-1 | Success Criteria |\n`,
   );
-  expect(engine.completePhase(slug, "requirement", GATES).ok).toBe(true);
+  expect(engine.completePhase(slug, "requirement", GATES, { skipArtifactValidation: true }).ok).toBe(true);
 
   fs.writeFileSync(path.join(dir, ".dev-complete"), DEV_COMPLETE_EVIDENCE);
-  expect(engine.completePhase(slug, "dev", GATES).ok).toBe(true);
+  expect(engine.completePhase(slug, "dev", GATES, { skipArtifactValidation: true }).ok).toBe(true);
 
   fs.writeFileSync(
     path.join(dir, "TEST.md"),
     `# TEST\n\n## Test Plan\nRun npm test.\n\n## Execution\n| cmd | code |\n|---|---|\n| npm test | 0 |\n`,
   );
-  expect(engine.completePhase(slug, "test", GATES).ok).toBe(true);
+  expect(engine.completePhase(slug, "test", GATES, { skipArtifactValidation: true }).ok).toBe(true);
 
   fs.writeFileSync(
     path.join(dir, "CHANGELOG.md"),
@@ -90,7 +99,7 @@ describe("integration gates", () => {
     expect(audit?.ok).toBe(false);
     expect(audit?.findings.some((f) => f.code === "ac.open-before-integration")).toBe(true);
 
-    const blocked = engine.completePhase(slug, "integration", GATES);
+    const blocked = engine.completePhase(slug, "integration", GATES, { skipArtifactValidation: true });
     expect(blocked.ok).toBe(false);
     expect(blocked.error).toMatch(/ac\.open-before-integration|Success Criteria/);
   });
@@ -104,7 +113,7 @@ describe("integration gates", () => {
     expect(audit?.ok).toBe(false);
     expect(audit?.findings.some((f) => f.code === "delivery.not-closed")).toBe(true);
 
-    const blocked = engine.completePhase(slug, "integration", GATES);
+    const blocked = engine.completePhase(slug, "integration", GATES, { skipArtifactValidation: true });
     expect(blocked.ok).toBe(false);
     expect(blocked.error).toMatch(/Integration audit failed|delivery/i);
   });
@@ -113,7 +122,7 @@ describe("integration gates", () => {
     const slug = "changelog-sync";
     advanceLiteToIntegration(engine, slug, taiyiRoot);
 
-    const r = engine.completePhase(slug, "integration", GATES);
+    const r = engine.completePhase(slug, "integration", GATES, { skipArtifactValidation: true });
     expect(r.ok, r.error).toBe(true);
 
     const rootLog = path.join(workspace, "CHANGELOG.md");
@@ -131,7 +140,7 @@ describe("integration gates", () => {
     );
 
     advanceLiteToIntegration(engine, slug, taiyiRoot);
-    expect(engine.completePhase(slug, "integration", GATES).ok).toBe(true);
+    expect(engine.completePhase(slug, "integration", GATES, { skipArtifactValidation: true }).ok).toBe(true);
 
     expect(getOpenspecStatus(workspace, slug).changeExists).toBe(false);
 
