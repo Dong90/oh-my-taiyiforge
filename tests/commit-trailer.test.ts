@@ -65,4 +65,15 @@ EOF
     expect(r.suggestion).toContain("Taiyi-Change: ship-it");
     fs.rmSync(dir, { recursive: true, force: true });
   });
+
+  it("commitTrailersEnabled 显式默认 true(防 config bypass)", () => {
+    // 不传 env,默认应 true(不再被 loadProjectConfig bypass)
+    expect(commitTrailersEnabled()).toBe(true);
+    expect(commitTrailersEnabled("/some/workspace")).toBe(true);
+  });
+
+  it("commitTrailersEnabled:TAIYI_COMMIT_TRAILERS=0 → false(保留 env 关闭通道)", () => {
+    expect(commitTrailersEnabled(undefined, { TAIYI_COMMIT_TRAILERS: "0" })).toBe(false);
+    expect(commitTrailersEnabled(undefined, { TAIYI_COMMIT_TRAILERS: "false" })).toBe(false);
+  });
 });

@@ -1,7 +1,6 @@
 import { execSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
-import { loadProjectConfig } from "../project-config.js";
 
 export type CommitTrailerResult = {
   passed: boolean;
@@ -71,12 +70,9 @@ function listCommitBodies(workspaceDir: string, base: string): { hash: string; b
 }
 
 export function commitTrailersEnabled(workspaceDir?: string, env = process.env): boolean {
+  // 只看 env:不允许 config disable(防止 project config 的 commitTrailers: false 绕过 trailer 校验)
   if (env.TAIYI_COMMIT_TRAILERS === "0" || env.TAIYI_COMMIT_TRAILERS === "false") {
     return false;
-  }
-  if (workspaceDir) {
-    const cfg = loadProjectConfig(workspaceDir);
-    if (cfg.commitTrailers === false) return false;
   }
   return true;
 }
