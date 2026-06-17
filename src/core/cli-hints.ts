@@ -1,6 +1,6 @@
 import type { ChangeProfile } from "./types.js";
 
-export const VALID_PROFILES: readonly ChangeProfile[] = ["full", "api", "ui", "lite", "spike", "micro", "nano"];
+export const VALID_PROFILES: readonly ChangeProfile[] = ["full", "api", "ui", "lite", "spike", "micro", "nano", "audit"];
 
 export const SLUG_EXAMPLE = "my-feature";
 

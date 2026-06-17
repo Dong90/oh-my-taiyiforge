@@ -1385,6 +1385,7 @@ const SCENARIO_CREATE_PROFILE: Partial<Record<ScenarioId, ChangeProfile>> = {
   nano: "nano",
   service: "api",
   "design-system": "ui",
+  audit: "audit",
 };
 
 function taiyiScenarioInternal(
@@ -1440,6 +1441,8 @@ function normalizeFlowTopic(topic: string): ScenarioId {
     ui: "design-system",
     ci: "ci",
     devops: "ci",
+    audit: "audit",
+    review: "audit",
   };
   return map[topic.toLowerCase()] ?? "feature";
 }
@@ -1469,6 +1472,8 @@ export function taiyiFlow(
     "ui",
     "ci",
     "devops",
+    "audit",
+    "review",
   ]);
   const result =
     parts.length === 0

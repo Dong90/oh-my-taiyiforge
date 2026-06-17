@@ -361,7 +361,7 @@ export class WorkflowEngine {
 
     if (!options?.skipArtifactValidation) {
       const artifactFile = artifactPathForPhase(this.changeDir(slug), phaseId);
-      const inferred = validateArtifactFile(artifactFile, phaseId);
+      const inferred = validateArtifactFile(artifactFile, phaseId, workingState.profile);
       if (inferred) {
         qualityHints = inferred.hints;
         qualityScores = {

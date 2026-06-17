@@ -18,7 +18,8 @@ export type ScenarioId =
   | "nano"
   | "service"
   | "design-system"
-  | "ci";
+  | "ci"
+  | "audit";
 
 export type ScenarioRunResult = {
   ok: boolean;
@@ -37,6 +38,7 @@ const SCENARIO_PROFILE: Record<ScenarioId, ChangeProfile> = {
   service: "api",
   "design-system": "ui",
   ci: "full",
+  audit: "audit",
 };
 
 function scenarioHeader(title: string, subtitle: string): string[] {

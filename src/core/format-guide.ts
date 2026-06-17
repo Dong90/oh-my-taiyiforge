@@ -162,6 +162,9 @@ export function formatGuidePlain(guide: PhaseGuide): string {
   if (guide.skippedPhases?.length) {
     lines.push(`跳过: ${guide.skippedPhases.join(", ")}`);
   }
+  if (guide.profileHint) {
+    lines.push(`⚠ ${guide.profileHint}`);
+  }
   lines.push(`Skill: ${guide.skill}`);
   lines.push(`工件: ${guide.artifactPath}`);
   lines.push(

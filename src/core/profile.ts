@@ -6,13 +6,15 @@ export const PROFILE_SKIPPED: Record<ChangeProfile, PhaseId[]> = {
   api: ["ui-design"],
   /** Alias of `full` — explicit UI-heavy naming; same nine phases. */
   ui: [],
-  lite: ["design", "ui-design", "task", "review"],
+  lite: ["design", "ui-design", "task"],
   /** MVP / 创业验证：跳过规划与设计，保留测试与交付 */
   spike: ["requirement", "design", "ui-design", "task", "review"],
   /** 个人工具 / 脚本：最小路径 change → dev → integration */
   micro: ["requirement", "design", "ui-design", "task", "test", "review"],
   /** 最简变更：跳过所有文档阶段，dev → integration 直出 */
   nano: ["change", "requirement", "design", "ui-design", "task", "test", "review"],
+  /** 审查/审计/复盘类任务：跳过 UI、任务切片、独立测试，6 阶段 light 流程 */
+  audit: ["ui-design", "task", "test"],
 };
 
 export function skippedPhasesForProfile(profile: ChangeProfile): PhaseId[] {

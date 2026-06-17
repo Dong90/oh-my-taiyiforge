@@ -1,6 +1,6 @@
 import fs from "node:fs";
 import path from "node:path";
-import type { ChangeState } from "./types.js";
+import type { ChangeProfile, ChangeState } from "./types.js";
 import { detectAheadArtifacts } from "./ahead-artifacts.js";
 import { detectCompletedAuxiliary } from "./auxiliary-artifacts.js";
 import {
@@ -33,13 +33,17 @@ function escapeRegExp(s: string): string {
 }
 
 /** 内容已实质填写但忘了删 seed 标记时，自动 promote 为正式工件。 */
-export function tryPromoteSeedArtifact(artifactPath: string, phaseId: ChangeState["currentPhase"]): boolean {
+export function tryPromoteSeedArtifact(
+  artifactPath: string,
+  phaseId: ChangeState["currentPhase"],
+  profile?: ChangeProfile,
+): boolean {
   if (!fs.existsSync(artifactPath)) return false;
   const content = fs.readFileSync(artifactPath, "utf8");
   if (!isSeedTemplate(content)) return false;
 
   const body = stripSeedMarker(content);
-  const v = validateArtifactContent(phaseId, body);
+  const v = validateArtifactContent(phaseId, body, profile);
   if (!Object.values(v.scores).every(Boolean)) return false;
 
   fs.writeFileSync(artifactPath, body.endsWith("\n") ? body : `${body}\n`, "utf8");
@@ -105,7 +109,7 @@ export function syncChangeState(changeDir: string, state: ChangeState): StateSyn
   const phase = getPhase(working.currentPhase);
   if (phase.kind === "markdown") {
     const artifactPath = artifactPathForPhase(changeDir, working.currentPhase);
-    if (tryPromoteSeedArtifact(artifactPath, working.currentPhase)) {
+    if (tryPromoteSeedArtifact(artifactPath, working.currentPhase, working.profile)) {
       changed = true;
       actions.push(`已移除 ${phase.artifact} 的模板标记（内容已就绪）`);
     }

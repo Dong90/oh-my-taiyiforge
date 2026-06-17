@@ -10,6 +10,8 @@ export type ProjectScenarioId =
   | "micro"
   | "nano"
   | "devops"
+  | "audit"
+  | "review"
   | "default";
 
 export type TaiyiProjectConfig = {
@@ -27,7 +29,7 @@ export type TaiyiProjectConfig = {
   openspec?: boolean;
 };
 
-const VALID_PROFILES = new Set<string>(["full", "api", "ui", "lite", "spike", "micro", "nano"]);
+const VALID_PROFILES = new Set<string>(["full", "api", "ui", "lite", "spike", "micro", "nano", "audit"]);
 
 export function projectConfigPath(workspaceDir: string): string {
   return path.join(workspaceDir, ".taiyi", "config.json");
@@ -65,6 +67,9 @@ export function profileForScenario(scenario: ProjectScenarioId): ChangeProfile {
       return "api";
     case "design-system":
       return "ui";
+    case "audit":
+    case "review":
+      return "audit";
     case "devops":
     case "default":
     default:

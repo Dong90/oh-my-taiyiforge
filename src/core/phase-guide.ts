@@ -69,6 +69,8 @@ export type PhaseGuide = {
   earlyCodeWarning?: string;
   /** review 前 medium/high 须 taiyi-health */
   healthGateLine?: string;
+  /** 建议切换 profile（如 full + 无 UI → 建议用 api/audit） */
+  profileHint?: string;
 };
 
 export function buildPhaseGuide(
@@ -104,13 +106,13 @@ export function buildPhaseGuide(
   let qualityHints: string[] = [];
 
   if (artifactExists && phase.kind === "markdown") {
-    const v = validateArtifactFile(artifactPath, state.currentPhase);
+    const v = validateArtifactFile(artifactPath, state.currentPhase, state.profile);
     if (v) {
       qualityHints = v.hints;
       qualityReady = Object.values(v.scores).every(Boolean);
     }
   } else if (artifactExists && phase.kind === "code") {
-    const v = validateArtifactFile(artifactPath, state.currentPhase);
+    const v = validateArtifactFile(artifactPath, state.currentPhase, state.profile);
     if (v) {
       qualityHints = v.hints;
       qualityReady = Object.values(v.scores).every(Boolean);
@@ -228,6 +230,14 @@ export function buildPhaseGuide(
     });
   }
 
+  const profileWaste = (state.profile === "full" || state.profile === "ui") &&
+    !intentSignals.hasUi &&
+    state.currentPhase !== "ui-design" &&
+    !state.completedPhases.includes("ui-design");
+  const profileHint = profileWaste
+    ? `建议: 本变更无 UI，可用 --profile api（省 ui-design）或 --profile audit（省 ui-design + task + test）。下次 /taiyi:new 加 --profile audit`
+    : undefined;
+
   const auxNote = pending.length > 0 ? `（可选辅助：${pending.join(", ")}）` : "";
 
   if (!artifactExists) {
@@ -286,5 +296,6 @@ export function buildPhaseGuide(
     autoHarness: state.autoHarness ?? false,
     harness,
     healthGateLine,
+    profileHint,
   });
 }

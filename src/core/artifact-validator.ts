@@ -1,6 +1,6 @@
 import fs from "node:fs";
 import path from "node:path";
-import type { PhaseId, QualityScores } from "./types.js";
+import type { ChangeProfile, PhaseId, QualityScores } from "./types.js";
 import { getPhase } from "./phase-registry.js";
 import { evaluateMachineReview } from "./review-gate.js";
 import { isDevCompleteEvidence } from "./dev-complete.js";
@@ -123,9 +123,15 @@ function sectionBody(content: string, heading: string): string {
   return stripComments(body).trim();
 }
 
+/** 非代码类 profile —— dev 不要求 command/exitCode；task/test 放宽校验 */
+function isNonCodeProfile(profile: ChangeProfile | undefined): boolean {
+  return profile === "audit" || profile === "spike" || profile === "micro" || profile === "nano";
+}
+
 export function validateArtifactContent(
   phaseId: PhaseId,
   content: string,
+  profile?: ChangeProfile,
 ): { scores: QualityScores; hints: string[] } {
   const hints: string[] = [];
   if (isSeedTemplate(content)) {
@@ -145,19 +151,44 @@ export function validateArtifactContent(
   const text = stripComments(content);
 
   if (phaseId === "dev") {
-    const ok = isDevCompleteEvidence(text);
+    const relaxed = isNonCodeProfile(profile);
+    const hasCmd = /command:\s*\S+/i.test(text);
+    const hasExit = /exit(?:Code)?:\s*0\b/i.test(text);
+    const trimmed = text.trim();
+    const hasMarker =
+      trimmed.length >= 8 &&
+      (/complete|done|dev|通过|完成/i.test(trimmed) ||
+        trimmed.split("\n").some((l) => l.trim().length >= 4));
+    if (relaxed) {
+      // audit/spike/micro/nano: 只需完成标记 + 实质内容
+      const ok = hasMarker && text.length >= 16;
+      if (!ok) {
+        if (!hasMarker) {
+          hints.push(".dev-complete 需含完成标记（≥8 字符，含 complete/done/dev/通过 或有效说明行）");
+        }
+        if (text.length < 16) {
+          hints.push(".dev-complete 内容过短（需≥16 字符实质说明）");
+        }
+      }
+      return {
+        scores: {
+          completeness: ok,
+          consistency: ok,
+          verifiability: ok,
+          traceability: ok,
+          engineering_quality: ok,
+        },
+        hints,
+      };
+    }
+    const ok = hasMarker && hasCmd && hasExit;
     if (!ok) {
-      if (!/command:\s*\S+/i.test(text)) {
+      if (!hasCmd) {
         hints.push(".dev-complete 需含 command: <npm test 等可验证命令>");
       }
-      if (!/exit(?:Code)?:\s*0\b/i.test(text)) {
+      if (!hasExit) {
         hints.push(".dev-complete 需含 exitCode: 0（测试通过证据）");
       }
-      const trimmed = text.trim();
-      const hasMarker =
-        trimmed.length >= 8 &&
-        (/complete|done|dev/i.test(trimmed) ||
-          trimmed.split("\n").some((l) => l.trim().length >= 4));
       if (!hasMarker) {
         hints.push("创建 .dev-complete 标记（≥8 字符，含 complete/done/dev 或有效说明行）");
       }
@@ -184,6 +215,11 @@ export function validateArtifactContent(
   for (const rule of rules) {
     const body = sectionBody(content, rule.heading);
     const need = rule.minChars ?? 4;
+    // 非代码 profile 的 test 阶段：接受 Verification / Notes 替代 Test Plan
+    if (phaseId === "test" && isNonCodeProfile(profile) && body.length < need) {
+      const alt = sectionBody(content, "## Verification") || sectionBody(content, "## Notes");
+      if (alt.length >= need) continue;
+    }
     if (body.length < need) {
       sectionsOk = false;
       hints.push(`缺少或未填写: ${rule.heading}`);
@@ -208,7 +244,14 @@ export function validateArtifactContent(
     }
   }
   if (phaseId === "task") {
-    if (!taskHasTddPlan(content)) {
+    if (isNonCodeProfile(profile)) {
+      // audit/spike/micro/nano: 不要求 TDD，有切片列表即可
+      const hasSections = /##\s*(Slices|Tasks|Checklist)/i.test(content) && text.length >= 40;
+      if (!hasSections) {
+        placeholderContent = true;
+        hints.push("TASK 须含 Slices/Tasks/Checklist 节（非代码类 profile 不要求 TDD）");
+      }
+    } else if (!taskHasTddPlan(content)) {
       placeholderContent = true;
       hints.push("TASK 须注明测试先行（RED/测试文件/ Done when 含 test 命令）");
     }
@@ -299,10 +342,11 @@ export function validateArtifactContent(
 export function validateArtifactFile(
   artifactPath: string,
   phaseId: PhaseId,
+  profile?: ChangeProfile,
 ): { scores: QualityScores; hints: string[] } | null {
   if (!fs.existsSync(artifactPath)) return null;
   const content = fs.readFileSync(artifactPath, "utf8");
-  return validateArtifactContent(phaseId, content);
+  return validateArtifactContent(phaseId, content, profile);
 }
 
 export function artifactPathForPhase(changeDir: string, phaseId: PhaseId): string {

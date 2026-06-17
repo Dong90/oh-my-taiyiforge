@@ -64,7 +64,7 @@ const TaiyiForgePlugin: Plugin = async () => {
             .optional()
             .describe("Human-readable change title for templates"),
           profile: tool.schema
-            .enum(["full", "api", "ui", "lite", "spike", "micro"])
+            .enum(["full", "api", "ui", "lite", "spike", "micro", "nano", "audit"])
             .optional()
             .describe("full=9 phases; api=skip ui-design; lite=5 phases"),
           strictDev: tool.schema
@@ -92,7 +92,7 @@ const TaiyiForgePlugin: Plugin = async () => {
         args: {
           title: tool.schema.string().describe("Human-readable change title, e.g. User login"),
           profile: tool.schema
-            .enum(["full", "api", "ui", "lite", "spike", "micro"])
+            .enum(["full", "api", "ui", "lite", "spike", "micro", "nano", "audit"])
             .optional()
             .describe("full=9 phases; api=skip ui-design; lite=5 phases"),
           strictDev: tool.schema

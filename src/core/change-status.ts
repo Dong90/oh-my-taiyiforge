@@ -44,6 +44,7 @@ export function displayPhase(state: ChangeState): string {
 export function workflowPhaseLabelFromState(state: ChangeState): string {
   const n = expectedPhaseCount(state);
   if (n === 5) return "五阶段";
+  if (n === 6) return "六阶段";
   if (n === 9) return "九阶段";
   return `${n} 阶段`;
 }
