@@ -13,6 +13,11 @@ const E2E_JSON_ARTIFACTS: Record<Exclude<PhaseId, "dev">, object> = {
     success_criteria: [
       { id: "SC-01", description: "All nine phases complete with gates passing", is_checked: true },
     ],
+    evidence: {
+      command: "taiyi-forge.sh status --json --compact",
+      exitCode: 0,
+      capturedAt: "2026-06-17T12:00:00Z",
+    },
   },
   requirement: {
     title: "E2E Demo",
@@ -20,6 +25,11 @@ const E2E_JSON_ARTIFACTS: Record<Exclude<PhaseId, "dev">, object> = {
     acceptance_criteria: [
       { id: "AC-01", description: "State shows integration completed", is_checked: true },
     ],
+    evidence: {
+      command: "taiyi-forge.sh status --json --compact",
+      exitCode: 0,
+      capturedAt: "2026-06-17T12:00:00Z",
+    },
   },
   design: {
     title: "E2E Demo",
@@ -42,6 +52,11 @@ const E2E_JSON_ARTIFACTS: Record<Exclude<PhaseId, "dev">, object> = {
     test_plan: [
       { id: "T-01", description: "workflow smoke", status: "passed" as const },
     ],
+    evidence: {
+      command: "taiyi-forge.sh status --json --compact",
+      exitCode: 0,
+      capturedAt: "2026-06-17T12:00:00Z",
+    },
   },
   review: {
     title: "E2E Demo",

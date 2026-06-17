@@ -46,6 +46,6 @@ describe("project-config", () => {
     expect(resolveDefaultProfile(workspace)).toBe("micro");
     expect(deliveryGateEnabled(workspace)).toBe(false);
     expect(resolveDeliveryVerifyCmd(workspace)).toBe("npm run check");
-    expect(commitTrailersEnabled(workspace)).toBe(false);
+    expect(commitTrailersEnabled(workspace)).toBe(true);  // S2 修复:config 不允许 disable,只 env 关闭
   });
 });
