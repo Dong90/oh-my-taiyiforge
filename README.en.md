@@ -196,13 +196,14 @@ never dump full artifacts into chat.
 
 ```bash
 # Install from a GitHub tag into your project (works in any consumer repo, no npm required)
-npm install https://github.com/Dong90/oh-my-taiyiforge.git#v0.25.0
+# MUST use the git+ prefix — that makes npm clone the repo and run postinstall (npm run build)
+npm install 'git+https://github.com/Dong90/oh-my-taiyiforge.git#v0.25.0'
 # Or install globally and run bin via npx
-npm install -g https://github.com/Dong90/oh-my-taiyiforge.git#v0.25.0
-npx -p https://github.com/Dong90/oh-my-taiyiforge.git#v0.25.0 taiyi-forge-install --all
+npm install -g 'git+https://github.com/Dong90/oh-my-taiyiforge.git#v0.25.0'
+npx -p 'git+https://github.com/Dong90/oh-my-taiyiforge.git#v0.25.0' taiyi-forge-install --all
 ```
 
-> Equivalent to a normal npm install, but pinned to a GitHub release tag. Use `#v0.25.0`, `#main`, or any commit SHA. To bump versions later, just change the tag suffix.
+> The `git+` prefix is required (tarball URLs skip postinstall, so dist/ won't get built and bins will fail). Pin to a tag (`#v0.25.0`, `#v0.25.1`), branch (`#main`), or commit SHA.
 
 ### Option A · One-liner install (recommended, v0.24+)
 

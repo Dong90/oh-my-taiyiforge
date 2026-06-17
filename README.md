@@ -193,14 +193,15 @@ v28 umbrella 之外再添新的顶栏重复。
 
 ```bash
 # 直接从 GitHub tag 装到本地项目（任何用户工程里跑，不进 npm）
-npm install https://github.com/Dong90/oh-my-taiyiforge.git#v0.25.0
+# 必须用 git+ 前缀 —— 这样 npm 会 clone 仓库 + 跑 postinstall (npm run build)
+npm install 'git+https://github.com/Dong90/oh-my-taiyiforge.git#v0.25.0'
 # 或装到全局 / 用 npx 跑 bin
-npm install -g https://github.com/Dong90/oh-my-taiyiforge.git#v0.25.0
-npx -p https://github.com/Dong90/oh-my-taiyiforge.git#v0.25.0 taiyi-forge-install --all
+npm install -g 'git+https://github.com/Dong90/oh-my-taiyiforge.git#v0.25.0'
+npx -p 'git+https://github.com/Dong90/oh-my-taiyiforge.git#v0.25.0' taiyi-forge-install --all
 ```
 
-> 等价于 npm 安装，但用 GitHub release tag 锁定版本（`#v0.25.0` / `#main` / `#<commit-sha>` 都行）。
-> 想换版本只改 tag：`#v0.25.0` → `#v0.25.1`。
+> 必须用 `git+` 前缀（不是 tarball URL），npm 才会 clone 仓库并触发 postinstall 自动 build dist。
+> 想换版本只改 tag：`#v0.25.0` → `#v0.25.1` → `#main` → `#<commit-sha>` 都可以。
 
 ### 方式 A · 一行安装（推荐,v0.24+）
 
