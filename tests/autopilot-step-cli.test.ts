@@ -37,7 +37,12 @@ describe("autopilot + step CLI 链（lite · 夹具）", () => {
     ]);
     expect(init.code).toBe(0);
 
-    fs.writeFileSync(path.join(changeDir, "CHANGE.md"), E2E_ARTIFACTS.change, "utf8");
+    fs.writeFileSync(path.join(changeDir, "CHANGE.md"), E2E_ARTIFACTS.change.md, "utf8");
+    fs.writeFileSync(
+      path.join(changeDir, "change.json"),
+      JSON.stringify(E2E_ARTIFACTS.change.json, null, 2),
+      "utf8",
+    );
 
     const autopilot = runForge(REPO, workspace, ["autopilot", SLUG]);
     expect(autopilot.code).toBe(0);
@@ -77,7 +82,12 @@ describe("autopilot + step CLI 链（lite · 夹具）", () => {
 
     fs.writeFileSync(
       path.join(changeDir, "REQUIREMENT.md"),
-      E2E_ARTIFACTS.requirement,
+      E2E_ARTIFACTS.requirement.md,
+      "utf8",
+    );
+    fs.writeFileSync(
+      path.join(changeDir, "requirement.json"),
+      JSON.stringify(E2E_ARTIFACTS.requirement.json, null, 2),
       "utf8",
     );
 
