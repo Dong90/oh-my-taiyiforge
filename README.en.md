@@ -189,6 +189,20 @@ never dump full artifacts into chat.
 ## 4 · Quick Start
 
 > **Zero-build install**: v0.24.0+ supports `npx taiyi-forge-install --all` one-liner to all four harnesses without cloning the repo. Source install still available.
+>
+> **v0.25.0 GitHub install**: v0.25.x is not yet on npm (24h name reclaim lock after upstream unpublish). Install directly from the GitHub tag — see [Option A0](#option-a0--install-directly-from-github-new-in-v025-when-npm-is-unavailable).
+
+### Option A0 · Install directly from GitHub (new in v0.25, when npm is unavailable)
+
+```bash
+# Install from a GitHub tag into your project (works in any consumer repo, no npm required)
+npm install https://github.com/Dong90/oh-my-taiyiforge.git#v0.25.0
+# Or install globally and run bin via npx
+npm install -g https://github.com/Dong90/oh-my-taiyiforge.git#v0.25.0
+npx -p https://github.com/Dong90/oh-my-taiyiforge.git#v0.25.0 taiyi-forge-install --all
+```
+
+> Equivalent to a normal npm install, but pinned to a GitHub release tag. Use `#v0.25.0`, `#main`, or any commit SHA. To bump versions later, just change the tag suffix.
 
 ### Option A · One-liner install (recommended, v0.24+)
 
@@ -227,7 +241,7 @@ npm run walkthrough-e2e    # Nine-stage shell E2E + iron-triangle
 | [examples/browser-e2e-smoke](examples/browser-e2e-smoke/) | CI templates |
 | [examples/verification-suite](examples/verification-suite/) | Minimal integration demo |
 
-> Want `npm install oh-my-taiyiforge`? v0.24 is published to npm — install directly.
+> Want `npm install oh-my-taiyiforge`? For v0.25 install from GitHub for now (see [Option A0](#option-a0--install-directly-from-github-new-in-v025-when-npm-is-unavailable)). `npm i oh-my-taiyiforge` will resume once we re-publish to npm.
 
 ### Option D · Your first change (5 minutes)
 
