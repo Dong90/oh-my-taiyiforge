@@ -149,14 +149,15 @@ function seedPhaseArtifact(changeDir: string, phaseId: PhaseId): void {
     fs.writeFileSync(path.join(changeDir, ".dev-complete"), DEV_COMPLETE_EVIDENCE, "utf8");
     return;
   }
-  const body = E2E_ARTIFACTS[phaseId];
+  const { md, json } = E2E_ARTIFACTS[phaseId];
   const phase = getPhase(phaseId);
-  fs.writeFileSync(path.join(changeDir, phase.artifact), body, "utf8");
+  fs.writeFileSync(path.join(changeDir, phase.artifact), md, "utf8");
+  fs.writeFileSync(path.join(changeDir, `${phaseId}.json`), JSON.stringify(json, null, 2), "utf8");
 }
 
 function refreshReviewArtifact(changeDir: string): void {
   const reviewPath = path.join(changeDir, "REVIEW.md");
-  fs.writeFileSync(reviewPath, E2E_ARTIFACTS.review, "utf8");
+  fs.writeFileSync(reviewPath, E2E_ARTIFACTS.review.md, "utf8");
   const t = new Date(Date.now() + 2000);
   fs.utimesSync(reviewPath, t, t);
 }

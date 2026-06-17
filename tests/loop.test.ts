@@ -47,7 +47,7 @@ describe("loop-runner", () => {
     const changeDir = engine.changeDir("loop-demo");
     fs.writeFileSync(
       path.join(changeDir, "CHANGE.md"),
-      E2E_ARTIFACTS.change.replace(/E2E Demo/g, "Loop"),
+      E2E_ARTIFACTS.change.md.replace(/E2E Demo/g, "Loop"),
       "utf8",
     );
 

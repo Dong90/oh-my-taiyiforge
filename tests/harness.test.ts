@@ -14,7 +14,7 @@ import { E2E_ARTIFACTS } from "../src/core/e2e-fixtures.js";
 import { writeE2eArtifacts } from "../src/core/run-e2e-workflow.js";
 
 function writeChangeArtifact(dir: string, slug: string): void {
-  fs.writeFileSync(path.join(dir, "CHANGE.md"), E2E_ARTIFACTS.change.replace(/E2E Demo/g, slug), "utf8");
+  fs.writeFileSync(path.join(dir, "CHANGE.md"), E2E_ARTIFACTS.change.md.replace(/E2E Demo/g, slug), "utf8");
 }
 
 const GATES = {

@@ -34,14 +34,14 @@ export function writeE2eArtifacts(changeDir: string): void {
   for (const [phaseId, body] of Object.entries(E2E_ARTIFACTS)) {
     const phase = getPhase(phaseId as PhaseId);
     const file = path.join(changeDir, phase.artifact);
-    fs.writeFileSync(file, body, "utf8");
+    fs.writeFileSync(file, body.md, "utf8");
     // Write companion JSON for Zod validation
     const jsonObj = E2E_JSON[phaseId];
     if (jsonObj) fs.writeFileSync(path.join(changeDir, `${phaseId}.json`), JSON.stringify(jsonObj, null, 2));
     // Write hash snap for reverse-sync
     const snapDir = path.join(changeDir, ".taiyi", "snapshots");
     fs.mkdirSync(snapDir, { recursive: true });
-    const hash = crypto.createHash("sha256").update(body).digest("hex");
+    const hash = crypto.createHash("sha256").update(body.md).digest("hex");
     fs.writeFileSync(path.join(snapDir, `${phaseId}.hash`), hash);
   }
   fs.writeFileSync(path.join(changeDir, ".dev-complete"), DEV_COMPLETE_EVIDENCE, "utf8");
