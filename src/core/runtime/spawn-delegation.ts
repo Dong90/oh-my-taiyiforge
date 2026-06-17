@@ -1,8 +1,12 @@
 import type { PhaseId } from "../types.js";
 import { rolesForPhase } from "../agent-roles.js";
+import { type TokenBucket, defaultAgentBucket } from "./token-bucket.js";
 
-/** 对标 OMC spawn_agent 并发上限 */
-export const MAX_PARALLEL_AGENTS = 6;
+/** 对标 OMC spawn_agent 并发上限；可通过 TAIYI_MAX_PARALLEL_AGENTS 覆盖 */
+export const MAX_PARALLEL_AGENTS = (() => {
+  const env = parseInt(process.env.TAIYI_MAX_PARALLEL_AGENTS ?? "", 10);
+  return Number.isFinite(env) && env > 0 ? env : 6;
+})();
 
 export type SpawnWorker = {
   id: string;
@@ -79,6 +83,7 @@ export function formatSpawnPlanPlain(plan: SpawnPlan): string {
   const lines = [
     `Spawn 计划 · 最多 ${plan.maxParallel} 路并行（对标 OMC spawn_agent）`,
     `  slug: ${plan.slug} · 阶段: ${plan.phase}`,
+    `  ⚠ 限流: 令牌桶容量=3, 恢复=2/s · 并发上限可通过 TAIYI_MAX_PARALLEL_AGENTS 调整`,
     "",
   ];
   for (const w of plan.workers) {
