@@ -65,6 +65,7 @@ say ""
 
 # ─── §0 引擎就绪（v28 #11–13）───
 banner "§0 引擎就绪 · v28 #11 /taiyi:doctor · #12 /taiyi:audit · #13 /taiyi:verify"
+cd "$ROOT"  # 让 new/list 在主仓 cwd 跑,创建 .taiyi/changes/ 在主仓下
 run "v28 #11 /taiyi:doctor（engine: doctor --json --compact）" \
   bash "$ROOT/scripts/taiyi-forge.sh" doctor --json --compact
 run "v28 #12 /taiyi:audit（engine: audit --json --compact）" \
@@ -73,10 +74,10 @@ run "v28 #12 /taiyi:audit（engine: audit --json --compact）" \
 # ─── §1 主链 (6) ───
 banner "§1 Main chain (6) · v28 #1–6"
 run "v28 #1 /taiyi:new（engine: new）" \
-  bash "$ROOT/scripts/taiyi-forge.sh" new "demo: 跑全 28 v28 顶栏斜杠" --profile lite
+  bash "$ROOT/scripts/taiyi-forge.sh" new "demo: 跑全 28 v28 顶栏斜杠" --profile lite --force
 
 # 取真实生成的 slug（new 输出含 "变更: <slug>"）
-SLUG="$(bash "$ROOT/scripts/taiyi-forge.sh" list --all 2>&1 | awk 'NR==1{print $1}')"
+SLUG="$(bash "$ROOT/scripts/taiyi-forge.sh" list --all 2>&1 | head -1 | cut -f1)"
 say ""
 say "[SLUG 解析] 实际生成: $SLUG（new 输出 '变更: $SLUG'）"
 
