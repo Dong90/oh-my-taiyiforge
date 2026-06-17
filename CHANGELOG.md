@@ -1,5 +1,50 @@
 # Changelog
 
+## [0.26.0] - 2026-06-17
+
+### Added
+
+- **evidence 强校验**：`src/core/artifact-validator.ts` 在 change / requirement / test 三阶段,`success_criteria[].is_checked = true` 必须配 `evidence{command, exitCode:0, capturedAt}`。`ChangeSchema` / `RequirementSchema` / `TestSchema` 新增 `evidence?` 字段(共享 `EvidenceSchema`)。阻止"AC 全勾但实测走样"的假过门(#31)
+- **status 命令 5s 防抖**：`src/cli/taiyi.ts` status case 加 `(globalThis as any).__taiyiLastStatusCall` 时间戳,避免连按 N 次重复跑同一查询。`TAIYI_STATUS_DEBOUNCE=0` 可关闭(#31)
+- **profile 列表扩 5**：`scripts/taiyi-forge.sh` 白名单 +10 (flow / service / mvp / micro / nano / design-system / devops / ci-scenario / chat / code-review);`src/cli/taiyi.ts` 3 处 usage 文本 profile 列表扩 full / micro / nano / spike(#32)
+
+### Changed
+
+- **commit trailer 强 enable**：`src/core/gates/commit-trailer.ts` `commitTrailersEnabled()` 显式默认 `true`,删 `loadProjectConfig` bypass,只 env `TAIYI_COMMIT_TRAILERS=0` 关闭(#31)
+- **delivery-gate hint 加 trailer 模板**：`src/core/gates/delivery-gate.ts` 未提交文件时 hint 加 `git commit -m "..."` 含 `Taiyi-Change: <slug>` trailer 模板 + `/taiyi:commit <slug>` 推荐(#31)
+
+### Breaking Changes
+
+- **evidence 强校验**:未来 9 阶段变更在 change / requirement / test 阶段 `acceptance_criteria` 标 `is_checked=true` 时必填 `evidence` 字段,否则 `qualityReady=false`。`examples/full-flow-demo` 等 e2e fixture 已升级加 evidence 字段
+- **commitTrailersEnabled 强 enable**:`project config` 的 `commitTrailers: false` 不再生效(只 env `TAIYI_COMMIT_TRAILERS=0` 关闭)。所有新 commit 必须含 `Taiyi-Change: <slug>` trailer 才能过 integration
+
+### Tests
+
+- `tests/artifact-validator.test.ts` 新增 6 条单测(覆盖 is_checked + evidence / exitCode 必须 0 / capturedAt ISO)
+- `tests/commit-trailer.test.ts` 新增 2 条单测(默认 true + env 关闭)
+- `src/core/e2e-fixtures.ts` 升级:change / requirement / test 3 个 fixture 加 evidence 字段
+- `tests/project-config.test.ts` 期望值同步(S2 行为变化)
+- 完整 630/630 vitest passed,build 成功,`/taiyi:audit` PASS
+
+### Migration
+
+```bash
+# 已有 9 阶段变更,需补 evidence 字段
+# change.json / requirement.json / test.json 顶层加:
+"evidence": {
+  "command": "<真跑过的命令,如 npm test>",
+  "exitCode": 0,
+  "capturedAt": "<ISO 8601 时间>"
+}
+# 且 acceptance_criteria[].is_checked=true 的必须有 evidence
+
+# commit 缺 trailer,需 amend 或新 commit 加
+git commit --amend -m "..."
+# 末尾加:
+# Taiyi-Change: <slug>
+# Taiyi-Phase: <phase>
+```
+
 ## [0.24.0] - 2026-06-16
 
 ### Added
