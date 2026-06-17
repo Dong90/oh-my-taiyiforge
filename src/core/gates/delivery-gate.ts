@@ -138,13 +138,16 @@ export function evaluateDeliveryGate(
     : dirty;
   if (blockingDirty.length > 0) {
     const slugTag = options?.slug ? `[${options.slug}] ` : "";
+    const slugHint = options?.slug ?? "<slug>";
     return {
       passed: false,
       reason: `delivery.not-closed ${slugTag}${blockingDirty.length} 个未提交文件（本变更范围）`,
       hints: [
         `未提交: ${blockingDirty.slice(0, 8).join(", ")}${blockingDirty.length > 8 ? " …" : ""}`,
-        "先 git add + git commit（含 Taiyi-Change trailer），再 complete/continue integration",
-        "或 /taiyi:commit [slug] 生成带 trailer 的提交信息",
+        "必须含 trailer,示例:",
+        "  git add .",
+        `  git commit -m "feat: deliver ${slugHint} slice\n\nTaiyi-Change: ${slugHint}\nTaiyi-Phase: integration"`,
+        `或跑: taiyi-forge.sh commit ${slugHint} 生成带 trailer 的提交(推荐)`,
         "本地演示可设 TAIYI_DELIVERY_GATE=0（不推荐 CI）",
       ],
     };
