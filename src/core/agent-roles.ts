@@ -85,7 +85,7 @@ export const AGENT_ROLES: Record<string, AgentRoleDef> = {
     id: "security-reviewer",
     label: "安全审查",
     phases: ["review"],
-    load: ["/taiyi:security", "taiyi-review"],
+    load: ["/taiyi:test security", "taiyi-review"],
     when: "semgrep/trivy 与威胁面",
   },
   "code-reviewer": {
@@ -99,7 +99,7 @@ export const AGENT_ROLES: Record<string, AgentRoleDef> = {
     id: "qa-tester",
     label: "QA 走查",
     phases: ["test"],
-    load: ["/taiyi:gstack qa", "/taiyi:e2e", "taiyi-test"],
+    load: ["/taiyi:gstack qa", "/taiyi:test e2e", "taiyi-test"],
     when: "站点/E2E 手工+自动 QA",
   },
   writer: {

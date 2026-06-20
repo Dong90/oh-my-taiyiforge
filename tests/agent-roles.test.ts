@@ -26,9 +26,9 @@ const PROMPTS = new Set(
 );
 
 const SLASH_TO_PROMPT: Record<string, string> = {
-  "/taiyi:security": "taiyi-security",
+  "/taiyi:test security": "taiyi-test",
   "/taiyi:gstack qa": "taiyi-gstack-qa",
-  "/taiyi:e2e": "taiyi-e2e",
+  "/taiyi:test e2e": "taiyi-test",
   "/taiyi:commit": "taiyi-commit",
   "/taiyi:ship": "taiyi-ship",
   "/taiyi:land": "taiyi-land",

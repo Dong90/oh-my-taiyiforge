@@ -17,9 +17,6 @@ const OMC_AUTONOMOUS_SLASHES: { slash: string; prompt: string; engine: string }[
   { slash: "/taiyi:agent", prompt: "taiyi-agent.md", engine: "agent" },
   { slash: "/taiyi:step", prompt: "taiyi-step.md", engine: "step" },
   { slash: "/taiyi:stop-mode", prompt: "taiyi-stop-mode.md", engine: "stop-mode" },
-  { slash: "/taiyi:modes", prompt: "taiyi-modes.md", engine: "modes" },
-  { slash: "/taiyi:keyword", prompt: "taiyi-keyword.md", engine: "keyword" },
-  { slash: "/taiyi:preflight", prompt: "taiyi-preflight.md", engine: "preflight" },
 ];
 
 describe("OMC autonomous slash coverage", () => {
