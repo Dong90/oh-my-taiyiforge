@@ -11,7 +11,6 @@ const COMMANDS_YAML = path.join(REPO, "docs/taiyi/commands.yaml");
 const OMC_AUTONOMOUS_SLASHES: { slash: string; prompt: string; engine: string }[] = [
   { slash: "/taiyi:ralph", prompt: "taiyi-ralph.md", engine: "ralph" },
   { slash: "/taiyi:autopilot", prompt: "taiyi-autopilot.md", engine: "autopilot" },
-  { slash: "/taiyi:daemon", prompt: "taiyi-daemon.md", engine: "daemon run" },
   { slash: "/taiyi:team", prompt: "taiyi-team.md", engine: "team" },
   { slash: "/taiyi:ultrawork", prompt: "taiyi-ultrawork.md", engine: "ultrawork" },
   { slash: "/taiyi:agent", prompt: "taiyi-agent.md", engine: "agent" },
