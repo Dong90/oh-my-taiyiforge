@@ -24,11 +24,11 @@ export function taiyiControlPlaneBody(platform: "cursor" | "claude"): string {
   return `## 原则（对齐 oh-my-codex / omc.sh）
 
 1. **聊天里**：加载 \`taiyi-*\` 阶段 Skill、Superpowers、gstack 写工件与评审。
-2. **引擎过关**：用户说 **/taiyi:new**、**/taiyi:continue**、**/taiyi:apply**、**/taiyi:archive**、**/taiyi:cancel**、**/taiyi:handoff**（Codex：**$taiyi-new** 等），你用 **终端工具** 代跑 \`scripts/taiyi-forge.sh\`。
+2. **引擎过关**：用户说 **/taiyi:new**、**/taiyi:continue**、**/taiyi:apply**、**/taiyi:archive**、**/taiyi:cancel**、**/taiyi:pause**（Codex：**$taiyi-new** 等），你用 **终端工具** 代跑 \`scripts/taiyi-forge.sh\`。
 3. **禁止**让用户手打长 shell 路径；**禁止**未执行过关就声称阶段已完成。
 4. **一步一 continue**：只写当前阶段工件；**禁止**跳步创建后续阶段 md 或改业务代码（dev 前）。
 5. **以 /taiyi:status 为准**：文件写了但 status 未就绪 → 跑 /taiyi:status 看「已自动对齐 / 顺序冲突」提示，勿重复劳动。
-6. **跨会话**：暂停前 /taiyi:handoff；恢复先 /taiyi:status。
+6. **跨会话**：暂停前 /taiyi:pause；恢复先 /taiyi:status。
 7. **推荐斜杠**：每条职责一个入口；重复别名已移除。见 \`docs/taiyi/canonical-commands.md\` 与 \`commands.yaml\` → \`canonical_commands\`。
 ${hookLine}
 
@@ -50,7 +50,7 @@ ${chatIntro}
 
 **主流程：** /taiyi:new · /taiyi:status · /taiyi:continue · /taiyi:apply · /taiyi:archive
 
-**常用辅助：** /taiyi:doctor · /taiyi:audit · /taiyi:verify · /taiyi:list · /taiyi:check · /taiyi:sync · /taiyi:handoff · /taiyi:cancel · /taiyi:loop · /taiyi:write · /taiyi:feature · /taiyi:bug · /taiyi:ralph · /taiyi:autopilot · /taiyi:team · /taiyi:ultrawork · /taiyi:agent · /taiyi:review-loop · /taiyi:review-check · /taiyi:token *
+**常用辅助：** /taiyi:doctor · /taiyi:audit · /taiyi:verify · /taiyi:list · /taiyi:check · /taiyi:sync · /taiyi:pause · /taiyi:handoff · /taiyi:cancel · /taiyi:write · /taiyi:feature · /taiyi:bug · /taiyi:ralph · /taiyi:autopilot · /taiyi:team · /taiyi:ultrawork · /taiyi:agent · /taiyi:review-loop · /taiyi:review-check · /taiyi:token *
 
 **引擎斜杠（原 engine-only）：** /taiyi:init · /taiyi:complete · … · /taiyi:ci platform · /taiyi:ci prompt
 

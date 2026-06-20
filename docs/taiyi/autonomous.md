@@ -51,7 +51,7 @@ scripts/taiyi-forge.sh daemon status my-feature
 | `TAIYI_DAEMON_INTERVAL_MS` | 0 | 轮间 sleep（秒级取整） |
 | `TAIYI_AUTO_HUMAN` | — | CI 时可自动过 change/design/review 人工门 |
 
-与 `/taiyi:autopilot` + 聊天内 `/taiyi:loop` 的区别：**daemon 在终端常驻循环**，阻塞时会 **exec** codex/claude/cursor，而不是等用户在 IDE 里继续聊。
+与 `/taiyi:autopilot` + 聊天内 `/taiyi:continue xN` 的区别：**daemon 在终端常驻循环**，阻塞时会 **exec** codex/claude/cursor，而不是等用户在 IDE 里继续聊。
 
 ## 与 OMC 的差异
 

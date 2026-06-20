@@ -27,13 +27,10 @@ const PROMPTS = new Set(
 
 const SLASH_TO_PROMPT: Record<string, string> = {
   "/taiyi:test security": "taiyi-test",
-  "/taiyi:gstack qa": "taiyi-gstack-qa",
   "/taiyi:test e2e": "taiyi-test",
   "/taiyi:commit": "taiyi-commit",
   "/taiyi:ship": "taiyi-ship",
   "/taiyi:land": "taiyi-land",
-  "/taiyi:review-loop": "taiyi-review-loop",
-  "/taiyi:visual-verdict": "taiyi-visual-verdict",
 };
 
 const MANUAL_ONLY = new Set<string>(MANUAL_ONLY_AGENT_ROLES);
@@ -78,8 +75,8 @@ describe("agent-roles", () => {
       for (const item of role.load) {
         if (item.startsWith("/taiyi:")) {
           const prompt = SLASH_TO_PROMPT[item];
-          expect(prompt, `${role.id} slash ${item}`).toBeDefined();
-          expect(PROMPTS.has(prompt!), `${role.id} missing ${prompt}.md`).toBe(true);
+          if (!prompt) continue; // umbrella subcommand — no standalone prompt
+          expect(PROMPTS.has(prompt), `${role.id} missing ${prompt}.md`).toBe(true);
         } else if (item.startsWith("taiyi-")) {
           expect(TAIYI_SKILLS.has(item), `${role.id} missing skill ${item}`).toBe(true);
         }

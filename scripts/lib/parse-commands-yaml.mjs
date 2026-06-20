@@ -257,11 +257,12 @@ export function validateV28CatalogSync(yaml, sections) {
   const canonical = parseCanonicalV28Slashes(yaml).map(normalizeCatalogSlash);
   const recommended = (sections.recommended_v28 ?? []).map(normalizeCatalogSlash);
 
-  if (canonical.length !== 27) {
-    errors.push(`canonical_v28 应有 28 条 slash，实际 ${canonical.length}`);
+  const expected = 29;
+  if (canonical.length !== expected) {
+    errors.push(`canonical_v28 应有 ${expected} 条 slash，实际 ${canonical.length}`);
   }
-  if (recommended.length !== 27) {
-    errors.push(`slash_catalog.recommended_v28 应有 28 条，实际 ${recommended.length}`);
+  if (recommended.length !== expected) {
+    errors.push(`slash_catalog.recommended_v28 应有 ${expected} 条，实际 ${recommended.length}`);
   }
   const a = [...canonical].sort();
   const b = [...recommended].sort();
@@ -322,7 +323,7 @@ export function parseSlashCatalogLists(yaml) {
       if (section && !sections[section]) sections[section] = [];
       continue;
     }
-    const item = line.match(/^\s{6,10}- (\/taiyi:[^\s#]+(?:\s[^\s#]+)?)\s*$/);
+    const item = line.match(/^\s{6,10}- "?(\/taiyi:\S+(?:\s+\S+)*)"?\s*$/);
     if (item && section) {
       if (!sections[section]) sections[section] = [];
       sections[section].push(item[1].trim());

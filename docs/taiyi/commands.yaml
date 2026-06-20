@@ -78,12 +78,12 @@ profiles:
         meaning: 取消进行中变更（aborted，目录保留）
         when: 走错路、想重新开始
 
-      - chat: "/taiyi:handoff [slug] [note]"
-        codex: "$taiyi-handoff"
-        engine: "taiyi-forge.sh handoff [slug] [note]"
+      - chat: "/taiyi:pause [slug] [--resume] [note]"
+        codex: "$taiyi-pause"
+        engine: "taiyi-forge.sh pause [slug] [note]"
         meaning: |
           写 HANDOFF.md 快照（对标 OMC notepad / gstack checkpoint）。
-          不 complete 任何阶段；下一会话先 /taiyi:status。
+          不 complete 任何阶段；恢复用 /taiyi:pause --resume。
         when: 暂停工作、换会话、上下文将满
 
       - chat: "/taiyi:doctor"
@@ -118,10 +118,12 @@ profiles:
         when: review 前、harness 推荐、medium/high complexity 在 review 过关前必选
 
 
-      - chat: "/taiyi:list"
+      - chat: "/taiyi:list [--all] [--dashboard]"
         codex: "$taiyi-list"
-        engine: "taiyi-forge.sh ls"
-        meaning: 列出所有变更及阶段进度
+        engine: "taiyi-forge.sh list [--all] [--dashboard]"
+        meaning: |
+          列出所有变更及阶段进度。
+          --dashboard: 显示里程碑仪表盘（原 /taiyi:milestone）
         when: 多变更并行时必须（否则 status/continue 无法推断 slug）
 
 
@@ -195,6 +197,31 @@ profiles:
         when: 按阶段并行专 Agent
 
 
+      - chat: "/taiyi:ultrawork [slug]"
+        codex: "$taiyi-ultrawork"
+        engine: "taiyi-forge.sh ultrawork [slug]"
+        meaning: 高吞吐并行 Task 切片执行
+        when: TASK.md 就绪后
+
+      - chat: "/taiyi:agent <role> [slug]"
+        codex: "$taiyi-agent"
+        engine: "taiyi-forge.sh agent [slug]"
+        meaning: 加载原生 specialist Agent 角色协议
+        when: 需特定角色协助
+
+      - chat: "/taiyi:step [slug]"
+        codex: "$taiyi-step"
+        engine: "taiyi-forge.sh step [slug]"
+        meaning: 单次 mode step（ralph verify / autopilot continue）
+        when: 手动推进一回合
+
+      - chat: "/taiyi:stop-mode [slug]"
+        codex: "$taiyi-stop-mode"
+        engine: "taiyi-forge.sh stop-mode [slug]"
+        meaning: 取消活跃 runtime mode
+        when: 需停止 ralph/autopilot/ultrawork/team
+
+
       - chat: "/taiyi:write [slug]"
         codex: "$taiyi-write"
         engine: "taiyi-forge.sh write [slug]"
@@ -204,15 +231,6 @@ profiles:
         when: 任意规划/实现阶段写工件
 
 
-      - chat: "/taiyi:loop [slug] [xN]"
-        codex: "$taiyi-loop"
-        engine: "taiyi-forge.sh loop [slug] [xN]"
-        meaning: |
-          循环 continue（默认每轮最多 20 次），不写工件/代码。
-          change/design/review 人工门会硬阻塞，须单独 continue --approver，loop 无法一路跑到 archive。
-          其余阶段阻塞后补工件/实现，再调 loop。
-        when: 自动推进非人工门阶段；不能替代人工审批
-
   engine_only:
     description: 无独立聊天斜杠的引擎子命令 — 见 legacy_cli；脚本/CI 仍直接调用 taiyi-forge.sh
     note: 聊天入口以 canonical_commands 为准
@@ -221,7 +239,7 @@ profiles:
     description: 每条职责一个推荐斜杠；重复别名已移除（引擎 CLI legacy 仍可用，见 legacy_cli）
     version: 28
     map:
-      handoff: /taiyi:handoff
+      pause: /taiyi:pause
       commit: /taiyi:commit
       status: /taiyi:status
       continue: /taiyi:continue
@@ -252,9 +270,8 @@ profiles:
       session:
         count: 4
         commands:
-          - slash: /taiyi:handoff
-            replaces: [pause]
-          - slash: /taiyi:resume
+          - slash: /taiyi:pause
+          - slash: /taiyi:pause --resume
           - slash: /taiyi:cancel
           - slash: /taiyi:list
             cli_extras: ["list --archived", "list --all", "prune --aborted"]
@@ -294,6 +311,12 @@ profiles:
           - slash: /taiyi:explore
             phase: change
             loads: superpowers/brainstorming + taiyi-change
+          - slash: "/taiyi:tdd plan|dev"
+            note: TDD 模式（plan=测试计划，dev=红绿重构）
+          - slash: "/taiyi:flow <verb> | <slug>"
+            note: 按场景跳过九阶段（bug→lite，quick→micro）
+            phase: change
+            loads: superpowers/brainstorming + taiyi-change
       umbrellas:
         count: 6
         commands:
@@ -329,7 +352,6 @@ profiles:
             prompt_file: "prompts/taiyi-mode.md"
           - slash: "/taiyi:workflow plan|ralplan|loop|ccg|sciomc|deepinit|remember|ultraqa|…"
             legacy_map:
-              loop: /taiyi:loop
               external-context: /taiyi:external-context
               deep-interview: /taiyi:deep-interview
               visual-verdict: /taiyi:visual-verdict
@@ -350,8 +372,8 @@ profiles:
         - /taiyi:apply
         - /taiyi:archive
       session:
-        - /taiyi:handoff
-        - /taiyi:resume
+        - /taiyi:pause
+        - /taiyi:pause --resume
         - /taiyi:cancel
         - /taiyi:list
       triage:
@@ -368,6 +390,9 @@ profiles:
         - /taiyi:gstack <skill>
         - /taiyi:sp <skill>
       phase_shortcuts:
+        - /taiyi:explore
+        - "/taiyi:tdd plan|dev"
+        - "/taiyi:flow <verb> | <slug>"
       umbrellas:
         - /taiyi:token status|record|scan|compress
         - /taiyi:test smoke|e2e|qa|ui|security
@@ -381,7 +406,6 @@ profiles:
         - /taiyi:write
       auxiliary:
         - /taiyi:health
-        - /taiyi:loop
         - /taiyi:review-loop
         - /taiyi:review-check
         - /taiyi:ralph
@@ -392,6 +416,10 @@ profiles:
         - /taiyi:ai-slop-cleaner
         - /taiyi:ecomode
         - /taiyi:team
+        - /taiyi:ultrawork
+        - /taiyi:agent
+        - /taiyi:step
+        - /taiyi:stop-mode
     opencode_tools:
       note: OpenCode 无斜杠菜单，用 taiyi_* 插件工具；与 slash 一一对应
       mode_tools:
@@ -448,7 +476,7 @@ profiles:
         gstack: "任意 gstack Skill（design-shotgun · autoplan · canary · gstack-upgrade …）"
       - chat: "/taiyi:sp <skill>"
         superpowers: "任意 Superpowers Skill（writing-skills · brainstorming …）"
-      - chat: "/taiyi:resume [slug]"
+      - chat: "/taiyi:resume [slug] (legacy — 请用 /taiyi:pause --resume)"
         engine: "read HANDOFF.md + status"
 
   repeat_suffix:
@@ -457,7 +485,6 @@ profiles:
       - "/taiyi:continue x3"
       - "/taiyi:apply x2"
       - "/taiyi:check x2"
-      - "/taiyi:loop x10"
     engine: "taiyi-forge.sh <cmd> [slug] xN 或 --times N"
 
   expanded:
@@ -466,14 +493,14 @@ profiles:
         engine: "taiyi-forge.sh doctor"
 
 legacy_aliases:
-  shell: [done, next, n, go, ls, check, sync, pause, guide, commit-trailers, change, requirement, design, ui-design, task, dev, test, review, integration]
+  shell: [done, next, n, go, ls, check, sync, handoff, pause, guide, commit-trailers, change, requirement, design, ui-design, task, dev, test, review, integration]
   chat: ["/tf new", "/tf next", "/tf done"]
   note: "引擎 CLI 仍可用；聊天以 canonical_commands 为准"
 
 legacy_cli:
   description: 无聊天斜杠的引擎子命令（脚本/CI/MCP）
   replaces:
-    pause: handoff
+    handoff: pause
     commit-trailers: /taiyi:commit
     state: "status --json 或 MCP taiyi_state_get_status"
     state-read: "MCP taiyi_state_read 或读 state.json"

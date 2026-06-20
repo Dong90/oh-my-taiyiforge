@@ -1,9 +1,9 @@
 /** 用户面斜杠命令 */
 export function loopSlash(slug?: string, times?: number): string {
   if (times && times > 1) {
-    return slug ? `/taiyi:loop ${slug} x${times}` : `/taiyi:loop x${times}`;
+    return slug ? `/taiyi:continue ${slug} x${times}` : `/taiyi:continue x${times}`;
   }
-  return slug ? `/taiyi:loop ${slug}` : "/taiyi:loop";
+  return slug ? `/taiyi:continue ${slug}` : "/taiyi:continue";
 }
 
 export function withRepeatSuffix(base: string, times: number): string {

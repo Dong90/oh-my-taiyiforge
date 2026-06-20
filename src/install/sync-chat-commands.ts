@@ -13,7 +13,7 @@ export const CURSOR_COMMAND_MARKER = "TAIYI-FORGE:CURSOR-COMMAND";
 /** v28 顶栏 28 提示词 — 默认只同步这 28 个到 IDE 菜单。设 TAIYI_FORGE_ALL_PROMPTS=1 恢复全量同步。 */
 export const V28_CANONICAL_PROMPTS: ReadonlySet<string> = new Set([
   "taiyi-new.md", "taiyi-status.md", "taiyi-write.md", "taiyi-continue.md", "taiyi-apply.md", "taiyi-archive.md",
-  "taiyi-handoff.md", "taiyi-resume.md", "taiyi-cancel.md", "taiyi-list.md",
+  "taiyi-pause.md", "taiyi-resume.md", "taiyi-cancel.md", "taiyi-list.md",
   "taiyi-doctor.md", "taiyi-audit.md", "taiyi-verify.md",
   "taiyi-commit.md", "taiyi-ship.md", "taiyi-land.md", "taiyi-release.md",
   "taiyi-gstack.md", "taiyi-sp.md",

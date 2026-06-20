@@ -200,6 +200,8 @@ export function taiyiNew(
     auto?: boolean;
     noAuto?: boolean;
     force?: boolean;
+    /** 显式指定 slug（不 auto-slugify） */
+    explicitSlug?: string;
   },
 ) {
   const trimmed = title.trim();
@@ -209,7 +211,7 @@ export function taiyiNew(
   const harnessArgs: string[] = [];
   if (options?.auto) harnessArgs.push("--auto");
   if (options?.noAuto) harnessArgs.push("--no-auto");
-  const slug = slugifyTitle(trimmed);
+  const slug = options?.explicitSlug ?? slugifyTitle(trimmed);
   return taiyiInit(workspaceDir, slug, {
     title: trimmed,
     profile: options?.profile,

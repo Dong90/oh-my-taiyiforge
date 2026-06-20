@@ -83,7 +83,7 @@ TaiyiForge — 推荐 /taiyi:* 斜杠（Agent 代跑本脚本）
 
 常用:
   /taiyi:doctor  /taiyi:audit  /taiyi:verify  /taiyi:list  /taiyi:check
-  /taiyi:sync  /taiyi:handoff  /taiyi:cancel  /taiyi:loop
+  /taiyi:sync  /taiyi:pause  /taiyi:cancel
   /taiyi:review-loop  /taiyi:feature  /taiyi:bug  /taiyi:ui-test
   /taiyi:ralph  /taiyi:autopilot  /taiyi:daemon  /taiyi:team  /taiyi:ultrawork  /taiyi:agent
   /taiyi:run  /taiyi:browser-smoke  /taiyi:help
@@ -117,7 +117,7 @@ case "$cmd" in
     run_taiyi cancel "$@"
     ;;
   handoff|pause)
-    run_taiyi handoff "$@"
+    run_taiyi pause "$@"
     ;;
   status)
     run_taiyi status "$@"

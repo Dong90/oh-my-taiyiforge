@@ -47,7 +47,7 @@ function attemptContinueOnce(
     return {
       advanced: false,
       phase: phaseId,
-      message: `阶段 ${phaseId} 为人工门，/taiyi:loop 不能自动过关。工件就绪后请: scripts/taiyi-forge.sh continue ${slug} --approver "你的名字"\n${hint}`,
+      message: `阶段 ${phaseId} 为人工门，/taiyi:continue 不能自动过关。工件就绪后请: scripts/taiyi-forge.sh continue ${slug} --approver "你的名字"\n${hint}`,
     };
   }
 

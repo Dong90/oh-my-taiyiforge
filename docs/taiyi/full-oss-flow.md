@@ -181,7 +181,7 @@ harness <slug>           # 看 §1 铁三角 + §2 辅助 + §3 主 Skill
 → 重复至 integration
 ```
 
-或 `/taiyi:loop` 循环推进。
+或 `/taiyi:continue xN` 循环推进。
 
 ---
 

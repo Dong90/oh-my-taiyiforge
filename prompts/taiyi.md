@@ -14,7 +14,7 @@ User invoked TaiyiForge. Map `$ARGUMENTS` or the user's `/taiyi:*` to `scripts/t
 | `/taiyi:apply` | `apply` |
 | `/taiyi:archive` | `archive` |
 | `/taiyi:cancel` | `cancel` |
-| `/taiyi:handoff` | `handoff` |
+| `/taiyi:pause` | `pause` |
 | `/taiyi:write` | `write` (nine-stage artifact writes) |
 | `/taiyi:list` | `list` |
 | `/taiyi:check` | `check` (= harness) |
@@ -28,7 +28,7 @@ User invoked TaiyiForge. Map `$ARGUMENTS` or the user's `/taiyi:*` to `scripts/t
 | `/taiyi:health` | `health` |
 | `/taiyi:sync` | `sync` |
 | `/taiyi:run` | `walkthrough` |
-| `/taiyi:loop` | `loop` |
+| ~~`/taiyi:loop`~~ | `continue xN` |
 | `/taiyi:review-loop` | `review-loop` |
 | `/taiyi:review-check` | `review-check` |
 | `/taiyi:token status\|record\|scan\|compress` | `token …` |

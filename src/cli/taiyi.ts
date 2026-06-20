@@ -18,7 +18,18 @@ import {
   taiyiHarness, taiyiHealth, taiyiList, taiyiMilestone, taiyiNext,
   taiyiResume, taiyiStatus, taiyiCiVerify, taiyiCiPlatform, taiyiCiPrompt,
   taiyiToken, taiyiWrite, taiyiChatSlashOnlyHint,
+  taiyiAgent, taiyiTeam, taiyiUltrawork,
+  taiyiHarnessCheck, taiyiMarkAux,
+  taiyiRalph,
+  taiyiAutopilot,
+  taiyiAssess, taiyiModes, taiyiStep, taiyiStopMode,
+  taiyiRemember, taiyiKeyword,
+  taiyiReviewCheck, taiyiReviewLoop,
+  taiyiCommitTrailers, taiyiSyncOpenspec,
+  taiyiFeature, taiyiBug, taiyiPrune,
+  taiyiTrimAhead,
 } from "../plugin/handlers.js";
+import { runWalkthrough, formatWalkthroughPlain } from "../core/walkthrough.js";
 import type { CiPlatformId } from "../core/ci-platform.js";
 import { parseRepeatCount } from "../core/repeat-parse.js";
 import { formatArchivePlain } from "../core/format-integration.js";
@@ -27,6 +38,7 @@ import {
   runContinueRepeat, runLoopUntilComplete,
 } from "../core/loop-runner.js";
 import { SLASH_ONLY, LEGACY_REDIRECT } from "../core/command-registry.js";
+import { runDaemonLoop, readDaemonState, formatDaemonResultPlain } from "../core/daemon-runner.js";
 
 const workspaceDir = process.cwd();
 const taiyiRoot = resolveTaiyiRoot(workspaceDir);
@@ -38,7 +50,7 @@ function usage(): void {
 
 日常:  new <t> [--profile p]  |  status [slug]  |  write [slug]
        continue [slug] [xN]   |  apply [slug]   |  loop [slug] [xN]
-       list [--all]            |  milestone       |  archive [slug]
+       list [--all] [--dashboard]  |  archive [slug]
        cancel [slug]           |  handoff [slug]  |  resume [slug]
 
 排查:  doctor [--strict] [--json]  |  audit [slug]  |  verify [slug]
@@ -49,11 +61,18 @@ function usage(): void {
        /taiyi:mode ...  /taiyi:workflow ...  /taiyi:diagram ...
 
 Profile: full | api | ui | lite | spike | micro | nano
-Legacy: init→new · done→continue · next→status · pause→handoff
+Legacy: init→new · done→continue · next→status · handoff→pause
 `);
 }
 
-const CLI_ALIASES: Record<string, string> = { pause: "handoff" };
+const CLI_ALIASES: Record<string, string> = {
+  handoff: "pause",
+  ls: "list",
+  run: "walkthrough",
+  n: "next",
+  go: "next",
+  done: "continue",
+};
 function normalizeCliCommand(raw?: string): string | undefined {
   if (!raw) return undefined;
   return CLI_ALIASES[raw] ?? raw;
@@ -179,24 +198,39 @@ const handlers: Record<string, CliHandler> = {
   },
   verify: () => runVerifyCommand(args),
   list: (a) => {
+    if (a.includes("--dashboard")) {
+      const r = taiyiMilestone(workspaceDir, { includeArchived: a.includes("--all") || a.includes("--archived") }, !jsonMode);
+      if (!r.ok) { console.error(r.error); process.exit(1); }
+      if (jsonMode) console.log(JSON.stringify(r.report, null, 2));
+      else console.log(r.text);
+      return;
+    }
     const r = taiyiList(workspaceDir, { includeAll: a.includes("--all"), includeArchived: a.includes("--archived") });
     if (jsonMode) console.log(JSON.stringify(r, null, 2));
     else console.log(formatChangeListPlain(r.changes));
   },
-  milestone: (a) => {
-    const r = taiyiMilestone(workspaceDir, { includeArchived: a.includes("--all") || a.includes("--archived") }, !jsonMode);
-    if (!r.ok) { console.error(r.error); process.exit(1); }
-    if (jsonMode) console.log(JSON.stringify(r.report, null, 2));
-    else console.log(r.text);
-  },
-  new: (a) => {
-    const title = stripFlags(a).join(" ").trim();
-    if (!title) { console.error("用法: new <标题> [--profile full|lite|api|micro|nano|spike|ui]"); process.exit(1); }
-    const slug = slugifyTitle(title);
+  init: (a) => {
+    const titleIdx = a.indexOf("--title");
+    const title = titleIdx >= 0 && a[titleIdx + 1] ? a[titleIdx + 1] : stripFlags(a).join(" ").trim() || "unnamed";
+    const slug = a[0] && !a[0].startsWith("--") ? a[0]! : slugifyTitle(title);
     try {
       const result = engine.initChange(slug, { title, templatesDir, profile: resolveProfileFromArgs(a) ?? resolveDefaultProfile(workspaceDir), strictDev: a.includes("--strict-dev"), autoHarness: resolveAutoHarness(a, false), force: a.includes("--force") });
       if (jsonMode) console.log(JSON.stringify(result, null, 2));
       else { const guide = buildPhaseGuide(taiyiRoot, slug, result, workspaceDir); console.log("变更: " + slug + "\n"); console.log(formatGuidePlain(guide)); }
+    } catch (e) { console.error(e instanceof Error ? e.message : String(e)); process.exit(1); }
+  },
+  new: (a) => {
+    const positional = stripFlags(a);
+    const first = positional[0] ?? "";
+    const firstIsSlug = positional.length >= 2 && /^[a-z0-9][a-z0-9-]{0,47}$/.test(first);
+    const slug = firstIsSlug ? first : null;
+    const title = firstIsSlug ? positional.slice(1).join(" ").trim() : positional.join(" ").trim();
+    if (!title) { console.error("用法: new <slug> <标题> 或 new <标题> [--profile full|lite|api|micro|nano|spike|ui]"); process.exit(1); }
+    const resolvedSlug = slug ?? slugifyTitle(title);
+    try {
+      const result = engine.initChange(resolvedSlug, { title, templatesDir, profile: resolveProfileFromArgs(a) ?? resolveDefaultProfile(workspaceDir), strictDev: a.includes("--strict-dev"), autoHarness: resolveAutoHarness(a, false), force: a.includes("--force") });
+      if (jsonMode) console.log(JSON.stringify(result, null, 2));
+      else { const guide = buildPhaseGuide(taiyiRoot, resolvedSlug, result, workspaceDir); console.log("变更: " + resolvedSlug + "\n"); console.log(formatGuidePlain(guide)); }
     } catch (e) { console.error(e instanceof Error ? e.message : String(e)); process.exit(1); }
   },
   cancel: (a) => {
@@ -261,9 +295,17 @@ const handlers: Record<string, CliHandler> = {
     else if (compactMode) console.log(formatStatusCompact(r.guide));
     else console.log(formatStatusPlain(r.guide));
   },
-  handoff: (a) => {
+  pause: (a) => {
     const { positional } = parseRepeatCount(stripFlags(a));
     const slug = positional[0];
+    const resumeFlag = a.includes("--resume");
+    if (resumeFlag) {
+      const r = taiyiResume(workspaceDir, slug, !jsonMode);
+      if (!r.ok) { console.error(r.error); process.exit(1); }
+      if (jsonMode) console.log(JSON.stringify(r, null, 2));
+      else console.log(r.text);
+      return;
+    }
     const note = positional.slice(1).join(" ").trim() || undefined;
     const r = taiyiHandoff(workspaceDir, slug, note);
     if (!r.ok) { console.error(r.error); process.exit(1); }
@@ -312,6 +354,241 @@ const handlers: Record<string, CliHandler> = {
     if (!r.ok) { console.error("error" in r ? r.error : r.text); process.exit(1); }
     if (jsonMode) console.log(JSON.stringify(r, null, 2));
     else if ("text" in r && r.text) console.log(r.text);
+  },
+  walkthrough: (a) => {
+    const { positional } = parseRepeatCount(stripFlags(a));
+    const slug = positional[0] || undefined;
+    const profile = resolveProfileFromArgs(a);
+    const r = runWalkthrough(workspaceDir, { slug, profile });
+    if (jsonMode) console.log(JSON.stringify(r, null, 2));
+    else console.log(formatWalkthroughPlain(r));
+    if (!r.ok) process.exit(1);
+  },
+  agent: (a) => {
+    const { positional } = parseRepeatCount(stripFlags(a));
+    const role = positional[0] || "executor";
+    const slug = positional[1];
+    const r = taiyiAgent(workspaceDir, role, slug);
+    if (jsonMode) console.log(JSON.stringify(r, null, 2));
+    else if ("text" in r && r.text) console.log(r.text);
+    if (!r.ok) process.exit(1);
+  },
+  team: (a) => {
+    const { positional } = parseRepeatCount(stripFlags(a));
+    const slug = positional[0];
+    const r = taiyiTeam(workspaceDir, slug);
+    if (jsonMode) console.log(JSON.stringify(r, null, 2));
+    else if ("text" in r && r.text) console.log(r.text);
+    if (!r.ok) process.exit(1);
+  },
+  ultrawork: (a) => {
+    const { positional } = parseRepeatCount(stripFlags(a));
+    const slug = positional[0];
+    const r = taiyiUltrawork(workspaceDir, slug);
+    if (jsonMode) console.log(JSON.stringify(r, null, 2));
+    else if ("text" in r && r.text) console.log(r.text);
+    if (!r.ok) process.exit(1);
+  },
+  "harness-check": (a) => {
+    const { positional } = parseRepeatCount(stripFlags(a));
+    const slug = positional[0];
+    const hookRef = positional[1];
+    if (!slug || !hookRef) { console.error("[taiyi] 用法: harness-check <slug> <hook-ref>"); process.exit(1); }
+    const r = taiyiHarnessCheck(workspaceDir, slug, hookRef);
+    if (jsonMode) console.log(JSON.stringify(r, null, 2));
+    else if ("text" in r && r.text) console.log(r.text);
+    if (!r.ok) process.exit(1);
+  },
+  "mark-aux": (a) => {
+    const { positional } = parseRepeatCount(stripFlags(a));
+    const slug = positional[0];
+    const skillId = positional[1];
+    if (!slug || !skillId) { console.error("[taiyi] 用法: mark-aux <slug> <skill-id>"); process.exit(1); }
+    const r = taiyiMarkAux(workspaceDir, slug, skillId);
+    if (jsonMode) console.log(JSON.stringify(r, null, 2));
+    else if (r.ok) console.log(`已标记 auxiliary skill: ${skillId}`);
+    else console.error(r.error ?? "未知错误");
+    if (!r.ok) process.exit(1);
+  },
+  ralph: (a) => {
+    const { positional } = parseRepeatCount(stripFlags(a));
+    const slug = positional[0];
+    const r = taiyiRalph(workspaceDir, slug);
+    if (jsonMode) console.log(JSON.stringify(r, null, 2));
+    else if ("text" in r && r.text) console.log(r.text);
+    if (!r.ok) process.exit(1);
+  },
+  autopilot: (a) => {
+    const { positional } = parseRepeatCount(stripFlags(a));
+    const slug = positional[0];
+    const r = taiyiAutopilot(workspaceDir, slug);
+    if (jsonMode) console.log(JSON.stringify(r, null, 2));
+    else if ("text" in r && r.text) console.log(r.text);
+    if (!r.ok) process.exit(1);
+  },
+  // ── New CLI handlers for commands removed from SLASH_ONLY ──
+  assess: (a) => {
+    const { positional } = parseRepeatCount(stripFlags(a));
+    const slug = positional[0];
+    const r = taiyiAssess(workspaceDir, slug);
+    if (jsonMode) console.log(JSON.stringify(r, null, 2));
+    else if ("text" in r && r.text) console.log(r.text);
+    if (!r.ok) process.exit(1);
+  },
+  modes: (a) => {
+    const r = taiyiModes(workspaceDir, !jsonMode);
+    if (jsonMode) console.log(JSON.stringify(r, null, 2));
+    else if ("text" in r && r.text) console.log(r.text);
+    if (!r.ok) process.exit(1);
+  },
+  "stop-mode": (a) => {
+    const { positional } = parseRepeatCount(stripFlags(a));
+    const slug = positional[0] || undefined;
+    const force = a.includes("--force");
+    const r = taiyiStopMode(workspaceDir, { slug, force });
+    if (jsonMode) console.log(JSON.stringify(r, null, 2));
+    else if ("text" in r && r.text) console.log(r.text);
+    if (!r.ok) process.exit(1);
+  },
+  remember: (a) => {
+    const { positional } = parseRepeatCount(stripFlags(a));
+    const note = positional.join(" ").trim() || undefined;
+    const r = taiyiRemember(workspaceDir, note, !jsonMode);
+    if (jsonMode) console.log(JSON.stringify(r, null, 2));
+    else if ("text" in r && r.text) console.log(r.text);
+    if (!r.ok) process.exit(1);
+  },
+  keyword: (a) => {
+    const prompt = a.join(" ").trim();
+    const r = taiyiKeyword(workspaceDir, prompt, !jsonMode);
+    if (jsonMode) console.log(JSON.stringify(r, null, 2));
+    else if ("text" in r && r.text) console.log(r.text);
+    if (!r.ok) process.exit(1);
+  },
+  "review-check": (a) => {
+    const { positional } = parseRepeatCount(stripFlags(a));
+    const slug = positional[0];
+    const r = taiyiReviewCheck(workspaceDir, slug, !jsonMode);
+    if (jsonMode) console.log(JSON.stringify(r, null, 2));
+    else if ("text" in r && r.text) console.log(r.text);
+    if (!r.ok) process.exit(1);
+  },
+  "review-loop": (a) => {
+    const { positional } = parseRepeatCount(stripFlags(a));
+    const slug = positional[0];
+    const r = taiyiReviewLoop(workspaceDir, slug, !jsonMode);
+    if (jsonMode) console.log(JSON.stringify(r, null, 2));
+    else if ("text" in r && r.text) console.log(r.text);
+    if (!r.ok) process.exit(1);
+  },
+  step: (a) => {
+    const { positional } = parseRepeatCount(stripFlags(a));
+    const slug = positional[0];
+    const r = taiyiStep(workspaceDir, slug);
+    if (jsonMode) console.log(JSON.stringify(r, null, 2));
+    else if ("text" in r && r.text) console.log(r.text);
+    if (!r.ok) process.exit(1);
+  },
+  "commit-trailers": (a) => {
+    const { positional } = parseRepeatCount(stripFlags(a));
+    const slug = positional[0];
+    const subject = positional.slice(1).join(" ");
+    const r = taiyiCommitTrailers(workspaceDir, slug, subject || undefined);
+    if (jsonMode) console.log(JSON.stringify(r, null, 2));
+    else if ("text" in r && r.text) console.log(r.text);
+    if (!r.ok) process.exit(1);
+  },
+  "sync-openspec": (a) => {
+    const { positional } = parseRepeatCount(stripFlags(a));
+    const slug = positional[0];
+    if (!slug) { console.error("[taiyi] 用法: sync-openspec <slug>"); process.exit(1); }
+    const r = taiyiSyncOpenspec(workspaceDir, slug);
+    if (jsonMode) console.log(JSON.stringify(r, null, 2));
+    else if ("text" in r && r.text) console.log(r.text);
+    if (!r.ok) process.exit(1);
+  },
+  feature: (a) => {
+    const title = stripFlags(a).join(" ").trim();
+    if (!title) { console.error("用法: feature <title>"); process.exit(1); }
+    const r = taiyiFeature(workspaceDir, title);
+    if (jsonMode) console.log(JSON.stringify(r, null, 2));
+    else if ("text" in r && r.text) console.log(r.text);
+    if (!r.ok) process.exit(1);
+  },
+  bug: (a) => {
+    const title = stripFlags(a).join(" ").trim();
+    if (!title) { console.error("用法: bug <title>"); process.exit(1); }
+    const r = taiyiBug(workspaceDir, title);
+    if (jsonMode) console.log(JSON.stringify(r, null, 2));
+    else if ("text" in r && r.text) console.log(r.text);
+    if (!r.ok) process.exit(1);
+  },
+  flow: (a) => {
+    const [sub, ...rest] = a;
+    const title = stripFlags(rest).join(" ").trim();
+    if (sub === "feature") {
+      if (!title) { console.error("用法: flow feature <title>"); process.exit(1); }
+      const r = taiyiFeature(workspaceDir, title);
+      if (jsonMode) console.log(JSON.stringify(r, null, 2));
+      else if ("text" in r && r.text) console.log(r.text);
+      if (!r.ok) process.exit(1);
+      return;
+    }
+    if (sub === "bug") {
+      if (!title) { console.error("用法: flow bug <title>"); process.exit(1); }
+      const r = taiyiBug(workspaceDir, title);
+      if (jsonMode) console.log(JSON.stringify(r, null, 2));
+      else if ("text" in r && r.text) console.log(r.text);
+      if (!r.ok) process.exit(1);
+      return;
+    }
+    console.error("用法: flow feature <title> | flow bug <title>");
+    process.exit(1);
+  },
+  prune: (a) => {
+    const { positional } = parseRepeatCount(stripFlags(a));
+    const slug = positional[0];
+    const r = taiyiPrune(workspaceDir, { dryRun: a.includes("--dry-run"), includeAborted: a.includes("--all") }, !jsonMode);
+    if (jsonMode) console.log(JSON.stringify(r, null, 2));
+    else { if (r.ok) console.log(`prune: 已清理(runtime状态)`); else console.error("prune: " + (r.text ?? "失败")); }
+    if (!r.ok) process.exit(1);
+  },
+  "trim-ahead": (a) => {
+    const { positional } = parseRepeatCount(stripFlags(a));
+    const slug = positional[0];
+    const r = taiyiTrimAhead(workspaceDir, slug, !jsonMode);
+    if (jsonMode) console.log(JSON.stringify(r, null, 2));
+    else if ("text" in r && r.text) console.log(r.text);
+    if (!r.ok) process.exit(1);
+  },
+  "smoke-reset": () => {
+    console.error("[taiyi] smoke-reset 仅支持 scripts/taiyi-forge.sh smoke-reset (三通道向下)");
+    process.exit(2);
+  },
+  daemon: (a) => {
+    const [sub, ...daemonArgs] = a;
+    const { positional } = parseRepeatCount(stripFlags(daemonArgs));
+    const slug = positional[0];
+    if (sub === "run") {
+      if (!slug) { console.error("用法: daemon run <slug> [options]"); process.exit(1); }
+      const force = daemonArgs.includes("--force");
+      const engineOnly = daemonArgs.includes("--engine-only");
+      const dryRun = daemonArgs.includes("--dry-run");
+      const result = runDaemonLoop(engine, workspaceDir, taiyiRoot, slug, { engineOnly, dryRun, force });
+      const msg = formatDaemonResultPlain(result);
+      if (jsonMode) console.log(JSON.stringify(result, null, 2));
+      else console.log(msg);
+      process.exit(result.ok ? 0 : 1);
+    }
+    if (sub === "status") {
+      if (!slug) { console.error("用法: daemon status <slug>"); process.exit(1); }
+      const state = readDaemonState(taiyiRoot, slug);
+      if (jsonMode) console.log(JSON.stringify(state, null, 2));
+      else if (state) console.log(`daemon ${slug}: round=${state.round} active=${state.active}`);
+      else console.error("daemon status: 未找到运行状态");
+      process.exit(state ? 0 : 1);
+    }
+    console.error("用法: daemon run|status <slug>"); process.exit(1);
   },
 };
 

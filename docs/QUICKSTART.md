@@ -100,10 +100,10 @@ EOF
 | `/taiyi:status` | 阶段进度 + **Superpowers 推荐** + 工件就绪 |
 | `/taiyi:continue` | 尝试过关（工件 + auto 时 harness-check/mark-aux；人工门 `--approver`） |
 | `/taiyi:apply` | dev / test **实现清单**（不写代码、不 complete；实现后须 continue） |
-| `/taiyi:handoff` | 跨会话暂停，写 HANDOFF.md |
+| `/taiyi:pause` | 跨会话暂停，写 HANDOFF.md |
 | `/taiyi:cancel` | 放弃活跃变更 |
 | `/taiyi:health` | **仅输出协议**；须 Agent 跑 taiyi-health 写 report + mark-aux |
-| `/taiyi:loop` | 循环 continue；**人工门会阻塞**，不能一路跑到 archive |
+| `/taiyi:continue xN` | 循环 continue（原 `/taiyi:loop` 已移除）；**人工门会阻塞** |
 | `/taiyi:check` | auto 模式 harness 清单 |
 | `/taiyi:explore` | change 头脑风暴（→ Superpowers brainstorming） |
 | `/taiyi:token status` | Token 用量 / 预算 / 压缩建议 |
