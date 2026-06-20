@@ -8,11 +8,9 @@ const REPO = path.join(path.dirname(fileURLToPath(import.meta.url)), "..");
 const SMOKE_DIR = path.join(REPO, "examples/browser-e2e-smoke");
 
 describe("/taiyi:e2e browser smoke fixture", () => {
-  it("prompt contract: test umbrella covers e2e/qa", () => {
+  it("prompt contract: test umbrella covers e2e", () => {
     const test = fs.readFileSync(path.join(REPO, "prompts/taiyi-test.md"), "utf8");
-    const qa = fs.readFileSync(path.join(REPO, "prompts/taiyi-gstack-qa.md"), "utf8");
     expect(test).toContain("/taiyi:test");
-    expect(qa).toMatch(/browse|qa/i);
   });
 
   it("run-verify.mjs：Playwright 真跑（/taiyi:e2e 等价）", () => {

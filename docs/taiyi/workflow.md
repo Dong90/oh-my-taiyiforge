@@ -33,11 +33,11 @@
 | 命令 | 何时用 |
 |------|--------|
 | `/taiyi:doctor` | 安装/升级后自检（≈ `omc doctor`）+ **工作区流程** |
-| `/taiyi:handoff` | 暂停前写 HANDOFF.md（≈ OMC notepad / gstack checkpoint） |
+| `/taiyi:pause` | 暂停前写 HANDOFF.md（≈ OMC notepad / gstack checkpoint） |
 | `/taiyi:cancel` | 取消进行中变更（aborted） |
 | `/taiyi:list` | **多个变更并行**时列 slug（否则 continue 报错） |
 | `/taiyi:check` | `--auto` 时每阶段看 harness 铁三角清单 |
-| `/taiyi:loop` | 循环 `continue` 直到完成或阻塞（人工门需 `--approver`） |
+| `/taiyi:continue xN` | 循环 `continue` 直到完成或阻塞（人工门需 `--approver`） |
 | `/taiyi:verify` | PR/CI 工件门禁（`ci verify` 的斜杠入口） |
 | `/taiyi:audit` | 流程/交付排查（git 未入库、CHANGE 漂移等） |
 | `/taiyi:review-loop` | review 机器审查；不过则继续修再跑 |
@@ -63,7 +63,7 @@
 | `/taiyi:sp <skill>` | 任意 Superpowers（writing-skills …） |
 | `/taiyi:security` | semgrep + trivy（review） |
 | `/taiyi:e2e` | Playwright E2E（test） |
-| `/taiyi:resume` | 从 HANDOFF 恢复 |
+| `/taiyi:pause --resume` | 从 HANDOFF 恢复 |
 | `/taiyi:help` | 斜杠总览 |
 
 写工件用 **`/taiyi:write`**（引擎按当前阶段输出 Skill）；或直接加载 **`@taiyi-*`** Skill。场景捷径：**`/taiyi:feature`** · **`/taiyi:bug`** · **`/taiyi:ui-test`**。
@@ -145,7 +145,7 @@ high 复杂度会推荐 `taiyi-evolve`，其 home 阶段为 **test**（`architec
 | 写当前阶段工件 | `/taiyi:write` |
 | 读状态（人类） | `/taiyi:status` |
 | 读状态（JSON/MCP） | `status --json` · MCP `taiyi_state_get_status` |
-| 暂停 | `/taiyi:handoff` |
+| 暂停 | `/taiyi:pause` |
 | 过关 | `/taiyi:continue` |
 | integration 前 commit | `/taiyi:commit` |
 | 脚本/CI 专用 | `init` · `complete` · `mark-aux` · `commit-trailers` · `change` …（无聊天斜杠） |

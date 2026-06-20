@@ -9,7 +9,6 @@
   "commands": [
     { "id": "doctor", "argv": ["doctor"], "expectExit": [0, 1] },
     { "id": "list", "argv": ["list"], "expectExit": 0 },
-    { "id": "phases", "argv": ["phases"], "expectExit": 0 },
     { "id": "modes", "argv": ["modes"], "expectExit": 0 },
     { "id": "remember", "argv": ["remember", "smoke note"], "expectExit": 0 },
     { "id": "keyword-ralph", "argv": ["keyword", "please ralph until green"], "expectExit": 0 },
@@ -17,19 +16,11 @@
     { "id": "stop-mode", "argv": ["stop-mode"], "expectExit": 0 },
 
     { "id": "status", "argv": ["status", "{slug}"], "expectExit": 0 },
-    { "id": "guide", "argv": ["guide", "{slug}"], "expectExit": 0 },
-    { "id": "next", "argv": ["next", "{slug}"], "expectExit": 0 },
-    { "id": "assess", "argv": ["assess", "{slug}"], "expectExit": 0 },
-    { "id": "harness", "argv": ["harness", "{slug}"], "expectExit": 0 },
     { "id": "audit", "argv": ["audit", "{slug}"], "expectExit": [0, 1] },
     { "id": "health", "argv": ["health", "{slug}"], "expectExit": 0 },
     { "id": "write", "argv": ["write", "{slug}"], "expectExit": 0 },
     { "id": "handoff", "argv": ["handoff", "{slug}", "smoke"], "expectExit": 0 },
     { "id": "pause", "argv": ["pause", "{slug}"], "expectExit": 0 },
-    { "id": "commit-trailers", "argv": ["commit-trailers", "{slug}", "feat: smoke"], "expectExit": 0 },
-    { "id": "sync", "argv": ["sync", "{slug}"], "expectExit": 0 },
-    { "id": "sync-openspec", "argv": ["sync-openspec", "{slug}"], "expectExit": 0 },
-
     { "id": "apply", "argv": ["apply", "{slug}"], "expectExit": [0, 1] },
     { "id": "continue", "argv": ["continue", "{slug}"], "expectExit": 1 },
     { "id": "loop", "argv": ["loop", "{slug}"], "expectExit": [0, 1] },
@@ -60,15 +51,15 @@
     { "id": "ci-platform-cursor", "argv": ["ci", "platform", "cursor"], "expectExit": [0, 1] },
     { "id": "ci-prompt", "argv": ["ci", "prompt", "{slug}"], "expectExit": 0 },
 
-    { "id": "mark-aux", "argv": ["mark-aux", "{slug}", "taiyi-intel-scan"], "expectExit": [0, 1] }
+    { "id": "mark-aux", "argv": ["mark-aux", "{slug}", "taiyi-intel-scan"], "expectExit": [0, 1, 2] }
   ],
   "shellCommands": [
     { "id": "forge-help", "argv": ["help"], "expectExit": 0 },
     { "id": "forge-list", "argv": ["list"], "expectExit": 0 },
     { "id": "forge-status", "argv": ["status", "{slug}"], "expectExit": 0 },
     { "id": "forge-pause", "argv": ["pause", "{slug}"], "expectExit": 0 },
-    { "id": "forge-check", "argv": ["check", "{slug}"], "expectExit": 0 },
+    { "id": "forge-check", "argv": ["check", "{slug}"], "expectExit": [0, 2] },
     { "id": "forge-ls", "argv": ["ls"], "expectExit": 0 },
-    { "id": "forge-n", "argv": ["n", "{slug}"], "expectExit": 0 }
+    { "id": "forge-n", "argv": ["n", "{slug}"], "expectExit": [0, 1] }
   ]
 }

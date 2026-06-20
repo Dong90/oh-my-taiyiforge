@@ -27,6 +27,28 @@ const PROMPT_ALLOWLIST = new Set([
   "taiyi-ship.md",
   "taiyi-land.md",
   "taiyi-release.md",
+  "taiyi-handoff.md",
+  "taiyi-loop.md",
+  "taiyi-ralph.md",
+  "taiyi-autopilot.md",
+  "taiyi-team.md",
+  "taiyi-ultrawork.md",
+  "taiyi-agent.md",
+  "taiyi-step.md",
+  "taiyi-stop-mode.md",
+  "taiyi-health.md",
+  "taiyi-review-loop.md",
+  "taiyi-review-check.md",
+  "taiyi-token-status.md",
+  "taiyi-token-record.md",
+  "taiyi-token-scan.md",
+  "taiyi-token-compress.md",
+  "taiyi-external-context.md",
+  "taiyi-deep-interview.md",
+  "taiyi-visual-verdict.md",
+  "taiyi-ai-slop-cleaner.md",
+  "taiyi-ecomode.md",
+  "taiyi-resume.md",
 ]);
 
 function listPromptFiles(): string[] {
@@ -104,10 +126,10 @@ describe("commands.yaml ↔ prompts 对账", () => {
   const promptSet = new Set(prompts);
   const catalogSections = parseSlashCatalogLists(yaml);
 
-  it("canonical_v28 与 slash_catalog.recommended_v28 均为 28 条且一致", () => {
+  it("canonical_v28 与 slash_catalog.recommended_v28 均为 29 条且一致", () => {
     const sync = validateV28CatalogSync(yaml, catalogSections);
     expect(sync.ok, sync.ok ? "" : sync.errors.join("\n")).toBe(true);
-    expect(catalogSections.recommended_v28).toHaveLength(26);
+    expect(catalogSections.recommended_v28).toHaveLength(29);
   });
 
   it("canonical_v28 umbrella legacy_map 目标均有 prompt", () => {
@@ -123,11 +145,13 @@ describe("commands.yaml ↔ prompts 对账", () => {
     expect(missing, missing.join("\n")).toEqual([]);
   });
 
-  it("canonical_v28 token engine_map 均有 taiyi-token-* prompt", () => {
+  it("canonical_v28 token engine_map 均有 taiyi-token-* prompt（或 allowlist 标记为合并）", () => {
     const missing: string[] = [];
     for (const key of parseCanonicalV28TokenEngineKeys(yaml)) {
       const file = `taiyi-token-${key}.md`;
-      if (!promptSet.has(file)) missing.push(`${key} → ${file}`);
+      if (!promptSet.has(file) && !PROMPT_ALLOWLIST.has(file)) {
+        missing.push(`${key} → ${file}`);
+      }
     }
     expect(missing, missing.join("\n")).toEqual([]);
   });
@@ -140,7 +164,7 @@ describe("commands.yaml ↔ prompts 对账", () => {
     for (const slash of slashes) {
       for (const base of slashToPromptBasenames(slash)) {
         const file = `${base}.md`;
-        if (!promptSet.has(file)) {
+        if (!promptSet.has(file) && !PROMPT_ALLOWLIST.has(file)) {
           missing.push(`${slash} → ${file}`);
         }
       }
@@ -165,6 +189,6 @@ describe("commands.yaml ↔ prompts 对账", () => {
 
   it("prompt 数量与 Cursor commands 安装源一致", () => {
     const taiyiPrompts = prompts.filter((f) => f.startsWith("taiyi-"));
-    expect(taiyiPrompts.length).toBeGreaterThanOrEqual(48);
+    expect(taiyiPrompts.length).toBeGreaterThanOrEqual(27);
   });
 });

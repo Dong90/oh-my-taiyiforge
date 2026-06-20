@@ -89,7 +89,7 @@ Spec-Kit **编排成一台状态机**。装了什么用什么,其余自动跳过
 | # | 分组 | Slash | 用途 |
 |---|------|-------|------|
 | 1–6 | 主链 | `new` · `status` · `write` · `continue` · `apply` · `archive` | 日常最短路径 |
-| 7–10 | 会话 | `handoff` · `resume` · `cancel` · `list` | 跨会话 |
+| 7–10 | 会话 | `pause` · `resume` · `cancel` · `list` | 跨会话 |
 | 11–13 | 排查 | `doctor` · `audit` · `verify` | 自检 + 交付门控 |
 | 14–17 | 交付 | `commit` · `ship` · `land` · `release` | gstack 交付链 |
 | 18–19 | 路由 | `gstack <skill>` · `sp <skill>` | 外部 harness 路由 |
@@ -121,7 +121,7 @@ v28 umbrella 之外再添新的顶栏重复。
 
 | 旧 / legacy | v28 现用 |
 |------|----------|
-| `/taiyi:pause` | `/taiyi:handoff` |
+| `/taiyi:pause` | `/taiyi:pause` |
 | `/taiyi:state` · `/taiyi:state-read` | `/taiyi:status` |
 | `/taiyi:next` · `/taiyi:done` | `/taiyi:status` + `/taiyi:continue` |
 | `/taiyi:change` … `/taiyi:integration` | `/taiyi:write` |

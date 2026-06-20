@@ -227,7 +227,7 @@ export function formatMilestonePlain(report: MilestoneReport): string {
 
   lines.push("");
   lines.push("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-  lines.push("  /taiyi:new  /taiyi:list  /taiyi:status <slug>  /taiyi:milestone");
+  lines.push("  /taiyi:new  /taiyi:list  /taiyi:status <slug>  /taiyi:list --dashboard");
   lines.push("  * 超过3天未更新");
   lines.push("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
 

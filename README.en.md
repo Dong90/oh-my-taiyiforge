@@ -90,7 +90,7 @@ Source of truth: [canonical-commands.md](docs/taiyi/canonical-commands.md) →
 | # | Group | Slash | Purpose |
 |---|------|------|---------|
 | 1–6 | Main chain | `new` · `status` · `write` · `continue` · `apply` · `archive` | Daily shortest path |
-| 7–10 | Session | `handoff` · `resume` · `cancel` · `list` | Cross-session |
+| 7–10 | Session | `pause` · `resume` · `cancel` · `list` | Cross-session |
 | 11–13 | Diagnose | `doctor` · `audit` · `verify` | Self-check + delivery gate |
 | 14–17 | Delivery | `commit` · `ship` · `land` · `release` | gstack delivery chain |
 | 18–19 | Routing | `gstack <skill>` · `sp <skill>` | External harness routing |
@@ -122,7 +122,7 @@ top-bar duplicates of v28 umbrellas.
 
 | Legacy | v28 now |
 |--------|---------|
-| `/taiyi:pause` | `/taiyi:handoff` |
+| `/taiyi:pause` | `/taiyi:pause` |
 | `/taiyi:state` · `/taiyi:state-read` | `/taiyi:status` |
 | `/taiyi:next` · `/taiyi:done` | `/taiyi:status` + `/taiyi:continue` |
 | `/taiyi:change` … `/taiyi:integration` | `/taiyi:write` |

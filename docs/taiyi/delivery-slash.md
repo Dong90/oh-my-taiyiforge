@@ -30,7 +30,7 @@ dev/test 完成
 | `/taiyi:sp <skill>` | Superpowers | writing-skills 等 |
 | `/taiyi:security` | semgrep + trivy | SAST/漏洞（review） |
 | `/taiyi:e2e` | Playwright | E2E（test） |
-| `/taiyi:resume` | HANDOFF + status | 恢复会话 |
+| `/taiyi:pause --resume` | HANDOFF + status | 恢复会话 |
 | `/taiyi:help` | — | 斜杠总览 |
 
 Codex：`$taiyi-ship`、`$taiyi-land`、`$taiyi-commit` 等（`prompts/taiyi-*.md`）。

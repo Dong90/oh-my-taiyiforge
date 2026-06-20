@@ -26,26 +26,17 @@ export interface CommandEntry {
 }
 
 export const SLASH_ONLY = new Set([
-  "explore", "full-flow", "tdd", "security", "e2e", "ui-test",
-  "release", "preflight", "sp", "gstack",
+  "explore", "tdd",
+  "release", "sp", "gstack",
   "diagram-pipeline", "diagram-c4", "diagram-arch", "diagram-flow", "diagram-render",
   "commit", "ship", "land",
-  "ralph", "autopilot", "team", "ultrawork", "agent", "daemon",
-  "feature", "bug", "flow", "mvp", "micro", "nano", "service", "design-system", "ci-scenario",
-  "assess", "mark-aux", "harness", "harness-check",
-  "review-check", "review-loop",
-  "sync", "sync-openspec", "sync-wrapper", "commit-trailers",
-  "browser-smoke", "walkthrough",
   "change", "requirement", "design", "ui-design", "task", "dev", "test", "review", "integration",
-  "modes", "step", "stop-mode", "trim-ahead", "prune", "remember", "keyword",
 ]);
 
 export const LEGACY_REDIRECT: Record<string, string> = {
-  init: "new --profile <profile>",
   done: "continue",
   next: "status",
   guide: "status",
   phases: "status",
   complete: "continue --approver",
-  pause: "handoff",
 };

@@ -59,9 +59,6 @@
 
 | 旧斜杠 | v28 入口 |
 |--------|----------|
-| `/taiyi:feature` | 新功能 full 九阶段（`/taiyi:flow feature`） |
-| `/taiyi:bug` | lite 修 bug（`/taiyi:flow bug`） |
-| `/taiyi:ui-test` | test UI QA（`/taiyi:test ui`） |
 
 列表/清理：`list --archived` · `list --all` · `prune --aborted`（CLI，无独立顶栏）。
 

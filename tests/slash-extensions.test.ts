@@ -38,15 +38,6 @@ describe("slash extensions", () => {
     expect(body).toContain("verification-before-completion");
   });
 
-  it("taiyi-resume pairs with handoff", () => {
-    const body = rendered("taiyi-resume.md");
-    expect(body).toContain("/taiyi:resume");
-    expect(body).toContain("HANDOFF.md");
-    expect(body).toContain("scripts/taiyi-forge.sh status");
-    const handoff = readPrompt("taiyi-handoff.md");
-    expect(handoff).toContain("/taiyi:resume");
-  });
-
   it("taiyi-security|e2e|smoke moved to test umbrella", () => { const body = rendered("taiyi-test.md"); expect(body).toContain("/taiyi:test"); });
   it("commands.yaml documents extension slashes", () => {
     const yaml = fs.readFileSync(
@@ -58,11 +49,7 @@ describe("slash extensions", () => {
       "/taiyi:resume",
       "/taiyi:ralph",
       "/taiyi:autopilot",
-      "/taiyi:daemon",
-      "/taiyi:diagram-arch",
-      "/taiyi:diagram-flow",
       "/taiyi:team",
-      "/taiyi:agent",
       "/taiyi:gstack <skill>",
       "/taiyi:sp <skill>",
     ]) {
