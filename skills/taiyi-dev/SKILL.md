@@ -1,110 +1,39 @@
 ---
 name: taiyi-dev
-description: TaiyiForge 第 6 阶段 — TDD 开发执行。四端通用。
+description: TaiyiForge 第6阶段 — TDD开发执行。四端通用。
+paradigm: Operator
 ---
 
-# taiyi-dev
+# taiyi-dev — TDD开发
 
-## 目的
+## 步骤
 
-按 TASK 切片（或 lite 下 REQUIREMENT AC）**测试先行**实现，产出可运行代码与 `.dev-complete` 证据。dev 是九阶段中唯一大量改仓库代码的主阶段。
+### 1.4 沿用已有抽象grep(强制)
+写新代码前grep同类模式(axios/fetch/httpClient/ErrorBoundary/use*)。贴入SUMMARY。
 
-## 何时使用
+### 1.5 扫LESSONS(强制)
+grep LESSONS.md，对active条目声明差异。相同方案→停手。
 
-| 信号 | 建议 |
-|------|------|
-| `task` 已 complete（full/api） | 必做 |
-| lite：`requirement` 后 | 直接 dev |
-| `taiyi next` → `dev` | 开始编码 |
+### 1.6 UI任务额外检查
+确认UI-DESIGN.md存在。颜色/字体/间距从UI-DESIGN.md派生。禁硬编码hex。
 
-## 输入
+### 1.7 Schema变更检查
+生成可逆迁移(up+down)。grep确认当前结构。
 
-- `TASK.md` 当前未完成切片（full/api）
-- lite：`REQUIREMENT.md` AC
-- Superpowers `test-driven-development`（**必加载**；`/taiyi:tdd dev`）
-- `CONTEXT.md` 命名与测试惯例
+### 1.8 破坏性变更高门槛
+删>=5行/改公共导出/改API→grep引用→停手反问。
 
-## 输出
+### 2. TDD红→绿→重构
 
-- 仓库内代码变更
-- `.taiyi/changes/<slug>/.dev-complete`
+### 3. 提交前diff边界verify
+git diff与TASK write_files比对，越界→停。
 
-## 执行步骤
+### 4. 6维self-review(R1-R6)
+R1认知过载/R2变更传播/R3知识重复/R4偶然复杂/R5依赖混乱/R6领域扭曲
 
-### 1. 取当前切片
-
-1. `scripts/taiyi-forge.sh next <slug>` 确认阶段为 dev
-2. TASK 中取下一个未勾选 **T***
-3. lite：按 AC 列表逐项实现
-
-### 2. TDD 循环（每切片）
-
-```
-红 → 写失败测试
-绿 → 最小实现通过
-重构 → 保持测试绿
-```
-
-- 测试位置对齐项目惯例（见 CONTEXT）
-- 禁止「先写实现再补假测试」
-
-### 3. 更新 TASK
-
-- 切片完成在 TASK 表勾选 `[x]`
-- 多切片可**多轮**留在 dev 阶段，直到全部完成
-
-### 4. 写 `.dev-complete`
-
-**过关必填（引擎校验）：**
-
-```text
-command: npm test
-exitCode: 0
-dev complete
-```
-
-**`--strict-dev` 额外要求首行：**
-
-```text
-strict: true
-```
-
-可选：`timestamp`、`slices: T1,T2` 便于 audit 追溯。
-
-### 5. 完成
-
-`scripts/taiyi-forge.sh complete <slug> dev`
-
-## 与 profile
-
-| Profile | 驱动文档 |
-|---------|----------|
-| full / api | TASK.md |
-| lite | REQUIREMENT.md AC |
-
-## 与下游衔接
-
-| 下游 | dev 应留下 |
-|------|------------|
-| `taiyi-test` | 可运行的测试与命令 |
-| `taiyi-evolve` | 与 DESIGN 一致的实现（或已知偏差） |
-| `taiyi-health` | 可 build/lint 的工程 |
-
-## 与铁三角
-
-- Superpowers `test-driven-development` — 红绿重构纪律
-- 大改：每切片小 PR，避免 mega commit
-
-## 质量自检
-
-- [ ] 每个 T* / AC 有对应测试或脚本验证
-- [ ] strictDev 时 `exitCode: 0` 有真实证据
-- [ ] 未扩大 TASK 未列 scope
-- [ ] CONTEXT 命名惯例已遵循
+### 5. SUMMARY + .dev-complete
 
 ## 禁止
-
-- 无测试直接 `complete dev`
-- 在 dev 改 CHANGE Scope（应回到 change）
-- strict 模式下伪造 exitCode
-- 跳过 TASK 顺序（除非 TASK 明确可并行）
+- verify未通过标记完成
+- 破坏性变更不走1.8协议
+- 不grep就写新代码
