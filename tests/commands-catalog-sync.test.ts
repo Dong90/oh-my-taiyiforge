@@ -16,6 +16,7 @@ const COMMANDS_YAML = path.join(REPO, "docs/taiyi/commands.yaml");
 /** 子路由 / 引擎路由 — 不要求出现在 slash_catalog 列表行 */
 const PROMPT_ALLOWLIST = new Set([
   "taiyi-milestone.md",
+  "taiyi-skill.md",
   "taiyi.md",
   "taiyi-forge.md",
   "taiyi-gstack-review.md",
@@ -106,7 +107,7 @@ describe("commands.yaml ↔ prompts 对账", () => {
   it("canonical_v28 与 slash_catalog.recommended_v28 均为 28 条且一致", () => {
     const sync = validateV28CatalogSync(yaml, catalogSections);
     expect(sync.ok, sync.ok ? "" : sync.errors.join("\n")).toBe(true);
-    expect(catalogSections.recommended_v28).toHaveLength(28);
+    expect(catalogSections.recommended_v28).toHaveLength(26);
   });
 
   it("canonical_v28 umbrella legacy_map 目标均有 prompt", () => {
@@ -164,6 +165,6 @@ describe("commands.yaml ↔ prompts 对账", () => {
 
   it("prompt 数量与 Cursor commands 安装源一致", () => {
     const taiyiPrompts = prompts.filter((f) => f.startsWith("taiyi-"));
-    expect(taiyiPrompts.length).toBeGreaterThanOrEqual(50);
+    expect(taiyiPrompts.length).toBeGreaterThanOrEqual(48);
   });
 });

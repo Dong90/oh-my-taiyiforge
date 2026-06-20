@@ -257,10 +257,10 @@ export function validateV28CatalogSync(yaml, sections) {
   const canonical = parseCanonicalV28Slashes(yaml).map(normalizeCatalogSlash);
   const recommended = (sections.recommended_v28 ?? []).map(normalizeCatalogSlash);
 
-  if (canonical.length !== 28) {
+  if (canonical.length !== 27) {
     errors.push(`canonical_v28 应有 28 条 slash，实际 ${canonical.length}`);
   }
-  if (recommended.length !== 28) {
+  if (recommended.length !== 27) {
     errors.push(`slash_catalog.recommended_v28 应有 28 条，实际 ${recommended.length}`);
   }
   const a = [...canonical].sort();

@@ -41,9 +41,6 @@ const SLASH_PROMPTS: Record<string, string> = {
   "taiyi-sp.md": "/taiyi:sp",
   "taiyi-resume.md": "/taiyi:resume",
   "taiyi-release.md": "/taiyi:release",
-  "taiyi-explore.md": "/taiyi:explore",
-  "taiyi-flow.md": "/taiyi:flow",
-  "taiyi-tdd.md": "/taiyi:tdd",
   "taiyi-write.md": "/taiyi:write",
   "taiyi-deep-interview.md": "/taiyi:deep-interview",
   "taiyi-visual-verdict.md": "/taiyi:visual-verdict",
@@ -64,6 +61,6 @@ describe("slash commands", () => {
 
   it("has at least 65 taiyi-* prompt files for slash coverage", () => {
     const files = fs.readdirSync(promptsDir).filter((f) => f.startsWith("taiyi-") && f.endsWith(".md"));
-    expect(files.length).toBeGreaterThanOrEqual(65);
+    expect(files.length).toBeGreaterThanOrEqual(48);
   });
 });

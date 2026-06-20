@@ -125,29 +125,6 @@ profiles:
         when: 多变更并行时必须（否则 status/continue 无法推断 slug）
 
 
-      - chat: "/taiyi:explore"
-        codex: "$taiyi-explore"
-        engine: "加载 Superpowers brainstorming + taiyi-change（无 shell 子命令）"
-        meaning: change 阶段头脑风暴 → 加载 Superpowers brainstorming + taiyi-change
-        when: 对标 opsx:explore / OMX clarify，无独立引擎子命令
-
-      - chat: "/taiyi:flow [slug]"
-        codex: "$taiyi-flow"
-        engine: "读 workflow-manifest.yaml + superpowers-flow.md（无 shell 子命令）"
-        meaning: |
-          Superpowers 全技能主轴九阶段流程；status/guide 按阶段输出建议/可选 Skill。
-          可选外挂：gstack · OpenSpec · web-quality-skills。
-        when: onboarding、确认当前阶段该加载哪些 Superpowers
-
-
-      - chat: "/taiyi:tdd [plan|dev] [slug]"
-        codex: "$taiyi-tdd"
-        engine: "加载 Superpowers test-driven-development + taiyi-task（plan）或 taiyi-dev（dev）"
-        meaning: |
-          TDD 纪律入口：task 阶段定切片测试计划（plan）；
-          dev 阶段红绿重构实现（dev）。完成后 harness-check superpowers/test-driven-development。
-        when: task/dev 阶段；Superpowers TDD 纪律入口
-
       - chat: "/taiyi:token status [slug]"
         codex: "$taiyi-token-status"
         engine: "taiyi-forge.sh token status [slug]"
@@ -299,6 +276,8 @@ profiles:
             gstack: ship
           - slash: /taiyi:land
             gstack: land-and-deploy
+          - slash: "/taiyi:skill <name>"
+            note: 外部Skill路由（gstack/sp/explore/tdd/flow）
           - slash: /taiyi:release
             gstack: document-release
             replaces: ["/taiyi:gstack release"]
@@ -315,10 +294,6 @@ profiles:
           - slash: /taiyi:explore
             phase: change
             loads: superpowers/brainstorming + taiyi-change
-          - slash: "/taiyi:tdd plan|dev"
-            phases: [task, dev]
-          - slash: /taiyi:flow
-            note: 流程总览；子 topic 见 canonical-commands.md
       umbrellas:
         count: 6
         commands:
@@ -388,13 +363,11 @@ profiles:
         - /taiyi:ship
         - /taiyi:land
         - /taiyi:release
+        - /taiyi:skill <name>
       routers:
         - /taiyi:gstack <skill>
         - /taiyi:sp <skill>
       phase_shortcuts:
-        - /taiyi:explore
-        - /taiyi:tdd plan|dev
-        - /taiyi:flow
       umbrellas:
         - /taiyi:token status|record|scan|compress
         - /taiyi:test smoke|e2e|qa|ui|security
@@ -489,8 +462,6 @@ profiles:
 
   expanded:
     commands:
-      - chat: "/taiyi:explore"
-        engine: "提示加载 taiyi-change + Superpowers brainstorming"
       - chat: "/taiyi:doctor"
         engine: "taiyi-forge.sh doctor"
 
