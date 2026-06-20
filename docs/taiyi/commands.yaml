@@ -163,27 +163,6 @@ profiles:
         meaning: 列出所有变更及阶段进度
         when: 多变更并行时必须（否则 status/continue 无法推断 slug）
 
-      - chat: "/taiyi:check"
-        codex: "$taiyi-check"
-        engine: "taiyi-forge.sh check [slug]"
-        meaning: auto 模式 harness 清单（铁三角 → 辅助须 mark-aux → 主 Skill）
-        when: init --auto 或 new 后每阶段过关前
-
-      - chat: "/taiyi:sync"
-        codex: "$taiyi-sync"
-        engine: "taiyi-forge.sh sync [slug]   # 引擎子命令为 sync（非 sync-openspec）；CLI 也接受 sync-openspec"
-        meaning: |
-          Taiyi 工件 → OpenSpec（对标 opsx:sync）。聊天动词无连字符，引擎用 sync 别名。
-          **BY DESIGN**：OpenSpec 已归档于 changes/archive/ 时默认拒绝 sync（exit 1），防误写 active 目录；须 --force 或删误建 openspec/changes/<slug>/
-        when: 项目已装 OpenSpec，integration 前后（勿对已 OpenSpec 归档 slug 重复 sync）
-
-      - chat: "/taiyi:run"
-        codex: "$taiyi-run"
-        engine: "taiyi-forge.sh run [--slug name]"
-        meaning: |
-          首次体验：doctor + init demo + 打印下一步（≈ npx taiyi walkthrough）。
-          不跑九阶段。完整 E2E 见 examples/minimal-project → npm run walkthrough-e2e。
-        when: onboarding、CI 冒烟，非日常主流程
 
       - chat: "/taiyi:explore"
         codex: "$taiyi-explore"
@@ -199,13 +178,6 @@ profiles:
           可选外挂：gstack · OpenSpec · web-quality-skills。
         when: onboarding、确认当前阶段该加载哪些 Superpowers
 
-      - chat: "/taiyi:full-flow [slug]"
-        codex: "$taiyi-full-flow"
-        engine: "读 workflow-manifest.yaml + full-oss-flow.md + harness <slug>（无 shell 子命令）"
-        meaning: |
-          完整开源流程：Superpowers + gstack + OpenSpec + web-quality + Playwright +
-          Semgrep + Trivy + Changesets + taiyi 辅助 Skill，按阶段全部串联执行。
-        when: 要跑通全部开源 Skill/CLI 的端到端流程
 
       - chat: "/taiyi:tdd [plan|dev] [slug]"
         codex: "$taiyi-tdd"
@@ -292,17 +264,6 @@ profiles:
         meaning: 取消活跃运行时模式（ralph/autopilot/ultrawork/team 等）。关键词 stopomc 等价。
         when: 验证已绿或需人工接管
 
-      - chat: "/taiyi:modes"
-        codex: "$taiyi-modes"
-        engine: "taiyi-forge.sh modes"
-        meaning: 列出 .taiyi/runtime/*-mode.json 活跃模式
-        when: 不确定当前是否在 ralph/autopilot 循环中
-
-      - chat: "/taiyi:remember [note]"
-        codex: "$taiyi-remember"
-        engine: "taiyi-forge.sh remember [note]"
-        meaning: 读写 .taiyi/project-memory.json（对标 OMC project memory）
-        when: 跨会话记住模式/约束
 
       - chat: "/taiyi:plan [slug]"
         codex: "$taiyi-plan"
@@ -346,19 +307,6 @@ profiles:
         meaning: 外部文档/研究上下文写入 external-context.md
         when: AC 依赖外部 API/法规/第三方 SDK
 
-      - chat: "/taiyi:keyword <text>"
-        codex: "$taiyi-keyword"
-        engine: "taiyi-forge.sh keyword <text>"
-        meaning: |
-          OMC keyword-detector 斜杠：扫描用户消息 → 映射 `/taiyi:ralph` 等。
-          Cursor/Claude 通常由 keyword hook 自动注入；Codex 用 `/taiyi:preflight` 或本命令。
-        when: 口头触发 ralph/autopilot/team/ulw/stopomc 等；OpenCode 用 taiyi_keyword 工具
-
-      - chat: "/taiyi:preflight"
-        codex: "$taiyi-preflight"
-        engine: "codex-keyword-preflight.mjs + codex-mode-reminder.mjs"
-        meaning: Codex 无 hook 时的关键词检测 + step 提醒
-        when: Codex 每轮开始/结束前自觉执行
 
       - chat: "/taiyi:team [slug]"
         codex: "$taiyi-team"
@@ -386,26 +334,6 @@ profiles:
           仍可用 @taiyi-change … @taiyi-integration Skill；引擎 CLI `change` 等保留给脚本。
         when: 任意规划/实现阶段写工件
 
-      - chat: "/taiyi:feature [标题或slug]"
-        engine: "taiyi-forge.sh feature …"
-        meaning: 新功能 full 九阶段场景剧本
-
-      - chat: "/taiyi:bug [描述或slug]"
-        engine: "taiyi-forge.sh bug …"
-        meaning: 修 bug lite 五阶段场景剧本
-
-      - chat: "/taiyi:ui-test [slug]"
-        engine: "提示 /taiyi:gstack qa + /taiyi:e2e"
-        meaning: test 阶段 UI QA 捷径
-
-      - chat: "/taiyi:browser-smoke [--json]"
-        codex: "$taiyi-browser-smoke"
-        engine: "taiyi-forge.sh browser-smoke [--json]"
-        meaning: |
-          内置 Playwright 浏览器冒烟（examples/browser-e2e-smoke）。
-          无需目标项目 Playwright 配置；等价于可复现的 /taiyi:e2e 验证子集。
-          Agent 代跑，勿让用户手打 node 路径。
-        when: 验证 TaiyiForge 浏览器 E2E 路径、CI 冒烟、发版前快速检查
 
       - chat: "/taiyi:loop [slug] [xN]"
         codex: "$taiyi-loop"
@@ -498,8 +426,7 @@ profiles:
           - slash: "/taiyi:tdd plan|dev"
             phases: [task, dev]
           - slash: /taiyi:flow
-            subcommands: [full-flow, feature, bug, help]
-            note: 流程总览；feature/bug 场景剧本；子 topic 见 canonical-commands.md
+            note: 流程总览；子 topic 见 canonical-commands.md
       umbrellas:
         count: 6
         commands:
@@ -512,12 +439,6 @@ profiles:
             phase: 2
             prompt_file: "prompts/taiyi-token.md"
           - slash: "/taiyi:test smoke|e2e|qa|ui|security"
-            legacy_map:
-              smoke: /taiyi:browser-smoke
-              e2e: /taiyi:e2e
-              qa: /taiyi:gstack qa
-              ui: /taiyi:ui-test
-              security: /taiyi:security
             phase: 2
             prompt_file: "prompts/taiyi-test.md"
           - slash: "/taiyi:review loop|check|health|gstack"
@@ -537,7 +458,7 @@ profiles:
               flow: /taiyi:diagram-flow
             phase: 2
             prompt_file: "prompts/taiyi-diagram.md"
-          - slash: "/taiyi:mode ralph|autopilot|daemon|team|ultrawork|agent|step|stop|list|keyword|preflight"
+          - slash: "/taiyi:mode ralph|autopilot|daemon|team|ultrawork|agent|step|stop|list"
             legacy_map:
               ralph: /taiyi:ralph
               autopilot: /taiyi:autopilot
@@ -547,23 +468,17 @@ profiles:
               agent: /taiyi:agent
               step: /taiyi:step
               stop: /taiyi:stop-mode
-              list: /taiyi:modes
-              keyword: /taiyi:keyword
-              preflight: /taiyi:preflight
+              list: /taiyi:mode list
             phase: 2
             prompt_file: "prompts/taiyi-mode.md"
-          - slash: "/taiyi:workflow plan|ralplan|loop|check|run|sync|ccg|sciomc|deepinit|remember|ultraqa|…"
+          - slash: "/taiyi:workflow plan|ralplan|loop|ccg|sciomc|deepinit|remember|ultraqa|…"
             legacy_map:
               plan: /taiyi:plan
               ralplan: /taiyi:ralplan
               loop: /taiyi:loop
-              check: /taiyi:check
-              run: /taiyi:run
-              sync: /taiyi:sync
               ccg: /taiyi:ccg
               sciomc: /taiyi:sciomc
               deepinit: /taiyi:deepinit
-              remember: /taiyi:remember
               ultraqa: /taiyi:ultraqa
               external-context: /taiyi:external-context
               deep-interview: /taiyi:deep-interview
@@ -610,16 +525,12 @@ profiles:
         - /taiyi:test smoke|e2e|qa|ui|security
         - /taiyi:review loop|check|health|gstack
         - /taiyi:diagram pipeline|c4|arch|render|flow
-        - /taiyi:mode ralph|autopilot|daemon|team|ultrawork|agent|step|stop|list|keyword|preflight
-        - /taiyi:workflow plan|ralplan|loop|check|run|sync|ccg|sciomc|deepinit|remember|ultraqa|…
+        - /taiyi:mode ralph|autopilot|daemon|team|ultrawork|agent|step|stop|list
+        - /taiyi:workflow plan|ralplan|loop|ccg|sciomc|deepinit|remember|ultraqa|…
     legacy_slash:
       description: 旧顶栏 — 仍绑定 prompts/taiyi-*.md；请优先用 v28 伞形命令
       phase_write:
         - /taiyi:write
-      scenarios:
-        - /taiyi:feature
-        - /taiyi:bug
-        - /taiyi:ui-test
       auxiliary:
         - /taiyi:health
         - /taiyi:diagram-pipeline
@@ -627,9 +538,6 @@ profiles:
         - /taiyi:diagram-arch
         - /taiyi:diagram-flow
         - /taiyi:diagram-render
-        - /taiyi:check
-        - /taiyi:sync
-        - /taiyi:run
         - /taiyi:loop
         - /taiyi:review-loop
         - /taiyi:review-check
@@ -638,17 +546,11 @@ profiles:
         - /taiyi:daemon
         - /taiyi:step
         - /taiyi:stop-mode
-        - /taiyi:modes
-        - /taiyi:remember
-        - /taiyi:plan
-        - /taiyi:ralplan
         - /taiyi:ultraqa
         - /taiyi:ccg
         - /taiyi:sciomc
         - /taiyi:deepinit
         - /taiyi:external-context
-        - /taiyi:keyword
-        - /taiyi:preflight
         - /taiyi:deep-interview
         - /taiyi:visual-verdict
         - /taiyi:ai-slop-cleaner
@@ -656,28 +558,6 @@ profiles:
         - /taiyi:team
         - /taiyi:ultrawork
         - /taiyi:agent
-        - /taiyi:full-flow
-        - /taiyi:help
-        - /taiyi:security
-        - /taiyi:e2e
-        - /taiyi:browser-smoke
-    engine_slash:
-      - chat: "/taiyi:init <slug>"
-        engine: "taiyi-forge.sh init"
-      - chat: "/taiyi:complete <slug> <phase>"
-        engine: "taiyi-forge.sh complete"
-      - chat: "/taiyi:phases"
-        engine: "taiyi-forge.sh phases"
-      - chat: "/taiyi:mark-aux <slug> <skill>"
-        engine: "taiyi-forge.sh mark-aux"
-      - chat: "/taiyi:assess <slug>"
-        engine: "taiyi-forge.sh assess"
-      - chat: "/taiyi:harness-check <slug> <key>"
-        engine: "taiyi-forge.sh harness-check"
-      - chat: "/taiyi:ci platform <端>"
-        engine: "taiyi-forge.sh ci platform"
-      - chat: "/taiyi:ci prompt <slug>"
-        engine: "taiyi-forge.sh ci prompt"
     opencode_tools:
       note: OpenCode 无斜杠菜单，用 taiyi_* 插件工具；与 slash 一一对应
       mode_tools:
@@ -734,16 +614,8 @@ profiles:
         gstack: "任意 gstack Skill（design-shotgun · autoplan · canary · gstack-upgrade …）"
       - chat: "/taiyi:sp <skill>"
         superpowers: "任意 Superpowers Skill（writing-skills · brainstorming …）"
-      - chat: "/taiyi:security [slug]"
-        engine: "semgrep + trivy（optional gstack cso）"
-      - chat: "/taiyi:e2e [slug]"
-        engine: "npx playwright test + verification-before-completion"
-      - chat: "/taiyi:browser-smoke [--json]"
-        engine: "taiyi-forge.sh browser-smoke [--json]"
       - chat: "/taiyi:resume [slug]"
         engine: "read HANDOFF.md + status"
-      - chat: "/taiyi:help [topic]"
-        engine: "slash_catalog + scenario playbooks"
 
   repeat_suffix:
     description: 多数引擎命令可后缀 xN；complete/mark-aux/harness-check 等须显式参数，不支持 xN
@@ -758,8 +630,6 @@ profiles:
     commands:
       - chat: "/taiyi:explore"
         engine: "提示加载 taiyi-change + Superpowers brainstorming"
-      - chat: "/taiyi:sync"
-        engine: "taiyi-forge.sh sync [slug]"
       - chat: "/taiyi:doctor"
         engine: "taiyi-forge.sh doctor"
 

@@ -15,6 +15,7 @@ const COMMANDS_YAML = path.join(REPO, "docs/taiyi/commands.yaml");
 
 /** 子路由 / 引擎路由 — 不要求出现在 slash_catalog 列表行 */
 const PROMPT_ALLOWLIST = new Set([
+  "taiyi-milestone.md",
   "taiyi.md",
   "taiyi-forge.md",
   "taiyi-gstack-review.md",
@@ -163,6 +164,6 @@ describe("commands.yaml ↔ prompts 对账", () => {
 
   it("prompt 数量与 Cursor commands 安装源一致", () => {
     const taiyiPrompts = prompts.filter((f) => f.startsWith("taiyi-"));
-    expect(taiyiPrompts.length).toBeGreaterThanOrEqual(75);
+    expect(taiyiPrompts.length).toBeGreaterThanOrEqual(66);
   });
 });
