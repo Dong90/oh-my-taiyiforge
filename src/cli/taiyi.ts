@@ -5,11 +5,12 @@ import { buildAuditJsonCompact } from "../core/workflow-audit.js";
 import { resolveTaiyiRoot } from "../core/paths.js";
 import { resolvePackageRoot, resolveTemplatesDir } from "../core/package-root.js";
 import { resolveHumanForComplete } from "../core/gates/human-gate-config.js";
-import { formatChangeListPlain, formatGuidePlain, formatPhaseProgressLine, formatStatusCompact, formatStatusPlain } from "../core/format-guide.js";
+import { formatChangeListPlain, formatPhaseProgressLine, formatStatusCompact, formatStatusPlain } from "../core/format-guide.js";
 import { buildPhaseGuide } from "../core/phase-guide.js";
-import { isChangeAborted, isWorkflowCompleted, completedWorkflowMessage } from "../core/change-status.js";
+import { isChangeAborted, isWorkflowCompleted, completedWorkflowMessage, expectedPhaseCount } from "../core/change-status.js";
 import { resolveActiveSlug, slugifyTitle } from "../core/active-slug.js";
 import { resolveAutoHarness } from "../core/resolve-auto-harness.js";
+import { getNextPhase } from "../core/phase-registry.js";
 import { formatChangeNotFound, parseProfileFlag } from "../core/cli-hints.js";
 import { resolveDefaultProfile } from "../core/project-config.js";
 import { runInitWizard } from "../commands/init-wizard.js";
@@ -41,7 +42,7 @@ import {
 } from "../core/loop-runner.js";
 import { SLASH_ONLY, LEGACY_REDIRECT } from "../core/command-registry.js";
 import { getLogger } from "../core/logger.js";
-import { emit } from "../core/event-bus.js";
+import { logActivity } from "../core/activity-log.js";
 
 const log = getLogger();
 import { runDaemonLoop, readDaemonState, formatDaemonResultPlain } from "../core/daemon-runner.js";
@@ -145,11 +146,11 @@ function tryCompletePhase(slug: string, options?: { approver?: string; phaseId?:
 function printCompleteSuccess(slug: string, phaseId: PhaseId): void {
   const state = engine.getState(slug);
   if (jsonMode) { console.log(JSON.stringify(state, null, 2)); return; }
-  if (state && isWorkflowCompleted(state)) { console.log("✓ " + phaseId + " 完成 → /taiyi:archive"); return; }
-  console.log("✓ " + phaseId + " 过关");
-  const r = taiyiNext(workspaceDir, slug, true);
-  if (r.ok && "text" in r && r.text) console.log("\n" + r.text);
-  else console.log("→ /taiyi:continue 或 /taiyi:status");
+  if (state && isWorkflowCompleted(state)) { console.log("✓ " + phaseId + " 已完成，可归档"); return; }
+  const nextPhase = state ? getNextPhase(state.currentPhase as PhaseId, state.skippedPhases) : null;
+  const done = state ? state.completedPhases.length + 1 : 0;
+  const total = state ? expectedPhaseCount(state) : 9;
+  console.log(`✓ ${phaseId} 过关 (${done}/${total}) → ${nextPhase ?? "全部完成"}${nextPhase ? `：写 ${nextPhase.toUpperCase()}.md` : "，可归档"}`);
 }
 
 function printDoctor(doctorArgs: string[]): void {
@@ -223,7 +224,7 @@ const handlers: Record<string, CliHandler> = {
     try {
       const result = engine.initChange(slug, { title, templatesDir, profile: resolveProfileFromArgs(a) ?? resolveDefaultProfile(workspaceDir), strictDev: a.includes("--strict-dev"), autoHarness: resolveAutoHarness(a, false), force: a.includes("--force") });
       if (jsonMode) console.log(JSON.stringify(result, null, 2));
-      else { const guide = buildPhaseGuide(taiyiRoot, slug, result, workspaceDir); console.log("变更: " + slug + "\n"); console.log(formatGuidePlain(guide)); }
+      else { const guide = buildPhaseGuide(taiyiRoot, slug, result, workspaceDir); console.log(formatStatusCompact(guide)); }
     } catch (e) { log.error(e instanceof Error ? e.message : String(e)); process.exitCode = 1; return; }
   },
   new: (a) => {
@@ -237,7 +238,7 @@ const handlers: Record<string, CliHandler> = {
     try {
       const result = engine.initChange(resolvedSlug, { title, templatesDir, profile: resolveProfileFromArgs(a) ?? resolveDefaultProfile(workspaceDir), strictDev: a.includes("--strict-dev"), autoHarness: resolveAutoHarness(a, false), force: a.includes("--force") });
       if (jsonMode) console.log(JSON.stringify(result, null, 2));
-      else { const guide = buildPhaseGuide(taiyiRoot, resolvedSlug, result, workspaceDir); console.log("变更: " + resolvedSlug + "\n"); console.log(formatGuidePlain(guide)); }
+      else { const guide = buildPhaseGuide(taiyiRoot, resolvedSlug, result, workspaceDir); console.log(formatStatusCompact(guide)); }
     } catch (e) { log.error(e instanceof Error ? e.message : String(e)); process.exitCode = 1; return; }
   },
   cancel: (a) => {
@@ -254,7 +255,7 @@ const handlers: Record<string, CliHandler> = {
     if (times > 1) { const result = runContinueRepeat(engine, workspaceDir, taiyiRoot, slug, times); if (jsonMode) console.log(JSON.stringify(result, null, 2)); else console.log(formatLoopResultPlain(result, engine, taiyiRoot, workspaceDir)); process.exit(result.ok ? 0 : 1); }
     const state = engine.getState(slug);
     if (!state) { log.error(formatChangeNotFound(slug)); process.exitCode = 1; return; }
-    if (isWorkflowCompleted(state)) { console.log("变更 " + slug + " 已完成 → /taiyi:archive"); return; }
+    if (isWorkflowCompleted(state)) { console.log("变更 " + slug + " 已完成，可归档"); return; }
     if (isChangeAborted(state)) { log.error("变更 " + slug + " 已取消"); process.exitCode = 1; return; }
     const phaseId = state.currentPhase as PhaseId;
     const attempt = tryCompletePhase(slug, { approver });
@@ -269,13 +270,13 @@ const handlers: Record<string, CliHandler> = {
     const { slug, times } = requireSlugAndRepeat(a);
     const state = engine.getState(slug);
     if (!state) { log.error(formatChangeNotFound(slug)); process.exitCode = 1; return; }
-    if (isWorkflowCompleted(state)) { console.log("变更 " + slug + " 已完成 → /taiyi:archive"); return; }
+    if (isWorkflowCompleted(state)) { console.log("变更 " + slug + " 已完成，可归档"); return; }
     if (isChangeAborted(state)) { log.error("变更 " + slug + " 已取消"); process.exitCode = 1; return; }
     if (state.currentPhase !== "dev" && state.currentPhase !== "test") { log.error("当前阶段为「" + state.currentPhase + "」。apply 用于 dev/test"); process.exitCode = 1; return; }
     const h = taiyiHarness(workspaceDir, slug, !jsonMode);
     if (!h.ok) { log.error(h.error); process.exitCode = 1; return; }
     for (let i = 1; i <= times; i++) {
-      if (!jsonMode) { if (times === 1) console.log("=== /taiyi:apply（" + state.currentPhase + "）===\n说明: 只输出清单，实现后 /taiyi:continue\n"); else console.log("=== /taiyi:apply " + i + "/" + times + "（" + state.currentPhase + "）===\n"); }
+      if (!jsonMode) { if (times === 1) console.log("=== apply（" + state.currentPhase + "）===\n说明: 只输出清单，实现后 complete 过关\n"); else console.log("=== apply " + i + "/" + times + "（" + state.currentPhase + "）===\n"); }
       if (!jsonMode && "text" in h && h.text) { console.log(h.text); if (i < times) console.log(""); }
       else if (jsonMode) console.log(JSON.stringify({ round: i, total: times, ...h }, null, 2));
     }
@@ -298,7 +299,7 @@ const handlers: Record<string, CliHandler> = {
     const slug = requireSlug(a);
     const r = taiyiStatus(workspaceDir, slug);
     if (!r.ok) { log.error(r.error); process.exitCode = 1; return; }
-    if (jsonMode) { const payload = compactMode ? { engineTruth: r.engineTruth, statusLine: formatPhaseProgressLine(r.guide) } : { engineTruth: r.engineTruth, state: r.state, guide: r.guide, openspec: r.openspec }; console.log(JSON.stringify(payload, null, 2)); }
+    if (jsonMode) { const payload = compactMode ? { engineTruth: r.engineTruth, statusLine: formatPhaseProgressLine(r.guide), nextAction: r.guide.nextAction } : { engineTruth: r.engineTruth, state: r.state, guide: r.guide, openspec: r.openspec }; console.log(JSON.stringify(payload, null, 2)); }
     else if (compactMode) console.log(formatStatusCompact(r.guide));
     else console.log(formatStatusPlain(r.guide));
   },
@@ -318,7 +319,7 @@ const handlers: Record<string, CliHandler> = {
     if (!r.ok) { log.error(r.error); process.exitCode = 1; return; }
     if (jsonMode) console.log(JSON.stringify(r, null, 2));
     else if ("noop" in r && r.noop && r.message) console.log(r.message);
-    else { console.log("已写入: " + r.path); console.log("恢复: /taiyi:status " + r.slug); }
+    else { console.log("已写入: " + r.path); console.log("恢复: status " + r.slug); }
   },
   resume: (a) => {
     const slug = stripFlags(a)[0];
@@ -331,7 +332,7 @@ const handlers: Record<string, CliHandler> = {
     const slug = requireSlug(a);
     const r = taiyiArchive(workspaceDir, slug, { skipSpecs: a.includes("--skip-specs") });
     if (r.ok && !r.alreadyArchived) {
-      emit("change:archived", { slug, reason: r.reason }).catch(() => {});
+      logActivity(taiyiRoot, { event: "change:archived", slug, reason: r.reason });
     }
     if (jsonMode) console.log(JSON.stringify(r, null, 2));
     else if (r.ok) console.log(formatArchivePlain(slug, r));

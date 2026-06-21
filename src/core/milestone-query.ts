@@ -27,6 +27,25 @@ export type ChangeMilestoneEntry = {
   isAborted: boolean;
 };
 
+export type BlockingItem = {
+  slug: string;
+  phase: string;
+  type: "human-gate" | "stale" | "quality" | "step-blocker";
+  detail: string;
+};
+
+export type HealthCheck = {
+  id: string;
+  ok: boolean;
+  detail: string;
+};
+
+export type CommandTimestamp = {
+  command: string;
+  lastRun: string | null;
+  lastSlug: string | null;
+};
+
 export type MilestoneReport = {
   totalChanges: number;
   activeChanges: number;
@@ -38,6 +57,9 @@ export type MilestoneReport = {
   phaseDistribution: Record<string, number>;
   bottleneckPhase: { phaseId: string; count: number; slugs: string[] } | null;
   changes: ChangeMilestoneEntry[];
+  blockingItems: BlockingItem[];
+  commandTimestamps: CommandTimestamp[];
+  healthChecks: HealthCheck[];
 };
 
 export type MilestoneQueryOptions = {
@@ -172,6 +194,15 @@ export function queryMilestone(
     bottleneck = null;
   }
 
+  // ── 阻塞项 ──
+  const blockingItems = collectBlockingItems(taiyiRoot, changesDir);
+
+  // ── 横向命令时间戳 ──
+  const commandTimestamps = collectCommandTimestamps(taiyiRoot);
+
+  // ── 健康自检 ──
+  const healthChecks = runHealthChecks(taiyiRoot, changesDir, blockingItems);
+
   return {
     totalChanges: changes.length,
     activeChanges,
@@ -185,5 +216,156 @@ export function queryMilestone(
     phaseDistribution,
     bottleneckPhase: bottleneck,
     changes,
+    blockingItems,
+    commandTimestamps,
+    healthChecks,
   };
+}
+
+// ── 阻塞项采集 ──
+
+const HUMAN_GATED = new Set(["change", "design", "review"]);
+
+function collectBlockingItems(
+  taiyiRoot: string,
+  changesDir: string,
+): BlockingItem[] {
+  const items: BlockingItem[] = [];
+  if (!fs.existsSync(changesDir)) return items;
+
+  for (const ent of fs.readdirSync(changesDir, { withFileTypes: true })) {
+    if (!ent.isDirectory()) continue;
+    const statePath = path.join(changesDir, ent.name, "state.json");
+    const state = readStateFile(statePath);
+    if (!state) continue;
+
+    const phase = displayPhase(state);
+    if (phase === "completed" || phase === "aborted") continue;
+
+    const daysStale = daysAgo(state.updatedAt);
+
+    // Blocked on human gate
+    if (HUMAN_GATED.has(state.currentPhase)) {
+      items.push({
+        slug: state.slug,
+        phase: state.currentPhase,
+        type: "human-gate",
+        detail: `等待 --approver 审批`,
+      });
+    }
+
+    // Stale > 7 days
+    if (daysStale > 7) {
+      items.push({
+        slug: state.slug,
+        phase: state.currentPhase,
+        type: "stale",
+        detail: `停滞 ${daysStale} 天`,
+      });
+    }
+  }
+
+  return items;
+}
+
+// ── 横向命令时间戳 ──
+
+const TRACKED_COMMANDS = [
+  { command: "taiyi-health", event: "aux:completed", skill: "taiyi-health", label: "健康巡检" },
+  { command: "taiyi-intel-scan", event: "aux:completed", skill: "taiyi-intel-scan", label: "情报扫描" },
+  { command: "taiyi-architect", event: "aux:completed", skill: "taiyi-architect", label: "架构决策" },
+  { command: "taiyi-evolve", event: "aux:completed", skill: "taiyi-evolve", label: "架构同步" },
+];
+
+function collectCommandTimestamps(taiyiRoot: string): CommandTimestamp[] {
+  const activityPath = path.join(taiyiRoot, "activity.jsonl");
+  const results: CommandTimestamp[] = [];
+
+  // Parse activity log to find last run of each command
+  const lastEvents = new Map<string, { ts: string; slug: string }>();
+  if (fs.existsSync(activityPath)) {
+    try {
+      const lines = fs.readFileSync(activityPath, "utf8").trim().split("\n");
+      for (const line of lines) {
+        try {
+          const entry = JSON.parse(line);
+          if (entry.event === "aux:completed" && entry.skill) {
+            lastEvents.set(entry.skill, { ts: entry.ts, slug: entry.slug });
+          }
+        } catch { /* skip malformed */ }
+      }
+    } catch { /* skip */ }
+  }
+
+  for (const cmd of TRACKED_COMMANDS) {
+    const last = lastEvents.get(cmd.skill);
+    results.push({
+      command: cmd.label,
+      lastRun: last?.ts ?? null,
+      lastSlug: last?.slug ?? null,
+    });
+  }
+
+  return results;
+}
+
+// ── 健康自检 ──
+
+function runHealthChecks(
+  taiyiRoot: string,
+  changesDir: string,
+  blockings: BlockingItem[],
+): HealthCheck[] {
+  const checks: HealthCheck[] = [];
+
+  // .taiyi/ exists
+  checks.push({
+    id: ".taiyi 目录",
+    ok: fs.existsSync(taiyiRoot),
+    detail: fs.existsSync(taiyiRoot) ? "存在" : "缺失",
+  });
+
+  // Config exists
+  const configPath = path.join(taiyiRoot, "config.json");
+  checks.push({
+    id: "项目配置",
+    ok: fs.existsSync(configPath),
+    detail: fs.existsSync(configPath) ? "config.json 存在" : "未配置（可选 init-wizard）",
+  });
+
+  // Stale locks
+  let staleLocks = 0;
+  if (fs.existsSync(changesDir)) {
+    for (const ent of fs.readdirSync(changesDir, { withFileTypes: true })) {
+      if (!ent.isDirectory()) continue;
+      const lockPath = path.join(changesDir, ent.name, ".lock");
+      try {
+        const stat = fs.statSync(lockPath);
+        if (Date.now() - stat.mtimeMs > 3600_000) staleLocks++;
+      } catch { /* no lock */ }
+    }
+  }
+  checks.push({
+    id: "残留锁文件",
+    ok: staleLocks === 0,
+    detail: staleLocks === 0 ? "无" : `${staleLocks} 个 stale lock`,
+  });
+
+  // Blocking items summary
+  checks.push({
+    id: "阻塞项",
+    ok: blockings.length === 0,
+    detail: blockings.length === 0 ? "无阻塞" : `${blockings.length} 项需处理`,
+  });
+
+  // Active changes count (warn if > 5)
+  const activeCount = [...(fs.existsSync(changesDir) ? fs.readdirSync(changesDir, { withFileTypes: true }) : [])]
+    .filter((e) => e.isDirectory()).length;
+  checks.push({
+    id: "活跃变更数",
+    ok: activeCount <= 5,
+    detail: `${activeCount} 个（${activeCount > 5 ? "偏多，建议归档或取消" : "正常"}）`,
+  });
+
+  return checks;
 }

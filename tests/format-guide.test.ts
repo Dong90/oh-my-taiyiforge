@@ -38,12 +38,12 @@ describe("format-guide", () => {
     const line = formatPhaseProgressLine(baseGuide());
     expect(line).toContain("design（3/9）");
     expect(line).toContain("taiyi-design");
-    expect(line).toContain("/taiyi:continue");
+    expect(line).toContain("complete 过关");
   });
 
   it("formatPhaseProgressLine uses apply for dev", () => {
     const line = formatPhaseProgressLine(baseGuide({ currentPhase: "dev", skill: "taiyi-dev" }));
-    expect(line).toContain("/taiyi:apply");
+    expect(line).toContain("apply");
   });
 
   it("formatStatusPlain includes progress and hints", () => {
@@ -51,7 +51,7 @@ describe("format-guide", () => {
     expect(text).toContain("# demo");
     expect(text).toContain("design（3/9）");
     expect(text).toContain("补充架构图");
-    expect(text).toContain("/taiyi:status");
+    expect(text).toContain("status");
   });
 
   it("formatStatusPlain shows intent analysis when signals present", () => {

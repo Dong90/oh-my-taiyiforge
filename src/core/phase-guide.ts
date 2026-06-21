@@ -155,7 +155,7 @@ export function buildPhaseGuide(
       : null;
     let nextAction = guide.nextAction;
     if (stepBlockers.length > 0) {
-      nextAction = `先解决顺序冲突（删除超前工件或勿跳步），再 /taiyi:continue`;
+      nextAction = `先解决顺序冲突（删除超前工件或勿跳步），再 complete 过关`;
     } else if (earlyCode) {
       nextAction = `dev 前勿改业务代码；撤销或暂存改动后再推进。`;
     }
@@ -185,7 +185,7 @@ export function buildPhaseGuide(
       artifactIsSeed: false,
       qualityReady: false,
       qualityHints: [],
-      nextAction: "变更已取消 → /taiyi:new 创建新变更",
+      nextAction: "变更已取消，可新建变更",
       nextPhase: null,
       nextSkill: null,
       requiresHumanGate: false,
@@ -214,7 +214,7 @@ export function buildPhaseGuide(
       qualityReady: true,
       qualityHints: [],
       nextAction:
-        `${workflowPhaseLabelFromState(state)}已完成 → /taiyi:archive（可选 sync-openspec）`,
+        `${workflowPhaseLabelFromState(state)}已完成，可归档（可选 sync-openspec）`,
       nextPhase: null,
       nextSkill: null,
       requiresHumanGate: false,
@@ -230,35 +230,35 @@ export function buildPhaseGuide(
 
   const auxNote = pending.length > 0 ? `（可选辅助：${pending.join(", ")}）` : "";
 
-  if (!artifactExists) {
-    const pre =
-      pending.length > 0 && state.currentPhase === "change"
-        ? `建议先运行辅助 Skill：${pending.join(", ")}，再`
-        : "";
-    nextAction = `${pre}加载 Skill「${phase.skill}」，编辑 ${phase.artifact}`;
-  } else if (!qualityReady) {
-    nextAction = `完善 ${phase.artifact}（见 qualityHints），再 /taiyi:continue`;
-  } else if (humanGate) {
-    nextAction = `人工确认后 /taiyi:continue${auxNote}`;
-  } else {
-    nextAction = `工件就绪，执行 /taiyi:continue${auxNote}`;
-  }
-
   const needsHealth =
     state.currentPhase === "review" &&
     (state.complexity?.level === "high" || state.complexity?.level === "medium") &&
     !state.auxiliaryCompleted.includes("taiyi-health");
   const healthGateLine = needsHealth
-    ? `⚠ ${state.complexity?.level} 复杂度 review 门禁：须先 /taiyi:health → health-report.md → mark-aux taiyi-health`
+    ? `⚠ ${state.complexity?.level} 复杂度 review 门禁：health → health-report.md → mark-aux → review-loop`
     : undefined;
+
   if (needsHealth) {
-    nextAction = `${state.complexity?.level} 复杂度：先 taiyi-health → mark-aux，再 /taiyi:review-loop`;
+    nextAction = `${state.complexity?.level} 复杂度：health → mark-aux，再 review-loop`;
   } else if (state.currentPhase === "review") {
-    nextAction = `/taiyi:review-loop（会话内循环 review 直到机器审查通过）→ 通过后 complete review --approver`;
+    nextAction = `review-loop（会话内循环直到机器审查通过）→ complete（--approver）`;
   } else if (state.autoHarness) {
-    nextAction = `全自动：harness 清单 → 铁三角打卡 → /taiyi:continue`;
-  } else if (state.currentPhase === "dev" || state.currentPhase === "test") {
-    nextAction = `加载 ${phase.skill}，实现后 /taiyi:apply 或 /taiyi:continue`;
+    nextAction = `全自动：harness 清单 → 铁三角打卡 → complete`;
+  } else if (!artifactExists) {
+    const preHint =
+      pending.length > 0 && state.currentPhase === "change"
+        ? `建议先处理辅助: ${pending.join(", ")}，再`
+        : "";
+    nextAction = `${preHint}加载「${phase.skill}」编辑 ${phase.artifact} → complete${humanGate ? "（--approver）" : ""}`;
+  } else if (!qualityReady) {
+    nextAction = `完善 ${phase.artifact}（qualityHints）→ complete${humanGate ? "（--approver）" : ""}`;
+    if (state.currentPhase === "dev" || state.currentPhase === "test") {
+      nextAction = `实现 → apply 或 complete`;
+    }
+  } else if (humanGate) {
+    nextAction = `人工确认 → complete（--approver）${auxNote}`;
+  } else {
+    nextAction = `工件就绪 → complete${auxNote}`;
   }
 
   return attachMeta({

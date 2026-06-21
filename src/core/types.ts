@@ -67,4 +67,5 @@ export type ComplexityAssessment = {
   level: ComplexityLevel;
   score: number;
   recommendedSkills: string[];
+  recommendedProfile?: ChangeProfile;
 };

@@ -20,5 +20,3 @@
 - [ ] No flaky tests introduced
 
 ## Gaps / Follow-ups
-
-<!-- 已知未覆盖 -->
