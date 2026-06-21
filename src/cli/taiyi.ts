@@ -600,16 +600,16 @@ const handlers: Record<string, CliHandler> = {
     }
     log.error("用法: daemon run|status <slug>"); process.exitCode = 1; return;
   },
-  "init-wizard": (a) => {
+  "init-wizard": (a: string[]) => {
     const r = runInitWizard(workspaceDir);
-    if (jsonMode) { r.then(a => console.log(JSON.stringify(a, null, 2))).catch(e => { log.error(e.message); process.exitCode = 1; }); return; }
-    r.then(a => console.log("已写入 .taiyi/config.json: " + JSON.stringify(a))).catch(e => { log.error(e.message); process.exitCode = 1; });
+    if (jsonMode) { r.then((result: unknown) => console.log(JSON.stringify(result, null, 2))).catch((err: unknown) => { log.error(err instanceof Error ? err.message : String(err)); process.exitCode = 1; }); return; }
+    r.then((result: unknown) => console.log("已写入 .taiyi/config.json: " + JSON.stringify(result))).catch((err: unknown) => { log.error(err instanceof Error ? err.message : String(err)); process.exitCode = 1; });
   },
-  "import": (a) => {
+  "import": (a: string[]) => {
     const branch = stripFlags(a)[0];
     if (!branch) { log.error("用法: import <branch-name>"); process.exitCode = 1; return; }
     const r = importFromGitBranch(branch, workspaceDir);
-    r.then(slug => { if (jsonMode) console.log(JSON.stringify({ slug }, null, 2)); else console.log("导入完成: " + slug); }).catch(e => { log.error(e.message); process.exitCode = 1; });
+    r.then(slug => { if (jsonMode) console.log(JSON.stringify({ slug }, null, 2)); else console.log("导入完成: " + slug); }).catch((err: unknown) => { log.error(err instanceof Error ? err.message : String(err)); process.exitCode = 1; });
   },
 };
 
