@@ -14,6 +14,7 @@ import { loadTokenBudgetConfig } from "./token/budget-config.js";
 import { scanArtifactTokens } from "./token/scan-artifacts.js";
 import { resolveChangeDir } from "./taiyi-archive.js";
 import { isWorkflowCompleted } from "./change-status.js";
+import { getLogger } from "./logger.js";
 
 export type HarnessStepKind = "agent" | "shell" | "taiyi-cli";
 
@@ -95,6 +96,7 @@ export function buildHarnessPlan(
   taiyiRoot: string,
   state: ChangeState,
 ): HarnessPlan {
+  const log = getLogger();
   const phase = state.currentPhase;
   const changeDir = resolveChangeDir(taiyiRoot, state.slug) ?? path.join(taiyiRoot, "changes", state.slug);
   const phaseDef = getPhase(phase);
@@ -176,6 +178,8 @@ export function buildHarnessPlan(
     }
   }
 
+  log.info("Built harness plan", { slug: state.slug, phase, ironTriangleCount: ironTriangle.length, auxiliaryCount: auxiliary.length });
+
   return {
     slug: state.slug,
     phase,
@@ -194,11 +198,16 @@ export function enforceAutoHarnessBeforeComplete(
   taiyiRoot: string,
   state: ChangeState,
 ): { ok: boolean; error?: string; plan?: HarnessPlan } {
-  if (!state.autoHarness) return { ok: true };
+  const log = getLogger();
+  if (!state.autoHarness) {
+    log.debug("Auto harness skipped", { slug: state.slug, reason: "autoHarness disabled" });
+    return { ok: true };
+  }
 
   const plan = buildHarnessPlan(workspaceDir, taiyiRoot, state);
 
   if (plan.blockers.length > 0) {
+    log.warn("Auto harness blocked", { slug: state.slug, blockers: plan.blockers });
     return {
       ok: false,
       error: `Auto harness blocked: ${plan.blockers.join("; ")}. Run: ${forgeHarness(state.slug)}`,
@@ -214,6 +223,8 @@ export function runPostCompleteShellHooks(
   slug: string,
   phaseId: PhaseId,
 ): HarnessStep[] {
+  const log = getLogger();
+  log.info("Running post-complete shell hooks", { slug, phaseId });
   const results: HarnessStep[] = [];
   const harness = getHarnessContext(workspaceDir, slug, phaseId);
 

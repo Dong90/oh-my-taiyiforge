@@ -4,6 +4,7 @@ import type { PhaseId } from "./types.js";
 import { getPhase, listPhases } from "./phase-registry.js";
 import { isSeedTemplate, wrapSeedTemplate } from "./seed-marker.js";
 import { ZOD_PHASES } from "./artifact-validator.js";
+import { renderTemplate as engineRender } from "./template-engine.js";
 
 export type SeedVars = {
   slug: string;
@@ -18,11 +19,7 @@ export type SeedOptions = {
 };
 
 function renderTemplate(raw: string, vars: SeedVars): string {
-  const title = vars.title ?? vars.slug.replace(/-/g, " ");
-  const rendered = raw
-    .replace(/\{\{title\}\}/g, title)
-    .replace(/\{\{slug\}\}/g, vars.slug);
-  return wrapSeedTemplate(rendered);
+  return wrapSeedTemplate(engineRender(raw, vars));
 }
 
 function seedArtifactFile(
