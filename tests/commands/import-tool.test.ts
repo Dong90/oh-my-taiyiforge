@@ -17,6 +17,7 @@ beforeEach(() => {
   execSync("git init", { cwd: repoDir });
   execSync('git config user.email "test@test.com"', { cwd: repoDir });
   execSync('git config user.name "Test"', { cwd: repoDir });
+  execSync("git config init.defaultBranch main", { cwd: repoDir });
   execSync("git commit --allow-empty -m 'initial commit'", { cwd: repoDir });
 
   // Create a feature branch with commits
