@@ -2,11 +2,7 @@
 
 ## Scope
 
-<!-- 哪些页面/组件；无 UI 则写 N/A 并说明 -->
-
 ## Layout & Hierarchy
-
-<!-- 信息架构、主路径 -->
 
 ## States
 

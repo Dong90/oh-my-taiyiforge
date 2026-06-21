@@ -13,7 +13,8 @@ import { formatChangeNotFound, formatWrongPhaseError } from "./cli-hints.js";
 import { assertValidSlug, validateSlug } from "./slug.js";
 import { evaluateQualityGate } from "./gates/quality-gate.js";
 import { canEnterPhase, getNextPhase, getPhase, listPhases } from "./phase-registry.js";
-import { isPhaseSkipped, skippedPhasesForProfile } from "./profile.js";
+import { skippedPhasesForProfile, isPhaseSkipped, changeHasUiSignals } from "./profile.js";
+import { loadProjectConfig } from "./project-config.js";
 import { assessComplexity, type ComplexitySignals } from "./routing/complexity.js";
 import { inferComplexitySignals } from "./routing/infer-complexity.js";
 import { resolveChangeDir } from "./taiyi-archive.js";
@@ -33,7 +34,6 @@ import { enforceTokenBudgetBeforeComplete } from "./token-runner.js";
 import { expectedPhaseCount, isChangeAborted, isWorkflowCompleted } from "./change-status.js";
 import { normalizeState } from "./normalize-state.js";
 import { deliveryGateEnabled, evaluateDeliveryGate } from "./gates/delivery-gate.js";
-import { emit } from "./event-bus.js";
 import { auditChange } from "./workflow-audit.js";
 import { syncRootChangelog } from "./sync-root-changelog.js";
 import { syncChangeState } from "./state-sync.js";
@@ -43,6 +43,8 @@ import {
 } from "./dev-phase-guard.js";
 import { getLogger } from "./logger.js";
 import { ChangeLock } from "./change-lock.js";
+import { logActivity } from "./activity-log.js";
+import { appendPhaseToContext } from "./phase-context.js";
 
 export type InitChangeOptions = {
   title?: string;
@@ -141,7 +143,7 @@ export class WorkflowEngine {
     };
     this.writeState(state);
     this.log.info("Initiated change", { slug, profile: options?.profile ?? "full", initialPhase });
-    emit("change:created", { slug, profile: options?.profile ?? "full", initialPhase }).catch(() => {});
+    logActivity(this.taiyiRoot, { event: "change:created", slug, profile: options?.profile ?? "full" });
     return { ...state, seeded };
   }
 
@@ -242,6 +244,7 @@ export class WorkflowEngine {
       : [...state.auxiliaryCompleted, skillId];
     this.writeState({ ...state, auxiliaryCompleted, updatedAt: new Date().toISOString() });
     this.log.info("Marked auxiliary", { slug, skillId });
+    logActivity(this.taiyiRoot, { event: "aux:completed", slug, skill: skillId });
     return { ok: true };
   }
 
@@ -280,7 +283,7 @@ export class WorkflowEngine {
       return { ok: false, error: `Phase ${phaseId} is skipped for profile ${state.profile}` };
     }
     if (state.currentPhase !== phaseId) {
-      emit("phase:blocked", { slug, phase: phaseId, reason: `wrong phase, expected ${state.currentPhase}` }).catch(() => {});
+      logActivity(this.taiyiRoot, { event: "phase:blocked", slug, phase: phaseId, reason: `wrong phase, expected ${state.currentPhase}` });
       return {
         ok: false,
         error: formatWrongPhaseError(slug, state.currentPhase, phaseId),
@@ -351,7 +354,7 @@ export class WorkflowEngine {
         const highs = audit.findings
           .filter((f) => f.severity === "high")
           .map((f) => `${f.code}: ${f.message}`);
-        emit("audit:high", { slug, findings: audit.findings }).catch(() => {});
+        logActivity(this.taiyiRoot, { event: "audit:high", slug, findings: highs.length });
         return {
           ok: false,
           error: `Integration audit failed:\n${highs.join("\n")}`,
@@ -363,7 +366,7 @@ export class WorkflowEngine {
       const delivery = evaluateDeliveryGate(workspaceDir, { slug, phase: "integration" });
       if (!delivery.passed) {
         const hintText = delivery.hints?.length ? ` — ${delivery.hints.join("; ")}` : "";
-        emit("gate:failed", { slug, phase: phaseId, reason: delivery.reason }).catch(() => {});
+        logActivity(this.taiyiRoot, { event: "gate:failed", slug, phase: phaseId, reason: delivery.reason });
         return {
           ok: false,
           error: `Delivery gate failed: ${delivery.reason}${hintText}`,
@@ -439,10 +442,13 @@ export class WorkflowEngine {
     }
 
     if (process.env.TAIYI_SKIP_QUALITY_GATE !== "1") {
+      const isLowComplexity = workingState.complexity?.level === "low";
+      const isHumanGated = requiresHumanGate(phaseId);
       const quality = evaluateQualityGate(qualityScores);
-      if (!quality.passed) {
+      const qualityStrict = !isLowComplexity || isHumanGated || phaseId === "integration";
+      if (!quality.passed && qualityStrict) {
         const hintText = qualityHints?.length ? ` — ${qualityHints.join("; ")}` : "";
-        emit("gate:failed", { slug, phase: phaseId, reason: quality.failed.join(", ") }).catch(() => {});
+        logActivity(this.taiyiRoot, { event: "gate:failed", slug, phase: phaseId, reason: quality.failed.join(", ") });
         return {
           ok: false,
           error: `Quality gate failed: ${quality.failed.join(", ")}${hintText}`,
@@ -459,21 +465,30 @@ export class WorkflowEngine {
         options?.allowAutoHuman,
       );
       if (!autoReject.ok) {
-        emit("phase:blocked", { slug, phase: phaseId, reason: autoReject.error }).catch(() => {});
+        logActivity(this.taiyiRoot, { event: "phase:blocked", slug, phase: phaseId, reason: autoReject.error });
         return { ok: false, error: autoReject.error };
       }
       const human = evaluateHumanGate(gates.human);
       if (!human.passed) {
-        emit("phase:blocked", { slug, phase: phaseId, reason: human.reason ?? "Human gate failed" }).catch(() => {});
+        logActivity(this.taiyiRoot, { event: "phase:blocked", slug, phase: phaseId, reason: human.reason ?? "Human gate failed" });
         return { ok: false, error: human.reason ?? "Human gate failed" };
       }
     }
 
     const completed = [...workingState.completedPhases, phaseId];
-    const next = getNextPhase(phaseId, workingState.skippedPhases);
+
+    const dynamicSkipped = [...workingState.skippedPhases];
+    const projectCfg = loadProjectConfig(workspaceDir);
+    if (phaseId === "change" && !dynamicSkipped.includes("ui-design") && !changeHasUiSignals(changeDir) && projectCfg.autoSkipUiDesign) {
+      dynamicSkipped.push("ui-design");
+      this.log.info("Auto-skipping ui-design (no UI signals in CHANGE.md)", { slug });
+    }
+    const next = getNextPhase(phaseId, dynamicSkipped);
+
     const draft: ChangeState = {
       ...workingState,
       completedPhases: completed,
+      skippedPhases: dynamicSkipped,
       currentPhase: next ?? phaseId,
       complexity:
         workingState.completedPhases.includes("change") && workingState.complexity
@@ -492,7 +507,7 @@ export class WorkflowEngine {
     this.writeState(updated);
 
     const templatesDir = this.templatesDir;
-    if (next && templatesDir && !isPhaseSkipped(next, workingState.skippedPhases)) {
+    if (next && templatesDir && !isPhaseSkipped(next, dynamicSkipped)) {
       let title: string | undefined;
       try {
         const changeMd = fs.readFileSync(path.join(changeDir, "CHANGE.md"), "utf8");
@@ -504,6 +519,10 @@ export class WorkflowEngine {
       seedPhaseTemplate(changeDir, templatesDir, next, { slug, title });
     }
 
+    if (next && !isPhaseSkipped(next, dynamicSkipped)) {
+      try { appendPhaseToContext(changeDir, slug, phaseId, next, updated); } catch { /* best-effort */ }
+    }
+
     if (phaseId === "integration" && process.env.TAIYI_SKIP_ROOT_CHANGELOG !== "1") {
       syncRootChangelog(workspaceDir, slug);
     }
@@ -512,7 +531,7 @@ export class WorkflowEngine {
       runPostCompleteShellHooks(workspaceDir, this.workspaceRoot, slug, phaseId);
     }
     this.log.info("Completed phase", { slug, phaseId });
-    emit("phase:complete", { slug, phase: phaseId }).catch(() => {});
+    logActivity(this.taiyiRoot, { event: "phase:complete", slug, phase: phaseId });
     return { ok: true };
   }
 

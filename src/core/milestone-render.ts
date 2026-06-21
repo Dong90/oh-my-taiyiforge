@@ -13,6 +13,12 @@ function padRight(s: string, n: number): string {
   return s.length >= n ? s.slice(0, n) : s + " ".repeat(n - s.length);
 }
 
+function daysAgo(iso: string): number {
+  const then = new Date(iso).getTime();
+  const now = Date.now();
+  return Math.max(0, Math.floor((now - then) / 86_400_000));
+}
+
 function nextStep(phase: string, slug: string, isCompleted: boolean, isAborted: boolean): string {
   if (isCompleted) return `/taiyi:archive ${slug}`;
   if (isAborted) return "已废弃";
@@ -150,7 +156,41 @@ export function formatMilestonePlain(report: MilestoneReport): string {
   lines.push(`  ${metricParts.join("  ")}`);
   lines.push("");
 
-  // Priority focus — show #1 action
+  lines.push("");
+
+  // ── 阻塞项 ──
+  if (report.blockingItems.length > 0) {
+    lines.push("  ── 阻塞项 ──");
+    for (const b of report.blockingItems) {
+      const icon = b.type === "human-gate" ? "🔒" : b.type === "stale" ? "⏳" : "⚠";
+      lines.push(`  ${icon} ${b.slug} (${b.phase}): ${b.detail}`);
+    }
+    lines.push("");
+  }
+
+  // ── 横向命令 ──
+  if (report.commandTimestamps.length > 0) {
+    lines.push("  ── 横向命令 ──");
+    for (const c of report.commandTimestamps) {
+      const ago = c.lastRun ? `${daysAgo(c.lastRun)}d 前` : "未执行";
+      const fresh = c.lastRun ? daysAgo(c.lastRun) > 30 : true;
+      const marker = !c.lastRun ? " ⚐" : fresh ? " (建议重跑)" : "";
+      lines.push(`  ${c.command}: ${ago}${marker}`);
+    }
+    lines.push("");
+  }
+
+  // ── 健康自检 ──
+  if (report.healthChecks.length > 0) {
+    lines.push("  ── 自检 ──");
+    for (const h of report.healthChecks) {
+      const icon = h.ok ? "✓" : "✗";
+      lines.push(`  ${icon} ${h.id}: ${h.detail}`);
+    }
+    lines.push("");
+  }
+
+  // ── 优先处理 ──
   const firstActive = report.changes.find((e) => !e.isCompleted && !e.isAborted);
   if (firstActive) {
     const cmd = nextStep(firstActive.currentPhase, firstActive.slug, false, false);

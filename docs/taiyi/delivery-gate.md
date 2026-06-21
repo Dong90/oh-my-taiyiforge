@@ -1,23 +1,45 @@
-# Integration 交付门（Delivery Gate）
+# 交付门与部署（Delivery Gate + 交付链 Slash）
 
-## 问题
-
-九阶段可在「代码未 commit / 工作区未干净」时 complete integration，导致 **流程闭环 ≠ 工程交付闭环**。
-
-## 行为
+## 引擎交付门
 
 `complete <slug> integration` 时，若工作区为 **git 仓库**（默认启用）：
 
 1. 相对 `origin/develop`（或 `origin/main`）须有 **已 commit 的新增 diff**
 2. 工作区须 **干净**（无 unstaged / staged / untracked）
-3. 可选验证命令（优先级：`TAIYI_DELIVERY_VERIFY_CMD` > `package.json` 的 `taiyi.deliveryVerifyCmd`；安装时若有 `scripts.test` 会默认写入 `"npm test"`）
-4. **Commit trailers**（默认启用）：相对 base 的 commit 中至少一条须含 `Taiyi-Change: <slug>`
+3. 可选验证命令（优先级：`TAIYI_DELIVERY_VERIFY_CMD` > `package.json` 的 `taiyi.deliveryVerifyCmd`）
+4. **Commit trailers**（默认启用）：commit 中至少一条须含 `Taiyi-Change: <slug>`
 
-非 git 目录（单测 tmpdir）自动跳过。
+非 git 目录自动跳过。关闭：`TAIYI_DELIVERY_GATE=0`
+
+## 交付链 Slash（gstack 直连）
+
+TaiyiForge **九阶段**管工件与门禁；**git · PR · 部署**通过下列斜杠加载 **gstack Skill**。
+
+```text
+dev/test 完成
+  → /taiyi:commit          # Taiyi trailer + git commit
+  → /taiyi:verify          # 工件门禁
+  → /taiyi:gstack review   # gstack 审 diff（可选）
+  → /taiyi:ship            # gstack：测试 · push · 开 PR
+  → /taiyi:land            # gstack：merge · CI · deploy · canary
+  → /taiyi:release         # gstack document-release（可选）
+  → /taiyi:continue integration
+  → /taiyi:archive
+```
+
+| 斜杠 | gstack Skill | 作用 |
+|------|--------------|------|
+| `/taiyi:commit` | Taiyi `commit-trailers` + git | 带 trailer 的 commit |
+| `/taiyi:ship` | `ship` | 推分支、开 PR |
+| `/taiyi:land` | `land-and-deploy` | 合并、部署、canary |
+| `/taiyi:gstack review` | `review` | PR/diff 结构审查 |
+| `/taiyi:gstack qa` | `qa` | 站点 QA |
+| `/taiyi:release` | `document-release` | 文档/CHANGELOG 同步 |
+| `/taiyi:gstack <skill>` | 任意 gstack | design-shotgun · autoplan · canary 等 |
+
+gstack 管 **GitHub/部署**；TaiyiForge 管 **`.taiyi/changes/` 阶段真源**。
 
 ## Commit trailers
-
-实现 commit 建议在 message 末尾追加：
 
 ```text
 feat: export path fix
@@ -26,38 +48,10 @@ Taiyi-Change: my-slug
 Taiyi-Phase: dev
 ```
 
-生成建议（聊天用 **`/taiyi:commit`**；legacy CLI）：
+关闭：`TAIYI_COMMIT_TRAILERS=0`
 
-```bash
-npx taiyi commit-trailers [slug] [subject line]
-```
-
-关闭 trailer 检查（仍保留交付门 1–3）：
-
-```bash
-TAIYI_COMMIT_TRAILERS=0 npx taiyi complete <slug> integration --approver "你"
-```
-
-详见 `examples/minimal-project/COMMIT-TRAILER-EXAMPLE.md`；设计参考见 [omc-reference.md](./omc-reference.md)（非 OMC 集成）。
-
-## 关闭（仅本地演示）
+## 关闭交付门
 
 ```bash
 TAIYI_DELIVERY_GATE=0 npx taiyi complete <slug> integration --approver "你"
 ```
-
-## 推荐流程
-
-```
-dev → commit → test → review Approve → PR → merge
-  → integration（根 CHANGELOG + 回写 CHANGE checkbox）
-  → sync-openspec → archive
-```
-
-## 相关修复（v0.22+）
-
-| 修复 | 说明 |
-|------|------|
-| `normalizeState` | legacy `complexity: "medium"`、`currentPhase: "complete"` |
-| `artifact-validator` | 拒绝 REQUIREMENT/DESIGN 纯占位模板 |
-| `check-novel-derive-scope.sh` | 含工作区 + untracked（见 examples/dogfood-showcase） |

@@ -39,10 +39,10 @@ function formatIntentLine(guide: PhaseGuide): string | null {
 /** 单行阶段进度（continue / status 顶部） */
 export function formatPhaseProgressLine(guide: PhaseGuide): string {
   if (guide.workflowAborted) {
-    return `阶段: 已取消 (aborted) → /taiyi:new`;
+    return `阶段: 已取消 (aborted)，可新建变更`;
   }
   if (guide.workflowCompleted) {
-    return `阶段: 已完成 ✓ (${guide.completedCount}/${guide.totalPhases}) → /taiyi:archive`;
+    return `阶段: 已完成 ✓ (${guide.completedCount}/${guide.totalPhases})，可归档`;
   }
   if (guide.earlyCodeWarning && guide.currentPhase !== "dev" && guide.currentPhase !== "test") {
     const { index, total } = profilePhaseOrdinal(guide.skippedPhases, guide.currentPhase);
@@ -50,7 +50,7 @@ export function formatPhaseProgressLine(guide: PhaseGuide): string {
   }
   const { index, total } = profilePhaseOrdinal(guide.skippedPhases, guide.currentPhase);
   const impl = guide.currentPhase === "dev" || guide.currentPhase === "test";
-  const verb = impl ? "/taiyi:apply" : "/taiyi:continue";
+  const verb = impl ? "apply 或 complete" : "complete 过关";
   return `当前: ${guide.currentPhase}（${index}/${total}）| Skill: ${guide.skill} | 推进: ${verb}`;
 }
 
@@ -58,7 +58,6 @@ export function formatPhaseProgressLine(guide: PhaseGuide): string {
 export function formatStatusCompact(guide: PhaseGuide): string {
   const lines: string[] = [`# ${guide.slug}`, formatPhaseProgressLine(guide)];
   if (guide.workflowCompleted) {
-    lines.push("→ /taiyi:archive");
     return lines.join("\n");
   }
   const artifactStatus = guide.qualityReady
@@ -66,7 +65,8 @@ export function formatStatusCompact(guide: PhaseGuide): string {
     : guide.artifactIsSeed
       ? "seed"
       : "!ready";
-  lines.push(`artifact=${guide.artifact} (${artifactStatus}) | ${guide.nextAction}`);
+  const nextOneLine = guide.nextAction?.replace(/\n/g, " → ") ?? "";
+  lines.push(`artifact=${guide.artifact} (${artifactStatus}) | ${nextOneLine}`);
   if (guide.stepBlockers?.length) {
     lines.push(`blockers: ${guide.stepBlockers.join("; ")}`);
   }
@@ -96,7 +96,7 @@ export function formatStatusPlain(guide: PhaseGuide): string {
   }
   lines.push("");
   if (guide.workflowCompleted) {
-    lines.push(`${workflowPhaseLabel(guide.totalPhases)}已全部完成。归档: /taiyi:archive`);
+    lines.push(`${workflowPhaseLabel(guide.totalPhases)}已全部完成，可归档`);
     return lines.join("\n");
   }
   const artifactStatus = guide.qualityReady
@@ -129,11 +129,10 @@ export function formatStatusPlain(guide: PhaseGuide): string {
     for (const h of guide.qualityHints) lines.push(`  - ${h}`);
   }
   lines.push("");
-  lines.push(`下一步: ${guide.nextAction}`);
+  lines.push(`系统建议: ${guide.nextAction}`);
   if (guide.nextSkill) lines.push(`过关后 Skill: ${guide.nextSkill}`);
   lines.push("");
-  lines.push("常用: /taiyi:status | /taiyi:continue | /taiyi:apply（dev/test） | /taiyi:review-loop（review 机器审查）");
-  lines.push("次数: /taiyi:continue x3 · /taiyi:apply x2");
+  lines.push("常用: status · complete · apply（dev/test）· review-loop（review 机器审查）");
   return lines.join("\n");
 }
 
@@ -183,6 +182,9 @@ export function formatGuidePlain(guide: PhaseGuide): string {
   }
   if (guide.complexity) {
     lines.push(`复杂度: ${guide.complexity.level} (score ${guide.complexity.score})`);
+    if (guide.complexity.recommendedProfile && guide.complexity.recommendedProfile !== guide.profile) {
+      lines.push(`  💡 建议: --profile ${guide.complexity.recommendedProfile}（当前 ${guide.profile}）`);
+    }
   }
   if (guide.pendingAuxiliary.length) {
     lines.push(`待做辅助: ${guide.pendingAuxiliary.join(", ")}`);
@@ -202,7 +204,7 @@ export function formatGuidePlain(guide: PhaseGuide): string {
   }
   if (guide.autoHarness) {
     lines.push("");
-    lines.push(`编排: /taiyi:continue（或 taiyi-forge.sh harness ${guide.slug}）`);
+    lines.push(`编排: complete 过关（或 taiyi-forge.sh harness ${guide.slug}）`);
   }
   lines.push("");
   lines.push(`→ ${guide.nextAction}`);
@@ -211,7 +213,7 @@ export function formatGuidePlain(guide: PhaseGuide): string {
 }
 
 export function formatChangeListPlain(changes: ChangeSummary[]): string {
-  if (changes.length === 0) return "（无匹配变更 → /taiyi:new；归档用 list --archived，全量用 list --all [--archived]）";
+  if (changes.length === 0) return "（无匹配变更，可新建；归档用 list --archived，全量用 list --all [--archived]）";
   return changes
     .map((c) => {
       const phase = c.workflowCompleted ? "completed" : c.workflowAborted ? "aborted" : c.currentPhase;

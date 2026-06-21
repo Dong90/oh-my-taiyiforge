@@ -1,5 +1,6 @@
 import fs from "node:fs";
 import path from "node:path";
+import { execSync } from "node:child_process";
 import type { ChangeProfile } from "./types.js";
 import type { PhaseDefinition } from "./types.js";
 
@@ -28,6 +29,15 @@ export type TaiyiProjectConfig = {
   openspec?: boolean;
   /** User-defined custom phases extending the built-in 9-phase workflow. */
   customPhases?: PhaseDefinition[];
+  /** Human-gate approver configuration */
+  approver?: {
+    /** "auto" = read from git config user.name; "prompt" = always require --approver */
+    mode?: "auto" | "prompt";
+    /** Literal approver name, overrides git config */
+    name?: string;
+  };
+  /** Auto-skip ui-design phase when CHANGE.md has no UI keywords (default: false) */
+  autoSkipUiDesign?: boolean;
 };
 
 const VALID_PROFILES = new Set<string>(["full", "api", "ui", "lite", "spike", "micro", "nano"]);
@@ -77,4 +87,31 @@ export function profileForScenario(scenario: ProjectScenarioId): ChangeProfile {
 
 export function resolveScenarioFromConfig(workspaceDir: string): ProjectScenarioId {
   return loadProjectConfig(workspaceDir).scenario ?? "default";
+}
+
+export type ApproverConfig = {
+  mode: "prompt" | "auto";
+  name?: string;
+};
+
+export function resolveApproverConfig(workspaceDir: string): ApproverConfig {
+  const cfg = loadProjectConfig(workspaceDir).approver;
+  return {
+    mode: cfg?.mode ?? "prompt",
+    name: cfg?.name,
+  };
+}
+
+export function resolveApproverName(workspaceDir: string): string {
+  const cfg = resolveApproverConfig(workspaceDir);
+  if (cfg.name) return cfg.name;
+  try {
+    const name = execSync("git config user.name", {
+      cwd: workspaceDir,
+      encoding: "utf8",
+      timeout: 3000,
+    }).trim();
+    if (name) return name;
+  } catch { /* git not available */ }
+  return "cli-operator";
 }

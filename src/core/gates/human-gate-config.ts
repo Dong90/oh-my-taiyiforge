@@ -1,7 +1,10 @@
 import type { HumanApproval, PhaseId } from "../types.js";
+import { resolveApproverConfig, resolveApproverName } from "../project-config.js";
 
 export function allowAutoHumanEnv(env = process.env): boolean {
-  return env.TAIYI_AUTO_HUMAN === "1" || env.TAIYI_AUTO_HUMAN === "true";
+  if (env.TAIYI_AUTO_HUMAN === "1" || env.TAIYI_AUTO_HUMAN === "true") return true;
+  const wsDir = env.TAIYI_WORKSPACE_DIR ?? process.cwd();
+  return resolveApproverConfig(wsDir).mode === "auto";
 }
 
 /** Shared human-gate resolution for CLI complete and plugin taiyi_complete. */
@@ -30,7 +33,7 @@ export function resolveHumanForComplete(
   }
 
   const humanApprover = needsHuman
-    ? (approver ?? (allowAutoHuman ? "cli-operator" : ""))
+    ? (approver ?? (allowAutoHuman ? resolveApproverName(env.TAIYI_WORKSPACE_DIR ?? process.cwd()) : ""))
     : (approver ?? "opencode-agent");
 
   if (needsHuman && !humanApprover) {

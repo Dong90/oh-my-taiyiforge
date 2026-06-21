@@ -15,7 +15,6 @@ export class ChangeLock {
 
   acquire(timeoutMs = 5000): void {
     if (this.held) return;
-    // Ensure lockfile exists (lockSync requires an existing file)
     if (!fs.existsSync(this.lockfilePath)) {
       fs.writeFileSync(this.lockfilePath, "");
     }
@@ -29,7 +28,6 @@ export class ChangeLock {
         return;
       } catch (e) {
         lastError = e instanceof Error ? e : new Error(String(e));
-        // Spin-wait ~200ms before retry
         const spinUntil = Date.now() + 200;
         while (Date.now() < spinUntil) { /* intentional busy-wait */ }
       }
@@ -46,5 +44,36 @@ export class ChangeLock {
     }
     this.held = false;
     this.releaseFn = null;
+  }
+
+  /** Detect stale lock files (>1 hour old) for all changes */
+  static findStaleLocks(taiyiRoot: string): string[] {
+    const changesDir = path.join(taiyiRoot, "changes");
+    if (!fs.existsSync(changesDir)) return [];
+    const stale: string[] = [];
+    const cutoff = Date.now() - 3600_000; // 1 hour
+    for (const ent of fs.readdirSync(changesDir, { withFileTypes: true })) {
+      if (!ent.isDirectory()) continue;
+      const lockPath = path.join(changesDir, ent.name, ".lock");
+      try {
+        const stat = fs.statSync(lockPath);
+        if (stat.mtimeMs < cutoff) {
+          stale.push(ent.name);
+        }
+      } catch { /* no lock file */ }
+    }
+    return stale;
+  }
+
+  /** Clean a specific stale lock */
+  static cleanLock(taiyiRoot: string, slug: string): boolean {
+    const lockPath = path.join(taiyiRoot, "changes", slug, ".lock");
+    try {
+      if (fs.existsSync(lockPath)) {
+        fs.unlinkSync(lockPath);
+        return true;
+      }
+    } catch { /* cannot remove */ }
+    return false;
   }
 }
