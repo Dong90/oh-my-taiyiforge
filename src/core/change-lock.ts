@@ -13,14 +13,28 @@ export class ChangeLock {
     this.lockfilePath = path.join(dir, ".lock");
   }
 
-  async acquire(timeoutMs = 5000): Promise<void> {
+  acquire(timeoutMs = 5000): void {
     if (this.held) return;
-    const release = await lockfile.lock(this.lockfilePath, {
-      realpath: false,
-      retries: { retries: Math.ceil(timeoutMs / 200), minTimeout: 200 },
-    });
-    this.releaseFn = release as unknown as () => void;
-    this.held = true;
+    // Ensure lockfile exists (lockSync requires an existing file)
+    if (!fs.existsSync(this.lockfilePath)) {
+      fs.writeFileSync(this.lockfilePath, "");
+    }
+    const deadline = Date.now() + timeoutMs;
+    let lastError: Error | null = null;
+    while (Date.now() < deadline) {
+      try {
+        const release = lockfile.lockSync(this.lockfilePath, { realpath: false });
+        this.releaseFn = release as unknown as () => void;
+        this.held = true;
+        return;
+      } catch (e) {
+        lastError = e instanceof Error ? e : new Error(String(e));
+        // Spin-wait ~200ms before retry
+        const spinUntil = Date.now() + 200;
+        while (Date.now() < spinUntil) { /* intentional busy-wait */ }
+      }
+    }
+    throw lastError ?? new Error(`Could not acquire lock within ${timeoutMs}ms`);
   }
 
   release(): void {

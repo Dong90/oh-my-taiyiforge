@@ -13,28 +13,27 @@ describe("ChangeLock", () => {
     fs.rmSync(tmpDir, { recursive: true, force: true });
   });
 
-  it("acquire and release works", async () => {
+  it("acquire and release works", () => {
     const lock = new ChangeLock(tmpDir, "test-slug");
-    await lock.acquire();
+    lock.acquire();
     expect(lock.held).toBe(true);
     lock.release();
     expect(lock.held).toBe(false);
   });
 
-  it("second acquire on same slug blocks", async () => {
+  it("second acquire on same slug blocks", () => {
     const lock1 = new ChangeLock(tmpDir, "test-slug");
     const lock2 = new ChangeLock(tmpDir, "test-slug");
-    await lock1.acquire();
-    const p = lock2.acquire(200); // 200ms timeout
-    await expect(p).rejects.toThrow();
+    lock1.acquire();
+    expect(() => lock2.acquire(200)).toThrow();
     lock1.release();
-  }, 10000);
+  });
 
-  it("different slugs don't block each other", async () => {
+  it("different slugs don't block each other", () => {
     const lock1 = new ChangeLock(tmpDir, "slug-a");
     const lock2 = new ChangeLock(tmpDir, "slug-b");
-    await lock1.acquire();
-    await lock2.acquire(200); // should not throw
+    lock1.acquire();
+    lock2.acquire(200); // should not throw
     lock1.release();
     lock2.release();
   }, 10000);

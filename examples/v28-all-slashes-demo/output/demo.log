@@ -5,7 +5,7 @@
 ╚══════════════════════════════════════════════════════════════╝
 
 ROOT  = /Users/shixiaocai/Desktop/chuangye/oh-my-taiyiforge
-TIME  = 22:42:53
+TIME  = 01:32:56
 LOG   = /Users/shixiaocai/Desktop/chuangye/oh-my-taiyiforge/examples/v28-all-slashes-demo/output/demo.log
 
 
@@ -17,25 +17,21 @@ LOG   = /Users/shixiaocai/Desktop/chuangye/oh-my-taiyiforge/examples/v28-all-sla
 [2m\$ bash /Users/shixiaocai/Desktop/chuangye/oh-my-taiyiforge/scripts/taiyi-forge.sh doctor --json --compact[0m
 {
   "ok": true,
-  "version": "0.23.1",
+  "version": "0.26.0",
   "installOk": true,
   "workspaceOk": false,
   "failed": [
     {
+      "id": "cursor-commands",
+      "detail": "25/27 at /Users/shixiaocai/.cursor/commands"
+    },
+    {
       "id": "workflow-active-count",
-      "detail": "多个 active（demo-28-v28, readme-v28, ty-5rwl6k-v, dogfood-demo）— 须 /taiyi:list 并指定 slug"
-    },
-    {
-      "id": "project-wrapper",
-      "detail": "wrapper 为旧版完整脚本，建议升级为 shim — TAIYI_FORGE_FORCE_PROJECT_WRAPPER=1 npx taiyi-forge-install --cursor"
-    },
-    {
-      "id": "consumer-cli-resolvable",
-      "detail": "无法解析 taiyi CLI：npm install oh-my-taiyiforge 或 npx taiyi-forge-install --cursor"
+      "detail": "多个 active（test-slug, handoff-cli-demo, handoff-cli-smoke-var-folders-5f-m8c734691mgcmvy, ty-6aqm6k-b, verification, demo-28-v28, fix-shell-whitelist-and-profile-help）— 须 /taiyi:list 并指定 slug"
     },
     {
       "id": "workflow-infer-slug",
-      "detail": "有 4 个进行中的变更（demo-28-v28, readme-v28, ty-5rwl6k-v, dogfood-demo），请指定 slug：/taiyi:continue <slug>\n查看全部: /taiyi:list"
+      "detail": "有 7 个进行中的变更（test-slug, handoff-cli-demo, handoff-cli-smoke-var-folders-5f-m8c734691mgcmvy, ty-6aqm6k-b, verification … 另有 2 个），请指定 slug：/taiyi:continue <slug>\n查看全部: /taiyi:list"
     }
   ]
 }
@@ -46,27 +42,45 @@ LOG   = /Users/shixiaocai/Desktop/chuangye/oh-my-taiyiforge/examples/v28-all-sla
 [2m\$ bash /Users/shixiaocai/Desktop/chuangye/oh-my-taiyiforge/scripts/taiyi-forge.sh audit --json --compact[0m
 {
   "ok": false,
-  "changes": 4,
-  "highCount": 3,
-  "mediumCount": 1,
+  "changes": 7,
+  "highCount": 6,
+  "mediumCount": 0,
   "findings": [
+    {
+      "slug": "test-slug",
+      "severity": "high",
+      "code": "artifact.quality",
+      "message": "阶段 change 工件未通过质量校验: 创建并填写工件: /Users/shixiaocai/Desktop/chuangye/oh-my-taiyiforge/.taiyi/changes/test-slug/CHANGE.md"
+    },
+    {
+      "slug": "handoff-cli-demo",
+      "severity": "high",
+      "code": "artifact.quality",
+      "message": "阶段 change 工件未通过质量校验: [Zod] 缺少 change.json，用 executor.generateStageData 生成"
+    },
+    {
+      "slug": "handoff-cli-smoke-var-folders-5f-m8c734691mgcmvy",
+      "severity": "high",
+      "code": "artifact.quality",
+      "message": "阶段 change 工件未通过质量校验: [Zod] 缺少 change.json，用 executor.generateStageData 生成"
+    },
+    {
+      "slug": "ty-6aqm6k-b",
+      "severity": "high",
+      "code": "artifact.quality",
+      "message": "阶段 change 工件未通过质量校验: [Zod] 缺少 change.json，用 executor.generateStageData 生成"
+    },
+    {
+      "slug": "verification",
+      "severity": "high",
+      "code": "artifact.quality",
+      "message": "阶段 dev 工件未通过质量校验: 创建并填写工件: /Users/shixiaocai/Desktop/chuangye/oh-my-taiyiforge/.taiyi/changes/verification/.dev-complete"
+    },
     {
       "slug": "demo-28-v28",
       "severity": "high",
       "code": "artifact.quality",
-      "message": "阶段 change 工件未通过质量校验: 仍为引擎模板占位（含 taiyi:seed-template），请按当前阶段 Skill 填写后再 continue"
-    },
-    {
-      "slug": "readme-v28",
-      "severity": "high",
-      "code": "artifact.quality",
-      "message": "阶段 dev 工件未通过质量校验: 创建并填写工件: /Users/shixiaocai/Desktop/chuangye/oh-my-taiyiforge/.taiyi/changes/readme-v28/.dev-complete"
-    },
-    {
-      "slug": "ty-5rwl6k-v",
-      "severity": "high",
-      "code": "artifact.quality",
-      "message": "阶段 change 工件未通过质量校验: 仍为引擎模板占位（含 taiyi:seed-template），请按当前阶段 Skill 填写后再 continue"
+      "message": "阶段 change 工件未通过质量校验: [Zod] 缺少 change.json，用 executor.generateStageData 生成"
     }
   ],
   "notes": [
@@ -80,105 +94,8 @@ LOG   = /Users/shixiaocai/Desktop/chuangye/oh-my-taiyiforge/examples/v28-all-sla
 ────────────────────────────────────────────────────
 
 [1;36mv28 #1 /taiyi:new（engine: new）[0m
-[2m\$ bash /Users/shixiaocai/Desktop/chuangye/oh-my-taiyiforge/scripts/taiyi-forge.sh new demo: 跑全 28 v28 顶栏斜杠 --profile lite[0m
-Change already exists: demo-28-v28. Use --force to reinitialize.
-
-[SLUG 解析] 实际生成: demo-28-v28（new 输出 '变更: demo-28-v28'）
-
-────────────────────────────────────────────────────
-
-[1;36m/taiyi:write · #3 · /taiyi:write（九阶段统一写工件入口）[0m
-[2m\$ cat prompts/taiyi-write.md | head -30[0m
----
-description: "TaiyiForge /taiyi:write — write current phase artifact"
-argument-hint: "[slug]"
----
-User invoked **$taiyi-write** (= `/taiyi:write`). **Write the current phase artifact** (engine picks Skill from status).
-
-```bash
-scripts/taiyi-forge.sh write $ARGUMENTS
-```
-
-Then load the **Skill** named in engine output (`@taiyi-*`). Nine-stage writes use this single slash; `@taiyi-change` … `@taiyi-integration` still work when loaded directly.
-
-{{TAIYI_STAGE_PROTOCOL}}
-
-────────────────────────────────────────────────────
-
-[1;36m/taiyi:continue · #4 · /taiyi:continue（pass 当前 phase · 人工门需 --approver）[0m
-[2m\$ cat prompts/taiyi-continue.md | head -30[0m
----
-description: "TaiyiForge /taiyi:continue — advance workflow (OpenSpec opsx:continue)"
-argument-hint: "optional slug"
----
-User invoked **$taiyi-continue** (= `/taiyi:continue`). Run:
-
-```bash
-scripts/taiyi-forge.sh continue $ARGUMENTS
-```
-
-**Attempts to complete the current phase** (quality + harness + human gates). Does not write artifacts. On failure, prints blockers and next-step guidance. Omit slug when only one active change.
-
-**One phase per continue** — never skip ahead. If status shows「顺序冲突」or ahead-of-phase, delete future phase markdown files or finish the current phase first. Trust `status` over chat memory.
-
-Human gates: `continue --approver "你的名字"` for change / design / review.
-
-{{TAIYI_STAGE_PROTOCOL}}
-
-────────────────────────────────────────────────────
-
-[1;36m/taiyi:apply · #5 · /taiyi:apply（dev/test harness 清单）[0m
-[2m\$ cat prompts/taiyi-apply.md | head -30[0m
----
-description: "TaiyiForge /taiyi:apply — implement (OpenSpec opsx:apply)"
-argument-hint: "optional slug"
----
-User invoked **$taiyi-apply** (= `/taiyi:apply`). Run:
-
-```bash
-scripts/taiyi-forge.sh apply $ARGUMENTS
-```
-
-For dev/test phases: show implementation harness + next steps.
-
-**apply does NOT write code or complete the phase.** After implementation:
-- **dev**: load `taiyi-dev` + Superpowers `test-driven-development` (or `/taiyi:tdd dev`)
-- **test**: load `taiyi-test` + Superpowers `verification-before-completion`
-- After tests pass, write `.dev-complete` with `command:` + `exitCode: 0`, then `/taiyi:continue`
-
-{{TAIYI_STAGE_PROTOCOL}}
-
-────────────────────────────────────────────────────
-
-[1;36m/taiyi:archive · #6 · /taiyi:archive（九阶段完成后归档）[0m
-[2m\$ cat prompts/taiyi-archive.md | head -30[0m
----
-description: "TaiyiForge /taiyi:archive — archive completed change (OpenSpec opsx:archive)"
-argument-hint: "optional slug"
----
-User invoked **$taiyi-archive** (= `/taiyi:archive`). Run:
-
-```bash
-scripts/taiyi-forge.sh archive $ARGUMENTS
-```
-
-Only after nine phases complete. Omit slug when only one active change.
-
-**Token 纪律**：archive 后该 slug 退出对话上下文；长会话前可 `/taiyi:token compress` 再开 `/taiyi:new`。
-
-────────────────────────────────────────────────────
-
-[1;36mv28 #4 /taiyi:continue（engine: complete change）[0m
-[2m\$ bash /Users/shixiaocai/Desktop/chuangye/oh-my-taiyiforge/scripts/taiyi-forge.sh complete demo-28-v28 change --approver demo[0m
-当前 change 未到 dev，但工作区有业务代码改动（examples/v28-all-slashes-demo/scripts/run-v28-all-slashes.sh）。规划阶段只写 .taiyi/changes/ 工件；实现请等到 dev 且 /taiyi:apply 后再改代码。
-
-────────────────────────────────────────────────────
-
-[1;36mv28 #4 /taiyi:continue（engine: continue requirement）[0m
-[2m\$ bash /Users/shixiaocai/Desktop/chuangye/oh-my-taiyiforge/scripts/taiyi-forge.sh continue demo-28-v28[0m
-当前: change（1/5）| ⚠ dev 前有业务代码改动
-
-尚未过关: 阶段 change 需人工审批。使用 --approver "你的名字"，例如: /taiyi:continue demo-28-v28 change --approver "你的名字"
+[2m\$ bash /Users/shixiaocai/Desktop/chuangye/oh-my-taiyiforge/scripts/taiyi-forge.sh new demo: 跑全 28 v28 顶栏斜杠 --profile lite --force[0m
+变更: demo-28-v28
 
 # TaiyiForge · demo-28-v28
 
@@ -200,14 +117,17 @@ Profile: lite
 跳过: design, ui-design, task, review
 Skill: taiyi-change
 工件: /Users/shixiaocai/Desktop/chuangye/oh-my-taiyiforge/.taiyi/changes/demo-28-v28/CHANGE.md
-质量就绪: 否（模板占位）
+质量就绪: 否
 
-⚠ 代码漂移: 当前 change 未到 dev，但工作区有业务代码改动（examples/v28-all-slashes-demo/scripts/run-v28-all-slashes.sh）。规划阶段只写 .taiyi/changes/ 工件；实现请等到 dev 且 /taiyi:apply 后再改代码。
+已自动对齐:
+  ↻ 已移除 CHANGE.md 的模板标记（内容已就绪）
+
+⚠ 代码漂移: 当前 change 未到 dev，但工作区有业务代码改动（examples/v28-all-slashes-demo/output/demo.log, .omc/state/checkpoints/checkpoint-2026-06-20T17-31-50-114Z.json）。规划阶段只写 .taiyi/changes/ 工件；实现请等到 dev 且 /taiyi:apply 后再改代码。
 复杂度: low (score 3)
 待做辅助: taiyi-intel-scan
 
 质量提示:
-  - 仍为引擎模板占位（含 taiyi:seed-template），请按当前阶段 Skill 填写后再 continue
+  - [Zod] 缺少 change.json，用 executor.generateStageData 生成
 
 铁三角推荐:
   - superpowers: brainstorming (立项前澄清范围与风险（/taiyi:explore）)
@@ -217,797 +137,3 @@ Skill: taiyi-change
 → dev 前勿改业务代码；撤销或暂存改动后再推进。
 下一步 Skill: taiyi-requirement
 
-提示: /taiyi:status 查看完整进度
-
-────────────────────────────────────────────────────
-
-[1;36mv28 #4 /taiyi:continue（engine: continue dev · lite 直通）[0m
-[2m\$ bash /Users/shixiaocai/Desktop/chuangye/oh-my-taiyiforge/scripts/taiyi-forge.sh continue demo-28-v28[0m
-当前: change（1/5）| ⚠ dev 前有业务代码改动
-
-尚未过关: 阶段 change 需人工审批。使用 --approver "你的名字"，例如: /taiyi:continue demo-28-v28 change --approver "你的名字"
-
-# TaiyiForge · demo-28-v28
-
-当前: change（1/5）| ⚠ dev 前有业务代码改动
-意图分析: 模块≈2 · 无 UI · 测试层级≈1 · 复杂度 low(3)
-Token: 0 / 500,000（0%）· 估算费用 ≈ $0.0000
-  阶段 change: 0 / 80,000
-
-Superpowers（建议）: brainstorming
-Superpowers（可选）: using-superpowers, using-git-worktrees
-辅助 Skill: taiyi-intel-scan
-harness 必选: superpowers/brainstorming
-斜杠命令: /taiyi:explore · /taiyi:continue
-人工门: 须 --approver
-Taiyi Skill: taiyi-change → CHANGE.md
-
-说明: new/init 仅创建当前阶段模板；后续阶段模板在上一阶段过关后生成
-Profile: lite
-跳过: design, ui-design, task, review
-Skill: taiyi-change
-工件: /Users/shixiaocai/Desktop/chuangye/oh-my-taiyiforge/.taiyi/changes/demo-28-v28/CHANGE.md
-质量就绪: 否（模板占位）
-
-⚠ 代码漂移: 当前 change 未到 dev，但工作区有业务代码改动（examples/v28-all-slashes-demo/scripts/run-v28-all-slashes.sh）。规划阶段只写 .taiyi/changes/ 工件；实现请等到 dev 且 /taiyi:apply 后再改代码。
-复杂度: low (score 3)
-待做辅助: taiyi-intel-scan
-
-质量提示:
-  - 仍为引擎模板占位（含 taiyi:seed-template），请按当前阶段 Skill 填写后再 continue
-
-铁三角推荐:
-  - superpowers: brainstorming (立项前澄清范围与风险（/taiyi:explore）)
-  - taiyi: scripts/taiyi-forge.sh token compress demo-28-v28 (Token: 工件按 ## 节截断 → CONTEXT-COMPACT.md；优先于全量读 CHANGE…CHANGELOG) (可选)
-  - gstack: checkpoint (Token 压缩: 长会话 / IDE compaction 前落盘 git+决策；新会话读 checkpoint 续作) (可选)
-
-→ dev 前勿改业务代码；撤销或暂存改动后再推进。
-下一步 Skill: taiyi-requirement
-
-提示: /taiyi:status 查看完整进度
-
-────────────────────────────────────────────────────
-
-[1;36mv28 #4 /taiyi:continue（engine: continue test · lite 直通）[0m
-[2m\$ bash /Users/shixiaocai/Desktop/chuangye/oh-my-taiyiforge/scripts/taiyi-forge.sh continue demo-28-v28[0m
-当前: change（1/5）| ⚠ dev 前有业务代码改动
-
-尚未过关: 阶段 change 需人工审批。使用 --approver "你的名字"，例如: /taiyi:continue demo-28-v28 change --approver "你的名字"
-
-# TaiyiForge · demo-28-v28
-
-当前: change（1/5）| ⚠ dev 前有业务代码改动
-意图分析: 模块≈2 · 无 UI · 测试层级≈1 · 复杂度 low(3)
-Token: 0 / 500,000（0%）· 估算费用 ≈ $0.0000
-  阶段 change: 0 / 80,000
-
-Superpowers（建议）: brainstorming
-Superpowers（可选）: using-superpowers, using-git-worktrees
-辅助 Skill: taiyi-intel-scan
-harness 必选: superpowers/brainstorming
-斜杠命令: /taiyi:explore · /taiyi:continue
-人工门: 须 --approver
-Taiyi Skill: taiyi-change → CHANGE.md
-
-说明: new/init 仅创建当前阶段模板；后续阶段模板在上一阶段过关后生成
-Profile: lite
-跳过: design, ui-design, task, review
-Skill: taiyi-change
-工件: /Users/shixiaocai/Desktop/chuangye/oh-my-taiyiforge/.taiyi/changes/demo-28-v28/CHANGE.md
-质量就绪: 否（模板占位）
-
-⚠ 代码漂移: 当前 change 未到 dev，但工作区有业务代码改动（examples/v28-all-slashes-demo/scripts/run-v28-all-slashes.sh）。规划阶段只写 .taiyi/changes/ 工件；实现请等到 dev 且 /taiyi:apply 后再改代码。
-复杂度: low (score 3)
-待做辅助: taiyi-intel-scan
-
-质量提示:
-  - 仍为引擎模板占位（含 taiyi:seed-template），请按当前阶段 Skill 填写后再 continue
-
-铁三角推荐:
-  - superpowers: brainstorming (立项前澄清范围与风险（/taiyi:explore）)
-  - taiyi: scripts/taiyi-forge.sh token compress demo-28-v28 (Token: 工件按 ## 节截断 → CONTEXT-COMPACT.md；优先于全量读 CHANGE…CHANGELOG) (可选)
-  - gstack: checkpoint (Token 压缩: 长会话 / IDE compaction 前落盘 git+决策；新会话读 checkpoint 续作) (可选)
-
-→ dev 前勿改业务代码；撤销或暂存改动后再推进。
-下一步 Skill: taiyi-requirement
-
-提示: /taiyi:status 查看完整进度
-
-────────────────────────────────────────────────────
-
-[1;36mv28 #4 /taiyi:continue（engine: continue integration）[0m
-[2m\$ bash /Users/shixiaocai/Desktop/chuangye/oh-my-taiyiforge/scripts/taiyi-forge.sh continue demo-28-v28[0m
-当前: change（1/5）| ⚠ dev 前有业务代码改动
-
-尚未过关: 阶段 change 需人工审批。使用 --approver "你的名字"，例如: /taiyi:continue demo-28-v28 change --approver "你的名字"
-
-# TaiyiForge · demo-28-v28
-
-当前: change（1/5）| ⚠ dev 前有业务代码改动
-意图分析: 模块≈2 · 无 UI · 测试层级≈1 · 复杂度 low(3)
-Token: 0 / 500,000（0%）· 估算费用 ≈ $0.0000
-  阶段 change: 0 / 80,000
-
-Superpowers（建议）: brainstorming
-Superpowers（可选）: using-superpowers, using-git-worktrees
-辅助 Skill: taiyi-intel-scan
-harness 必选: superpowers/brainstorming
-斜杠命令: /taiyi:explore · /taiyi:continue
-人工门: 须 --approver
-Taiyi Skill: taiyi-change → CHANGE.md
-
-说明: new/init 仅创建当前阶段模板；后续阶段模板在上一阶段过关后生成
-Profile: lite
-跳过: design, ui-design, task, review
-Skill: taiyi-change
-工件: /Users/shixiaocai/Desktop/chuangye/oh-my-taiyiforge/.taiyi/changes/demo-28-v28/CHANGE.md
-质量就绪: 否（模板占位）
-
-⚠ 代码漂移: 当前 change 未到 dev，但工作区有业务代码改动（examples/v28-all-slashes-demo/scripts/run-v28-all-slashes.sh）。规划阶段只写 .taiyi/changes/ 工件；实现请等到 dev 且 /taiyi:apply 后再改代码。
-复杂度: low (score 3)
-待做辅助: taiyi-intel-scan
-
-质量提示:
-  - 仍为引擎模板占位（含 taiyi:seed-template），请按当前阶段 Skill 填写后再 continue
-
-铁三角推荐:
-  - superpowers: brainstorming (立项前澄清范围与风险（/taiyi:explore）)
-  - taiyi: scripts/taiyi-forge.sh token compress demo-28-v28 (Token: 工件按 ## 节截断 → CONTEXT-COMPACT.md；优先于全量读 CHANGE…CHANGELOG) (可选)
-  - gstack: checkpoint (Token 压缩: 长会话 / IDE compaction 前落盘 git+决策；新会话读 checkpoint 续作) (可选)
-
-→ dev 前勿改业务代码；撤销或暂存改动后再推进。
-下一步 Skill: taiyi-requirement
-
-提示: /taiyi:status 查看完整进度
-
-[1;36m§2 Session (4) · v28 #7–10[0m
-
-────────────────────────────────────────────────────
-
-[1;36mv28 #10 /taiyi:list（engine: list --all）[0m
-[2m\$ bash /Users/shixiaocai/Desktop/chuangye/oh-my-taiyiforge/scripts/taiyi-forge.sh list --all[0m
-demo-28-v28	change	0/5	lite	low
-readme-v28	dev	2/5	lite	low
-ty-5rwl6k-v	change	0/9	full	low
-dogfood-demo	integration	8/9	full	medium
-
-────────────────────────────────────────────────────
-
-[1;36m/taiyi:handoff · #7 · /taiyi:handoff（暂停 → CONTEXT-COMPACT.md）[0m
-[2m\$ cat prompts/taiyi-handoff.md | head -30[0m
----
-description: "TaiyiForge /taiyi:handoff — pause and write HANDOFF.md for next session"
-argument-hint: "optional slug and note"
----
-User invoked **$taiyi-handoff** (= `/taiyi:handoff`). Run:
-
-```bash
-scripts/taiyi-forge.sh handoff $ARGUMENTS
-```
-
-Writes `.taiyi/changes/<slug>/HANDOFF.md` with current phase snapshot. **Does not complete any phase.** Omit slug when only one active change.
-
-After handoff, tell the user to resume with `/taiyi:resume` or `/taiyi:status` in the next session.
-
-{{TAIYI_STAGE_PROTOCOL}}
-
-────────────────────────────────────────────────────
-
-[1;36m/taiyi:resume · #8 · /taiyi:resume（接续 handoff 上下文）[0m
-[2m\$ cat prompts/taiyi-resume.md | head -30[0m
----
-description: "TaiyiForge /taiyi:resume — restore session from HANDOFF.md + status"
-argument-hint: "[optional slug]"
----
-User invoked **$taiyi-resume** (= `/taiyi:resume`). **从 HANDOFF 恢复**（与 `/taiyi:handoff` 配对）。
-
-1. 若多变更：`scripts/taiyi-forge.sh list`
-2. 读 `.taiyi/changes/<slug>/HANDOFF.md`（若存在；slug 来自 `$ARGUMENTS` 或唯一 active）
-3. 运行：
-   ```bash
-   scripts/taiyi-forge.sh status $ARGUMENTS
-   ```
-4. 向用户汇总：**HANDOFF 备注** + **status 当前阶段** + **下一步斜杠**（continue / apply / 当前阶段 `@taiyi-*` 或 `/taiyi:write`）
-5. **不要**自动 continue 或改代码，除非用户明确要求
-
-无 HANDOFF.md 时：仅展示 status，提示可用 `/taiyi:handoff` 暂停。
-
-{{TAIYI_STAGE_PROTOCOL}}
-
-────────────────────────────────────────────────────
-
-[1;36m/taiyi:cancel · #9 · /taiyi:cancel（放弃变更 · 可选 --remove-dir）[0m
-[2m\$ cat prompts/taiyi-cancel.md | head -30[0m
----
-description: "TaiyiForge /taiyi:cancel — abort active change"
-argument-hint: "optional slug"
----
-User invoked **$taiyi-cancel** (= `/taiyi:cancel`). Run:
-
-```bash
-scripts/taiyi-forge.sh cancel $ARGUMENTS
-```
-
-Marks the change **aborted** (no longer counts as active). Does **not** delete `.taiyi/changes/<slug>/`. Omit slug when only one active change.
-
-**STOP after showing output.** Do not edit artifacts or run continue.
-
-{{TAIYI_STAGE_PROTOCOL}}
-
-[1;36m§3 Diagnose (3) · v28 #11–13（已 §0 实跑 engine）[0m
-
-────────────────────────────────────────────────────
-
-[1;36m/taiyi:doctor · #11 · /taiyi:doctor[0m
-[2m\$ cat prompts/taiyi-doctor.md | head -30[0m
----
-description: "TaiyiForge /taiyi:doctor — install + workspace workflow health"
----
-User invoked **$taiyi-doctor**. Run from project root:
-
-```bash
-scripts/taiyi-forge.sh doctor --json --compact
-# CI / 门禁：工作区 blocker 也须 PASS
-scripts/taiyi-forge.sh doctor --strict-workspace --json --compact
-```
-
-Parse **`ok`**, **`failed[]`** (id + detail). Human summary: omit `--json` or add `--compact` only.
-
-Checks **install** (skills, rules, commands) and **workspace workflow** (active slug, phase blockers, early code drift) — similar to OMC `omc-doctor` + active state.
-
-Fix install failures: `npx taiyi-forge-install --all`
-
-Fix workflow issues: `/taiyi:status --json --compact` · `/taiyi:audit --json --compact` · `/taiyi:handoff`
-
-────────────────────────────────────────────────────
-
-[1;36m/taiyi:audit · #12 · /taiyi:audit[0m
-[2m\$ cat prompts/taiyi-audit.md | head -30[0m
----
-description: "TaiyiForge /taiyi:audit — workflow & delivery bug hunt (not install doctor)"
----
-User invoked **/taiyi:audit**. Run:
-
-```bash
-scripts/taiyi-forge.sh audit $ARGUMENTS --json --compact
-```
-
-Parse **`ok`**, **`highCount`**, **`findings[]`** (high only). Human summary: omit `--json`.
-
-排查流程/交付闭环问题（非 `/taiyi:doctor` 安装自检）：
-- legacy state.json（complete / string complexity）
-- 工件质量 / harness 阻塞
-- CHANGE checkbox 与 CHANGELOG 漂移
-- integration 已过关但 git 未交付
-- OpenSpec 目录缺失
-
-对照：`doctor`=安装 · `verify`=PR工件门禁 · `audit`=交付与漂移
-
-────────────────────────────────────────────────────
-
-[1;36m/taiyi:verify · #13 · /taiyi:verify[0m
-[2m\$ cat prompts/taiyi-verify.md | head -30[0m
----
-description: "TaiyiForge /taiyi:verify — PR/CI artifact gate (no LLM)"
-argument-hint: "optional slug; add --require-complete for integration done"
----
-User invoked **$taiyi-verify** (= `/taiyi:verify`). Run:
-
-```bash
-scripts/taiyi-forge.sh verify $ARGUMENTS
-# 等价（CI 脚本沿用）: scripts/taiyi-forge.sh ci verify --slug <slug>
-```
-
-校验 `.taiyi/changes/` 工件质量与 auto harness 阻塞（无 LLM）。PR 合并前使用。
-
-对照：`/taiyi:audit` = 交付漂移+git · `/taiyi:verify` = 工件+门禁 · `/taiyi:doctor` = 安装
-
-[1;36m§4 Delivery (4) · v28 #14–17[0m
-
-────────────────────────────────────────────────────
-
-[1;36m/taiyi:commit · #14 · /taiyi:commit（带 Taiyi-Change trailer）[0m
-[2m\$ cat prompts/taiyi-commit.md | head -30[0m
----
-description: "TaiyiForge /taiyi:commit — git commit with Taiyi-Change trailers (pre-integration)"
-argument-hint: "[slug] [subject line]"
----
-User invoked **$taiyi-commit** (= `/taiyi:commit`). **Git 提交 + Taiyi 交付门对齐** — 无单独引擎子命令 beyond commit-trailers。
-
-## 1. 生成 commit message
-
-```bash
-scripts/taiyi-forge.sh commit-trailers $ARGUMENTS
-```
-
-## 2. 执行 git（Agent 代跑，用户不手打）
-
-- `git status` — 确认待提交文件
-- `git add` 相关实现文件（**不要**提交 `.env`、密钥）
-- `git commit` 使用上一步建议的 message（须含 `Taiyi-Change: <slug>`）
-
-可选：加载 **gstack `careful`** 若涉及 force、reset 等危险操作。
-
-## 3. 之后
-
-- `/taiyi:verify` — PR 前工件门禁
-- `/taiyi:ship` — 推分支 + 开 PR（gstack ship）
-- integration 前：`/taiyi:continue`（交付门检查 commit + 干净工作区）
-
-{{TAIYI_STAGE_PROTOCOL}}
-
-────────────────────────────────────────────────────
-
-[1;36m/taiyi:ship · #15 · /taiyi:ship（创建 PR）[0m
-[2m\$ cat prompts/taiyi-ship.md | head -30[0m
----
-description: "TaiyiForge /taiyi:ship — gstack ship: test, review diff, push, open PR"
-argument-hint: "[optional PR title hint]"
----
-User invoked **$taiyi-ship** (= `/taiyi:ship`). **创建 PR 工作流** — 加载 **gstack `ship`** Skill，无 TaiyiForge 引擎子命令。
-
-## 前置
-
-```bash
-scripts/taiyi-forge.sh status
-scripts/taiyi-forge.sh verify
-```
-
-实现代码应已 commit；review 阶段建议已 `/taiyi:review-loop` 通过。
-
-## 执行
-
-1. 加载 **gstack `ship`**（见下方 gstack 加载协议）。
-2. 按 ship Skill 完整流程：合并 base · 跑测试 · review diff · 必要时 bump VERSION/CHANGELOG · **push · 创建 PR**。
-3. 不要跳过 ship Skill 直接 `gh pr create`（除非 ship 不可用且用户明确要求）。
-
-PR 创建后：用户或 Agent 可用 `/taiyi:land` 合并与部署。
-
-{{TAIYI_STAGE_PROTOCOL}}
-
-{{GSTACK_INVOKE}}
-
-────────────────────────────────────────────────────
-
-[1;36m/taiyi:land · #16 · /taiyi:land（合并部署）[0m
-[2m\$ cat prompts/taiyi-land.md | head -30[0m
----
-description: "TaiyiForge /taiyi:land — gstack land-and-deploy: merge PR, CI, deploy, canary"
-argument-hint: "[optional PR number or branch]"
----
-User invoked **$taiyi-land** (= `/taiyi:land`). **合并 + 部署 + 生产验证** — 加载 **gstack `land-and-deploy`** Skill。
-
-## 前置
-
-- 通常先有 `/taiyi:ship` 创建的 PR
-- CI 绿；review 与 `/taiyi:verify` 已过
-
-## 执行
-
-1. 加载 **gstack `land-and-deploy`**（见 gstack 加载协议）。
-2. 按 Skill：merge PR → 等 CI/deploy → **canary** 验证生产健康。
-3. 部署成功后：`/taiyi:continue` integration（若尚未）→ `/taiyi:archive`
-
-未配置 deploy：先 gstack **`setup-deploy`**，或只做 merge 部分并告知用户。
-
-{{TAIYI_STAGE_PROTOCOL}}
-
-{{GSTACK_INVOKE}}
-
-────────────────────────────────────────────────────
-
-[1;36m/taiyi:release · #17 · /taiyi:release（= gstack document-release）[0m
-[2m\$ cat prompts/taiyi-release.md | head -30[0m
----
-description: "TaiyiForge /taiyi:release — gstack document-release (integration docs sync)"
-argument-hint: "[optional slug]"
----
-User invoked **$taiyi-release** (= `/taiyi:release`). 加载 **gstack `document-release`** — 同步 README/ARCHITECTURE/CHANGELOG 等（integration 阶段 optional）。
-
-1. `/taiyi:status` — integration 或刚 `/taiyi:land` 之后
-2. 加载 **gstack `document-release`** Skill
-3. 与 `@taiyi-integration` 工件对齐后 `/taiyi:continue` integration
-4. 可选：`scripts/taiyi-forge.sh harness-check <slug> gstack/document-release`
-
-{{TAIYI_STAGE_PROTOCOL}}
-
-{{GSTACK_INVOKE}}
-
-[1;36m§5 Routing (2) · v28 #18–19[0m
-
-────────────────────────────────────────────────────
-
-[1;36m/taiyi:gstack · #18 · /taiyi:gstack <skill>（如 gstack/review · gstack/qa）[0m
-[2m\$ cat prompts/taiyi-gstack.md | head -30[0m
----
-description: "TaiyiForge /taiyi:gstack — load any gstack Skill by name"
-argument-hint: "<skill> e.g. design-shotgun autoplan canary gstack-upgrade"
----
-User invoked **$taiyi-gstack** (= `/taiyi:gstack $ARGUMENTS`). 加载 **gstack `$ARGUMENTS`** Skill（第一个词为 skill 名；含空格的 skill 用连字符，如 `land-and-deploy`）。
-
-**常用：**
-
-| Skill | 场景 |
-|-------|------|
-| `design-shotgun` | ui-design — 多方案视觉探索 |
-| `autoplan` | design/requirement — CEO+设计+工程+DX 一轮审完 |
-| `canary` | integration/land 后 — 部署监控 |
-| `gstack-upgrade` | 升级 gstack 工具链 |
-| `plan-eng-review` · `plan-design-review` · `qa` · `review` · `ship` · `land-and-deploy` · `document-release` | 见 delivery-slash.md |
-
-**步骤：**
-
-1. `/taiyi:status [slug]`
-2. 加载 **gstack `<skill>`** Skill（`$ARGUMENTS`）
-3. 产出写入当前阶段工件（DESIGN.md / UI-DESIGN.md / TEST.md / REVIEW.md 等）
-4. 可选：`scripts/taiyi-forge.sh harness-check <slug> gstack/<skill>`
-5. 需要推进阶段时：`/taiyi:continue`（ship/land **不替代** integration 交付门）
-
-快捷别名：`/taiyi:gstack review` · `/taiyi:gstack qa` · `/taiyi:release`（= document-release）
-
-{{TAIYI_STAGE_PROTOCOL}}
-
-{{GSTACK_INVOKE}}
-
-────────────────────────────────────────────────────
-
-[1;36m/taiyi:sp · #19 · /taiyi:sp <skill>（如 superpowers/brainstorming）[0m
-[2m\$ cat prompts/taiyi-sp.md | head -30[0m
----
-description: "TaiyiForge /taiyi:sp — load any Superpowers Skill by name"
-argument-hint: "<skill> e.g. writing-skills brainstorming test-driven-development"
----
-User invoked **$taiyi-sp** (= `/taiyi:sp $ARGUMENTS`). 加载 **Superpowers `$ARGUMENTS`** Skill（第一个词为 skill 名）。
-
-**14 技能：** `using-superpowers` · `brainstorming` · `writing-plans` · `using-git-worktrees` · `test-driven-development` · `subagent-driven-development` · `dispatching-parallel-agents` · `executing-plans` · `verification-before-completion` · `systematic-debugging` · `requesting-code-review` · `receiving-code-review` · `finishing-a-development-branch` · **`writing-skills`**（维护 Skill 元技能）
-
-**步骤：**
-
-1. `/taiyi:status [slug]`（若与当前变更相关）
-2. 加载 **Superpowers `<skill>`** Skill
-3. 按 Skill 要求产出（spec/plan/测试证据/CR 处理等）
-4. auto 模式：`scripts/taiyi-forge.sh harness-check <slug> superpowers/<skill>`
-
-快捷：`/taiyi:explore` → brainstorming · `/taiyi:tdd plan|dev` → TDD · `/taiyi:flow` → 阶段推荐表
-
-{{TAIYI_STAGE_PROTOCOL}}
-
-{{SUPERPOWERS_INVOKE}}
-
-[1;36m§6 Stage shortcuts (3) · v28 #20–22[0m
-
-────────────────────────────────────────────────────
-
-[1;36m/taiyi:explore · #20 · /taiyi:explore（→ Superpowers brainstorming）[0m
-[2m\$ cat prompts/taiyi-explore.md | head -30[0m
----
-description: "TaiyiForge /taiyi:explore — change 阶段头脑风暴（OpenSpec opsx:explore / OMX clarify）"
-argument-hint: "optional change topic"
----
-User invoked **$taiyi-explore** (= `/taiyi:explore`). No separate engine subcommand.
-
-1. Load **Superpowers `brainstorming`** — clarify scope, risks, and success criteria before writing CHANGE.md.
-2. Load **`taiyi-change`** — draft or refine `.taiyi/changes/<slug>/CHANGE.md`.
-3. When brainstorming is done and `--auto` is on, run:
-   ```bash
-   scripts/taiyi-forge.sh harness-check <slug> superpowers/brainstorming
-   ```
-4. Then `/taiyi:continue` when CHANGE.md is quality-ready.
-
-If user gave topic text in $ARGUMENTS, use it as the change title or CHANGE scope hint.
-
-{{TAIYI_STAGE_PROTOCOL}}
-
-────────────────────────────────────────────────────
-
-[1;36m/taiyi:tdd · #21 · /taiyi:tdd plan|dev（→ TDD 红绿）[0m
-[2m\$ cat prompts/taiyi-tdd.md | head -30[0m
----
-description: "TaiyiForge /taiyi:tdd — Superpowers TDD（task 计划 / dev 执行）"
-argument-hint: "[plan|dev] [slug]"
----
-User invoked **$taiyi-tdd** (= `/taiyi:tdd`). TDD discipline aligned with **taiyi-task** (plan) and **taiyi-dev** (implement).
-
-## Mode
-
-- **`plan`** (default): current phase is **task** — load **Superpowers `test-driven-development`** + **`taiyi-task`**. For each slice T*, specify: test file path, failing test name, and `Done when` command (e.g. `npm test -- slice-1`).
-- **`dev`**: current phase is **dev** — load **Superpowers `test-driven-development`** + **`taiyi-dev`**. RED → GREEN → REFACTOR per slice; run tests before claiming done.
-
-Parse `$ARGUMENTS`: first token `plan` or `dev` selects mode; optional slug after.
-
-## Engine context
-
-```bash
-scripts/taiyi-forge.sh status $ARGUMENTS
-scripts/taiyi-forge.sh apply $ARGUMENTS
-```
-
-## After TDD session
-
-1. Write/update **TASK.md** (plan) or code + **`.dev-complete`** (dev):
-   ```text
-   command: npm test
-   exitCode: 0
-   dev complete
-   ```
-2. Auto harness: `scripts/taiyi-forge.sh harness-check <slug> superpowers/test-driven-development`
-3. Dev done: `scripts/taiyi-forge.sh complete <slug> dev` (or test → `complete test`)
-
-────────────────────────────────────────────────────
-
-[1;36m/taiyi:flow · #22 · /taiyi:flow feature|bug|full-flow|help[0m
-[2m\$ cat prompts/taiyi-flow.md | head -30[0m
----
-description: "TaiyiForge /taiyi:flow — Superpowers 主轴九阶段流程"
-argument-hint: "[slug]"
----
-User invoked **$taiyi-flow** (= `/taiyi:flow`). **Superpowers 全技能主轴**九阶段流程；外部开源 Skill/CLI 为可选外挂。
-
-## Read
-
-- `docs/taiyi/superpowers-flow.md`
-- `docs/taiyi/workflow-manifest.yaml`
-
-## Current change
-
-```bash
-scripts/taiyi-forge.sh status $ARGUMENTS
-```
-
-Status includes **Superpowers · 外挂 · 辅助 · harness** from `workflow-manifest.yaml`.
-
-## Superpowers per phase (summary)
-
-| Phase | Load Superpowers |
-|-------|------------------|
-| change | brainstorming (`/taiyi:explore`) |
-| requirement | writing-plans (optional) |
-| task | writing-plans + test-driven-development (`/taiyi:tdd plan`) |
-| dev | test-driven-development (`/taiyi:tdd dev`); optional subagent/parallel/worktrees |
-| test | verification-before-completion |
-| review | requesting-code-review (`/taiyi:review-loop`); optional receiving-code-review |
-| integration | finishing-a-development-branch + verification-before-completion |
-
-[1;36m§7 Umbrellas (6) · v28 #23–28[0m
-
-────────────────────────────────────────────────────
-
-[1;36mv28 #23 /taiyi:token status（engine: token status）[0m
-[2m\$ bash /Users/shixiaocai/Desktop/chuangye/oh-my-taiyiforge/scripts/taiyi-forge.sh token status[0m
-有 4 个进行中的变更（demo-28-v28, readme-v28, ty-5rwl6k-v, dogfood-demo），请指定 slug：/taiyi:continue <slug>
-查看全部: /taiyi:list
-
-────────────────────────────────────────────────────
-
-[1;36mv28 #23 /taiyi:token record（engine: token record · 写入 .token-usage.json）[0m
-[2m\$ bash /Users/shixiaocai/Desktop/chuangye/oh-my-taiyiforge/scripts/taiyi-forge.sh token record demo-28-v28 0[0m
-Token: 0 / 500,000（0%）· 估算费用 ≈ $0.0000
-  阶段 change: 0 / 80,000
-
-────────────────────────────────────────────────────
-
-[1;36m/taiyi:token-compress · #23 · /taiyi:token compress（→ CONTEXT-COMPACT.md）[0m
-[2m\$ cat prompts/taiyi-token-compress.md | head -30[0m
----
-description: "TaiyiForge /taiyi:token compress — 引擎压缩 → CONTEXT-COMPACT.md"
-argument-hint: "<slug>"
----
-User invoked **$taiyi-token-compress** (= `/taiyi:token compress`). Run:
-
-```bash
-scripts/taiyi-forge.sh token compress $ARGUMENTS
-```
-
-Writes `CONTEXT-COMPACT.md` (zero LLM). Then load **taiyi-compress** or Superpowers/gstack Skills if still over budget.
-
-────────────────────────────────────────────────────
-
-[1;36m/taiyi:test（umbrella · 无独立顶层 prompt → 子命令 legacy 真源）[0m
-[2m[umbrella 真源: docs/taiyi/canonical-commands.md §伞形命令·子命令地图][0m
-[2m\$ ls prompts/ | grep -E "^taiyi-(browser-smoke|e2e|ui-test|security|smoke)" | sort[0m
-taiyi-browser-smoke.md
-taiyi-e2e.md
-taiyi-security.md
-taiyi-ui-test.md
-
-[2m\$ cat prompts/taiyi-browser-smoke.md | head -25[0m
----
-description: "TaiyiForge /taiyi:browser-smoke — Playwright 浏览器 E2E 冒烟（内置夹具）"
-argument-hint: "[--json]"
----
-User invoked **$taiyi-browser-smoke** (= `/taiyi:browser-smoke`). **Browser E2E smoke** — 内置 Playwright 夹具，等价于完整 `/taiyi:e2e` 验证路径的可复现子集。
-
-**Token 纪律：CI / 后台跑，勿把完整输出贴进聊天** — 只把 exit code + 摘要写入 TEST.md。
-
-## Agent 代跑（勿让用户手打）
-
-```bash
-scripts/taiyi-forge.sh browser-smoke
-# 或 JSON:
-scripts/taiyi-forge.sh browser-smoke --json
-```
-
-等价于：`node examples/browser-e2e-smoke/run-verify.mjs`（安装 Playwright + 跑 `e2e/smoke.spec.js`）。
-
-## 与九阶段斜杠的关系
-
-| 斜杠 | 场景 |
-|------|------|
-| **`/taiyi:browser-smoke`** | 本仓库 / 已装包内的**固定冒烟**（无需目标项目 Playwright 配置） |
-| **`/taiyi:e2e`** | 变更 **test** 阶段：跑**当前项目**的 `npx playwright test` |
-| **`/taiyi:gstack qa`** | 浏览器走查（gstack browse） |
-
-────────────────────────────────────────────────────
-
-[1;36m/taiyi:review（umbrella · 无独立顶层 prompt → 子命令 legacy 真源）[0m
-[2m[umbrella 真源: docs/taiyi/canonical-commands.md §伞形命令·子命令地图][0m
-[2m\$ ls prompts/ | grep -E "^taiyi-(review-loop|review-check|health|gstack-review)" | sort[0m
-taiyi-gstack-review.md
-taiyi-health.md
-taiyi-review-check.md
-taiyi-review-loop.md
-
-[2m\$ cat prompts/taiyi-gstack-review.md | head -25[0m
----
-description: "TaiyiForge /taiyi:gstack review — gstack PR diff review (not /taiyi:review-loop)"
-argument-hint: "[optional slug]"
----
-User invoked **$taiyi-gstack-review** (= `/taiyi:gstack review`). **gstack 结构审查** — 与 Taiyi **`/taiyi:review-loop`**（REVIEW.md 机器门）不同。
-
-1. `/taiyi:status` — 当前阶段
-2. 加载 **gstack `review`** Skill — 对 **git diff / PR** 做 pre-landing 审查
-3. 发现写入或更新 `REVIEW.md`（配合 `@taiyi-review`）
-4. 可选：`scripts/taiyi-forge.sh harness-check <slug> gstack/review`（auto 模式）
-5. 通过后 `/taiyi:review-loop` 或 `/taiyi:continue --approver`（review 人工门）
-
-{{TAIYI_STAGE_PROTOCOL}}
-
-{{GSTACK_INVOKE}}
-
-────────────────────────────────────────────────────
-
-[1;36m/taiyi:diagram（umbrella · 无独立顶层 prompt → 子命令 legacy 真源）[0m
-[2m[umbrella 真源: docs/taiyi/canonical-commands.md §伞形命令·子命令地图][0m
-[2m\$ ls prompts/ | grep -E "^taiyi-diagram-(pipeline|c4|arch|render|flow)" | sort[0m
-taiyi-diagram-arch.md
-taiyi-diagram-c4.md
-taiyi-diagram-flow.md
-taiyi-diagram-pipeline.md
-taiyi-diagram-render.md
-
-[2m\$ cat prompts/taiyi-diagram-arch.md | head -25[0m
----
-description: "TaiyiForge /taiyi:diagram-arch — 架构图（taiyi-diagram-arch Skill）"
-argument-hint: "[slug] [topic]"
----
-User invoked **/taiyi:diagram-arch**. Load **`taiyi-diagram-arch`** — **pipeline Step 2** (sync from C4 truth).
-
-1. **If** `diagrams/c4/containers.md` or `docs/c4/containers.md` exists → use as **source of truth**; do not redefine modules.
-2. Read `REQUIREMENT.md` + `DESIGN.md` (+ `CONTEXT.md` if present).
-3. Write `.taiyi/changes/<slug>/diagrams/architecture.md` (or `docs/diagrams/architecture.md` for `--repo`) with backlink to C4 source.
-4. PNG is **Step 3**: `/taiyi:diagram-render` or full `/taiyi:diagram-pipeline` — not required here.
-5. Repo product poster: `python3 scripts/generate-architecture-svg.py` (separate from this pipeline).
-6. `scripts/taiyi-forge.sh mark-aux <slug> taiyi-diagram-arch` when `diagrams/architecture.md` is substantive.
-
-Use slug from args or infer single active change. Optional `topic` narrows scope (e.g. `deployment`, `auth`).
-
-────────────────────────────────────────────────────
-
-[1;36m/taiyi:mode（umbrella · 无独立顶层 prompt → 子命令 legacy 真源）[0m
-[2m[umbrella 真源: docs/taiyi/canonical-commands.md §伞形命令·子命令地图][0m
-[2m\$ ls prompts/ | grep -E "^taiyi-(ralph|autopilot|daemon|team|ultrawork|agent|step|stop-mode|modes|keyword|preflight)" | sort[0m
-taiyi-agent.md
-taiyi-autopilot.md
-taiyi-daemon.md
-taiyi-keyword.md
-taiyi-modes.md
-taiyi-preflight.md
-taiyi-ralph.md
-taiyi-step.md
-taiyi-stop-mode.md
-taiyi-team.md
-taiyi-ultrawork.md
-
-[2m\$ cat prompts/taiyi-agent.md | head -25[0m
----
-description: "TaiyiForge /taiyi:agent — 29 个原生专 Agent 角色（自 OMC 迁移）"
-argument-hint: "<role|list> [slug]"
----
-User invoked **$taiyi-agent** (= `/taiyi:agent`). **Load a native specialist agent role — no OMC.**
-
-```bash
-scripts/taiyi-forge.sh agent $ARGUMENTS
-```
-
-List roles: `scripts/taiyi-forge.sh agent list`
-
-## Agent actions
-
-1. Run engine command — follow **load** list (taiyi-* Skills, `/taiyi:sp`, `/taiyi:gstack`, slash shortcuts)
-2. Write output to `.taiyi/changes/<slug>/` current phase artifact
-3. Finish with `/taiyi:continue` or verification loops (`/taiyi:ralph`, `/taiyi:review-loop`)
-
-Roles include: explore, analyst, planner, architect, designer, executor, debugger, test-engineer, verifier, tracer, security-reviewer, code-reviewer, qa-tester, writer, git-master, code-simplifier, critic, scientist, document-specialist, style-reviewer, api-reviewer, performance-reviewer, dependency-expert, quality-strategist, product-manager, ux-researcher, information-architect, product-analyst, vision.
-
-See `docs/taiyi/agent-roles.yaml` for phase defaults (generated from `src/core/agent-roles.ts` via `node scripts/sync-agent-roles-yaml.mjs`).
-
-Optional hard gate: `TAIYI_AGENT_STRICT_PHASE=1` blocks roles outside recommended phases (default is warn-only ⚠️).
-
-────────────────────────────────────────────────────
-
-[1;36m/taiyi:workflow（umbrella · 无独立顶层 prompt → 子命令 legacy 真源）[0m
-[2m[umbrella 真源: docs/taiyi/canonical-commands.md §伞形命令·子命令地图][0m
-[2m\$ ls prompts/ | grep -E "^taiyi-(plan|ralplan|loop|check|run|sync|ccg|sciomc|deepinit|remember|ultraqa|external-context|deep-interview|visual-verdict|ai-slop-cleaner|ecomode)" | sort[0m
-taiyi-ai-slop-cleaner.md
-taiyi-ccg.md
-taiyi-check.md
-taiyi-deep-interview.md
-taiyi-deepinit.md
-taiyi-ecomode.md
-taiyi-external-context.md
-taiyi-loop.md
-taiyi-plan.md
-taiyi-ralplan.md
-taiyi-remember.md
-taiyi-run.md
-taiyi-sciomc.md
-taiyi-sync.md
-taiyi-ultraqa.md
-taiyi-visual-verdict.md
-
-[2m\$ cat prompts/taiyi-ai-slop-cleaner.md | head -25[0m
----
-description: "TaiyiForge /taiyi:ai-slop-cleaner — AI 代码 slop 回归安全清理"
-argument-hint: "[slug]"
----
-User invoked **$taiyi-ai-slop-cleaner** (= `/taiyi:ai-slop-cleaner`).
-
-```bash
-scripts/taiyi-forge.sh ai-slop-cleaner $ARGUMENTS
-```
-
-Simplify without behavior change; verify with `/taiyi:ralph`.
-
-[1;36m§8 终态 · engineTruth[0m
-
-────────────────────────────────────────────────────
-
-[1;36mv28 #2 /taiyi:status（engine: status --json --compact）[0m
-[2m\$ bash /Users/shixiaocai/Desktop/chuangye/oh-my-taiyiforge/scripts/taiyi-forge.sh status demo-28-v28 --json --compact[0m
-{
-  "engineTruth": {
-    "slug": "demo-28-v28",
-    "workflowStatus": "active",
-    "displayPhase": "change",
-    "currentPhase": "change",
-    "completedPhases": [],
-    "completedCount": 0,
-    "totalPhases": 5,
-    "profile": "lite",
-    "autoHarness": false,
-    "workflowActive": true,
-    "artifact": "CHANGE.md",
-    "skill": "taiyi-change",
-    "qualityReady": false,
-    "requiresHumanGate": true,
-    "nextAction": "dev 前勿改业务代码；撤销或暂存改动后再推进。",
-    "blockers": [],
-    "syncActions": [],
-    "earlyCodeWarning": "当前 change 未到 dev，但工作区有业务代码改动（examples/v28-all-slashes-demo/scripts/run-v28-all-slashes.sh）。规划阶段只写 .taiyi/changes/ 工件；实现请等到 dev 且 /taiyi:apply 后再改代码。",
-    "handoffExists": false,
-    "activeModes": [
-      {
-        "mode": "team",
-        "slug": "fullflow-probe-feature"
-      }
-    ]
-  },
-  "statusLine": "当前: change（1/5）| ⚠ dev 前有业务代码改动"
-}
-
-────────────────────────────────────────────────────
-
-╔══════════════════════════════════════════════════════════════╗
-║  28 v28 顶栏调用完成                                           ║
-║  完整输出: /Users/shixiaocai/Desktop/chuangye/oh-my-taiyiforge/examples/v28-all-slashes-demo/output/demo.log
-╚══════════════════════════════════════════════════════════════╝

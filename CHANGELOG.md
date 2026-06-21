@@ -446,3 +446,39 @@ git reset --hard 267734f  # 回到 5 修前
 ```
 
 回滚影响:5 commit 是顺序依赖,revert 顺序需倒序(最新先 revert)。
+
+
+<!-- taiyi:fix-shell-whitelist-and-profile-help --> 2026-06-21
+# CHANGELOG: fix-shell-whitelist-and-profile-help
+
+## Added
+
+- feat(shell): 10 个 node CLI 支持的命令加到 shell 白名单(flow / service / mvp / micro / nano / design-system / devops / ci-scenario / chat / code-review),用户 `taiyi-forge.sh flow mvp` 不再报 unknown command
+- docs(help): 3 处 profile help 从 `api|lite` 改为 7 profile 全列(full/lite|api|micro|nano|spike|ui)
+
+## Changed
+
+- dist/cli/taiyi.js 第 35 行 (init)
+- dist/cli/taiyi.js 第 56 行 (walkthrough)
+- dist/cli/taiyi.js 第 478 行 (new)
+- scripts/taiyi-forge.sh 第 166 行 (case 白名单)
+
+## Fixed
+
+- 修复「白名单 + help 不全」两个 UX 问题,共 4 处小改动
+
+## Docs / Skills
+
+- [x] 不涉及对外协议 / 模板 / Skill 改动
+- [x] 不涉及 OpenSpec(项目未 init openspec)
+
+## Rollback
+
+```bash
+cd /Users/shixiaocai/Desktop/chuangye/oh-my-taiyiforge
+git checkout main -- scripts/taiyi-forge.sh dist/cli/taiyi.js
+# 或
+/taiyi:cancel fix-shell-whitelist-and-profile-help --remove-dir
+```
+
+回滚影响:仅 2 文件 4 行改动,无 schema 变更。
