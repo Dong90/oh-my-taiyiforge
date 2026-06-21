@@ -1,5 +1,35 @@
 # Changelog
 
+## [0.27.0] - 2026-06-21
+
+### Added
+
+- **feat(core)**: event bus + structured logger + git import tool — 核心基础设施升级，新增 `EventBus`、`Logger` 结构化日志、`ImportTool` 从 git branch import 变更
+- **feat(milestone)**: 里程碑总览命令 — 多变更聚合进度/瓶颈/清单
+- **feat(new)**: `taiyi new` 支持显式 slug + title 分离 `npx taiyi new "<slug>" "<title>"`
+- **feat(skills+schema)**: flow-x 借鉴 + design schema 扩展 — 10 个 SKILL.md 重写
+
+### Changed
+
+- **refactor(cli)**: 62→18 命令，handlers map 替代巨型 switch — CLI 大幅瘦身
+- **refactor(skill)**: 合并 explore/tdd/flow → skill umbrella
+- **refactor(prompts)**: 删 16 个与 umbrella 重复的独立 prompt
+- **refactor(commands)**: 删 21 个 legacy/aux prompt + commands.yaml 清理
+
+### Fixed
+
+- **fix(build)**: 补充缺失的 `init-wizard.ts`，修复 implicit any 类型错误
+- **fix(TS)**: TypeScript errors + test fixes + logger integration for production readiness
+- **fix(demo)**: v28 demo 脚本 3 个 bug 修复
+- **fix(shell+cli)**: profile 列表扩 nano/service/mvp/full/micro/spike (#32)
+- **fix(evidence)**: 5 修引擎 evidence/trailer/debounce (#31)
+
+### Tests
+
+- `tests/core/event-bus.test.ts`、`tests/commands/import-tool.test.ts`、`tests/commands/init-wizard.test.ts` 新增
+- `tests/l4-headless-contract.test.ts`、`tests/slash-commands.test.ts`、`tests/slash-extensions.test.ts` 等更新
+- 完整 vitest passed，build 成功
+
 ## [0.26.0] - 2026-06-17
 
 ### Added
