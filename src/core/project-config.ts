@@ -1,6 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import type { ChangeProfile } from "./types.js";
+import type { PhaseDefinition } from "./types.js";
 
 /** 消费方 `.taiyi/config.json` — 项目级默认与场景偏好 */
 export type ProjectScenarioId =
@@ -25,6 +26,8 @@ export type TaiyiProjectConfig = {
   scenario?: ProjectScenarioId;
   harness?: { minimal?: boolean };
   openspec?: boolean;
+  /** User-defined custom phases extending the built-in 9-phase workflow. */
+  customPhases?: PhaseDefinition[];
 };
 
 const VALID_PROFILES = new Set<string>(["full", "api", "ui", "lite", "spike", "micro", "nano"]);

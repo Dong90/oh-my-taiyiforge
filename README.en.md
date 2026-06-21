@@ -249,8 +249,10 @@ npm run walkthrough-e2e    # Nine-stage shell E2E + iron-triangle
 ```bash
 # Recommended entry: auto-slug + engine guidance
 npx taiyi walkthrough
+npx taiyi init-wizard               # interactive config initialization
 npx taiyi new "Add login optimization"  # writes to .taiyi/changes/<slug>/
 npx taiyi status                         # current phase + recommended Skill + next step
+npx taiyi import <branch>               # import from git branch (reads commits, generates CHANGE.md)
 
 # Edit .taiyi/changes/<slug>/CHANGE.md, then:
 npx taiyi complete <slug> change --approver "your-name"   # human gate

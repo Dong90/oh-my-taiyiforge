@@ -247,8 +247,10 @@ npm run walkthrough-e2e    # 九阶段 shell E2E + 铁三角
 ```bash
 # 推荐入口: 自动 slug + 引擎引导
 npx taiyi walkthrough
+npx taiyi init-wizard              # 交互式 config 初始化
 npx taiyi new "优化登录流程"     # 写到 .taiyi/changes/<slug>/
 npx taiyi status                   # 当前阶段 + 推荐 Skill + 下一步
+npx taiyi import <branch>          # 从 git 分支导入变更（自动读 commit 生成 CHANGE.md）
 
 # 编辑 .taiyi/changes/<slug>/CHANGE.md,然后:
 npx taiyi complete <slug> change --approver "你的名字"   # 人类门控
