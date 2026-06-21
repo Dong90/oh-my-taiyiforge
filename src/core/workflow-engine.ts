@@ -33,6 +33,7 @@ import { enforceTokenBudgetBeforeComplete } from "./token-runner.js";
 import { expectedPhaseCount, isChangeAborted, isWorkflowCompleted } from "./change-status.js";
 import { normalizeState } from "./normalize-state.js";
 import { deliveryGateEnabled, evaluateDeliveryGate } from "./gates/delivery-gate.js";
+import { emit } from "./event-bus.js";
 import { auditChange } from "./workflow-audit.js";
 import { syncRootChangelog } from "./sync-root-changelog.js";
 import { syncChangeState } from "./state-sync.js";
@@ -140,6 +141,7 @@ export class WorkflowEngine {
     };
     this.writeState(state);
     this.log.info("Initiated change", { slug, profile: options?.profile ?? "full", initialPhase });
+    emit("change:created", { slug, profile: options?.profile ?? "full", initialPhase }).catch(() => {});
     return { ...state, seeded };
   }
 
@@ -278,6 +280,7 @@ export class WorkflowEngine {
       return { ok: false, error: `Phase ${phaseId} is skipped for profile ${state.profile}` };
     }
     if (state.currentPhase !== phaseId) {
+      emit("phase:blocked", { slug, phase: phaseId, reason: `wrong phase, expected ${state.currentPhase}` }).catch(() => {});
       return {
         ok: false,
         error: formatWrongPhaseError(slug, state.currentPhase, phaseId),
@@ -348,6 +351,7 @@ export class WorkflowEngine {
         const highs = audit.findings
           .filter((f) => f.severity === "high")
           .map((f) => `${f.code}: ${f.message}`);
+        emit("audit:high", { slug, findings: audit.findings }).catch(() => {});
         return {
           ok: false,
           error: `Integration audit failed:\n${highs.join("\n")}`,
@@ -359,6 +363,7 @@ export class WorkflowEngine {
       const delivery = evaluateDeliveryGate(workspaceDir, { slug, phase: "integration" });
       if (!delivery.passed) {
         const hintText = delivery.hints?.length ? ` — ${delivery.hints.join("; ")}` : "";
+        emit("gate:failed", { slug, phase: phaseId, reason: delivery.reason }).catch(() => {});
         return {
           ok: false,
           error: `Delivery gate failed: ${delivery.reason}${hintText}`,
@@ -437,6 +442,7 @@ export class WorkflowEngine {
       const quality = evaluateQualityGate(qualityScores);
       if (!quality.passed) {
         const hintText = qualityHints?.length ? ` — ${qualityHints.join("; ")}` : "";
+        emit("gate:failed", { slug, phase: phaseId, reason: quality.failed.join(", ") }).catch(() => {});
         return {
           ok: false,
           error: `Quality gate failed: ${quality.failed.join(", ")}${hintText}`,
@@ -453,10 +459,12 @@ export class WorkflowEngine {
         options?.allowAutoHuman,
       );
       if (!autoReject.ok) {
+        emit("phase:blocked", { slug, phase: phaseId, reason: autoReject.error }).catch(() => {});
         return { ok: false, error: autoReject.error };
       }
       const human = evaluateHumanGate(gates.human);
       if (!human.passed) {
+        emit("phase:blocked", { slug, phase: phaseId, reason: human.reason ?? "Human gate failed" }).catch(() => {});
         return { ok: false, error: human.reason ?? "Human gate failed" };
       }
     }
@@ -504,6 +512,7 @@ export class WorkflowEngine {
       runPostCompleteShellHooks(workspaceDir, this.workspaceRoot, slug, phaseId);
     }
     this.log.info("Completed phase", { slug, phaseId });
+    emit("phase:complete", { slug, phase: phaseId }).catch(() => {});
     return { ok: true };
   }
 

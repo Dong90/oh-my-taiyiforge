@@ -12,6 +12,8 @@ import { resolveActiveSlug, slugifyTitle } from "../core/active-slug.js";
 import { resolveAutoHarness } from "../core/resolve-auto-harness.js";
 import { formatChangeNotFound, parseProfileFlag } from "../core/cli-hints.js";
 import { resolveDefaultProfile } from "../core/project-config.js";
+import { runInitWizard } from "../commands/init-wizard.js";
+import { importFromGitBranch } from "../commands/import-tool.js";
 import type { ChangeProfile, PhaseId } from "../core/types.js";
 import {
   taiyiArchive, taiyiAudit, taiyiCancel, taiyiDoctor, taiyiHandoff,
@@ -39,6 +41,7 @@ import {
 } from "../core/loop-runner.js";
 import { SLASH_ONLY, LEGACY_REDIRECT } from "../core/command-registry.js";
 import { getLogger } from "../core/logger.js";
+import { emit } from "../core/event-bus.js";
 
 const log = getLogger();
 import { runDaemonLoop, readDaemonState, formatDaemonResultPlain } from "../core/daemon-runner.js";
@@ -55,6 +58,7 @@ function usage(): void {
        continue [slug] [xN]   |  apply [slug]   |  loop [slug] [xN]
        list [--all] [--dashboard]  |  archive [slug]
        cancel [slug]           |  handoff [slug]  |  resume [slug]
+       init-wizard             |  import <branch>
 
 排查:  doctor [--strict] [--json]  |  audit [slug]  |  verify [slug]
        token status|record|compress  |  ci platform|verify|prompt
@@ -326,6 +330,9 @@ const handlers: Record<string, CliHandler> = {
   archive: (a) => {
     const slug = requireSlug(a);
     const r = taiyiArchive(workspaceDir, slug, { skipSpecs: a.includes("--skip-specs") });
+    if (r.ok && !r.alreadyArchived) {
+      emit("change:archived", { slug, reason: r.reason }).catch(() => {});
+    }
     if (jsonMode) console.log(JSON.stringify(r, null, 2));
     else if (r.ok) console.log(formatArchivePlain(slug, r));
     else log.error(formatArchivePlain(slug, r));
@@ -592,6 +599,17 @@ const handlers: Record<string, CliHandler> = {
       process.exit(state ? 0 : 1);
     }
     log.error("用法: daemon run|status <slug>"); process.exitCode = 1; return;
+  },
+  "init-wizard": (a) => {
+    const r = runInitWizard(workspaceDir);
+    if (jsonMode) { r.then(a => console.log(JSON.stringify(a, null, 2))).catch(e => { log.error(e.message); process.exitCode = 1; }); return; }
+    r.then(a => console.log("已写入 .taiyi/config.json: " + JSON.stringify(a))).catch(e => { log.error(e.message); process.exitCode = 1; });
+  },
+  "import": (a) => {
+    const branch = stripFlags(a)[0];
+    if (!branch) { log.error("用法: import <branch-name>"); process.exitCode = 1; return; }
+    const r = importFromGitBranch(branch, workspaceDir);
+    r.then(slug => { if (jsonMode) console.log(JSON.stringify({ slug }, null, 2)); else console.log("导入完成: " + slug); }).catch(e => { log.error(e.message); process.exitCode = 1; });
   },
 };
 
