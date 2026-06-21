@@ -107,9 +107,6 @@ new → write → continue → apply → continue → … → commit → continu
 
 | 旧斜杠 | v28 入口 |
 |--------|----------|
-| `/taiyi:feature` | 新功能 full 九阶段（`/taiyi:flow feature`） |
-| `/taiyi:bug` | lite 修 bug（`/taiyi:flow bug`） |
-| `/taiyi:ui-test` | test UI QA（`/taiyi:test ui`） |
 
 列表/清理：`list --archived` · `list --all` · `prune --aborted`（CLI，无独立顶栏）。
 
@@ -123,11 +120,11 @@ new → write → continue → apply → continue → … → commit → continu
 
 | v28 子命令 | 步骤 | 说明 | legacy 斜杠 |
 |------------|------|------|-------------|
-| `/taiyi:diagram pipeline` | ①②③ | 架构图三步流水线编排：① diagram-c4（C4 真源）→ ② diagram-arch（工程补充）→ ③ diagram-render（SVG） | `/taiyi:diagram-pipeline` |
-| `/taiyi:diagram c4` | ① | 流水线第 1 步：扫代码写 C4 真源（Observed/Inferred + Mermaid） | `/taiyi:diagram-c4` |
-| `/taiyi:diagram arch` | ② | 流水线第 2 步：以 `diagrams/c4/containers.md` 为真源同步 `diagrams/architecture.md`（勿重划模块） | `/taiyi:diagram-arch` |
-| `/taiyi:diagram render` | ③ | 流水线第 3 步：Mermaid → SVG（`render-mermaid.mjs` 或 diagramming-architecture 视觉审查） | `/taiyi:diagram-render` |
-| `/taiyi:diagram flow` | — | 业务流程图 / 状态机 / 九阶段 flowchart；AC 追溯表；TASK 切片对齐 | `/taiyi:diagram-flow` |
+| `/taiyi:diagram pipeline` | ①②③ |  | `/taiyi:diagram-pipeline` |
+| `/taiyi:diagram c4` | ① |  | `/taiyi:diagram-c4` |
+| `/taiyi:diagram arch` | ② |  | `/taiyi:diagram-arch` |
+| `/taiyi:diagram render` | ③ |  | `/taiyi:diagram-render` |
+| `/taiyi:diagram flow` | — |  | `/taiyi:diagram-flow` |
 
 详见 `docs/diagrams/pipeline.md` · `commands.yaml` → `auxiliary.commands`。
 
@@ -159,7 +156,7 @@ Token 纪律：全量 `playwright test` / probe 在 **CI 或后台**跑；聊天
 
 | 斜杠 | 引擎 | 说明 |
 |------|------|------|
-| `/taiyi:test smoke` | `browser-smoke` | 内置 Playwright 冒烟（v28 伞形 `test smoke`） |
+| `/taiyi:test smoke` | （聊天） | 内置 Playwright 冒烟（v28 伞形 `test smoke`） |
 | `/taiyi:test e2e` | （聊天） | 目标项目 `npx playwright test`（v28 伞形 `test e2e`） |
 | `/taiyi:test qa` | （聊天） | gstack browse 走查（v28 伞形 `test qa`） |
 | `/taiyi:test ui` | （聊天） | test 阶段 UI QA（v28 伞形 `test ui`） |
@@ -223,7 +220,7 @@ Agent 收到 v28 伞形斜杠时，**优先**加载对应 legacy prompt / 引擎
 |--------|--------|
 | `plan` | `/taiyi:plan` |
 | `ralplan` | `/taiyi:ralplan` |
-| `loop` | `/taiyi:loop` |
+| `loop` | `/taiyi:continue xN`（原 `/taiyi:loop` 已移除） |
 | `check` | `/taiyi:check` |
 | `run` | `/taiyi:run` |
 | `sync` | `/taiyi:sync` |
@@ -259,7 +256,7 @@ Agent 收到 v28 伞形斜杠时，**优先**加载对应 legacy prompt / 引擎
 
 | 曾用 | v28 现用 |
 |------|----------|
-| `/taiyi:pause` | `/taiyi:handoff` |
+| `/taiyi:handoff` | `/taiyi:pause` |
 | `/taiyi:commit-trailers` | `/taiyi:commit` |
 | `/taiyi:state` · `/taiyi:state-read` | `/taiyi:status` / MCP |
 | `/taiyi:next` · `/taiyi:done` | `/taiyi:status` + `/taiyi:continue` |

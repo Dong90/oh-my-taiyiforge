@@ -174,7 +174,7 @@ Monorepo / 本地开发：
 |------|--------|------------|
 | 读状态 | `/taiyi:status` · MCP `taiyi_state_get_status` | `taiyi-forge.sh status [--json] [--compact]` |
 | 安装/交付排查 | `/taiyi:doctor` · `/taiyi:audit` · MCP `taiyi_doctor` / `taiyi_audit` | `doctor|audit --json --compact` |
-| handoff / cancel | `/taiyi:handoff` · `/taiyi:cancel` | 同左映射 |
+| handoff / cancel | `/taiyi:pause` · `/taiyi:cancel` | 同左映射 |
 | 过关 / 门禁 | `/taiyi:continue` · `/taiyi:complete` | `taiyi-forge.sh …` |
 | CI（无聊天） | — | `taiyi ci verify` |
 

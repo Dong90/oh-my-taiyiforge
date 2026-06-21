@@ -36,7 +36,7 @@ entry_decision:
   implement_dev_test:
     all: "/taiyi:apply → 实现 → /taiyi:continue"
   pause_session:
-    all: "/taiyi:handoff（≈ MCP taiyi_state_handoff）"
+    all: "/taiyi:pause（≈ MCP taiyi_state_handoff）"
   abort_change:
     all: "/taiyi:cancel（≈ MCP taiyi_state_cancel）"
   pre_integration_commit:

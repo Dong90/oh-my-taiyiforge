@@ -100,8 +100,8 @@ export function isProjectWrapperStale(
       stale: true,
       detail:
         missing.length > 0
-          ? `wrapper 过旧（缺 ${missing.join(", ")}）— npx taiyi sync-wrapper`
-          : `wrapper list 未传 "$@" — npx taiyi sync-wrapper`,
+          ? `wrapper 过旧（缺 ${missing.join(", ")}）— npx taiyi-forge-install --cursor`
+          : `wrapper list 未传 "$@" — npx taiyi-forge-install --cursor`,
     };
   }
   return {

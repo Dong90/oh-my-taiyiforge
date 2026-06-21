@@ -17,6 +17,37 @@ export function getPhase(id: PhaseId): PhaseDefinition {
   return phase;
 }
 
+/** Register a custom phase definition at runtime. */
+export function registerCustomPhase(def: PhaseDefinition): void {
+  const existing = PHASES.find((p) => p.id === def.id);
+  if (existing) {
+    Object.assign(existing, def);
+    return;
+  }
+  PHASES.push(def);
+  PHASES.sort((a, b) => a.order - b.order);
+}
+
+/** Register multiple custom phases. */
+export function registerCustomPhases(defs: PhaseDefinition[]): void {
+  for (const def of defs) registerCustomPhase(def);
+}
+
+/** Load custom phases from a TaiyiProjectConfig.customPhases array and register them. */
+export function loadCustomPhasesFromConfig(
+  customPhases: PhaseDefinition[] | undefined,
+): { registered: number } {
+  if (!customPhases || customPhases.length === 0) return { registered: 0 };
+  registerCustomPhases(customPhases);
+  return { registered: customPhases.length };
+}
+
+/** Reset phases to built-in defaults (for testing). */
+export function resetPhases(): void {
+  PHASES.length = 0;
+  PHASES.push(...loadPhasesFromYaml(import.meta.url));
+}
+
 export function getPhaseOrder(id: PhaseId): number {
   return getPhase(id).order;
 }

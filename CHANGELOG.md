@@ -1,5 +1,35 @@
 # Changelog
 
+## [0.27.0] - 2026-06-21
+
+### Added
+
+- **feat(core)**: event bus + structured logger + git import tool — 核心基础设施升级，新增 `EventBus`、`Logger` 结构化日志、`ImportTool` 从 git branch import 变更
+- **feat(milestone)**: 里程碑总览命令 — 多变更聚合进度/瓶颈/清单
+- **feat(new)**: `taiyi new` 支持显式 slug + title 分离 `npx taiyi new "<slug>" "<title>"`
+- **feat(skills+schema)**: flow-x 借鉴 + design schema 扩展 — 10 个 SKILL.md 重写
+
+### Changed
+
+- **refactor(cli)**: 62→18 命令，handlers map 替代巨型 switch — CLI 大幅瘦身
+- **refactor(skill)**: 合并 explore/tdd/flow → skill umbrella
+- **refactor(prompts)**: 删 16 个与 umbrella 重复的独立 prompt
+- **refactor(commands)**: 删 21 个 legacy/aux prompt + commands.yaml 清理
+
+### Fixed
+
+- **fix(build)**: 补充缺失的 `init-wizard.ts`，修复 implicit any 类型错误
+- **fix(TS)**: TypeScript errors + test fixes + logger integration for production readiness
+- **fix(demo)**: v28 demo 脚本 3 个 bug 修复
+- **fix(shell+cli)**: profile 列表扩 nano/service/mvp/full/micro/spike (#32)
+- **fix(evidence)**: 5 修引擎 evidence/trailer/debounce (#31)
+
+### Tests
+
+- `tests/core/event-bus.test.ts`、`tests/commands/import-tool.test.ts`、`tests/commands/init-wizard.test.ts` 新增
+- `tests/l4-headless-contract.test.ts`、`tests/slash-commands.test.ts`、`tests/slash-extensions.test.ts` 等更新
+- 完整 vitest passed，build 成功
+
 ## [0.26.0] - 2026-06-17
 
 ### Added
@@ -379,3 +409,76 @@ git commit --amend -m "..."
 ## [0.1.0] - 2026-06-05
 
 - 初始 TaiyiForge 骨架
+
+
+<!-- taiyi:engine-evidence-check --> 2026-06-17
+# CHANGELOG: engine-evidence-check — 5 修引擎 evidence/trailer/debounce
+
+## Added
+
+- feat(evidence): Artifact validator 强校验 change/requirement/test 三阶段 AC is_checked=true 必配 evidence{command, exitCode:0, capturedAt}
+- feat(schema): ChangeSchema/RequirementSchema/TestSchema 加 evidence? 字段(共享 EvidenceSchema)
+- feat(debounce): status 命令 5s 防抖,TAIYI_STATUS_DEBOUNCE=0 关闭
+
+## Changed
+
+- refactor(trailer): commitTrailersEnabled() 显式默认 true,删 project config bypass
+- docs(delivery): delivery-gate hint 加 trailer 模板 + /taiyi:commit <slug> 推荐
+
+## Fixed
+
+- fix(evidence): 阻止 AC 全勾但实测走样的"假过门"(evidence 缺失 → qualityReady=false)
+- fix(trailer): 阻止 project config 的 commitTrailers: false 绕过 trailer 校验
+
+## Tests
+
+- test: 新增 tests/artifact-validator.test.ts 6 条单测
+- test: 新增 tests/commit-trailer.test.ts 2 条单测
+- test: 升级 src/core/e2e-fixtures.ts 加 evidence 字段(change/requirement/test 3 个 fixture)
+- test: 调整 tests/project-config.test.ts 期望值(S2 行为变化)
+
+## Rollback
+
+```bash
+git revert 6a8d36a 62a7ac5 a5c9c20 4b0fbc3 0f83be8
+# 或
+git reset --hard 267734f  # 回到 5 修前
+```
+
+回滚影响:5 commit 是顺序依赖,revert 顺序需倒序(最新先 revert)。
+
+
+<!-- taiyi:fix-shell-whitelist-and-profile-help --> 2026-06-21
+# CHANGELOG: fix-shell-whitelist-and-profile-help
+
+## Added
+
+- feat(shell): 10 个 node CLI 支持的命令加到 shell 白名单(flow / service / mvp / micro / nano / design-system / devops / ci-scenario / chat / code-review),用户 `taiyi-forge.sh flow mvp` 不再报 unknown command
+- docs(help): 3 处 profile help 从 `api|lite` 改为 7 profile 全列(full/lite|api|micro|nano|spike|ui)
+
+## Changed
+
+- dist/cli/taiyi.js 第 35 行 (init)
+- dist/cli/taiyi.js 第 56 行 (walkthrough)
+- dist/cli/taiyi.js 第 478 行 (new)
+- scripts/taiyi-forge.sh 第 166 行 (case 白名单)
+
+## Fixed
+
+- 修复「白名单 + help 不全」两个 UX 问题,共 4 处小改动
+
+## Docs / Skills
+
+- [x] 不涉及对外协议 / 模板 / Skill 改动
+- [x] 不涉及 OpenSpec(项目未 init openspec)
+
+## Rollback
+
+```bash
+cd /Users/shixiaocai/Desktop/chuangye/oh-my-taiyiforge
+git checkout main -- scripts/taiyi-forge.sh dist/cli/taiyi.js
+# 或
+/taiyi:cancel fix-shell-whitelist-and-profile-help --remove-dir
+```
+
+回滚影响:仅 2 文件 4 行改动,无 schema 变更。

@@ -33,6 +33,7 @@ import { enforceTokenBudgetBeforeComplete } from "./token-runner.js";
 import { expectedPhaseCount, isChangeAborted, isWorkflowCompleted } from "./change-status.js";
 import { normalizeState } from "./normalize-state.js";
 import { deliveryGateEnabled, evaluateDeliveryGate } from "./gates/delivery-gate.js";
+import { emit } from "./event-bus.js";
 import { auditChange } from "./workflow-audit.js";
 import { syncRootChangelog } from "./sync-root-changelog.js";
 import { syncChangeState } from "./state-sync.js";
@@ -40,6 +41,8 @@ import {
   detectEarlyCodeChanges,
   earlyCodeBlockOnContinue,
 } from "./dev-phase-guard.js";
+import { getLogger } from "./logger.js";
+import { ChangeLock } from "./change-lock.js";
 
 export type InitChangeOptions = {
   title?: string;
@@ -59,6 +62,9 @@ export type StateLookup =
 export { normalizeState } from "./normalize-state.js";
 
 export class WorkflowEngine {
+  private locks = new Map<string, ChangeLock>();
+  private log = getLogger();
+
   constructor(
     private readonly workspaceRoot: string,
     private readonly templatesDir?: string,
@@ -134,6 +140,8 @@ export class WorkflowEngine {
       updatedAt: now,
     };
     this.writeState(state);
+    this.log.info("Initiated change", { slug, profile: options?.profile ?? "full", initialPhase });
+    emit("change:created", { slug, profile: options?.profile ?? "full", initialPhase }).catch(() => {});
     return { ...state, seeded };
   }
 
@@ -170,11 +178,26 @@ export class WorkflowEngine {
   }
 
   private writeState(state: ChangeState): void {
-    const file = this.statePath(state.slug);
-    fs.mkdirSync(path.dirname(file), { recursive: true });
-    const tmp = `${file}.tmp.${process.pid}`;
-    fs.writeFileSync(tmp, JSON.stringify(state, null, 2), "utf8");
-    fs.renameSync(tmp, file);
+    const lock = this.lockFor(state.slug);
+    lock.acquire(5000);
+    try {
+      const file = this.statePath(state.slug);
+      fs.mkdirSync(path.dirname(file), { recursive: true });
+      const tmp = `${file}.tmp.${process.pid}`;
+      fs.writeFileSync(tmp, JSON.stringify(state, null, 2), "utf8");
+      fs.renameSync(tmp, file);
+    } finally {
+      lock.release();
+    }
+  }
+
+  private lockFor(slug: string): ChangeLock {
+    let lock = this.locks.get(slug);
+    if (!lock) {
+      lock = new ChangeLock(this.workspaceRoot, slug);
+      this.locks.set(slug, lock);
+    }
+    return lock;
   }
 
   private artifactPath(slug: string, phaseId: PhaseId): string {
@@ -218,6 +241,7 @@ export class WorkflowEngine {
       ? state.auxiliaryCompleted
       : [...state.auxiliaryCompleted, skillId];
     this.writeState({ ...state, auxiliaryCompleted, updatedAt: new Date().toISOString() });
+    this.log.info("Marked auxiliary", { slug, skillId });
     return { ok: true };
   }
 
@@ -256,6 +280,7 @@ export class WorkflowEngine {
       return { ok: false, error: `Phase ${phaseId} is skipped for profile ${state.profile}` };
     }
     if (state.currentPhase !== phaseId) {
+      emit("phase:blocked", { slug, phase: phaseId, reason: `wrong phase, expected ${state.currentPhase}` }).catch(() => {});
       return {
         ok: false,
         error: formatWrongPhaseError(slug, state.currentPhase, phaseId),
@@ -326,6 +351,7 @@ export class WorkflowEngine {
         const highs = audit.findings
           .filter((f) => f.severity === "high")
           .map((f) => `${f.code}: ${f.message}`);
+        emit("audit:high", { slug, findings: audit.findings }).catch(() => {});
         return {
           ok: false,
           error: `Integration audit failed:\n${highs.join("\n")}`,
@@ -337,6 +363,7 @@ export class WorkflowEngine {
       const delivery = evaluateDeliveryGate(workspaceDir, { slug, phase: "integration" });
       if (!delivery.passed) {
         const hintText = delivery.hints?.length ? ` — ${delivery.hints.join("; ")}` : "";
+        emit("gate:failed", { slug, phase: phaseId, reason: delivery.reason }).catch(() => {});
         return {
           ok: false,
           error: `Delivery gate failed: ${delivery.reason}${hintText}`,
@@ -415,6 +442,7 @@ export class WorkflowEngine {
       const quality = evaluateQualityGate(qualityScores);
       if (!quality.passed) {
         const hintText = qualityHints?.length ? ` — ${qualityHints.join("; ")}` : "";
+        emit("gate:failed", { slug, phase: phaseId, reason: quality.failed.join(", ") }).catch(() => {});
         return {
           ok: false,
           error: `Quality gate failed: ${quality.failed.join(", ")}${hintText}`,
@@ -431,10 +459,12 @@ export class WorkflowEngine {
         options?.allowAutoHuman,
       );
       if (!autoReject.ok) {
+        emit("phase:blocked", { slug, phase: phaseId, reason: autoReject.error }).catch(() => {});
         return { ok: false, error: autoReject.error };
       }
       const human = evaluateHumanGate(gates.human);
       if (!human.passed) {
+        emit("phase:blocked", { slug, phase: phaseId, reason: human.reason ?? "Human gate failed" }).catch(() => {});
         return { ok: false, error: human.reason ?? "Human gate failed" };
       }
     }
@@ -481,6 +511,8 @@ export class WorkflowEngine {
     if (workingState.autoHarness) {
       runPostCompleteShellHooks(workspaceDir, this.workspaceRoot, slug, phaseId);
     }
+    this.log.info("Completed phase", { slug, phaseId });
+    emit("phase:complete", { slug, phase: phaseId }).catch(() => {});
     return { ok: true };
   }
 
@@ -503,6 +535,7 @@ export class WorkflowEngine {
       workflowStatus: "aborted",
       updatedAt: new Date().toISOString(),
     });
+    this.log.info("Aborted change", { slug });
     return { ok: true };
   }
 }

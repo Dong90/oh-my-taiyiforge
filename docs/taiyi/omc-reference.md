@@ -11,7 +11,7 @@ TaiyiForge **不依赖、也不引导安装** [oh-my-claudecode (OMC)](https://g
 | `state_get_status` | `/taiyi:status` · MCP `taiyi_state_get_status` · `status --json` | 用户说斜杠；Agent 代跑引擎 |
 | `state_read` | MCP `taiyi_state_read` · 读 `state.json` | 无聊天斜杠 |
 | `state_list_active` | `/taiyi:list` · MCP `taiyi_state_list_active` | slug 不明时先列变更 |
-| notepad / checkpoint | `/taiyi:handoff` → `HANDOFF.md` | 跨会话恢复 |
+| notepad / checkpoint | `/taiyi:pause` → `HANDOFF.md` | 跨会话恢复 |
 | project-memory | `/taiyi:remember` → `.taiyi/project-memory.json` | 跨变更模式/决策 |
 | abort / cancel change | `/taiyi:cancel` · MCP `taiyi_state_cancel` | 放弃活跃变更 |
 | cancel skill（模式） | `/taiyi:stop-mode` · 关键词 `stopomc` | 停止 ralph/autopilot/team 等 |
@@ -53,7 +53,7 @@ Cursor 里用户说 **`/taiyi:status`**；机器/MCP 用 `status --json` 或 MCP
 |------|--------|
 | 读状态 | `/taiyi:status` |
 | 过关 | `/taiyi:continue` |
-| 暂停 | `/taiyi:handoff` |
+| 暂停 | `/taiyi:pause` |
 | 放弃变更 | `/taiyi:cancel` |
 | 停止模式 | `/taiyi:stop-mode` |
 | integration 前 commit | `/taiyi:commit` |

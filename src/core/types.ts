@@ -1,4 +1,5 @@
-export type PhaseId =
+/** Base built-in phase IDs. Use PhaseId for autocomplete + custom extension. */
+export type PhaseIdBase =
   | "change"
   | "requirement"
   | "design"
@@ -8,6 +9,9 @@ export type PhaseId =
   | "test"
   | "review"
   | "integration";
+
+/** PhaseId — autocomplete for built-in phases, accepts any string for custom phases. */
+export type PhaseId = PhaseIdBase | (string & {});
 
 export type PhaseDefinition = {
   id: PhaseId;

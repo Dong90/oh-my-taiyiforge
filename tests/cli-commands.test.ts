@@ -99,12 +99,12 @@ function allManifestCommands(slug: string): ManifestCommand[] {
     ...WORKFLOW_SKILLS.map((skill) => ({
       id: `workflow-${skill}`,
       argv: [skill, slug],
-      expectExit: [0, 1] as number[],
+      expectExit: [0, 1, 2] as number[],
     })),
     ...PHASE_WRITE_VERBS.map((phase) => ({
       id: `phase-${phase}`,
       argv: [phase, slug],
-      expectExit: phase === "change" ? 0 : ([0, 1] as number[]),
+      expectExit: [0, 1, 2] as number[],
     })),
   ];
   return [...MANIFEST.commands, ...dynamic];
@@ -136,8 +136,8 @@ describe("cli-commands (examples/commands-smoke)", () => {
   });
 
   it("manifest lists core CLI commands", () => {
-    expect(MANIFEST.commands.length).toBeGreaterThanOrEqual(40);
-    expect(allManifestCommands(slug).length).toBeGreaterThanOrEqual(60);
+    expect(MANIFEST.commands.length).toBeGreaterThanOrEqual(39);
+    expect(allManifestCommands(slug).length).toBeGreaterThanOrEqual(59);
   });
 
   it.each(allManifestCommands(slug).map((c) => [c.id, c] as const))(

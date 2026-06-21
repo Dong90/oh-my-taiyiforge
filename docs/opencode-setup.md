@@ -53,7 +53,7 @@ npx taiyi-forge-install --all
 | `taiyi_status` | 查看阶段状态（含 guide） |
 | `taiyi_phases` | 列出九阶段与 `taiyi-*` skill |
 | `taiyi_complete` | 完成当前阶段（门禁 + 工件） |
-| `taiyi_handoff` | 写 `HANDOFF.md` 供跨会话恢复（对齐 `/taiyi:handoff`） |
+| `taiyi_handoff` | 写 `HANDOFF.md` 供跨会话恢复（对齐 `/taiyi:pause`） |
 | `taiyi_cancel` | 取消活跃变更，保留目录（对齐 `/taiyi:cancel`） |
 | `taiyi_commit_trailers` | 生成含 `Taiyi-Change` / `Taiyi-Phase` 的 commit message 建议 |
 | `taiyi_assess` | 复杂度评估与辅助 skill 建议 |

@@ -56,7 +56,7 @@ export function runAutopilotGuide(
     "  3. dev/test: /taiyi:tdd dev · /taiyi:apply · /taiyi:ralph",
     "  4. review: /taiyi:review-loop · /taiyi:health",
     "  5. /taiyi:continue（change/design/review 须 --approver）",
-    "  6. 非人工门: /taiyi:loop",
+    "  6. 非人工门: /taiyi:continue",
     "",
     formatPhaseAgentsPlain(phase, slug),
     "",

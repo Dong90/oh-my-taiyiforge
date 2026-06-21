@@ -1,12 +1,39 @@
 # {{title}}
 
+## 技术栈
+{{#if techStack}}
+- **选定**: {{techStack.selected}}
+- **理由**: {{techStack.reason}}
+{{/if}}
+
+## 既有架构对齐
+{{#if existingArchitecture}}
+- **触碰模块**: {{#each existingArchitecture.touchedModules}}{{this}}{{#unless @last}}, {{/unless}}{{/each}}
+- **新增模块**: {{#each existingArchitecture.newModules}}{{this}}{{#unless @last}}, {{/unless}}{{/each}}
+{{#if existingArchitecture.doNotTouch}}
+- **禁动清单**: {{#each existingArchitecture.doNotTouch}}{{this}}{{#unless @last}}, {{/unless}}{{/each}}
+{{/if}}
+{{/if}}
+
 ## 方案对比
-| 方案 | 名称 | 优点 | 缺点 |
-|------|------|------|------|
+| 方案 | 名称 | 优点 | 缺点 | 代价 |
+|------|------|------|------|------|
 {{#each options}}
-| {{id}} | {{name}} | {{#each pros}}{{this}}<br>{{/each}} | {{#each cons}}{{this}}<br>{{/each}} |
+| {{id}} | {{name}} | {{#each pros}}{{this}}<br>{{/each}} | {{#each cons}}{{this}}<br>{{/each}} | {{cost}} |
 {{/each}}
 
 ## 决策
 - **Chosen**: {{decision.chosen}}
 - **Reason**: {{decision.reason}}
+{{#if decision.tradeoffs}}
+- **取舍**: {{decision.tradeoffs}}
+{{/if}}
+
+## 架构沉淀建议
+{{#if evolutionSuggestions}}
+{{#each evolutionSuggestions}}
+- [{{type}}] {{description}}
+{{/each}}
+{{else}}
+_无架构层面沉淀建议_
+{{/if}}

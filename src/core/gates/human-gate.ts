@@ -7,7 +7,7 @@ export function evaluateHumanGate(approval: HumanApproval): {
   if (!approval.approved) {
     return { passed: false, reason: "Human approval required" };
   }
-  if (!approval.approver.trim()) {
+  if (!approval.approver?.trim()) {
     return { passed: false, reason: "Approver identity required" };
   }
   return { passed: true };

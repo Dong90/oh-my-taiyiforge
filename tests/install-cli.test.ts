@@ -74,7 +74,7 @@ describe("taiyi-forge-install CLI", () => {
       const cmds = fs
         .readdirSync(commandsDir)
         .filter((f) => f.startsWith("taiyi-") && f.endsWith(".md"));
-      expect(cmds.length).toBeGreaterThan(70);
+      expect(cmds.length).toBeGreaterThanOrEqual(27);
     }
   }, 60_000);
 
@@ -91,7 +91,7 @@ describe("taiyi-forge-install CLI", () => {
     const cmds = fs
       .readdirSync(process.env.CURSOR_COMMANDS_DIR!)
       .filter((f) => f.startsWith("taiyi-") && f.endsWith(".md"));
-    expect(cmds.length).toBeGreaterThan(70);
+    expect(cmds.length).toBeGreaterThanOrEqual(27);
     expect(fs.existsSync(path.join(tmp, ".cursor", "hooks.json"))).toBe(true);
   }, 60_000);
 

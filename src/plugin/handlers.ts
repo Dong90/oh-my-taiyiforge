@@ -104,6 +104,8 @@ import {
   type ScenarioId,
 } from "../core/scenario-shortcuts.js";
 import { resolveDefaultProfile } from "../core/project-config.js";
+import { queryMilestone, type MilestoneReport } from "../core/milestone-query.js";
+import { formatMilestonePlain } from "../core/milestone-render.js";
 import { cancelRuntimeModes, formatCancelModePlain } from "../core/runtime/cancel-mode.js";
 import {
   formatProjectMemoryPlain,
@@ -198,6 +200,8 @@ export function taiyiNew(
     auto?: boolean;
     noAuto?: boolean;
     force?: boolean;
+    /** 显式指定 slug（不 auto-slugify） */
+    explicitSlug?: string;
   },
 ) {
   const trimmed = title.trim();
@@ -207,7 +211,7 @@ export function taiyiNew(
   const harnessArgs: string[] = [];
   if (options?.auto) harnessArgs.push("--auto");
   if (options?.noAuto) harnessArgs.push("--no-auto");
-  const slug = slugifyTitle(trimmed);
+  const slug = options?.explicitSlug ?? slugifyTitle(trimmed);
   return taiyiInit(workspaceDir, slug, {
     title: trimmed,
     profile: options?.profile,
@@ -1560,6 +1564,25 @@ export function taiyiModes(workspaceDir: string, plain = true) {
   const text = lines.join("\n");
   if (plain) return { ok: true, text, active };
   return { ok: true, active, text };
+}
+
+export function taiyiMilestone(
+  workspaceDir: string,
+  options?: { includeArchived?: boolean },
+  plain = true,
+) {
+  try {
+    const taiyiRoot = resolveTaiyiRoot(workspaceDir);
+    const report = queryMilestone(taiyiRoot, options);
+    const text = formatMilestonePlain(report);
+    if (plain) return { ok: true as const, text, report };
+    return { ok: true as const, report, text };
+  } catch (e) {
+    const error = e instanceof Error ? e.message : String(e);
+    const text = "milestone 失败: " + error;
+    if (plain) return { ok: false as const, text, error };
+    return { ok: false as const, error, text };
+  }
 }
 
 export function taiyiRemember(workspaceDir: string, note?: string, plain = true) {

@@ -1,0 +1,11 @@
+{
+  "active": true,
+  "started_at": "2026-06-20T12:04:59.597Z",
+  "original_prompt": "<ultrawork-mode>\n\n**MANDATORY**: You MUST say \"ULTRAWORK MODE ENABLED!\" to the user as your first response when this mode activates. This is non-negotiable.\n\n[CODE RED] Maximum precision required. Ultrathink before acting.\n\n## **ABSOLUTE CERTAINTY REQUIRED - DO NOT SKIP THIS**\n\n**YOU MUST NOT START ANY IMPLEMENTATION UNTIL YOU ARE 100% CERTAIN.**\n\n| **BEFORE YOU WRITE A SINGLE LINE OF CODE, YOU MUST:** |\n|-------------------------------------------------------|\n| **FULLY UNDERSTAND** what the...",
+  "session_id": "ses_11d8135cfffeFnEev3qNFLhkOm",
+  "project_path": "/Users/shixiaocai/Desktop/chuangye/oh-my-taiyiforge",
+  "reinforcement_count": 0,
+  "awaiting_confirmation": true,
+  "awaiting_confirmation_set_at": "2026-06-20T12:04:59.597Z",
+  "last_checked_at": "2026-06-20T12:04:59.597Z"
+}

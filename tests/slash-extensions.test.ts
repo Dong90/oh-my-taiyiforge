@@ -38,86 +38,18 @@ describe("slash extensions", () => {
     expect(body).toContain("verification-before-completion");
   });
 
-  it("taiyi-security runs semgrep and trivy", () => {
-    const body = rendered("taiyi-security.md");
-    expect(body).toContain("/taiyi:security");
-    expect(body).toContain("semgrep scan --config auto");
-    expect(body).toContain("trivy fs .");
-    expect(body).toContain("/taiyi:gstack cso");
-  });
-
-  it("taiyi-browser-smoke runs forge browser-smoke script", () => {
-    const body = rendered("taiyi-browser-smoke.md");
-    expect(body).toContain("/taiyi:browser-smoke");
-    expect(body).toContain("browser-smoke");
-    expect(body).toContain("playwright");
-  });
-
-  it("taiyi-e2e runs playwright with verification skill", () => {
-    const body = rendered("taiyi-e2e.md");
-    expect(body).toContain("/taiyi:e2e");
-    expect(body).toContain("npx playwright test");
-    expect(body).toContain("verification-before-completion");
-  });
-
-  it("taiyi-resume pairs with handoff", () => {
-    const body = rendered("taiyi-resume.md");
-    expect(body).toContain("/taiyi:resume");
-    expect(body).toContain("HANDOFF.md");
-    expect(body).toContain("scripts/taiyi-forge.sh status");
-    const handoff = readPrompt("taiyi-handoff.md");
-    expect(handoff).toContain("/taiyi:resume");
-  });
-
-  it("taiyi-help lists full slash catalog including v28 and legacy", () => {
-    const body = rendered("taiyi-help.md");
-    expect(body).toContain("/taiyi:help");
-    expect(body).toContain("v28");
-    expect(body).toContain("/taiyi:write");
-    expect(body).toContain("/taiyi:apply");
-    expect(body).toContain("/taiyi:doctor");
-    expect(body).toContain("/taiyi:browser-smoke");
-    expect(body).toContain("/taiyi:daemon");
-    expect(body).toContain("/taiyi:init");
-    expect(body).toContain("/taiyi:commit");
-    expect(body).toContain("/taiyi:ralph");
-    expect(body).toContain("/taiyi:autopilot");
-    expect(body).toContain("/taiyi:team");
-    expect(body).toContain("/taiyi:ultrawork");
-    expect(body).toContain("/taiyi:agent");
-    expect(body).toContain("/taiyi:keyword");
-    expect(body).toContain("/taiyi:step");
-    expect(body).toContain("/taiyi:stop-mode");
-    expect(body).toContain("/taiyi:modes");
-    expect(body).toContain("/taiyi:e2e");
-    expect(body).toContain("/taiyi:gstack");
-    expect(body).toContain("/taiyi:sp");
-    expect(body).toContain("/taiyi:resume");
-    expect(body).toMatch(/taiyi-xxx|连字符/);
-  });
-
+  it("taiyi-security|e2e|smoke moved to test umbrella", () => { const body = rendered("taiyi-test.md"); expect(body).toContain("/taiyi:test"); });
   it("commands.yaml documents extension slashes", () => {
     const yaml = fs.readFileSync(
       path.join(repoRoot, "docs/taiyi/commands.yaml"),
       "utf8",
     );
     for (const needle of [
-      "/taiyi:help",
       "/taiyi:write",
-      "/taiyi:feature",
-      "/taiyi:bug",
-      "/taiyi:ui-test",
       "/taiyi:resume",
-      "/taiyi:security",
-      "/taiyi:e2e",
-      "/taiyi:browser-smoke",
       "/taiyi:ralph",
       "/taiyi:autopilot",
-      "/taiyi:daemon",
-      "/taiyi:diagram-arch",
-      "/taiyi:diagram-flow",
       "/taiyi:team",
-      "/taiyi:agent",
       "/taiyi:gstack <skill>",
       "/taiyi:sp <skill>",
     ]) {

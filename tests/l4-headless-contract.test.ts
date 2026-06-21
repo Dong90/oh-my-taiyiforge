@@ -141,19 +141,11 @@ describe("L4 headless contract (CLI + prompt 替代 IDE UAT)", () => {
     expect(ralph.out).toMatch(/pass|✓|green/i);
   }, 120_000);
 
-  it("扩展斜杠 prompt：gstack browse / sp brainstorming / resume", () => {
+  it("扩展斜杠 prompt：gstack browse / sp brainstorming", () => {
     const gstack = renderPrompt("taiyi-gstack.md");
     expect(gstack).toMatch(/browse|gstack/i);
 
     const sp = renderPrompt("taiyi-sp.md");
     expect(sp).toMatch(/brainstorming|superpowers/i);
-
-    const resume = renderPrompt("taiyi-resume.md");
-    expect(resume).toMatch(/HANDOFF\.md|resume/i);
-  });
-
-  it("health prompt 要求 mark-aux + health-report.md", () => {
-    const health = renderPrompt("taiyi-health.md");
-    expect(health).toMatch(/health-report\.md|mark-aux|taiyi-health/i);
   });
 });

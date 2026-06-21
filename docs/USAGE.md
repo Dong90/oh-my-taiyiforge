@@ -262,7 +262,7 @@ continue integration → archive
 ```
 /taiyi:list              # 列出所有变更及阶段
 /taiyi:list --archived   # 已归档变更
-/taiyi:handoff           # 暂停工作，写 HANDOFF.md
+/taiyi:pause           # 暂停工作，写 HANDOFF.md
 /taiyi:resume            # 恢复工作
 /taiyi:cancel <slug>     # 放弃变更
 /taiyi:doctor            # 安装自检（四端 skills + CLI）
@@ -308,4 +308,4 @@ continue integration → archive
 
 ## 一句话总结
 
-**写就 `/taiyi:write`，过就 `/taiyi:continue`，停就 `/taiyi:handoff`，交就 `/taiyi:commit → ship → land → archive`。**
+**写就 `/taiyi:write`，过就 `/taiyi:continue`，停就 `/taiyi:pause`，交就 `/taiyi:commit → ship → land → archive`。**

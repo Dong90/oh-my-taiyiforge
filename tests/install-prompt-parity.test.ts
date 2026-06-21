@@ -56,7 +56,7 @@ describe("install prompt parity (四端 ↔ prompts/taiyi-*.md)", () => {
   for (const platform of PLATFORM_DIRS) {
     it(`${platform} 写入全部 taiyi-*.md 且与 Cursor 同源`, () => {
       const prompts = listTaiyiPrompts();
-      expect(prompts.length).toBeGreaterThanOrEqual(75);
+      expect(prompts.length).toBeGreaterThanOrEqual(27);
 
       const installed = fs
         .readdirSync(dirs[platform])

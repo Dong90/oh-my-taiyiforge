@@ -1,5 +1,6 @@
 import fs from "node:fs";
 import path from "node:path";
+import crypto from "node:crypto";
 
 export type ProjectMemoryFact = {
   id: string;
@@ -49,7 +50,7 @@ export function rememberFact(
 ): ProjectMemoryFact {
   const mem = readProjectMemory(taiyiRoot);
   const entry: ProjectMemoryFact = {
-    id: fact.id ?? `f-${Date.now()}`,
+    id: fact.id ?? `f-${crypto.randomUUID()}`,
     category: fact.category,
     text: fact.text,
     source: fact.source,

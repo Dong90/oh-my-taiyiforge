@@ -15,4 +15,4 @@ Checks **install** (skills, rules, commands) and **workspace workflow** (active 
 
 Fix install failures: `npx taiyi-forge-install --all`
 
-Fix workflow issues: `/taiyi:status --json --compact` · `/taiyi:audit --json --compact` · `/taiyi:handoff`
+Fix workflow issues: `/taiyi:status --json --compact` · `/taiyi:audit --json --compact` · `/taiyi:pause`
