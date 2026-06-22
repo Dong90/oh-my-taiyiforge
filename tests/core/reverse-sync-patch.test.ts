@@ -112,7 +112,7 @@ describe("reverse-sync with JSON Patch", () => {
 
     const mdPath = path.join(tmpDir, "REQUIREMENT.md");
     let md = fs.readFileSync(mdPath, "utf-8");
-    md = md.replace("# 用户登录", "# 用户注册");
+    md = md.replace("# REQUIREMENT: 用户登录", "# REQUIREMENT: 用户注册");
     fs.writeFileSync(mdPath, md);
 
     // LLM returns full JSON (old format compatibility)
