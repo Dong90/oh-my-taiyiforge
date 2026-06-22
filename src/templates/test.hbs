@@ -1,15 +1,220 @@
-# {{title}}
+<!-- phase:test skill:taiyi-test gate:auto est:20min produces:TEST.md upstream:[task,dev] downstream:[review] cplx:[ALL]5steps +[M+]4 +[H]2 -->
+# TEST: {{title}}
 
-## Test Plan
+> **策略**: {{#if strategy}}{{strategy}}{{else}}覆盖单元/集成/E2E 三层测试{{/if}}
+
+---
+
+## Step 1: Test Strategy
+> **[ALL]** Goal: 三层覆盖有目标 | Inputs: TASK.md + 实现代码
+<!-- Action: 单元/集成/E2E分层+覆盖率目标+重点 -->
+
+### 单元: {{#if unit_framework}}{{unit_framework}}{{else}}_vitest_{{/if}} | 目标≥{{#if unit_coverage_target}}{{unit_coverage_target}}{{else}}_X_%{{/if}}
+- 重点:
+
+### 集成:
+- 重点:
+
+### E2E: [Playwright/Cypress]
+- 重点:
+
+<!-- Validate: 三层全覆盖？覆盖率目标明确？ -->
+
+## Step 1b: 5-Round Coverage Matrix
+> **[ALL]** Goal: 五维度覆盖不遗漏 | Inputs: REQUIREMENT.md §4, §5, §9
+<!-- Action: 功能/性能/安全/兼容/可观测 — 每轮标注执行状态和跳过理由 -->
+
+| Round | 范围 | 状态 | 跳过理由 |
+|-------|------|:--:|---------|
+| Round 1 · 功能 | 全部 AC | ✅ 必跑 | — |
+| Round 2 · 性能 | Lighthouse / k6 / bundle | ⚠️ / ❌ | _填写理由_ |
+| Round 3 · 安全 | 依赖审计 / SAST / OWASP | ⚠️ / ❌ | _填写理由_ |
+| Round 4 · 兼容 | 浏览器 / 视口 / 数据迁移 | ⚠️ / ❌ | _填写理由_ |
+| Round 5 · 可观测 | 日志 / 指标 / 告警 | ⚠️ / ❌ | _填写理由_ |
+
+<!-- Validate: 每轮状态明确？跳过有理由？ -->
+
+## Step 2: Test Cases
+> **[ALL]** Goal: 每TC可独立执行 | Inputs: REQUIREMENT.md §3
+<!-- Action: TC-XX [unit/integration/e2e] Given/When/Then -->
+
 {{#each test_plan}}
 - **{{id}}**: {{description}} `[{{status}}]`
 {{/each}}
+
+<!-- Validate: 每个TC有Given/When/Then？覆盖成功+失败？ -->
+
+## Step 3: Code Path Coverage
+> **[MEDIUM+]** Goal: 不漏测试 | Inputs: 实现代码diff
+<!-- Action: ASCII树追踪每个函数/分支/错误路径的测试覆盖。★★★=边界+错误 ★★=happy ★=冒烟 -->
+
+```
+CODE PATH COVERAGE
+===========================
+[+] path/to/module.ts
+    ├── fn()
+    │   ├── [★★★ TESTED] desc — file:line
+    │   └── [GAP]         desc — NO TEST
+
+USER FLOW COVERAGE
+===========================
+[+] Feature flow
+    ├── [★★★ TESTED] desc — file:line
+    └── [GAP] [→E2E] desc — NO TEST
+
+─────────────────────────────────
+COVERAGE: N/M (X%) | QUALITY: ★★★:N ★★:N ★:N
+GAPS: N (N need E2E, N eval)
+```
+
+<!-- Validate: 每个新增/修改函数都在图中？每条分支都有状态？ -->
+
+## Step 4: Regression Rule
+> **[ALL]** Goal: 回归必有测试 | Inputs: Step3
+<!-- Action: gstack IRON RULE + Superpowers red-green: 1)写测试→跑(过) 2)回退修复→跑(必须挂) 3)恢复修复→跑(过)。三步全绿才算验证完成 -->
+
+{{#if regression_items}}
+| 回归项 | 原行为 | 新行为 | 测试 | Red-green | 状态 |
+|--------|--------|--------|------|-----------|------|
+{{#each regression_items}}
+| {{item}} | {{old_behaviour}} | {{new_behaviour}} | {{test}} | {{red_green}} | {{status}} |
+{{/each}}
+{{else}}
+| 回归项 | 原行为 | 新行为 | 测试 | Red-green | 状态 |
+|--------|--------|--------|------|-----------|------|
+| _全量 vitest_ | _126 pass_ | _126 pass_ | _npm test_ | _✅_ | _✅_ |
+{{/if}}
+
+<!-- Validate: 所有修改的已有代码路径都有覆盖？Red-green三步都跑过了？ -->
+
+## Step 5: Edge Case Coverage
+> **[MEDIUM+]** Goal: 边界不遗漏 | Inputs: REQUIREMENT.md §7
+<!-- Action: 并发/超时/非法输入/资源耗尽/空值 -->
+
+{{#if edge_cases}}
+| 场景 | TC | 状态 |
+|------|-----|------|
+{{#each edge_cases}}
+| {{scenario}} | {{tc}} | {{status}} |
+{{/each}}
+{{else}}
+| 场景 | TC | 状态 |
+|------|-----|------|
+| _并发_ | _待补充_ | _⚠_ |
+{{/if}}
+
+<!-- Validate: 典型边界全覆盖？ -->
+
+## Step 5b: UAT Scripts
+> **[ALL]** Goal: 手动测试有脚本 | Inputs: REQUIREMENT.md §3
+<!-- Action: 前置条件→步骤→期望→实际→执行人。集成阶段直接跑 -->
+
+### UAT-1 · _场景名_
+- **前置**: 
+- **步骤**: 1.  2.  3. 
+- **期望**: -  - 
+- **实际**: 通过 / 失败 / [描述]
+- **执行人 / 时间**:
+
+<!-- Validate: 覆盖所有需手动验证的 AC？ -->
+
+## Step 6: Performance Tests
+> **[MEDIUM+]** Goal: 性能有基线 | Inputs: REQUIREMENT.md §4
+<!-- Action: 场景→目标→工具(k6/autocannon)→结果 -->
+
+{{#if performance_tests}}
+| 场景 | 目标 | 工具 | 结果 |
+|------|------|------|------|
+{{#each performance_tests}}
+| {{scenario}} | {{target}} | {{tool}} | {{result}} |
+{{/each}}
+{{else}}
+| 场景 | 目标 | 工具 | 结果 |
+|------|------|------|------|
+| _CLI smoke_ | _<5s 全流程_ | _vitest_ | _通过_ |
+{{/if}}
+
+<!-- Validate: 覆盖目标QPS？有基线对比？ -->
+
+## Step 7: Security Tests
+> **[HIGH]** Goal: 安全不出事 | Inputs: DESIGN.md §10
+<!-- Action: OWASP Top10: SQL注入/XSS/CSRF/rate limit/敏感信息/npm audit -->
+
+{{#if security_checks}}
+{{#each security_checks}}
+- [ ] {{this}}
+{{/each}}
+{{else}}
+- [ ] npm audit 无 critical/high
+- [ ] 无硬编码密钥
+{{/if}}
+
+&lt;!-- Validate: OWASP Top10全覆盖？跑过npm audit/trivy？ -->
+
+> 📎 **SSOT 规则**: 安全测试应 1:1 映射 [REQUIREMENT.md §Non-Functional Security](REQUIREMENT.md) 的 NFR-S* 和 [DESIGN.md §Security Model](DESIGN.md) 的威胁建模，不独立重评估。
+
+## Step 7b: Compatibility Matrix
+> **[MEDIUM+]** Goal: 多端不炸 | Inputs: 目标平台
+<!-- Action: 浏览器+视口+数据迁移三种兼容验证 -->
+
+### 浏览器
+| 浏览器 | 版本 | 桌面 | 移动 | 状态 |
+|--------|------|:--:|:--:|:--:|
+| Chrome | 最新-1 | | | |
+| Safari | 最新-1 | | | |
+| Firefox | 最新-1 | | | |
+
+### 视口
+| 视口 | 状态 |
+|------|:--:|
+| Mobile (360) | |
+| Tablet (768) | |
+| Desktop (1440) | |
+
+### 数据迁移（涉及 schema 变更必填）
+- [ ] 生产数据快照预演通过
+- [ ] 实测耗时: [N] 分钟
+- [ ] 回滚脚本就位且测过
+
+## Step 8: Regression Test Plan
+> **[HIGH]** Goal: 新功能不影响已有 | Inputs: Step4
+<!-- Action: 范围+用例数+执行方式+负责人 -->
+
+{{#if regression_plan}}
+| 回归范围 | 用例数 | 执行方式 | 负责人 |
+|---------|--------|---------|--------|
+{{#each regression_plan}}
+| {{scope}} | {{cases}} | {{method}} | {{owner}} |
+{{/each}}
+{{else}}
+| 回归范围 | 用例数 | 执行方式 | 负责人 |
+|---------|--------|---------|--------|
+| _全量 vitest_ | _780+_ | _npm test_ | _CI_ |
+{{/if}}
+
+<!-- Validate: 回归范围覆盖所有相关模块？ -->
 
 {{#if summary}}
 ## Summary
 {{summary}}
 {{/if}}
+
 {{#if coverage}}
 ## Coverage
 {{coverage}}
 {{/if}}
+
+---
+## Quality Gate
+<!-- Evidence-first: 所有测试用例必须实际跑过，不是"应该能过"。Superpowers: 没有新鲜输出=没有验证 -->
+
+- [ ] S1 三层全覆盖
+- [ ] S2 TC用Given/When/Then
+- [ ] S2 覆盖成功+失败
+- [ ] [ALL] S4 回归规则+Red-green已应用
+- [ ] [M+] S3 Coverage图完整
+- [ ] [M+] S5 边界全覆盖
+- [ ] [M+] S6 性能有基线
+- [ ] [H]  S7 OWASP全覆盖
+- [ ] [H]  S8 回归范围完整
+- [ ] CI可自动化
