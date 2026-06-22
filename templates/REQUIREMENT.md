@@ -1,23 +1,21 @@
 # REQUIREMENT: {{title}}
 
 ## User Stories
-
 | ID | As a… | I want… | So that… |
 |----|--------|---------|----------|
 | US-1 | | | |
 
-## Acceptance Criteria (Given / When / Then)
+## Acceptance Criteria
 
 ### US-1
-
 - **Given** …
 - **When** …
 - **Then** …
 
 ## Traceability
-
-| AC | Links to CHANGE.md |
-|----|-------------------|
-| US-1 | Motivation / Success Criteria |
+| AC | CHANGE ref |
+|----|-----------|
+| US-1 | |
 
 ## Out of Scope
+- 

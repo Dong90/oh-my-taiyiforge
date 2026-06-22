@@ -1,22 +1,21 @@
 # CONTEXT: {{title}}
 
-> taiyi-intel-scan · slug: {{slug}}
+> taiyi-intel-scan · {{slug}}
 
-## Tech Stack
+## Stack
 - 
 
 ## Conventions
 - 
 
 ## Patterns
-| 类别 | 惯例 |
-|------|------|
-| 目录 | |
-| 测试 | |
-| API | |
+| Area | Convention |
+|------|-----------|
+| dirs | |
+| tests | |
+| api | |
 
 ## Risks
-| 路径 | 风险 |
+| Path | Risk |
 |------|------|
 | | |
-
