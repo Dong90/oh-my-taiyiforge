@@ -21,7 +21,5 @@
 
 ## Links
 
-<!-- 无 UI 时也必填：指向 DESIGN.md / REQUIREMENT.md -->
-
 - DESIGN.md: …
 - REQUIREMENT.md AC: …
