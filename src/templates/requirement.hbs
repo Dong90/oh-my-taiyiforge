@@ -1,11 +1,216 @@
-# {{title}}
+<!-- phase:requirement skill:taiyi-requirement gate:auto est:20min produces:REQUIREMENT.md upstream:[change] downstream:[design,ui-design] cplx:[ALL]5steps +[M+]4 +[H]1 -->
+# REQUIREMENT: {{title}}
 
-## 核心功能
+> **一句话**: {{#if one_liner}}{{one_liner}}{{else}}{{title}}{{/if}}
+
+---
+
+## Step 1: User Stories
+> **[ALL]** Goal: 从用户视角说清需求 | Inputs: CHANGE.md §1, §2
+<!-- Action: As a [角色] I want [功能] so that [价值]. 覆盖所有角色 -->
+
 {{#each features}}
 * {{this}}
 {{/each}}
 
-## 验收标准
+<!-- Validate: 所有用户角色都覆盖了？ -->
+
+## Step 2: Scope Partitioning
+> **[ALL]** Goal: 分版本切范围，防 TASK 阶段误判 | Inputs: CHANGE.md §2
+<!-- Action: v1=本次必做, v2=下次, out=永不. 至少 v2+out 各 ≥1 条 -->
+
+### v1（本次必做）
+{{#each scope_v1}}
+- {{this}}
+{{/each}}
+
+### v2（下次）
+{{#each scope_v2}}
+- {{this}}
+{{/each}}
+
+### out（永不）
+{{#each scope_out}}
+- {{this}}
+{{/each}}
+
+<!-- Validate: v2 和 out 各 ≥ 1 条？v1 不包含 out 项？ -->
+
+## Step 3: Functional Requirements
+> **[ALL]** Goal: 拆成可测试的功能点 | Inputs: Step1
+<!-- Action: FR-XX编号，分模块。涉及UI标注(UI)→触发Phase4 -->
+
+{{#if functional_requirements}}
+{{#each functional_requirements}}
+### {{module}}
+{{#each items}}
+- **{{id}}**: {{description}}{{#if ui}} (UI){{/if}}
+{{/each}}
+{{/each}}
+{{else}}
+### [模块名]
+- **FR-01**: [需求]
+{{/if}}
+
+<!-- Validate: 每个FR可独立测试？编号连续？ -->
+
+## Step 4: Acceptance Criteria
+> **[ALL]** Goal: 每个FR都有客观验收标准 | Inputs: Step3
+<!-- Action: Given/When/Then，AC-XX对应FR-XX。verify=可执行验证命令 -->
+
 {{#each acceptance_criteria}}
 - [{{#if is_checked}}x{{else}} {{/if}}] **{{id}}**: {{description}}
+  - **验证**: {{#if verify}}`{{verify}}`{{else}}[待补充]{{/if}}
 {{/each}}
+
+<!-- Validate: 每个AC可独立验收？Given/When/Then完整？验证命令可执行？ -->
+
+## Step 5: Non-Functional Requirements
+> **[ALL]** Goal: 性能/安全/可用性有硬指标 | Inputs: Step2
+<!-- Action: NFR-XX编号，每个带数值 -->
+
+{{#if non_functional}}
+### 性能
+{{#each non_functional.performance}}
+- **{{id}}**: {{description}}
+{{else}}
+- **NFR-P01**: [性能指标]
+{{/each}}
+
+### 安全
+{{#each non_functional.security}}
+- **{{id}}**: {{description}}
+{{else}}
+- **NFR-S01**: [安全指标]
+{{/each}}
+
+### 可用性
+{{#each non_functional.availability}}
+- **{{id}}**: {{description}}
+{{else}}
+- **NFR-A01**: [可用性指标]
+{{/each}}
+{{else}}
+### 性能
+- **NFR-P01**: [性能指标]
+### 安全
+- **NFR-S01**: [安全指标]
+### 可用性
+- **NFR-A01**: [可用性指标]
+{{/if}}
+
+&lt;!-- Validate: 每个指标有具体数字？ -->
+
+> 📎 **SSOT 规则**: NFR-S* 安全要求应基于 [CHANGE.md §Risks](CHANGE.md) 做非功能性拆解，不独立重评估。每条 NFR-S 应与 CHANGE 的 risks[] 可追溯。
+
+## Step 6: Error & Rescue Map
+> **[MEDIUM+]** Goal: 每个错误都有名字和恢复路径 | Inputs: Step2+3
+<!-- Action: 触发条件→捕获位置→用户看到→恢复路径 -->
+
+{{#if error_rescue_map}}
+| 错误类型 | 触发 | 捕获 | 用户看到 | 恢复 |
+|---------|------|------|---------|------|
+{{#each error_rescue_map}}
+| {{error}} | {{trigger}} | {{catch}} | {{user_sees}} | {{recovery}} |
+{{/each}}
+{{else}}
+| 错误类型 | 触发 | 捕获 | 用户看到 | 恢复 |
+|---------|------|------|---------|------|
+| _CLI 参数错误_ | _无效参数_ | _commander_ | _错误提示+用法_ | _重新输入_ |
+{{/if}}
+
+<!-- Validate: 所有可能的错误都有名字？恢复路径可执行？ -->
+
+## Step 7: Shadow Path Analysis
+> **[MEDIUM+]** Goal: 每条数据流覆盖四路径 | Inputs: Step5
+<!-- Action: Happy/Nil/Empty/UpstreamErr 逐条标注 -->
+
+{{#if shadow_paths}}
+{{#each shadow_paths}}
+### {{flow}}
+| 路径 | 输入 | 预期 |
+|------|------|------|
+| Happy | {{happy_input}} | {{happy_expected}} |
+| Nil | {{nil_input}} | {{nil_expected}} |
+| Empty | {{empty_input}} | {{empty_expected}} |
+| UpstreamErr | {{upstream_input}} | {{upstream_expected}} |
+{{/each}}
+{{else}}
+### [流程名]
+| 路径 | 输入 | 预期 |
+|------|------|------|
+| Happy | | |
+| Nil | | |
+| Empty | | |
+| UpstreamErr | | |
+{{/if}}
+
+<!-- Validate: 核心流程都覆盖了四路径？ -->
+
+## Step 8: Non-Happy-Path Matrix
+> **[MEDIUM+]** Goal: 边界和异常不遗漏 | Inputs: Step5+6
+<!-- Action: 空值/超时/并发/权限/非法输入全覆盖 -->
+
+{{#if non_happy_path_cases}}
+| 场景 | 预期行为 |
+|------|---------|
+{{#each non_happy_path_cases}}
+| {{scenario}} | {{behavior}} |
+{{/each}}
+{{else}}
+| 场景 | 预期行为 |
+|------|---------|
+| _空输入_ | _显示用法提示_ |
+{{/if}}
+
+<!-- Validate: 典型边界(空/超/并发/权限)全覆盖？ -->
+
+## Step 9: Dependencies
+> **[MEDIUM+]** Goal: 外部依赖不阻塞 | Inputs: CHANGE.md §4
+<!-- Action: 技术约束/第三方/跨团队+状态+风险 -->
+
+{{#if dependencies}}
+| 依赖 | 类型 | 状态 | 风险 |
+|------|------|------|------|
+{{#each dependencies}}
+| {{dependency}} | {{type}} | {{status}} | {{risk}} |
+{{/each}}
+{{else}}
+| 依赖 | 类型 | 状态 | 风险 |
+|------|------|------|------|
+| _vitest_ | _测试框架_ | _已安装_ | _无_ |
+{{/if}}
+
+<!-- Validate: 第三方SLA确认？跨团队排期对齐？ -->
+
+## Step 10: Security & Compliance
+> **[HIGH]** Goal: 安全不出事 | Inputs: Step4+5
+<!-- Action: OWASP Top10 + GDPR/PIPL. user/auth/payment/PII场景必填 -->
+
+{{#if security_compliance}}
+{{#each security_compliance}}
+- [ ] {{this}}
+{{/each}}
+{{else}}
+- [ ] npm audit 无 critical/high
+- [ ] 无硬编码密钥/令牌
+- [ ] PII/GDPR 合规检查（若涉及用户数据）
+{{/if}}
+
+<!-- Validate: threat modeling过了？PII合规？ -->
+
+---
+## Quality Gate
+<!-- Evidence-first: 每个需求可追溯到CHANGE.md的SC，Superpowers: 需求逐条对账 -->
+
+- [ ] S1 用户角色全覆盖
+- [ ] S2 版本切分 v1/v2/out 各≥1条
+- [ ] S3 每个FR可独立测试
+- [ ] S4 AC用Given/When/Then + 验证命令
+- [ ] S5 非功能需求有数值
+- [ ] [M+] S6 Error/Rescue全覆盖 | gstack PD#2
+- [ ] [M+] S7 核心流程四路径 | gstack PD#3
+- [ ] [M+] S8 典型边界全覆盖
+- [ ] [M+] S9 依赖关系已确认
+- [ ] [H]  S10 安全合规已覆盖
+- [ ] 无[NEEDS CLARIFICATION]残留
