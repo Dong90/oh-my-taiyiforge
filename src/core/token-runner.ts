@@ -72,13 +72,28 @@ export function tokenScan(changeDir: string, slug: string, phase: PhaseId): stri
   const scan = scanArtifactTokens(changeDir);
   if (scan.total === 0) return "Token scan: 无可扫描工件";
 
+  // 增量扫描：只记录从上次 scan 到现在的差值，避免 recompute 重复累加全量
+  const prevUsage = readTokenUsage(changeDir);
+  let prevScanTotal = 0;
+  if (prevUsage) {
+    for (const e of prevUsage.entries) {
+      if (e.kind === "scan") prevScanTotal += e.tokens;
+    }
+  }
+  const delta = Math.max(0, scan.total - prevScanTotal);
+  if (delta === 0) {
+    const usage = ensureTokenUsage(changeDir, slug, cfg.costPerMillionTokens);
+    const evalResult = evaluateTokenBudget(cfg, usage, phase);
+    return `Token scan: ${scan.total.toLocaleString()}（${scan.files.length} 个文件）— 无增量，跳过记录`;
+  }
+
   const usage = recordTokenUsage(
     changeDir,
     slug,
     {
       phase,
       kind: "scan",
-      tokens: scan.total,
+      tokens: delta,
       label: `${scan.files.length} files`,
     },
     cfg.costPerMillionTokens,
