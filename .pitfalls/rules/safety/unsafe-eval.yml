@@ -1,0 +1,22 @@
+# ast-grep rule: detect `eval()` and `new Function()` usage
+id: unsafe-eval
+language: typescript
+severity: error
+message: |
+  PITFALL [sec]: eval() / new Function() —— 代码注入风险，且无法被 tree-shaker/bundler 优化。
+rule:
+  any:
+    - pattern: eval($$$)
+    - pattern: new Function($$$)
+fix: |
+  // ❌ 永远不要用 eval()
+  // ✅ 考虑替代方案:
+  // - JSON.parse() 用于数据解析
+  // - 模板引擎（Handlebars）用于动态文本
+  // - vm 模块（沙箱模式）用于隔离执行（仅限可信输入）
+note: |
+  排查清单:
+  - 99.9% 的场景不需要 eval。你在做什么？
+  - 如果是解析 JSON：用 JSON.parse
+  - 如果是动态表达式：用函数映射表（如 { '+': (a,b) => a+b }）
+  - 参考: .pitfalls/GLOBAL.md #G-003
