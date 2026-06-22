@@ -119,6 +119,8 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run build
+      # 确保 @types/node 在多端 smoke 环境可用
+      - run: npm ls @types/node || npm i --no-save @types/node
       - run: npx taiyi ci platform ${{ matrix.platform }}
 
   # 真装包验证 — npm pack 出 tgz → 全新临时目录 install → CLI smoke
