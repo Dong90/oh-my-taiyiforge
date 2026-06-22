@@ -62,7 +62,7 @@ describe("state-manager", () => {
       const mdPath = path.join(tmpDir, "REQUIREMENT.md");
       expect(fs.existsSync(mdPath)).toBe(true);
       const md = fs.readFileSync(mdPath, "utf-8");
-      expect(md).toContain("# 用户登录");
+      expect(md).toContain("# REQUIREMENT: 用户登录");
     });
 
     it("writes hash snapshot", async () => {
