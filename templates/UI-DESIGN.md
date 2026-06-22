@@ -1,11 +1,12 @@
 # UI-DESIGN: {{title}}
 
 ## Scope
+- pages / components:
 
-## Layout & Hierarchy
+## Layout
+- 
 
 ## States
-
 | State | Behavior |
 |-------|----------|
 | loading | |
@@ -14,12 +15,10 @@
 | success | |
 
 ## Accessibility
-
-- [ ] 键盘可达
-- [ ] 对比度 / 焦点可见
-- [ ] 屏幕阅读器标签
+- [ ] keyboard
+- [ ] contrast / focus
+- [ ] screen reader
 
 ## Links
-
-- DESIGN.md: …
-- REQUIREMENT.md AC: …
+- DESIGN.md:
+- REQUIREMENT AC:

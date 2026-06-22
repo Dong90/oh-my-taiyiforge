@@ -1,16 +1,16 @@
 # REVIEW: {{title}}
 
 ## Findings
-| Severity | File / Area | Issue | Suggestion |
-|----------|-------------|-------|------------|
+| Severity | File | Issue | Fix |
+|----------|------|-------|-----|
 | high | | | |
 | medium | | | |
 | low | | | |
 
 ## Security
-- [ ] 输入校验 / 鉴权边界
-- [ ] 无硬编码密钥
+- [ ] auth / input validation
+- [ ] no hardcoded secrets
 
 ## Verdict
-- [ ] **Approve** — 可合并
-- [ ] **Request changes** — 阻塞项：…
+- [ ] **Approve**
+- [ ] **Request changes** — blocked:
