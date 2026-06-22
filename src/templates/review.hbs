@@ -1,16 +1,154 @@
-# {{title}}
+<!-- phase:review skill:taiyi-review gate:human est:20min produces:REVIEW.md upstream:[test,dev] downstream:[integration] cplx:[ALL]2steps +[M+]2 +[H]2 -->
+# REVIEW: {{title}}
+
+> **Reviewer**: {{#if reviewer}}{{reviewer}}{{else}}_AI_{{/if}} | **Date**: {{#if review_date}}{{review_date}}{{else}}_待定_{{/if}} | **Verdict**: **{{verdict}}**
+
+---
 
 ## Verdict
-**{{verdict}}**
+
+{{#if verdict}}
+- [x] **Approve** — 可合并
+{{else}}
+- [ ] **Approve**
+- [ ] **Request changes**
+{{/if}}
+
+---
+
+## Step 1: Review Scope & Findings
+> **[ALL]** Goal: 每个问题有位置+置信度+建议 | Inputs: 代码diff + TEST.md
+<!-- Action: gstack Prior Learnings: 检查本项目过往session的learnings，有匹配的标注"Prior learning applied"。[severity](confidence:N/10) file:line—desc。9-10=已验证,7-8=高置信,5-6=中(需人工)。critical=必修复 -->
+
+**评审范围**: 
+**关注重点**: 
 
 {{#if findings}}
-## Findings
 {{#each findings}}
 - **{{id}}** `[{{severity}}]` {{#if resolved}}✅{{else}}❌{{/if}}: {{description}}
 {{/each}}
+{{else}}
+### Critical — 暂无
+### High — 暂无
+### Medium — 暂无
+### Low/Suggestion — 暂无
 {{/if}}
+
+<!-- Validate: 每个finding有具体位置+置信度+修复建议？ -->
+
+## Step 2: Verdict & Action Items
+> **[ALL]** Goal: 明确裁决和后续动作 | Inputs: Step1
+<!-- Action: approved(过)/commented(建议但可过)/changes_requested(不过)。列出必须修复项 -->
+
+**必须修复** (blocking merge):
+{{#if blocking_items}}
+{{#each blocking_items}}
+- {{this}}
+{{/each}}
+{{else}}
+- _无_
+{{/if}}
+
+**建议修复** (可后续):
+{{#if suggestion_items}}
+{{#each suggestion_items}}
+- {{this}}
+{{/each}}
+{{else}}
+- _无_
+{{/if}}
+
+<!-- Validate: Verdict明确？blocking项有owner+deadline？ -->
+
+## Step 3: Code Quality Audit
+> **[MEDIUM+]** Goal: 五维评分 | Inputs: 代码diff
+<!-- Action: 可读性/可测试性/一致性/复杂度/文档 各0-10 -->
+
+| 维度 | 评分 | 备注 |
+|------|------|------|
+{{#if code_quality}}
+{{#each code_quality}}
+| {{dimension}} | {{score}}/10 | {{note}} |
+{{/each}}
+{{else}}
+| 可读性 | _待评估_ | _待评估_ |
+| 可测试性 | _待评估_ | _待评估_ |
+| 一致性 | _待评估_ | _待评估_ |
+| 复杂度 | _待评估_ | _待评估_ |
+| 文档 | _待评估_ | _待评估_ |
+{{/if}}
+
+<!-- Validate: 每维有具体改进建议而非仅打分？ -->
+
+## Step 4: Test Coverage Audit
+> **[MEDIUM+]** Goal: 对齐TEST.md | Inputs: TEST.md
+<!-- Action: 各层通过率+覆盖率+差距 -->
+
+| 层 | 通过/总 | 覆盖率 | 状态 |
+|----|--------|--------|------|
+{{#if test_coverage}}
+{{#each test_coverage}}
+| {{layer}} | {{passed}}/{{total}} | {{coverage}} | {{status}} |
+{{/each}}
+{{else}}
+| 单元 | _通过/总_ | _覆盖率_ | _待评估_ |
+| 集成 | _通过/总_ | _覆盖率_ | _待评估_ |
+| E2E | _通过/总_ | _覆盖率_ | _待评估_ |
+{{/if}}
+
+<!-- Validate: 与TEST.md数据一致？gap有补救计划？ -->
+
+## Step 5: Security Audit
+> **[HIGH]** Goal: 安全不出事 | Inputs: 代码diff+DESIGN.md §10
+<!-- Action: OWASP Top10+敏感数据+npm audit -->
+
+{{#if security_audit}}
+{{#each security_audit}}
+- [ ] {{this}}
+{{/each}}
+{{else}}
+- [ ] 认证/授权检查完整
+- [ ] 敏感数据不打印日志
+- [ ] 输入校验完整
+- [ ] npm audit无critical/high
+{{/if}}
+
+&lt;!-- Validate: OWASP Top10全覆盖？跑过审计工具？ -->
+
+> 📎 **SSOT 规则**: 安全评审应交叉验证 [CHANGE.md §Risks](CHANGE.md) + [REQUIREMENT.md §Security](REQUIREMENT.md) + [DESIGN.md §Security Model](DESIGN.md) 的三者一致性，不独立重评。发现不一致即标记为 blocking。
+
+## Step 6: Performance Audit
+> **[HIGH]** Goal: 上线不卡 | Inputs: 代码diff
+<!-- Action: DB索引/N+1/阻塞IO/缓存/内存泄漏 -->
+
+{{#if performance_audit}}
+| 检查项 | 状态 | 备注 |
+|--------|------|------|
+{{#each performance_audit}}
+| {{item}} | {{status}} | {{note}} |
+{{/each}}
+{{else}}
+| 检查项 | 状态 | 备注 |
+|--------|------|------|
+| _N+1 查询_ | _N/A_ | _无数据库操作_ |
+{{/if}}
+
+<!-- Validate: 关键路径无性能瓶颈？峰值QPS可撑？ -->
 
 {{#if summary}}
 ## Summary
 {{summary}}
 {{/if}}
+
+---
+## Quality Gate
+<!-- Evidence-first: 每个finding基于实际代码审查，非推测。Prior Learnings已检索。 -->
+
+- [ ] S1 所有finding有位置+置信度+建议
+- [ ] S1 Critical/High有修复计划
+- [ ] S2 Verdict明确+blocking项有owner
+- [ ] [M+] S3 五维评分完整
+- [ ] [M+] S4 测试对齐TEST.md
+- [ ] [H]  S5 OWASP全覆盖
+- [ ] [H]  S6 关键路径无瓶颈
+- [ ] **Prior Learnings**: 已检索过往session learnings并应用 | gstack learnings-search
