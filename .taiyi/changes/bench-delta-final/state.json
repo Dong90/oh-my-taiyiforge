@@ -1,0 +1,33 @@
+{
+  "slug": "bench-delta-final",
+  "currentPhase": "integration",
+  "completedPhases": [
+    "change",
+    "dev"
+  ],
+  "profile": "micro",
+  "skippedPhases": [
+    "requirement",
+    "design",
+    "ui-design",
+    "task",
+    "test",
+    "review"
+  ],
+  "strictDev": false,
+  "autoHarness": false,
+  "complexity": {
+    "level": "low",
+    "score": 4,
+    "recommendedSkills": [
+      "taiyi-intel-scan"
+    ]
+  },
+  "auxiliaryCompleted": [],
+  "workflowStatus": "active",
+  "createdAt": "2026-06-22T03:53:18.948Z",
+  "updatedAt": "2026-06-22T03:54:03.601Z",
+  "seeded": [
+    "CHANGE.md"
+  ]
+}
