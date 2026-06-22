@@ -157,10 +157,12 @@ export function archiveTaiyiChange(
   const dest = path.join(archiveRoot, slug);
 
   fs.renameSync(src, dest);
+  // 存相对路径，避免 .taiyi-archive.json 泄漏绝对路径
+  const relPath = path.relative(taiyiRoot, dest);
   const manifest = {
     slug,
     archivedAt: new Date().toISOString(),
-    path: dest,
+    path: relPath.startsWith("..") ? dest : relPath,
     openspec: options?.openspec ?? false,
   };
   fs.writeFileSync(path.join(dest, ".taiyi-archive.json"), JSON.stringify(manifest, null, 2) + "\n");
