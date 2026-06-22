@@ -2,9 +2,47 @@ import fs from "node:fs";
 import path from "node:path";
 import type { PhaseId, ChangeState } from "./types.js";
 import { getPhase } from "./phase-registry.js";
+import { AgentContext } from "./change-graph/agent-sdk.js";
+
+/* ──────────────────────────────────────────────
+ * Graph-native Phase Context (Phase B)
+ * Replaces regex-based Markdown extraction with
+ * ChangeGraph rendering. Agents read graph, not files.
+ * ────────────────────────────────────────────── */
+
+/**
+ * Generate PHASE-CONTEXT.md from the ChangeGraph.
+ * Delegates to AgentContext for graph loading + rendering.
+ *
+ * This supersedes appendPhaseToContext() — agents read graph, not regex-extracted text.
+ */
+export function generateGraphPhaseContext(
+  changeDir: string,
+  slug: string,
+): { ok: boolean; error?: string } {
+  try {
+    const sdk = AgentContext.fromChangeDir(changeDir, slug);
+    sdk.writePhaseContext();
+    return { ok: true };
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : String(e) };
+  }
+}
+
+/* ──────────────────────────────────────────────
+ * Legacy: regex-based Markdown extraction
+ * Kept for backward compatibility during Phase B transition.
+ * @deprecated — use generateGraphPhaseContext()
+ * ────────────────────────────────────────────── */
 
 function extractSection(content: string, heading: string, maxLines = 5): string {
-  const regex = new RegExp(`##\\s+${heading}\\s*\\n([\\s\\S]*?)(?=\\n##\\s|$)`, "i");
+  // heading may contain | alternations for multi-language (e.g. "Decision|方案|决策|选择").
+  // Wrap in non-capturing group so the capture group ([\s\S]*?) always captures section body.
+  // Also handle "## Step N: Heading" format used by templates (e.g. "## Step 4: Decision").
+  const regex = new RegExp(
+    `##\\s+(?:Step\\s+\\d+:\\s+)?(?:${heading})\\s*\\n([\\s\\S]*?)(?=\\n##\\s|$)`,
+    "i",
+  );
   const m = content.match(regex);
   if (!m) return "";
   const lines = m[1].trim().split("\n").filter(Boolean);
@@ -12,7 +50,8 @@ function extractSection(content: string, heading: string, maxLines = 5): string 
 }
 
 function extractTitle(content: string): string {
-  const m = content.match(/^#\s*(?:CHANGE:\s*)?(.+)$/m);
+  // Match "# CHANGE: Title" | "# DESIGN: Title" | "# Title" — strip phase prefix for cleaner summary.
+  const m = content.match(/^#\s*(?:[A-Z-]+:\s*)?(.+)$/m);
   return m?.[1]?.trim() ?? "";
 }
 
@@ -27,12 +66,17 @@ function extractCheckboxes(content: string, maxItems = 6): string[] {
 }
 
 function summaryForPhase(phaseId: PhaseId, phaseMd: string): string {
-  if (!phaseMd) return "";
   const title = extractTitle(phaseMd);
   switch (phaseId) {
     case "change": {
-      const scope = extractSection(phaseMd, "Scope|范围|Motivation|动机", 4);
-      return `**范围**: ${title}${scope ? "\n" + scope : ""}`;
+      const scope = extractSection(phaseMd, "Scope|范围|Motivation|动机|Problem Statement", 4);
+      const risks = extractSection(phaseMd, "Risks|风险", 3);
+      const rollback = extractSection(phaseMd, "Rollback|回滚", 2);
+      const parts = [`**范围**: ${title}`];
+      if (scope) parts.push(scope);
+      if (risks) parts.push(`**风险**:\n${risks}`);
+      if (rollback) parts.push(`**回滚**: ${rollback}`);
+      return parts.join("\n");
     }
     case "requirement": {
       const acs = extractCheckboxes(phaseMd);
@@ -47,8 +91,20 @@ function summaryForPhase(phaseId: PhaseId, phaseMd: string): string {
     case "ui-design":
       return `**UI 契约**: ${title || "已定义"}`;
     case "task": {
-      const tasks = extractSection(phaseMd, "Tasks|任务", 6);
+      const tasks = extractSection(phaseMd, "Slice Breakdown|Tasks|任务|切片", 6);
       return tasks ? `**任务切片**:\n${tasks}` : "";
+    }
+    case "dev": {
+      const dev = extractSection(phaseMd, "Implementation|实现|Dev", 4);
+      return dev ? `**开发**:\n${dev}` : `**开发**: ${title || "TDD 已完成"}`;
+    }
+    case "test": {
+      const test = extractSection(phaseMd, "Test Plan|Results|测试", 4);
+      return test ? `**测试**:\n${test}` : `**测试**: ${title || "测试已通过"}`;
+    }
+    case "review": {
+      const verdict = extractSection(phaseMd, "Verdict|裁决|评审", 3);
+      return verdict ? `**评审**:\n${verdict}` : `**评审**: ${title || "已评审"}`;
     }
     default:
       return "";
@@ -82,6 +138,48 @@ function footerForPhase(
   return lines.join("\n");
 }
 
+/**
+ * 从 taiyi-intel-scan 产出的 CONTEXT.md 提取项目级上下文，
+ * 自动注入到 PHASE-CONTEXT.md 的 PROJECT-CONTEXT 区域。
+ * 只在首次（尚无项目上下文标记）时执行，后续不覆盖。
+ */
+function injectProjectContextIfMissing(ctxPath: string, changeDir: string): boolean {
+  const PROJECT_MARKER = "<!-- PROJECT-CONTEXT-END -->";
+
+  // Already has project context — skip
+  if (fs.existsSync(ctxPath)) {
+    const existing = fs.readFileSync(ctxPath, "utf8");
+    if (existing.includes(PROJECT_MARKER)) return false;
+  }
+
+  // Look for CONTEXT.md from intel-scan in the change directory
+  const contextPath = path.join(changeDir, "CONTEXT.md");
+  if (!fs.existsSync(contextPath)) return false;
+
+  const contextContent = fs.readFileSync(contextPath, "utf8").trim();
+  // Don't inject if it's still a seed template
+  if (contextContent.length < 50 || contextContent.includes("<!-- seed -->")) return false;
+
+  const projectBlock = [
+    "<!-- 项目级上下文 · 来自 taiyi-intel-scan · 引擎自动维护 -->",
+    "## Project Context",
+    "",
+    contextContent,
+    "",
+    PROJECT_MARKER,
+    "",
+  ].join("\n");
+
+  if (fs.existsSync(ctxPath)) {
+    const existing = fs.readFileSync(ctxPath, "utf8");
+    fs.writeFileSync(ctxPath, projectBlock + existing, "utf8");
+  } else {
+    fs.writeFileSync(ctxPath, projectBlock, "utf8");
+  }
+
+  return true;
+}
+
 export function appendPhaseToContext(
   changeDir: string,
   slug: string,
@@ -90,6 +188,10 @@ export function appendPhaseToContext(
   state: ChangeState,
 ): void {
   const ctxPath = path.join(changeDir, "PHASE-CONTEXT.md");
+  const PROJECT_MARKER = "<!-- PROJECT-CONTEXT-END -->";
+
+  // Auto-inject project context from intel-scan CONTEXT.md on first creation
+  injectProjectContextIfMissing(ctxPath, changeDir);
 
   // Read just-completed phase markdown
   const phaseMdPath = path.join(changeDir, `${justCompletedPhase.toUpperCase()}.md`);
@@ -101,36 +203,39 @@ export function appendPhaseToContext(
     ? `## ${justCompletedPhase} (✓)\n${summary}\n`
     : `## ${justCompletedPhase} (✓)\n`;
 
+  let projectContext = "";
   let existing = "";
   if (fs.existsSync(ctxPath)) {
     existing = fs.readFileSync(ctxPath, "utf8");
+    // Preserve project-level context before PROJECT_MARKER
+    const markerIdx = existing.indexOf(PROJECT_MARKER);
+    if (markerIdx >= 0) {
+      projectContext = existing.slice(0, markerIdx + PROJECT_MARKER.length + 1);
+      existing = existing.slice(projectContext.length);
+    }
     // Find last completed phase section, insert after it
     const lastCompletedIdx = existing.lastIndexOf("(✓)");
     if (lastCompletedIdx >= 0) {
-      // Find end of that line
       const lineEnd = existing.indexOf("\n", lastCompletedIdx);
       const insertPos = lineEnd >= 0 ? lineEnd + 1 : existing.length;
-      // Insert before the "---" separator
       const sepIdx = existing.indexOf("\n---", insertPos);
       const before = sepIdx >= 0 ? existing.slice(0, sepIdx) : existing;
       const after = sepIdx >= 0 ? existing.slice(sepIdx) : "";
       existing = before + "\n" + appendBlock + "\n" + after.trimStart();
     } else {
-      // No completed phases yet, insert after header
       const headerEnd = existing.indexOf("\n---");
       const before = headerEnd >= 0 ? existing.slice(0, headerEnd) : existing;
       const after = headerEnd >= 0 ? existing.slice(headerEnd) : "";
       existing = before + "\n" + appendBlock + "\n" + after.trimStart();
     }
   } else {
-    // New file
     existing = `# Phase Context — ${slug}\n\n${appendBlock}`;
   }
 
   // Replace footer with current phase info
   const sepIdx = existing.lastIndexOf("\n---");
   const body = sepIdx >= 0 ? existing.slice(0, sepIdx) : existing;
-  const final = body + footerForPhase(nextPhase, state, changeDir);
+  const final = projectContext + body + footerForPhase(nextPhase, state, changeDir);
 
   fs.writeFileSync(ctxPath, final, "utf8");
 }
