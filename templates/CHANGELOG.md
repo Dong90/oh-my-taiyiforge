@@ -18,5 +18,3 @@
 - [ ] OpenSpec / 规格已 archive（若适用）
 
 ## Rollback
-
-<!-- 如何回滚本次变更 -->

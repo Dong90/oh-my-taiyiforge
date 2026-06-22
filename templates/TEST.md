@@ -2,11 +2,11 @@
 
 ## Test Plan
 
-| Level | Scope | Command / Tool |
-|-------|-------|----------------|
+| Level | Scope | Command |
+|-------|-------|---------|
 | unit | | |
 | integration | | |
-| e2e | | | gstack `qa`（有 web 面时；见 harness-check） |
+| e2e | | gstack qa |
 
 ## Coverage vs AC
 
