@@ -2,11 +2,8 @@
 
 ## Context
 
-<!-- 背景、约束、依赖 CHANGE / REQUIREMENT -->
 
 ## Options
-
-<!-- 门禁：须 markdown 表格行 | A | … | 与 | B | … |；勿用 ### Option A 标题 -->
 
 | Option | Summary | Pros | Cons | Cost |
 |--------|---------|------|------|------|

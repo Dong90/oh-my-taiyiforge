@@ -21,6 +21,7 @@
 3. 过关须 **人工审批** + **质量门禁五维**（`docs/taiyi/quality-gate.yaml`）
 4. **dev 阶段 TDD**：先失败测试，再最小实现
 5. **Token 纪律**：清 slug → archive → `token compress` → E2E/全量测试走 CI 后台（对话只写 TEST.md 摘要）
+6. **上下文加载**：进入阶段时优先读 `PHASE-CONTEXT.md`（引擎自动生成，~500 tokens），**不要**逐份读 CHANGE/REQUIREMENT/DESIGN/TASK 等上游工件
 
 ## Agent 读状态（默认）
 

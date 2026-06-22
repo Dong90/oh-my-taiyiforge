@@ -19,7 +19,22 @@ export function tokenStatusPlain(
   phase?: PhaseId,
 ): string {
   const cfg = loadTokenBudgetConfig();
-  const usage = readTokenUsage(changeDir);
+  let usage = readTokenUsage(changeDir);
+
+  // 方案E: 未记录时自动扫描工件入账（token status 无感）
+  if (!usage) {
+    const scan = scanArtifactTokens(changeDir);
+    if (scan.total > 0) {
+      recordTokenUsage(
+        changeDir,
+        slug,
+        { phase: phase ?? "change", kind: "scan", tokens: scan.total, label: `${scan.files.length} files` },
+        cfg.costPerMillionTokens,
+      );
+      usage = readTokenUsage(changeDir);
+    }
+  }
+
   const evalResult = evaluateTokenBudget(cfg, usage, phase);
   const artifactTokens = scanArtifactTokens(changeDir).total;
   return formatTokenBudgetPlain(cfg, usage, evalResult, {
@@ -128,7 +143,22 @@ export function buildTokenBudgetSummary(
   phase: PhaseId,
 ): { cfg: ReturnType<typeof loadTokenBudgetConfig>; evalResult: ReturnType<typeof evaluateTokenBudget>; line: string } {
   const cfg = loadTokenBudgetConfig();
-  const usage = readTokenUsage(changeDir);
+  let usage = readTokenUsage(changeDir);
+
+  // 方案E: 未记录时自动扫描工件入账（status 无感）
+  if (!usage) {
+    const scan = scanArtifactTokens(changeDir);
+    if (scan.total > 0) {
+      recordTokenUsage(
+        changeDir,
+        slug,
+        { phase, kind: "scan", tokens: scan.total, label: `${scan.files.length} files` },
+        cfg.costPerMillionTokens,
+      );
+      usage = readTokenUsage(changeDir);
+    }
+  }
+
   const evalResult = evaluateTokenBudget(cfg, usage, phase);
   const artifactTokens = scanArtifactTokens(changeDir).total;
   const line = formatTokenBudgetPlain(cfg, usage, evalResult, {

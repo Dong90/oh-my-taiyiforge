@@ -1,4 +1,4 @@
-import type { ComplexityAssessment, ComplexityLevel } from "../types.js";
+import type { ComplexityAssessment, ComplexityLevel, ChangeProfile } from "../types.js";
 
 export type ComplexitySignals = {
   touchedModules: number;
@@ -23,5 +23,10 @@ export function assessComplexity(
   if (level === "medium" || level === "high") recommendedSkills.push("taiyi-health");
   if (level === "high") recommendedSkills.push("taiyi-evolve");
 
-  return { level, score, recommendedSkills };
+  let recommendedProfile: ChangeProfile | undefined;
+  if (level === "low") {
+    recommendedProfile = signals.touchedModules <= 2 ? "micro" : "lite";
+  }
+
+  return { level, score, recommendedSkills, recommendedProfile };
 }
