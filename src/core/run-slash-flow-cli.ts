@@ -4,6 +4,7 @@ import { spawnSync } from "node:child_process";
 import { E2E_ARTIFACTS, E2E_PHASE_ORDER } from "./e2e-fixtures.js";
 import { getPhase } from "./phase-registry.js";
 import { DEV_COMPLETE_EVIDENCE } from "./dev-complete.js";
+import { renderE2ePhaseArtifact } from "./run-e2e-workflow.js";
 import { listAgentRoleIds, PHASE_AGENT_ROLES } from "./agent-roles.js";
 import { requiresHumanGate } from "./gates/human-gate-config.js";
 import { skippedPhasesForProfile } from "./profile.js";
@@ -144,20 +145,27 @@ export function runTaiyiCli(repoRoot: string, cwd: string, argv: string[]): Forg
   return { code: r.status ?? 1, out: `${r.stdout ?? ""}${r.stderr ?? ""}` };
 }
 
-function seedPhaseArtifact(changeDir: string, phaseId: PhaseId): void {
+function seedPhaseArtifact(changeDir: string, phaseId: PhaseId, templatesDir?: string): void {
   if (phaseId === "dev") {
     fs.writeFileSync(path.join(changeDir, ".dev-complete"), DEV_COMPLETE_EVIDENCE, "utf8");
     return;
   }
   const { md, json } = E2E_ARTIFACTS[phaseId];
   const phase = getPhase(phaseId);
-  fs.writeFileSync(path.join(changeDir, phase.artifact), md, "utf8");
+
+  const rendered = templatesDir
+    ? renderE2ePhaseArtifact(phaseId, templatesDir)
+    : null;
+  fs.writeFileSync(path.join(changeDir, phase.artifact), rendered ?? md, "utf8");
   fs.writeFileSync(path.join(changeDir, `${phaseId}.json`), JSON.stringify(json, null, 2), "utf8");
 }
 
-function refreshReviewArtifact(changeDir: string): void {
+function refreshReviewArtifact(changeDir: string, templatesDir?: string): void {
   const reviewPath = path.join(changeDir, "REVIEW.md");
-  fs.writeFileSync(reviewPath, E2E_ARTIFACTS.review.md, "utf8");
+  const rendered = templatesDir
+    ? renderE2ePhaseArtifact("review", templatesDir)
+    : null;
+  fs.writeFileSync(reviewPath, rendered ?? E2E_ARTIFACTS.review.md, "utf8");
   const t = new Date(Date.now() + 2000);
   fs.utimesSync(reviewPath, t, t);
 }
@@ -167,6 +175,7 @@ function runReviewExtras(
   cwd: string,
   slug: string,
   changeDir: string,
+  templatesDir: string,
   steps: SlashFlowStep[],
   errors: string[],
 ): void {
@@ -192,7 +201,7 @@ function runReviewExtras(
     errors.push(`review-loop 首轮应 exit 1: ${loopFirst.out}`);
   }
 
-  refreshReviewArtifact(changeDir);
+  refreshReviewArtifact(changeDir, templatesDir);
 
   const loopPass = runForge(repoRoot, cwd, ["review-loop", slug]);
   steps.push({
@@ -256,6 +265,7 @@ export function runSlashFlow(options: RunSlashFlowOptions): SlashFlowRunResult {
   const slug = options.slug ?? manifest.expectedSlug;
   const workspaceDir = path.resolve(options.workspaceDir);
   const changeDir = path.join(workspaceDir, ".taiyi/changes", slug);
+  const templatesDir = path.join(options.repoRoot, "src/templates");
   const phaseOrder = getPhaseOrderForProfile(profile);
   const steps: SlashFlowStep[] = [];
   const errors: string[] = [];
@@ -307,7 +317,7 @@ export function runSlashFlow(options: RunSlashFlowOptions): SlashFlowRunResult {
       break;
     }
 
-    seedPhaseArtifact(changeDir, phaseId);
+    seedPhaseArtifact(changeDir, phaseId, templatesDir);
 
     for (const argv of [["write", slug], [phaseId, slug], ["harness", slug], ["status", slug]]) {
       const r = runForge(options.repoRoot, workspaceDir, argv);
@@ -333,7 +343,7 @@ export function runSlashFlow(options: RunSlashFlowOptions): SlashFlowRunResult {
     }
 
     if (phaseId === "review") {
-      runReviewExtras(options.repoRoot, workspaceDir, slug, changeDir, steps, errors);
+      runReviewExtras(options.repoRoot, workspaceDir, slug, changeDir, templatesDir, steps, errors);
     }
 
     const contArgv = requiresHumanGate(phaseId)

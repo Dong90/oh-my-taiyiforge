@@ -6,18 +6,8 @@ import { E2E_ARTIFACTS, E2E_PHASE_ORDER } from "./e2e-fixtures.js";
 import { getPhase } from "./phase-registry.js";
 import { artifactPathForPhase } from "./artifact-validator.js";
 import { DEV_COMPLETE_EVIDENCE } from "./dev-complete.js";
+import { TemplateEngine, type SeedVars } from "./template-engine.js";
 import type { PhaseId } from "./types.js";
-
-const E2E_JSON: Record<string, unknown> = {
-  change: { title: "E2E Demo", motivation: "Validate workflow", scope: { includes: ["smoke"] }, success_criteria: [{ id: "SC-01", description: "All nine phases pass", is_checked: true }] },
-  requirement: { title: "E2E Demo", features: ["e2e workflow"], acceptance_criteria: [{ id: "AC-01", description: "Phases complete with gates", is_checked: false }] },
-  design: { title: "E2E Demo", options: [{ id: "A", name: "Inline", pros: ["fast"], cons: ["manual"] }, { id: "B", name: "Vitest", pros: ["CI"], cons: [] }], decision: { chosen: "B", reason: "Automated regression" } },
-  "ui-design": { title: "E2E Demo", scope: "N/A — CLI only" },
-  task: { title: "E2E Demo", slices: [{ id: "S1", label: "e2e test", test_command: "npm test" }] },
-  test: { title: "E2E Demo", test_plan: [{ id: "T1", description: "All suites pass", status: "passed" }] },
-  review: { title: "E2E Demo", verdict: "approved", findings: [{ id: "F1", severity: "low", description: "docs only", resolved: true }] },
-  integration: { title: "E2E Demo", changelog_entries: [{ type: "test", description: "E2E workflow regression" }] },
-};
 
 const PASSING_GATES = {
   quality: {
@@ -30,18 +20,42 @@ const PASSING_GATES = {
   human: { approved: true, approver: "e2e-runner" },
 } as const;
 
-export function writeE2eArtifacts(changeDir: string): void {
+export function renderE2ePhaseArtifact(
+  phaseId: PhaseId,
+  templatesDir: string,
+): string | null {
+  const phase = getPhase(phaseId);
+  if (phase.kind !== "markdown") return null;
+  const tplPath = path.join(templatesDir, `${phaseId}.hbs`);
+  if (!fs.existsSync(tplPath)) return null;
+
+  const raw = fs.readFileSync(tplPath, "utf8");
+  const artifact = E2E_ARTIFACTS[phaseId as keyof typeof E2E_ARTIFACTS];
+  if (!artifact) return null;
+
+  const vars: SeedVars = { slug: "e2e-demo", title: "E2E Demo" };
+  const engine = new TemplateEngine();
+  return engine.render(raw, { ...vars, ...(artifact.json as Record<string, unknown>) });
+}
+
+export function writeE2eArtifacts(changeDir: string, templatesDir?: string): void {
   for (const [phaseId, body] of Object.entries(E2E_ARTIFACTS)) {
     const phase = getPhase(phaseId as PhaseId);
     const file = path.join(changeDir, phase.artifact);
-    fs.writeFileSync(file, body.md, "utf8");
-    // Write companion JSON for Zod validation
-    const jsonObj = E2E_JSON[phaseId];
-    if (jsonObj) fs.writeFileSync(path.join(changeDir, `${phaseId}.json`), JSON.stringify(jsonObj, null, 2));
+
+    // 模板渲染优先；无 templatesDir 或无 .hbs 文件时回退到硬编码 md
+    const rendered = templatesDir
+      ? renderE2ePhaseArtifact(phaseId as PhaseId, templatesDir)
+      : null;
+    const md = rendered ?? body.md;
+
+    fs.writeFileSync(file, md, "utf8");
+    // Write companion JSON for Zod validation (uses enriched E2E_JSON_ARTIFACTS)
+    fs.writeFileSync(path.join(changeDir, `${phaseId}.json`), JSON.stringify(body.json, null, 2));
     // Write hash snap for reverse-sync
     const snapDir = path.join(changeDir, ".taiyi", "snapshots");
     fs.mkdirSync(snapDir, { recursive: true });
-    const hash = crypto.createHash("sha256").update(body.md).digest("hex");
+    const hash = crypto.createHash("sha256").update(md).digest("hex");
     fs.writeFileSync(path.join(snapDir, `${phaseId}.hash`), hash);
   }
   fs.writeFileSync(path.join(changeDir, ".dev-complete"), DEV_COMPLETE_EVIDENCE, "utf8");
@@ -57,7 +71,7 @@ export function runE2eWorkflow(
   }
 
   const changeDir = engine.changeDir(slug);
-  writeE2eArtifacts(changeDir);
+  writeE2eArtifacts(changeDir, templatesDir);
 
   const completed: PhaseId[] = [];
   for (const phaseId of E2E_PHASE_ORDER) {

@@ -44,7 +44,7 @@ import {
 import { getLogger } from "./logger.js";
 import { ChangeLock } from "./change-lock.js";
 import { logActivity } from "./activity-log.js";
-import { appendPhaseToContext } from "./phase-context.js";
+import { appendPhaseToContext, generateGraphPhaseContext } from "./phase-context.js";
 
 export type InitChangeOptions = {
   title?: string;
@@ -520,7 +520,12 @@ export class WorkflowEngine {
     }
 
     if (next && !isPhaseSkipped(next, dynamicSkipped)) {
-      try { appendPhaseToContext(changeDir, slug, phaseId, next, updated); } catch { /* best-effort */ }
+      try {
+        // Phase B: graph-native context generation (supersedes appendPhaseToContext)
+        generateGraphPhaseContext(changeDir, slug);
+        // Legacy fallback for phases without JSON files (e.g. dev)
+        appendPhaseToContext(changeDir, slug, phaseId, next, updated);
+      } catch { /* best-effort */ }
     }
 
     if (phaseId === "integration" && process.env.TAIYI_SKIP_ROOT_CHANGELOG !== "1") {
