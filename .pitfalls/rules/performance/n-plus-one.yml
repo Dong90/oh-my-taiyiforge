@@ -1,0 +1,25 @@
+# ast-grep rule: detect potential N+1 query patterns
+id: n-plus-one-query
+language: typescript
+severity: warning
+message: |
+  PITFALL [perf]: 潜在 N+1 查询 —— 在循环内发起独立异步请求。
+  每次迭代创建一个独立请求会导致请求数随数据量线性增长。
+rule:
+  pattern: |
+    for (const $ITEM of $ARRAY) {
+      $$$ await fetch($$$)
+      $$$
+    }
+fix: |
+  // 考虑批量查询或 Promise.all：await Promise.all($ARRAY.map(item => fetch(item)))
+  for (const $ITEM of $ARRAY) {
+      $$$ await fetch($$$)
+      $$$
+  }
+note: |
+  排查清单:
+  - 能否合并为单次批量查询？
+  - 能否用 Promise.all 并行化？
+  - 数据库查询能否用 WHERE IN (...) 替代逐条 SELECT？
+  - 参考: src/core/PITFALLS.md
