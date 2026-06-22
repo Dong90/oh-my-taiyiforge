@@ -1,0 +1,23 @@
+# ast-grep rule: detect missing await on async function calls
+id: missing-await
+language: typescript
+severity: error
+message: |
+  PITFALL [sec]: 异步函数调用缺少 await —— 返回值是 Promise 而非实际值。
+rule:
+  any:
+    - pattern: |
+        const $VAR = $ASYNC_FN($$$)
+    - pattern: |
+        $ASYNC_FN($$$)
+  constraints:
+    $ASYNC_FN:
+      kind: call_expression
+fix: |
+  const $VAR = await $ASYNC_FN($$$)
+note: |
+  排查清单:
+  - 函数是否返回 Promise？（检查类型签名或调用链）
+  - 如果故意不 await（如 fire-and-forget），加 .catch() 
+  - TypeScript 4.4+ 可以用 no-floating-promises 规则检测
+  - 参考: src/core/PITFALLS.md

@@ -1,0 +1,14 @@
+# ast-grep rule: detect modules exceeding 250 line threshold
+id: large-module
+language: typescript
+severity: info
+message: |
+  PITFALL [arch]: 文件超过 250 行有效代码 —— 建议检查是否需要模块拆分。
+  TaiyiForge 编码规范要求每个文件不超过 250 LOC（不含空行/注释/import）。
+rule:
+  kind: program
+note: |
+  人工排查清单:
+  - 超过 250 行的函数是否可以提取为独立模块？
+  - 是否有多个职责混在同一个文件中？
+  - 参考: src/core/PITFALLS.md #C-004

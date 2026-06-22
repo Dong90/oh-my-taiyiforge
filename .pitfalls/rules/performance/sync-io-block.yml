@@ -1,0 +1,31 @@
+# ast-grep rule: detect sync I/O in async context
+id: sync-io-in-async
+language: typescript
+severity: warning
+message: |
+  PITFALL [perf]: async 函数内使用同步 I/O —— 会阻塞事件循环。
+rule:
+  any:
+    - pattern: |
+        async function $NAME($$$) {
+          $$$ fs.readFileSync($$$)
+          $$$
+        }
+    - pattern: |
+        async function $NAME($$$) {
+          $$$ fs.writeFileSync($$$)
+          $$$
+        }
+fix: |
+  // 考虑使用 fs.promises.readFile 或 fs/promises 的异步版本
+  // 如果必须同步（如 CLI 入口），添加注释说明原因
+  async function $NAME($$$) {
+    $$$ /* 注意：此处使用同步 I/O 是因为 <原因> */
+    $$$
+  }
+note: |
+  排查清单:
+  - 能否改用 fs.promises.readFile / writeFile？
+  - 如果在 CLI 入口函数中，可以接受（因为无并发请求）
+  - 如果在 server handler 中，必须改为异步
+  - 参考: src/core/PITFALLS.md
