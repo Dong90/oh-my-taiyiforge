@@ -7,11 +7,11 @@
 | B | | | | |
 
 ## Decision
-**Chosen:** Option … — **Reason:** …
+**Chosen:** Option TBD — **Reason:** TBD
 
 ## Architecture
 ```text
-[组件/数据流]
+[data flow / components]
 ```
 
 ## Risks
@@ -20,4 +20,4 @@
 | | |
 
 ## Open
-- [ ] …
+- [ ] decision-1

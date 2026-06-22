@@ -1,20 +1,18 @@
 # CHANGELOG: {{title}}
 
 ## Added
-
-- …
+- 
 
 ## Changed
-
-- …
+- 
 
 ## Fixed
+- 
 
-- …
+## Docs
 
-## Docs / Skills
-
-- [ ] README / AGENTS.md 已同步（若对外行为变化）
-- [ ] OpenSpec / 规格已 archive（若适用）
+- [ ] README / AGENTS.md synced
+- [ ] OpenSpec archived
 
 ## Rollback
+- 
