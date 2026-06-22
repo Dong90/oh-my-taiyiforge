@@ -1,12 +1,146 @@
-# {{title}}
+<!-- phase:task skill:taiyi-task gate:auto est:15min produces:TASK.md upstream:[design,requirement] downstream:[dev,test] cplx:[ALL]2steps +[M+]2 +[H]1 -->
+# TASK: {{title}}
 
-## Slices
+> **总Slice**: {{#if total_slices}}{{total_slices}}{{else}}_待定_{{/if}} | **预估**: {{#if estimated_days}}{{estimated_days}}{{else}}_待估_{{/if}} | **并行**: {{#if max_parallel}}{{max_parallel}}{{else}}_待定_{{/if}}
+
+---
+
+## Step 1: Dependency Graph
+> **[ALL]** Goal: 一眼看清依赖 | Inputs: DESIGN.md
+<!-- Action: Mermaid图，箭头=依赖 -->
+
+```mermaid
+flowchart LR
+{{#each slices}}
+  S{{id}}[{{label}}]
+{{else}}
+  NoSlices[_待拆解_]
+{{/each}}
+```
+
+<!-- Validate: 无循环依赖 -->
+
+---
+
+## Step 2: Slice Breakdown
+> **[ALL]** Goal: 每个Slice独立可交付 | Inputs: Step1+DESIGN.md §5
+<!-- Action: 每个Slice=独立PR，含文件清单/验证命令/验收点/依赖/并行性/Completeness -->
+
 {{#each slices}}
 ### Slice {{id}}: {{label}}
+> **[ALL]** | ⇧ {{#if dependencies}}Slice {{dependencies}}{{else}}无{{/if}} | ⇶ {{#if parallelizable}}✅可并行{{else}}❌须顺序{{/if}} | Score: [N]/10
+
 {{#if description}}
 {{description}}
 {{/if}}
-{{#if test_command}}
-验证: `{{test_command}}`
-{{/if}}
+
+**read_files**（只读 · 不写）:
+{{#if read_files}}
+{{#each read_files}}
+- `{{this}}`
 {{/each}}
+{{else}}
+- _待补充_
+{{/if}}
+
+**write_files**（写边界 · 不越界）:
+<!-- R7.3 强约束: 不碰禁动清单，不顺手改其他文件 -->
+{{#if write_files}}
+{{#each write_files}}
+- `{{this}}`
+{{/each}}
+{{else}}
+- _待补充_
+{{/if}}
+
+{{#if test_command}}
+**验证**: `{{test_command}}`
+{{/if}}
+
+**验收点**:
+{{#if checkpoints}}
+{{#each checkpoints}}
+- ⬜ {{this}}
+{{/each}}
+{{else}}
+⬜ _待补充_
+{{/if}}
+
+<!-- Validate: 可独立merge/deploy？文件范围精确？ -->
+
+---
+
+{{/each}}
+
+## Step 3: Execution Plan
+> **[MEDIUM+]** Goal: 分Wave并行执行 | Inputs: Step2
+<!-- Action: 按依赖图分组，无依赖的同Wave并行 -->
+
+{{#if waves}}
+{{#each waves}}
+### Wave {{name}}
+{{#each slices}}
+- {{slice_id}}: {{description}}
+{{/each}}
+{{/each}}
+{{else}}
+### Wave 1 (无依赖,并行)
+- Slice N: _描述_
+{{/if}}
+
+<!-- Validate: 每Wave内部确实无依赖？ -->
+
+## Step 4: Risk per Slice
+> **[MEDIUM+]** Goal: 每个Slice风险独立评估 | Inputs: Step2+DESIGN.md §6
+<!-- Action: Slice→风险→概率→缓解 -->
+
+{{#if slice_risks}}
+| Slice | 风险 | 概率 | 缓解 |
+|-------|------|------|------|
+{{#each slice_risks}}
+| {{slice}} | {{risk}} | {{probability}} | {{mitigation}} |
+{{/each}}
+{{else}}
+| Slice | 风险 | 概率 | 缓解 |
+|-------|------|------|------|
+| _S1_ | _E2E 测试假阳性_ | _低_ | _CI 重试机制_ |
+{{/if}}
+
+<!-- Validate: 高风险Slice有独立回滚？ -->
+
+## Step 5: Rollback per Slice
+> **[HIGH]** Goal: 每个Slice可独立安全回退 | Inputs: Step4
+<!-- Action: 回滚方式+预计时间+数据影响 -->
+
+{{#if slice_rollbacks}}
+| Slice | 回滚方式 | 时间 | 数据影响 |
+|-------|---------|------|---------|
+{{#each slice_rollbacks}}
+| {{slice}} | {{rollback}} | {{time}} | {{data_impact}} |
+{{/each}}
+{{else}}
+| Slice | 回滚方式 | 时间 | 数据影响 |
+|-------|---------|------|---------|
+| _S1_ | _git revert_ | ≤_5_min | _无数据影响_ |
+{{/if}}
+
+&lt;!-- Validate: 每个Slice可独立回滚？数据一致性？ -->
+
+> 📎 **SSOT 规则**: 切片风险基于 [DESIGN.md §Blast Radius](DESIGN.md) 细分，不回重新评估。切片回滚基于 [CHANGE.md](CHANGE.md) 的 rollback_{trigger,ops,time} 做切片级适配（≤5min/md-only）。
+>
+> 📎 **多 Slice 并行模式**: 若变更拆为多个可并行发版的 Slice（对应独立 PR），每个 Slice 可生成独立的 `TEST-{slice}.md` 和 `REVIEW-{slice}.md`（ultrawork 模式）。宏观的 TEST.md / REVIEW.md 仅作为阶段级摘要；CI 流式合并以 Slice 级 TEST / REVIEW 为门控单元。
+
+---
+## Quality Gate
+<!-- Evidence-first: 每个Slice可独立验证交付。gstack cognitive#13: 先重构再实现，不把结构+行为放同一个PR -->
+
+- [ ] S1 依赖图无循环
+- [ ] S2 每个Slice可独立交付
+- [ ] S2 每个Slice有 read_files/write_files + 验证 + 验收点
+- [ ] S2 每个Slice有Completeness评分
+- [ ] [M+] S3 Wave分波合理
+- [ ] [M+] S4 每Slice风险已评估
+- [ ] [H]  S5 每Slice有独立回滚
+- [ ] **PITFALLS.md**: 已扫描触达模块的 PITFALLS（`.pitfalls/scan.sh --module <path>` + 人工 grep 关键词），无已知踩坑或已声明规避方案
+- [ ] **项目上下文**: 已查 PHASE-CONTEXT.md 既有抽象索引，无重复实现
+- [ ] **Refactor-first**: 重构PR和功能PR分开了？(gstack: make change easy, then make easy change)
