@@ -1,25 +1,162 @@
-# {{title}}
+<!-- phase:ui-design skill:taiyi-ui-design gate:auto est:20min produces:UI-DESIGN.md upstream:[design,requirement] downstream:[task,dev] cplx:[ALL]5steps +[M+]2 +[H]1 -->
+# UI-DESIGN: {{title}}
 
-## Scope
-{{scope}}
+> **Scope**: {{#if scope}}{{scope}}{{else}}[涉及页面/组件]{{/if}}
+
+---
+
+## Step 1: Component Inventory
+> **[ALL]** Goal: 知道改了什么 | Inputs: DESIGN.md §2
+<!-- Action: 页面/组件+操作(新增/修改)+路径+变更描述 -->
+
+| 页面/组件 | 操作 | 路径 | 变更 |
+|----------|------|------|------|
+{{#if is_cli_only}}
+| _N/A — {{scope}}_ |
+{{else}}
+| _待补充_ | _待补充_ | _待补充_ | _待补充_ |
+{{/if}}
+
+<!-- Validate: 公共组件(Header/Footer/ErrorBoundary)是否遗漏？ -->
+
+## Step 2: Component Tree
+> **[ALL]** Goal: 一眼看清层级 | Inputs: Step1
+<!-- Action: ASCII/Mermaid组件树，标注props和state -->
+
+```
+{{#if is_cli_only}}
+_N/A — {{scope}}_
+{{else}}
+_组件树待补充_
+ComponentRoot
+├── ComponentA (props:..., state:...)
+└── ComponentB
+{{/if}}
+```
+
+<!-- Validate: 所有状态分支都在树中？Props定义清晰？ -->
+
+## Step 3: State Matrix
+> **[ALL]** Goal: 每个状态有视觉 | Inputs: Step2
+<!-- Action: 每组件6状态: Default/Loading/Empty/Error/Success/Edge -->
 
 {{#if states}}
-## States
 {{#each states}}
 - **{{name}}**: {{description}}
 {{/each}}
+{{else}}
+### _组件名_
+| 状态 | 触发 | 视觉 |
+|------|------|------|
+| Default | _默认状态_ | _视觉描述_ |
+| Loading | _加载中_ | _视觉描述_ |
+| Empty | _无数据_ | _视觉描述_ |
+| Error | _出错时_ | _视觉描述_ |
+| Success | _成功时_ | _视觉描述_ |
+| Edge | _边界情况_ | _视觉描述_ |
 {{/if}}
 
+<!-- Validate: 6状态全覆盖？每个有视觉描述？ -->
+
+## Step 4: Interaction Edge Cases
+> **[ALL]** Goal: 交互边界不翻车 | Inputs: Step3
+<!-- Action: gstack PD#4: 9种交互边界全覆盖 -->
+
+| 边界 | 行为 |
+|------|------|
+| Double-click | 按钮disabled防重复提交 |
+| Navigate away | |
+| Slow (>3s) | |
+| Stale state | |
+| Concurrent tabs | |
+| Back button | |
+| Zero state | |
+| Max input | |
+| Offline | |
+
+<!-- Validate: 9种全覆盖？每个有具体行为？ -->
+
+## Step 5: Responsive Breakpoints
+> **[MEDIUM+]** Goal: 多端都可用 | Inputs: Step1+2
+<!-- Action: Mobile<768 / Tablet768-1024 / Desktop>1024 -->
+
+| 断点 | 宽度 | 布局变化 |
+|------|------|---------|
+{{#if is_cli_only}}
+| N/A | — | CLI-only change, no responsive layout |
+{{else}}
+| Mobile | <768px | |
+| Tablet | 768-1024px | |
+| Desktop | >1024px | |
+{{/if}}
+
+<!-- Validate: Mobile触控≥44px？关键交互可用？ -->
+
+## Step 6: Motion Spec
+> **[MEDIUM+]** Goal: 动效有规范 | Inputs: Step3
+<!-- Action: 交互→触发→效果→时长。考虑prefers-reduced-motion -->
+
+| 交互 | 触发 | 动效 | 时长 |
+|------|------|------|------|
+{{#if is_cli_only}}
+| _N/A — {{scope}}_ |
+{{else}}
+| _待补充_ | _待补充_ | _待补充_ | _待补充_ |
+{{/if}}
+
+<!-- Validate: 动效增强可用性而非纯装饰？有reduced-motion方案？ -->
+
+## Step 7: Accessibility
+> **[ALL]** Goal: WCAG AA底线 | Inputs: Step1+3+4
+<!-- Action: label/键盘/role/颜色/焦点/对比度/触控≥44px/sr友好 -->
+
 {{#if accessibility}}
-## Accessibility
 {{#each accessibility}}
 - [ ] {{this}}
 {{/each}}
+{{else}}
+- [ ] 表单有语义化label
+- [ ] 键盘完整可操作
+- [ ] 错误用role="alert"/aria-live
+- [ ] 颜色非唯一信息方式
+- [ ] 焦点可见(focus-visible)
+- [ ] 色盲友好(图标辅助)
+- [ ] 对比度≥WCAG AA
+- [ ] 触控≥44×44px
 {{/if}}
 
+<!-- Validate: 跑过axe/Lighthouse a11y审计？ -->
+
+## Step 8: Design Token Alignment
+> **[HIGH]** Goal: 视觉一致 | Inputs: DESIGN.md(项目级)
+<!-- Action: Token值+来源。主色/错误色/圆角/间距/字体 -->
+
+| Token | 值 | 来源 |
+|-------|-----|------|
+{{#if is_cli_only}}
+| _N/A — {{scope}}_ |
+{{else}}
+| _待补充_ | _待补充_ | _待补充_ |
+{{/if}}
+
+<!-- Validate: 新增组件复用现有Token？与DESIGN.md一致？ -->
+
 {{#if links}}
-## Links
+## References
 {{#each links}}
 - {{this}}
 {{/each}}
 {{/if}}
+
+---
+## Quality Gate
+<!-- Evidence-first: 用实际渲染截图验证，非凭感觉。gstack PD#4: 交互边界9场景全覆盖 -->
+
+- [ ] S1 组件清单完整
+- [ ] S2 组件树清晰
+- [ ] S3 6状态全覆盖
+- [ ] S4 9种交互边界全覆盖 | gstack PD#4
+- [ ] [M+] S5 响应式断点已定义
+- [ ] [M+] S6 动效有规范(含prefers-reduced-motion)
+- [ ] [ALL] S7 WCAG AA已覆盖 | axe/Lighthouse审计通过
+- [ ] [H]  S8 Design Token对齐
