@@ -1,16 +1,9 @@
 # CHANGE: {{title}}
 
-## Motivation
-
-
 ## Scope
-
 - In:
 - Out:
-
-## Risks
-
+- Risks:
 
 ## Success Criteria
-
 - [ ] 
