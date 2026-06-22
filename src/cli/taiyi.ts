@@ -88,7 +88,7 @@ function normalizeCliCommand(raw?: string): string | undefined {
 
 const templatesDir = resolveTemplatesDir(import.meta.url);
 const engine = new WorkflowEngine(taiyiRoot, templatesDir);
-const argv = process.argv.slice(2).filter((a) => a !== "--json" && a !== "--compact");
+const argv = process.argv.slice(2).filter((a: string) => a !== "--json" && a !== "--compact");
 const [rawCmd, ...args] = argv;
 const cmd = normalizeCliCommand(rawCmd);
 
