@@ -511,7 +511,9 @@ export class WorkflowEngine {
       let title: string | undefined;
       try {
         const changeMd = fs.readFileSync(path.join(changeDir, "CHANGE.md"), "utf8");
-        const m = changeMd.match(/^#\s*CHANGE:\s*(.+)$/m);
+        // Robust: handles Chinese colon, bold markup (**CHANGE**), H2, all phase prefixes
+        const m = changeMd.match(/^#{1,2}\s*(?:\*{0,2}(?:CHANGE|DESIGN|REQUIREMENT|UI-DESIGN|TASK|TEST|REVIEW|INTEGRATION)\*{0,2})\s*[:：]\s*(.+)$/m)
+          ?? changeMd.match(/^#{1,2}\s*(.+)$/m);
         title = m?.[1]?.trim();
       } catch {
         title = undefined;
