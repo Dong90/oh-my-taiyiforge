@@ -8,7 +8,6 @@ import {
   resolveScenarioFromConfig,
   type ProjectScenarioId,
 } from "./project-config.js";
-import { resolveTaiyiRoot } from "./paths.js";
 
 export type ScenarioId =
   | "feature"
@@ -18,7 +17,13 @@ export type ScenarioId =
   | "nano"
   | "service"
   | "design-system"
-  | "ci";
+  | "ci"
+  | "refactor"
+  | "hotfix"
+  | "prototype"
+  | "config"
+  | "docs"
+  | "dep-upgrade";
 
 export type ScenarioRunResult = {
   ok: boolean;
@@ -28,15 +33,279 @@ export type ScenarioRunResult = {
   text: string;
 };
 
-const SCENARIO_PROFILE: Record<ScenarioId, ChangeProfile> = {
-  feature: "full",
-  bug: "lite",
-  mvp: "spike",
-  micro: "micro",
-  nano: "nano",
-  service: "api",
-  "design-system": "ui",
-  ci: "full",
+// ── Data-driven playbook definitions ──
+
+interface PlaybookDef {
+  title: string;
+  subtitle: string;
+  profile: ChangeProfile;
+  defaultSlug: string;
+  slugAware: boolean;
+  featureMode?: boolean;
+  conditionalCreate?: boolean;
+  createLabel: string;
+  body: string[];
+}
+
+const SCENARIO_PLAYBOOKS: Record<ScenarioId, PlaybookDef> = {
+  feature: {
+    title: "Taiyi 场景 · 做功能",
+    subtitle: "profile **full**（九阶段）· 用户给标题则先 new，否则用当前 slug",
+    profile: "full",
+    defaultSlug: "",
+    slugAware: true,
+    featureMode: true,
+    createLabel: "1. 创建变更:",
+    body: [
+      "推荐串联:",
+      "  /taiyi:status → /taiyi:explore → /taiyi:write（每阶段）",
+      "  阶段顺序: change → requirement → design → ui-design → task",
+      "  → /taiyi:tdd plan → /taiyi:tdd dev · /taiyi:mode ralph",
+      "  → /taiyi:test smoke · /taiyi:test e2e · /taiyi:test qa",
+      "  → /taiyi:review loop · /taiyi:test security",
+      "  → /taiyi:commit → /taiyi:verify → /taiyi:ship → /taiyi:land",
+      "  → /taiyi:integration → /taiyi:archive",
+      "",
+      "总览: /taiyi:flow · 全自动: /taiyi:mode autopilot（须 --auto）",
+    ],
+  },
+  bug: {
+    title: "Taiyi 场景 · 修 Bug",
+    subtitle: "profile **lite** — 跳过 design / ui-design / task / review",
+    profile: "lite",
+    defaultSlug: "fix-export-bug",
+    slugAware: true,
+    createLabel: "1. 创建 lite 变更:",
+    body: [
+      "lite 路径（每阶段 /taiyi:write + /taiyi:continue）:",
+      "  change → requirement → dev → test → integration",
+      "",
+      "  /taiyi:write · /taiyi:tdd dev · /taiyi:mode ralph",
+      "  /taiyi:test smoke · /taiyi:test e2e（若有 UI 回归）",
+      "  /taiyi:integration · /taiyi:commit · /taiyi:archive",
+      "",
+      "无 REVIEW.md / review-loop；仍须 TEST.md 证据 + integration 交付门",
+    ],
+  },
+  mvp: {
+    title: "Taiyi 场景 · 创业 MVP",
+    subtitle: "profile **spike** — 跳过 requirement / design / ui-design / task / review",
+    profile: "spike",
+    defaultSlug: "mvp-onboarding",
+    slugAware: true,
+    createLabel: "1. 创建 spike 变更:",
+    body: [
+      "spike 路径（四阶段）:",
+      "  change → dev → test → integration",
+      "",
+      "  CHANGE.md 写清动机 + 成功标准（代替 REQUIREMENT）",
+      "  /taiyi:tdd dev · /taiyi:mode ralph · /taiyi:test smoke",
+      "  可设 TAIYI_DELIVERY_GATE=0 本地演示；上线前仍建议 commit + verify",
+      "  设 TAIYI_SKIP_QUALITY_GATE=1 绕过 quality gate 快速通过",
+      "  /taiyi:archive",
+    ],
+  },
+  micro: {
+    title: "Taiyi 场景 · 个人工具",
+    subtitle: "profile **micro** — 跳过 requirement / design / task / test / review",
+    profile: "micro",
+    defaultSlug: "cli-helper",
+    slugAware: true,
+    createLabel: "1. 创建 micro 变更:",
+    body: [
+      "micro 路径（三阶段）:",
+      "  change → dev → integration",
+      "",
+      "  无 TEST.md 门禁；integration 仍写 CHANGELOG.md",
+      "  /taiyi:write change → /taiyi:tdd dev → /taiyi:archive",
+      "  设 TAIYI_SKIP_QUALITY_GATE=1 可绕过 quality gate 快速过关",
+      "  真正零文档选 /taiyi:nano（连 CHANGE.md 都跳过）",
+    ],
+  },
+  nano: {
+    title: "Taiyi 场景 · 极简变更",
+    subtitle: "profile **nano** — 跳过所有文档阶段，dev→integration 直出",
+    profile: "nano",
+    defaultSlug: "hotfix-login",
+    slugAware: true,
+    createLabel: "1. 创建 nano 变更:",
+    body: [
+      "nano 路径（二阶段，无任何文档工件）:",
+      "  dev → integration",
+      "",
+      "  直接从 dev 开始: 写代码 → 创建 .dev-complete",
+      "  integration 阶段写 CHANGELOG.md → /taiyi:archive",
+      "  TAIYI_SKIP_QUALITY_GATE=1 可跳过 quality 门禁",
+      "  适于: 个人脚本、热修复、实验性改动",
+    ],
+  },
+  service: {
+    title: "Taiyi 场景 · 后端服务",
+    subtitle: "profile **api** — 九阶段 minus ui-design；适合 API / 服务长期演进",
+    profile: "api",
+    defaultSlug: "",
+    slugAware: true,
+    conditionalCreate: true,
+    createLabel: "1. 创建 api 变更:",
+    body: [
+      "推荐:",
+      "  requirement + design + task + dev + test + review + integration",
+      "  /taiyi:diagram-c4 · /taiyi:health（medium/high 复杂度）",
+      "  /taiyi:review-loop · /taiyi:test security",
+      "  deliveryVerifyCmd 对齐现有 CI（package.json 或 .taiyi/config.json）",
+      "",
+      "配置示例 .taiyi/config.json:",
+      '  { "scenario": "service", "defaultProfile": "api", "deliveryVerifyCmd": "npm test" }',
+    ],
+  },
+  "design-system": {
+    title: "Taiyi 场景 · 设计系统",
+    subtitle: "profile **ui**（完整九阶段，UI 优先 harness）",
+    profile: "ui",
+    defaultSlug: "",
+    slugAware: true,
+    conditionalCreate: true,
+    createLabel: "1. 创建 ui 变更:",
+    body: [
+      "重点阶段:",
+      "  ui-design → /taiyi:restyle · gstack plan-design-review",
+      "  test → /taiyi:ui-test · playwright · accessibility",
+      "  review → visual QA · /taiyi:gstack design-review",
+      "",
+      'config: { "scenario": "design-system", "defaultProfile": "ui" }',
+    ],
+  },
+  ci: {
+    title: "Taiyi 场景 · 成熟 DevOps",
+    subtitle: "已有 CI/CD 时 — 用 Taiyi 作变更追溯 + verify，不重复跑交付门",
+    profile: "full",
+    defaultSlug: "",
+    slugAware: false,
+    createLabel: "",
+    body: [
+      "1. 配置 .taiyi/config.json:",
+      "   {",
+      '     "scenario": "devops",',
+      '     "deliveryGate": false,',
+      '     "commitTrailers": false,',
+      '     "deliveryVerifyCmd": "npm run ci:verify"',
+      "   }",
+      "",
+      "2. 日常命令:",
+      "   npm run taiyi -- ci verify",
+      "   npm run taiyi -- ci platform",
+      "   有活跃变更时: /taiyi:verify · /taiyi:audit",
+      "",
+      "3. 仍需追溯时开 lite/spike 变更，integration 仅写 CHANGELOG",
+    ],
+  },
+  refactor: {
+    title: "Taiyi 场景 · 代码重构",
+    subtitle: "profile **lite** — 不改行为，只改结构；跳过 design / ui-design / task / review",
+    profile: "lite",
+    defaultSlug: "refactor-auth",
+    slugAware: true,
+    createLabel: "1. 创建 lite 变更:",
+    body: [
+      "lite 路径（每阶段 /taiyi:write + /taiyi:continue）:",
+      "  change → requirement → dev → test → integration",
+      "",
+      "  重构原则: 不做行为改动，只改进内部结构",
+      "  /taiyi:write · /taiyi:tdd dev（测试覆盖先行）· /taiyi:mode ralph",
+      "  /taiyi:test smoke · /taiyi:test e2e（回归）",
+      "  /taiyi:integration · /taiyi:commit · /taiyi:archive",
+      "",
+      "无 REVIEW.md / review-loop；仍须 TEST.md 证据 + integration 交付门",
+    ],
+  },
+  hotfix: {
+    title: "Taiyi 场景 · 紧急热修复",
+    subtitle: "profile **nano** — 零文档直出，dev→integration 直通生产",
+    profile: "nano",
+    defaultSlug: "hotfix-payment",
+    slugAware: true,
+    createLabel: "1. 创建 nano 变更:",
+    body: [
+      "nano 路径（二阶段，无任何文档工件）:",
+      "  dev → integration",
+      "",
+      "  直接从 dev 开始: 写修复代码 → 创建 .dev-complete",
+      "  integration 阶段写 CHANGELOG.md → /taiyi:archive",
+      "  TAIYI_SKIP_QUALITY_GATE=1 可跳过 quality 门禁加速上线",
+      "  适于: 生产热修复、紧急阻断、安全补丁",
+    ],
+  },
+  prototype: {
+    title: "Taiyi 场景 · 快速原型",
+    subtitle: "profile **spike** — 跳过 requirement / design / ui-design / task / review；试错优先",
+    profile: "spike",
+    defaultSlug: "proto-new-idea",
+    slugAware: true,
+    createLabel: "1. 创建 spike 变更:",
+    body: [
+      "spike 路径（四阶段）:",
+      "  change → dev → test → integration",
+      "",
+      "  CHANGE.md 写清探索目标 + 成功标准（代替 REQUIREMENT）",
+      "  /taiyi:tdd dev · /taiyi:mode ralph · /taiyi:test smoke",
+      "  可设 TAIYI_DELIVERY_GATE=0 本地演示；上线前仍建议 commit + verify",
+      "  设 TAIYI_SKIP_QUALITY_GATE=1 绕过 quality gate 快速通过",
+      "  适于: 新想法验证、技术调研、POC 原型",
+      "  /taiyi:archive",
+    ],
+  },
+  config: {
+    title: "Taiyi 场景 · 配置变更",
+    subtitle: "profile **micro** — 跳过 requirement / design / task / test / review；只改配置，不动逻辑",
+    profile: "micro",
+    defaultSlug: "update-env",
+    slugAware: true,
+    createLabel: "1. 创建 micro 变更:",
+    body: [
+      "micro 路径（三阶段）:",
+      "  change → dev → integration",
+      "",
+      "  无 TEST.md 门禁；integration 仍写 CHANGELOG.md",
+      "  /taiyi:write change → /taiyi:tdd dev → /taiyi:archive",
+      "  设 TAIYI_SKIP_QUALITY_GATE=1 可绕过 quality gate 快速过关",
+      "  适于: 环境变量、CI/CD 配置、部署参数、feature toggle",
+    ],
+  },
+  docs: {
+    title: "Taiyi 场景 · 文档更新",
+    subtitle: "profile **nano** — 只改文档不改代码；dev→integration 直出",
+    profile: "nano",
+    defaultSlug: "update-readme",
+    slugAware: true,
+    createLabel: "1. 创建 nano 变更:",
+    body: [
+      "nano 路径（二阶段，无任何文档工件）:",
+      "  dev → integration",
+      "",
+      "  直接从 dev 开始: 写文档 → 创建 .dev-complete",
+      "  integration 阶段写 CHANGELOG.md → /taiyi:archive",
+      "  TAIYI_SKIP_QUALITY_GATE=1 可跳过 quality 门禁",
+      "  适于: README、API 文档、注释更新、CHANGELOG 补写",
+    ],
+  },
+  "dep-upgrade": {
+    title: "Taiyi 场景 · 依赖升级",
+    subtitle: "profile **micro** — 只升级依赖不改业务逻辑；跳过 requirement / design / task / test / review",
+    profile: "micro",
+    defaultSlug: "bump-deps",
+    slugAware: true,
+    createLabel: "1. 创建 micro 变更:",
+    body: [
+      "micro 路径（三阶段）:",
+      "  change → dev → integration",
+      "",
+      "  无 TEST.md 门禁；integration 仍写 CHANGELOG.md",
+      "  /taiyi:write change → /taiyi:tdd dev → /taiyi:archive",
+      "  建议先用 npx taze / npm outdated 扫描可升级项",
+      "  设 TAIYI_SKIP_QUALITY_GATE=1 跳过 quality gate 加速批量升级",
+      "  适于: 安全补丁、semver-minor/patch 升级、锁定版本",
+    ],
+  },
 };
 
 function scenarioHeader(title: string, subtitle: string): string[] {
@@ -82,6 +351,108 @@ function resolveWorkspaceFromTaiyiRoot(taiyiRoot: string): string {
   return path.dirname(taiyiRoot);
 }
 
+// ── Unified render function (single source of truth) ──
+
+export function renderScenarioPlaybook(
+  engine: WorkflowEngine,
+  taiyiRoot: string,
+  scenario: ScenarioId,
+  titleOrSlug?: string,
+): ScenarioRunResult {
+  const pb = SCENARIO_PLAYBOOKS[scenario];
+  if (!pb) throw new Error(`Unknown scenario: ${scenario}`);
+
+  // ci: slugless scenario, config-aware
+  if (!pb.slugAware) {
+    const workspaceDir = resolveWorkspaceFromTaiyiRoot(taiyiRoot);
+    const cfg = loadProjectConfig(workspaceDir);
+    const lines = scenarioHeader(pb.title, pb.subtitle);
+    for (const l of pb.body) lines.push(l);
+    if (cfg.deliveryGate === false) {
+      lines.push("");
+      lines.push("✓ 当前项目 deliveryGate 已关闭");
+    }
+    return { ok: true, scenario, profile: pb.profile, text: lines.join("\n") };
+  }
+
+  // Existing slug → short status line
+  const existing = resolveScenarioSlug(engine, titleOrSlug);
+  if (existing.hasState && existing.slug) {
+    return {
+      ok: true,
+      scenario,
+      slug: existing.slug,
+      profile: pb.profile,
+      text: shortScenarioLine(scenario, existing.slug, pb.profile),
+    };
+  }
+
+  const lines = scenarioHeader(pb.title, pb.subtitle);
+  const explicitSlug = titleOrSlug?.trim();
+  const looksLikeSlug = explicitSlug && /^[a-z0-9][a-z0-9-]*$/i.test(explicitSlug);
+
+  // micro: config advice before create hint
+  if (scenario === "micro") {
+    const workspaceDir = resolveWorkspaceFromTaiyiRoot(taiyiRoot);
+    const cfg = loadProjectConfig(workspaceDir);
+    if (cfg.deliveryGate === false) {
+      lines.push("✓ 项目已关闭 deliveryGate（.taiyi/config.json）");
+      lines.push("");
+    } else {
+      lines.push("建议 .taiyi/config.json:");
+      lines.push('  { "defaultProfile": "micro", "deliveryGate": false, "commitTrailers": false }');
+      lines.push("");
+    }
+  }
+
+  // feature mode: check active slug when no input
+  if (pb.featureMode && !explicitSlug) {
+    const resolved = resolveActiveSlug(taiyiRoot);
+    if (!resolved.ok) {
+      lines.push("无活跃变更 → 先:");
+      lines.push('  /taiyi:new <功能标题>   例: /taiyi:new 用户登录');
+      return { ok: false, scenario, profile: pb.profile, text: lines.join("\n") };
+    }
+    lines.push(`当前 slug: **${resolved.slug}**`);
+    lines.push("");
+  }
+
+  // feature mode: create hint when explicit slug provided and no state
+  if (pb.featureMode && explicitSlug && !engine.getState(explicitSlug)) {
+    lines.push(pb.createLabel);
+    appendCreateHint(lines, explicitSlug, looksLikeSlug, pb.profile);
+  }
+
+  // standard mode (bug/mvp/micro/nano): create hint
+  if (!pb.featureMode && !pb.conditionalCreate) {
+    const slug = explicitSlug || pb.defaultSlug;
+    if (!explicitSlug || !engine.getState(slug)) {
+      lines.push(pb.createLabel);
+      appendCreateHint(lines, slug, looksLikeSlug, pb.profile);
+      if (scenario === "mvp") {
+        lines.push('   或在 .taiyi/config.json 设 `"scenario": "mvp"` 作为默认');
+        lines.push("");
+      }
+    }
+  }
+
+  // conditional mode (service/design-system): create hint only when explicit slug given
+  if (pb.conditionalCreate && explicitSlug && !engine.getState(explicitSlug)) {
+    lines.push(pb.createLabel);
+    appendCreateHint(lines, explicitSlug, looksLikeSlug, pb.profile);
+  }
+
+  for (const l of pb.body) lines.push(l);
+
+  return {
+    ok: true,
+    scenario,
+    slug: explicitSlug && engine.getState(explicitSlug) ? explicitSlug : undefined,
+    profile: pb.profile,
+    text: lines.join("\n"),
+  };
+}
+
 export function runFlowScenario(
   engine: WorkflowEngine,
   taiyiRoot: string,
@@ -103,6 +474,16 @@ export function runFlowScenario(
     ui: "design-system",
     ci: "ci",
     devops: "ci",
+    refactor: "refactor",
+    hotfix: "hotfix",
+    prototype: "prototype",
+    proto: "prototype",
+    config: "config",
+    docs: "docs",
+    documentation: "docs",
+    "dep-upgrade": "dep-upgrade",
+    upgrade: "dep-upgrade",
+    deps: "dep-upgrade",
   };
   if (normalized && aliases[normalized]) {
     return runScenario(engine, taiyiRoot, aliases[normalized]!);
@@ -121,8 +502,14 @@ export function runFlowScenario(
   lines.push("| 后端 / 服务长期维护 | `/taiyi:service` | api | 九阶段 minus UI 设计 |");
   lines.push("| 设计系统 / 组件库 | `/taiyi:design-system` | ui | UI-DESIGN + restyle + review |");
   lines.push("| 创业 MVP | `/taiyi:mvp` | spike | change→dev→test→integration |");
+  lines.push("| 快速原型 | `/taiyi:prototype` | spike | change→dev→test→integration，试错优先 |");
+  lines.push("| 代码重构 | `/taiyi:refactor` | lite | 不改行为，只改结构 |");
   lines.push("| 个人工具 | `/taiyi:micro` | micro | change→dev→integration |");
+  lines.push("| 配置变更 | `/taiyi:config` | micro | change→dev→integration，只改配置 |");
+  lines.push("| 依赖升级 | `/taiyi:dep-upgrade` | micro | change→dev→integration，只升依赖 |");
   lines.push("| 极简变更（零文档） | `/taiyi:nano` | nano | dev→integration 直出，无任何文档 |");
+  lines.push("| 紧急热修复 | `/taiyi:hotfix` | nano | dev→integration 直出，生产阻断 |");
+  lines.push("| 文档更新 | `/taiyi:docs` | nano | dev→integration 直出，只改文档 |");
   lines.push("| 修 Bug | `/taiyi:bug` | lite | 五阶段 lite |");
   lines.push("| 大功能 | `/taiyi:feature` | full | 完整九阶段 |");
   lines.push("| 成熟 DevOps | `/taiyi:flow devops` | — | 仅 CI verify + 配置交付门 |");
@@ -140,26 +527,7 @@ export function runScenario(
   scenario: ScenarioId,
   titleOrSlug?: string,
 ): ScenarioRunResult {
-  switch (scenario) {
-    case "feature":
-      return runFeatureScenario(engine, taiyiRoot, titleOrSlug);
-    case "bug":
-      return runBugScenario(engine, taiyiRoot, titleOrSlug);
-    case "mvp":
-      return runMvpScenario(engine, taiyiRoot, titleOrSlug);
-    case "micro":
-      return runMicroScenario(engine, taiyiRoot, titleOrSlug);
-    case "nano":
-      return runNanoScenario(engine, taiyiRoot, titleOrSlug);
-    case "service":
-      return runServiceScenario(engine, taiyiRoot, titleOrSlug);
-    case "design-system":
-      return runDesignSystemScenario(engine, taiyiRoot, titleOrSlug);
-    case "ci":
-      return runCiScenario(engine, taiyiRoot, titleOrSlug);
-    default:
-      return runFeatureScenario(engine, taiyiRoot, titleOrSlug);
-  }
+  return renderScenarioPlaybook(engine, taiyiRoot, scenario, titleOrSlug);
 }
 
 export function runFeatureScenario(
@@ -167,62 +535,7 @@ export function runFeatureScenario(
   taiyiRoot: string,
   titleOrSlug?: string,
 ): ScenarioRunResult {
-  const profile = SCENARIO_PROFILE.feature;
-  const existing = resolveScenarioSlug(engine, titleOrSlug);
-  if (existing.hasState && existing.slug) {
-    return {
-      ok: true,
-      scenario: "feature",
-      slug: existing.slug,
-      profile,
-      text: shortScenarioLine("feature", existing.slug, profile),
-    };
-  }
-
-  const lines = scenarioHeader(
-    "Taiyi 场景 · 做功能",
-    "profile **full**（九阶段）· 用户给标题则先 new，否则用当前 slug",
-  );
-
-  const explicitSlug = titleOrSlug?.trim();
-  const looksLikeSlug = explicitSlug && /^[a-z0-9][a-z0-9-]*$/i.test(explicitSlug);
-  const hasState = looksLikeSlug && engine.getState(explicitSlug);
-
-  if (!hasState && explicitSlug) {
-    lines.push("1. 创建变更:");
-    appendCreateHint(lines, explicitSlug, looksLikeSlug, profile);
-  } else if (!explicitSlug) {
-    const resolved = resolveActiveSlug(taiyiRoot);
-    if (!resolved.ok) {
-      lines.push("无活跃变更 → 先:");
-      lines.push('  /taiyi:new <功能标题>   例: /taiyi:new 用户登录');
-      return { ok: false, scenario: "feature", profile, text: lines.join("\n") };
-    }
-    lines.push(`当前 slug: **${resolved.slug}**`);
-    lines.push("");
-  } else {
-    lines.push(`slug: **${explicitSlug}**`);
-    lines.push("");
-  }
-
-  lines.push("推荐串联:");
-  lines.push("  /taiyi:status → /taiyi:explore → /taiyi:write（每阶段）");
-  lines.push("  阶段顺序: change → requirement → design → ui-design → task");
-  lines.push("  → /taiyi:tdd plan → /taiyi:tdd dev · /taiyi:mode ralph");
-  lines.push("  → /taiyi:test smoke · /taiyi:test e2e · /taiyi:test qa");
-  lines.push("  → /taiyi:review loop · /taiyi:test security");
-  lines.push("  → /taiyi:commit → /taiyi:verify → /taiyi:ship → /taiyi:land");
-  lines.push("  → /taiyi:integration → /taiyi:archive");
-  lines.push("");
-  lines.push("总览: /taiyi:flow · 全自动: /taiyi:mode autopilot（须 --auto）");
-
-  return {
-    ok: true,
-    scenario: "feature",
-    slug: hasState ? explicitSlug : undefined,
-    profile,
-    text: lines.join("\n"),
-  };
+  return renderScenarioPlaybook(engine, taiyiRoot, "feature", titleOrSlug);
 }
 
 export function runBugScenario(
@@ -230,51 +543,7 @@ export function runBugScenario(
   taiyiRoot: string,
   titleOrSlug?: string,
 ): ScenarioRunResult {
-  const profile = SCENARIO_PROFILE.bug;
-  const existing = resolveScenarioSlug(engine, titleOrSlug);
-  if (existing.hasState && existing.slug) {
-    return {
-      ok: true,
-      scenario: "bug",
-      slug: existing.slug,
-      profile,
-      text: shortScenarioLine("bug", existing.slug, profile),
-    };
-  }
-
-  const lines = scenarioHeader(
-    "Taiyi 场景 · 修 Bug",
-    "profile **lite** — 跳过 design / ui-design / task / review",
-  );
-
-  const explicitSlug = titleOrSlug?.trim();
-  const looksLikeSlug = explicitSlug && /^[a-z0-9][a-z0-9-]*$/i.test(explicitSlug);
-  const hasState = looksLikeSlug && engine.getState(explicitSlug);
-
-  if (!hasState) {
-    lines.push("1. 创建 lite 变更:");
-    appendCreateHint(lines, explicitSlug ?? "fix-export-bug", looksLikeSlug, profile);
-  } else {
-    lines.push(`slug: **${explicitSlug}**（确认 profile=lite）`);
-    lines.push("");
-  }
-
-  lines.push("lite 路径（每阶段 /taiyi:write + /taiyi:continue）:");
-  lines.push("  change → requirement → dev → test → integration");
-  lines.push("");
-  lines.push("  /taiyi:write · /taiyi:tdd dev · /taiyi:mode ralph");
-  lines.push("  /taiyi:test smoke · /taiyi:test e2e（若有 UI 回归）");
-  lines.push("  /taiyi:integration · /taiyi:commit · /taiyi:archive");
-  lines.push("");
-  lines.push("无 REVIEW.md / review-loop；仍须 TEST.md 证据 + integration 交付门");
-
-  return {
-    ok: true,
-    scenario: "bug",
-    slug: hasState ? explicitSlug : undefined,
-    profile,
-    text: lines.join("\n"),
-  };
+  return renderScenarioPlaybook(engine, taiyiRoot, "bug", titleOrSlug);
 }
 
 export function runMvpScenario(
@@ -282,50 +551,7 @@ export function runMvpScenario(
   taiyiRoot: string,
   titleOrSlug?: string,
 ): ScenarioRunResult {
-  const profile = SCENARIO_PROFILE.mvp;
-  const existing = resolveScenarioSlug(engine, titleOrSlug);
-  if (existing.hasState && existing.slug) {
-    return {
-      ok: true,
-      scenario: "mvp",
-      slug: existing.slug,
-      profile,
-      text: shortScenarioLine("mvp", existing.slug, profile),
-    };
-  }
-
-  const lines = scenarioHeader(
-    "Taiyi 场景 · 创业 MVP",
-    "profile **spike** — 跳过 requirement / design / ui-design / task / review",
-  );
-
-  const explicitSlug = titleOrSlug?.trim();
-  const looksLikeSlug = explicitSlug && /^[a-z0-9][a-z0-9-]*$/i.test(explicitSlug);
-  const hasState = looksLikeSlug && engine.getState(explicitSlug);
-
-  if (!hasState) {
-    lines.push("1. 创建 spike 变更:");
-    appendCreateHint(lines, explicitSlug ?? "mvp-onboarding", looksLikeSlug, profile);
-    lines.push('   或在 .taiyi/config.json 设 `"scenario": "mvp"` 作为默认');
-    lines.push("");
-  }
-
-  lines.push("spike 路径（四阶段）:");
-  lines.push("  change → dev → test → integration");
-  lines.push("");
-  lines.push("  CHANGE.md 写清动机 + 成功标准（代替 REQUIREMENT）");
-  lines.push("  /taiyi:tdd dev · /taiyi:mode ralph · /taiyi:test smoke");
-  lines.push("  可设 TAIYI_DELIVERY_GATE=0 本地演示；上线前仍建议 commit + verify");
-  lines.push("  设 TAIYI_SKIP_QUALITY_GATE=1 绕过 quality gate 快速通过");
-  lines.push("  /taiyi:archive");
-
-  return {
-    ok: true,
-    scenario: "mvp",
-    slug: hasState ? explicitSlug : undefined,
-    profile,
-    text: lines.join("\n"),
-  };
+  return renderScenarioPlaybook(engine, taiyiRoot, "mvp", titleOrSlug);
 }
 
 export function runMicroScenario(
@@ -333,60 +559,7 @@ export function runMicroScenario(
   taiyiRoot: string,
   titleOrSlug?: string,
 ): ScenarioRunResult {
-  const profile = SCENARIO_PROFILE.micro;
-  const existing = resolveScenarioSlug(engine, titleOrSlug);
-  if (existing.hasState && existing.slug) {
-    return {
-      ok: true,
-      scenario: "micro",
-      slug: existing.slug,
-      profile,
-      text: shortScenarioLine("micro", existing.slug, profile),
-    };
-  }
-
-  const workspaceDir = resolveWorkspaceFromTaiyiRoot(taiyiRoot);
-  const cfg = loadProjectConfig(workspaceDir);
-
-  const lines = scenarioHeader(
-    "Taiyi 场景 · 个人工具",
-    "profile **micro** — 跳过 requirement / design / task / test / review",
-  );
-
-  if (cfg.deliveryGate === false) {
-    lines.push("✓ 项目已关闭 deliveryGate（.taiyi/config.json）");
-    lines.push("");
-  } else {
-    lines.push("建议 .taiyi/config.json:");
-    lines.push('  { "defaultProfile": "micro", "deliveryGate": false, "commitTrailers": false }');
-    lines.push("");
-  }
-
-  const explicitSlug = titleOrSlug?.trim();
-  const looksLikeSlug = explicitSlug && /^[a-z0-9][a-z0-9-]*$/i.test(explicitSlug);
-  const hasState = looksLikeSlug && engine.getState(explicitSlug);
-
-  if (!hasState) {
-    lines.push("1. 创建 micro 变更:");
-    appendCreateHint(lines, explicitSlug ?? "cli-helper", looksLikeSlug, profile);
-    lines.push("");
-  }
-
-  lines.push("micro 路径（三阶段）:");
-  lines.push("  change → dev → integration");
-  lines.push("");
-  lines.push("  无 TEST.md 门禁；integration 仍写 CHANGELOG.md");
-  lines.push("  /taiyi:write change → /taiyi:tdd dev → /taiyi:archive");
-  lines.push("  设 TAIYI_SKIP_QUALITY_GATE=1 可绕过 quality gate 快速过关");
-  lines.push("  真正零文档选 /taiyi:nano（连 CHANGE.md 都跳过）");
-
-  return {
-    ok: true,
-    scenario: "micro",
-    slug: hasState ? explicitSlug : undefined,
-    profile,
-    text: lines.join("\n"),
-  };
+  return renderScenarioPlaybook(engine, taiyiRoot, "micro", titleOrSlug);
 }
 
 export function runNanoScenario(
@@ -394,48 +567,7 @@ export function runNanoScenario(
   taiyiRoot: string,
   titleOrSlug?: string,
 ): ScenarioRunResult {
-  const profile = SCENARIO_PROFILE.nano;
-  const existing = resolveScenarioSlug(engine, titleOrSlug);
-  if (existing.hasState && existing.slug) {
-    return {
-      ok: true,
-      scenario: "nano",
-      slug: existing.slug,
-      profile,
-      text: shortScenarioLine("nano", existing.slug, profile),
-    };
-  }
-
-  const lines = scenarioHeader(
-    "Taiyi 场景 · 极简变更",
-    "profile **nano** — 跳过所有文档阶段，dev→integration 直出",
-  );
-
-  const explicitSlug = titleOrSlug?.trim();
-  const looksLikeSlug = explicitSlug && /^[a-z0-9][a-z0-9-]*$/i.test(explicitSlug);
-  const hasState = looksLikeSlug && engine.getState(explicitSlug);
-
-  if (!hasState) {
-    lines.push("1. 创建 nano 变更:");
-    appendCreateHint(lines, explicitSlug ?? "hotfix-login", looksLikeSlug, profile);
-    lines.push("");
-  }
-
-  lines.push("nano 路径（二阶段，无任何文档工件）:");
-  lines.push("  dev → integration");
-  lines.push("");
-  lines.push("  直接从 dev 开始: 写代码 → 创建 .dev-complete");
-  lines.push("  integration 阶段写 CHANGELOG.md → /taiyi:archive");
-  lines.push("  TAIYI_SKIP_QUALITY_GATE=1 可跳过 quality 门禁");
-  lines.push("  适于: 个人脚本、热修复、实验性改动");
-
-  return {
-    ok: true,
-    scenario: "nano",
-    slug: hasState ? explicitSlug : undefined,
-    profile,
-    text: lines.join("\n"),
-  };
+  return renderScenarioPlaybook(engine, taiyiRoot, "nano", titleOrSlug);
 }
 
 export function runServiceScenario(
@@ -443,46 +575,7 @@ export function runServiceScenario(
   taiyiRoot: string,
   titleOrSlug?: string,
 ): ScenarioRunResult {
-  const profile = SCENARIO_PROFILE.service;
-  const existing = resolveScenarioSlug(engine, titleOrSlug);
-  if (existing.hasState && existing.slug) {
-    return {
-      ok: true,
-      scenario: "service",
-      slug: existing.slug,
-      profile,
-      text: shortScenarioLine("service", existing.slug, profile),
-    };
-  }
-
-  const lines = scenarioHeader(
-    "Taiyi 场景 · 后端服务",
-    "profile **api** — 九阶段 minus ui-design；适合 API / 服务长期演进",
-  );
-
-  const explicitSlug = titleOrSlug?.trim();
-  const looksLikeSlug = explicitSlug && /^[a-z0-9][a-z0-9-]*$/i.test(explicitSlug);
-  if (explicitSlug && !engine.getState(explicitSlug)) {
-    lines.push("1. 创建 api 变更:");
-    appendCreateHint(lines, explicitSlug, looksLikeSlug, profile);
-  }
-
-  lines.push("推荐:");
-  lines.push("  requirement + design + task + dev + test + review + integration");
-  lines.push("  /taiyi:diagram-c4 · /taiyi:health（medium/high 复杂度）");
-  lines.push("  /taiyi:review-loop · /taiyi:test security");
-  lines.push("  deliveryVerifyCmd 对齐现有 CI（package.json 或 .taiyi/config.json）");
-  lines.push("");
-  lines.push("配置示例 .taiyi/config.json:");
-  lines.push('  { "scenario": "service", "defaultProfile": "api", "deliveryVerifyCmd": "npm test" }');
-
-  return {
-    ok: true,
-    scenario: "service",
-    slug: explicitSlug && engine.getState(explicitSlug) ? explicitSlug : undefined,
-    profile,
-    text: lines.join("\n"),
-  };
+  return renderScenarioPlaybook(engine, taiyiRoot, "service", titleOrSlug);
 }
 
 export function runDesignSystemScenario(
@@ -490,84 +583,63 @@ export function runDesignSystemScenario(
   taiyiRoot: string,
   titleOrSlug?: string,
 ): ScenarioRunResult {
-  const profile = SCENARIO_PROFILE["design-system"];
-  const existing = resolveScenarioSlug(engine, titleOrSlug);
-  if (existing.hasState && existing.slug) {
-    return {
-      ok: true,
-      scenario: "design-system",
-      slug: existing.slug,
-      profile,
-      text: shortScenarioLine("design-system", existing.slug, profile),
-    };
-  }
-
-  const lines = scenarioHeader(
-    "Taiyi 场景 · 设计系统",
-    "profile **ui**（完整九阶段，UI 优先 harness）",
-  );
-
-  const explicitSlug = titleOrSlug?.trim();
-  const looksLikeSlug = explicitSlug && /^[a-z0-9][a-z0-9-]*$/i.test(explicitSlug);
-  if (explicitSlug && !engine.getState(explicitSlug)) {
-    lines.push("1. 创建 ui 变更:");
-    appendCreateHint(lines, explicitSlug, looksLikeSlug, profile);
-  }
-
-  lines.push("重点阶段:");
-  lines.push("  ui-design → /taiyi:restyle · gstack plan-design-review");
-  lines.push("  test → /taiyi:ui-test · playwright · accessibility");
-  lines.push("  review → visual QA · /taiyi:gstack design-review");
-  lines.push("");
-  lines.push('config: { "scenario": "design-system", "defaultProfile": "ui" }');
-
-  return {
-    ok: true,
-    scenario: "design-system",
-    slug: explicitSlug && engine.getState(explicitSlug) ? explicitSlug : undefined,
-    profile,
-    text: lines.join("\n"),
-  };
+  return renderScenarioPlaybook(engine, taiyiRoot, "design-system", titleOrSlug);
 }
 
 export function runCiScenario(
   engine: WorkflowEngine,
   taiyiRoot: string,
-  _titleOrSlug?: string,
+  titleOrSlug?: string,
 ): ScenarioRunResult {
-  const workspaceDir = resolveWorkspaceFromTaiyiRoot(taiyiRoot);
-  const cfg = loadProjectConfig(workspaceDir);
+  return renderScenarioPlaybook(engine, taiyiRoot, "ci", titleOrSlug);
+}
 
-  const lines = scenarioHeader(
-    "Taiyi 场景 · 成熟 DevOps",
-    "已有 CI/CD 时 — 用 Taiyi 作变更追溯 + verify，不重复跑交付门",
-  );
+export function runRefactorScenario(
+  engine: WorkflowEngine,
+  taiyiRoot: string,
+  titleOrSlug?: string,
+): ScenarioRunResult {
+  return renderScenarioPlaybook(engine, taiyiRoot, "refactor", titleOrSlug);
+}
 
-  lines.push("1. 配置 .taiyi/config.json:");
-  lines.push("   {");
-  lines.push('     "scenario": "devops",');
-  lines.push('     "deliveryGate": false,');
-  lines.push('     "commitTrailers": false,');
-  lines.push('     "deliveryVerifyCmd": "npm run ci:verify"');
-  lines.push("   }");
-  lines.push("");
-  lines.push("2. 日常命令:");
-  lines.push("   npm run taiyi -- ci verify");
-  lines.push("   npm run taiyi -- ci platform");
-  lines.push("   有活跃变更时: /taiyi:verify · /taiyi:audit");
-  lines.push("");
-  lines.push("3. 仍需追溯时开 lite/spike 变更，integration 仅写 CHANGELOG");
-  if (cfg.deliveryGate === false) {
-    lines.push("");
-    lines.push("✓ 当前项目 deliveryGate 已关闭");
-  }
+export function runHotfixScenario(
+  engine: WorkflowEngine,
+  taiyiRoot: string,
+  titleOrSlug?: string,
+): ScenarioRunResult {
+  return renderScenarioPlaybook(engine, taiyiRoot, "hotfix", titleOrSlug);
+}
 
-  return {
-    ok: true,
-    scenario: "ci",
-    profile: "full",
-    text: lines.join("\n"),
-  };
+export function runPrototypeScenario(
+  engine: WorkflowEngine,
+  taiyiRoot: string,
+  titleOrSlug?: string,
+): ScenarioRunResult {
+  return renderScenarioPlaybook(engine, taiyiRoot, "prototype", titleOrSlug);
+}
+
+export function runConfigScenario(
+  engine: WorkflowEngine,
+  taiyiRoot: string,
+  titleOrSlug?: string,
+): ScenarioRunResult {
+  return renderScenarioPlaybook(engine, taiyiRoot, "config", titleOrSlug);
+}
+
+export function runDocsScenario(
+  engine: WorkflowEngine,
+  taiyiRoot: string,
+  titleOrSlug?: string,
+): ScenarioRunResult {
+  return renderScenarioPlaybook(engine, taiyiRoot, "docs", titleOrSlug);
+}
+
+export function runDepUpgradeScenario(
+  engine: WorkflowEngine,
+  taiyiRoot: string,
+  titleOrSlug?: string,
+): ScenarioRunResult {
+  return renderScenarioPlaybook(engine, taiyiRoot, "dep-upgrade", titleOrSlug);
 }
 
 export function runConfiguredScenario(
