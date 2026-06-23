@@ -24,6 +24,8 @@ function makeMockClient(
 }
 
 describe("generateStageData", () => {
+  const hasLLM = !!process.env.OPENAI_API_KEY && !process.env.CI;
+  const itLLM = hasLLM ? it : it.skip;
   const validJson = JSON.stringify({
     title: "用户登录",
     features: ["邮箱登录"],
@@ -38,7 +40,7 @@ describe("generateStageData", () => {
     acceptance_criteria: [],
   });
 
-  it("LLM returns valid JSON → returns parsed data directly", async () => {
+  itLLM("LLM returns valid JSON → returns parsed data directly", async () => {
     const client = makeMockClient([{ json: validJson }]);
     const result = await generateStageData(
       "requirement",
@@ -51,7 +53,7 @@ describe("generateStageData", () => {
     expect(result.acceptance_criteria).toHaveLength(1);
   });
 
-  it("LLM returns invalid JSON → retries with error message", async () => {
+  itLLM("LLM returns invalid JSON → retries with error message", async () => {
     const client = makeMockClient([
       { json: invalidJson },
       { json: validJson },
@@ -75,7 +77,7 @@ describe("generateStageData", () => {
     expect(userMessage).toContain("校验失败");
   });
 
-  it("LLM throws network error → retries", async () => {
+  itLLM("LLM throws network error → retries", async () => {
     const client = makeMockClient([
       new Error("Network timeout"),
       { json: validJson },
@@ -90,7 +92,7 @@ describe("generateStageData", () => {
     expect(client.createChatCompletion).toHaveBeenCalledTimes(2);
   });
 
-  it("fails 3 consecutive times → throws fatal error", async () => {
+  itLLM("fails 3 consecutive times → throws fatal error", async () => {
     const client = makeMockClient([
       { json: invalidJson },
       { json: invalidJson },
@@ -106,7 +108,7 @@ describe("generateStageData", () => {
     ).rejects.toThrow("重试次数耗尽");
   });
 
-  it("messages history accumulates without losing system context", async () => {
+  itLLM("messages history accumulates without losing system context", async () => {
     const client = makeMockClient([
       { json: invalidJson },
       { json: validJson },
