@@ -39,8 +39,8 @@ export function buildWorkers(task: TaskSpec, phase: PhaseId): DispatchWorker[] {
   return task.slices.slice(0, MAX_PARALLEL_AGENTS).map((s, i) => ({
     id: `w${i + 1}`,
     role: DEV_ROLES[i % DEV_ROLES.length],
-    label: s.label,
-    task: s.description ?? s.label,
+    label: s.label ?? s.id,
+    task: s.description ?? s.label ?? s.id,
     testCommand: s.test_command,
   }));
 }
