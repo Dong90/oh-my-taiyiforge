@@ -9,3 +9,6 @@ coverage/
 .cursor/
 garden-gpt-image-2/
 garden-output/
+
+# OhMyOpenCode session state
+.omc/state/
