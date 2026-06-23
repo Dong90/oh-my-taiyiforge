@@ -1,20 +1,34 @@
 #!/usr/bin/env bash
-# PITFALLS 扫描器 —— 两层防线：ast-grep (自动代码模式) + grep (per-module)
-# 用法: .pitfalls/scan.sh [--ci] [--module src/core]
+# PITFALLS 扫描器 —— 三层防线：ast-grep (自动代码模式) + grep (per-module) + TF-IDF 语义搜索
+# 用法: .pitfalls/scan.sh [--ci] [--module src/core] [--search "查询描述"]
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 CI_MODE=false
 TARGET_MODULE=""
+SEARCH_QUERY=""
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --ci) CI_MODE=true; shift ;;
     --module) TARGET_MODULE="$2"; shift 2 ;;
+    --search) SEARCH_QUERY="$2"; shift 2 ;;
     *) shift ;;
   esac
 done
+
+# ── Layer 3: TF-IDF 语义搜索（可选） ──
+if [[ -n "$SEARCH_QUERY" ]]; then
+  SEARCH_SCRIPT="$SCRIPT_DIR/search.mjs"
+  if [[ -f "$SEARCH_SCRIPT" ]]; then
+    echo "── Layer 3: TF-IDF Semantic Search ──"
+    node "$SEARCH_SCRIPT" "$SEARCH_QUERY"
+    exit 0
+  else
+    echo "⚠ search.mjs not found, skipping semantic search"
+  fi
+fi
 
 ISSUES=0
 RED='\033[0;31m'
@@ -88,6 +102,7 @@ if [[ $ISSUES -eq 0 ]]; then
   echo ""
   echo "Next: 人工检查触达模块的 PITFALLS.md 条目（grep 关键词搜索）。"
   echo "  示例: grep -r '关键词' src/*/PITFALLS.md .pitfalls/GLOBAL.md"
+  echo "  语义: .pitfalls/scan.sh --search \"你的查询描述\"  # TF-IDF 语义搜索"
 else
   echo -e "${RED}✗ ${ISSUES} pattern issue(s) found.${NC}"
   if $CI_MODE; then
