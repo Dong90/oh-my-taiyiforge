@@ -12,3 +12,40 @@ garden-output/
 
 # OhMyOpenCode session state
 .omc/state/
+.omo/run-continuation/
+
+# Stale/unreferenced docs (kept locally, removed from git)
+docs/diagrams/visual/taiyiforge-architecture-ai-4k.png
+docs/diagrams/visual/taiyiforge-architecture-ai-v023-full-4k.png
+docs/diagrams/visual/taiyiforge-architecture-ai-v023-full-4k-zh-v2.png
+docs/diagrams/visual/taiyiforge-architecture-ai.png
+docs/diagrams/visual/taiyiforge-architecture-ai-v023-full-4k1.png
+docs/diagrams/visual/taiyiforge-architecture-ai-v023-full-4k-en.png
+docs/diagrams/architecture.md
+docs/diagrams/flow-auto-orchestrator.md
+docs/diagrams/flow-continue-gates.md
+docs/diagrams/flows.md
+docs/diagrams/pipeline.md
+docs/diagrams/workflow-animated.png
+docs/diagrams/workflow-animated.svg
+docs/ARCHITECTURE-V2.md
+docs/GAP-CLOSURE.md
+docs/PUBLISH.md
+docs/REGENERATE-DEMO.md
+docs/opencode-setup.md
+docs/superpowers/
+docs/ci/
+docs/taiyi/COMPREHENSIVE-ARCHITECTURE.md
+docs/taiyi/agents.yaml
+docs/taiyi/autonomous.md
+docs/taiyi/harness-hooks.yaml
+docs/taiyi/omc-reference.md
+docs/taiyi/review-loop.md
+docs/taiyi/skill-flow.yaml
+docs/taiyi/skill-fusion-principles.md
+docs/taiyi/skills-catalog.yaml
+docs/taiyi/superpowers-flow.md
+docs/taiyi/tdd-workflow.md
+docs/taiyi/token-budget.md
+docs/taiyi/token-compress.md
+_check_artifacts.mjs
