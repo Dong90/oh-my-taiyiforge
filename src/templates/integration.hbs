@@ -36,10 +36,15 @@ _无_
 > **[MEDIUM+]** Goal: 迁移一步完成 | Inputs: DESIGN.md §5, §9
 <!-- Action: DDL变更/环境变量变更/配置变更 -->
 
+{{#if sql_migration}}
 ### 数据库
 ```sql
--- 待补充
+{{sql_migration}}
 ```
+{{else}}
+### 数据库
+_未提供 DDL 变更_
+{{/if}}
 
 ### 环境变量
 - 新增: | 修改: | 删除: 
@@ -159,13 +164,13 @@ _无_
 ## Quality Gate
 <!-- Evidence-first: 每项部署检查需要可验证证据。gstack PD#5: Dashboard+Alert+Runbook不是上线后清理项 -->
 
-- [ ] S1 Changelog清晰完整
-- [ ] S1 Breaking有迁移指引
-- [ ] [M+] S2 迁移可一键执行
-- [ ] [M+] S3 部署清单无遗漏
-- [ ] [M+] S4 Dashboard+Alert+Runbook完整 | gstack PD#5
-- [ ] [M+] S5 观察期+退出标准明确
-- [ ] [H]  S6 回滚≤30min
-- [ ] [H]  S7 监控覆盖所有SC
-- [ ] 上下游已通知
-- [ ] Release已标注
+- ⬜ S1 Changelog清晰完整
+- ⬜ S1 Breaking有迁移指引
+- ⬜ [M+] S2 迁移可一键执行
+- ⬜ [M+] S3 部署清单无遗漏
+- ⬜ [M+] S4 Dashboard+Alert+Runbook完整 | gstack PD#5
+- ⬜ [M+] S5 观察期+退出标准明确
+- ⬜ [H]  S6 回滚≤30min
+- ⬜ [H]  S7 监控覆盖所有SC
+- ⬜ 上下游已通知
+- ⬜ Release已标注
