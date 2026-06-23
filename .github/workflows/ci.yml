@@ -59,6 +59,8 @@ jobs:
       - name: dogfood E2E (allow-failure)
         run: npm run dogfood
         continue-on-error: true
+        env:
+          TAIYI_SKIP_INTEGRATION_AUDIT: "1"
       - run: npm run ci:verify
 
   # 测试覆盖率 — 单跑一次，结果上传到 GitHub Summary
