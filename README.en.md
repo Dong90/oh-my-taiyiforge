@@ -10,7 +10,7 @@
 [![Node](https://img.shields.io/badge/node-%3E%3D20-brightgreen)](package.json)
 [![npm version](https://img.shields.io/npm/v/oh-my-taiyiforge.svg)](https://www.npmjs.com/package/oh-my-taiyiforge)
 [![npm downloads](https://img.shields.io/npm/dm/oh-my-taiyiforge.svg)](https://www.npmjs.com/package/oh-my-taiyiforge)
-[![Version](https://img.shields.io/badge/version-0.24.0-orange)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-0.40.0-orange)](CHANGELOG.md)
 [![v28 canonical](https://img.shields.io/badge/v28-28%20slashes%20%C2%B7%206%20umbrellas-blue)](docs/taiyi/canonical-commands.md)
 [![CI](https://img.shields.io/github/actions/workflow/status/Dong90/oh-my-taiyiforge/ci.yml?branch=main&label=CI)](https://github.com/Dong90/oh-my-taiyiforge/actions/workflows/ci.yml)
 [![Platforms](https://img.shields.io/badge/platforms-OpenCode%20%7C%20Claude%20%7C%20Codex%20%7C%20Cursor-8a2be2)](docs/QUICKSTART.md)
@@ -336,10 +336,15 @@ a 4 × ubuntu matrix.
 |---------|--------|----------------|
 | v0.23.0 | ✅ Released | **canonical v28**: 28 顶栏 slashes + 6 umbrellas (`token`/`test`/`review`/`diagram`/`mode`/`workflow`) + `skill-fusion-principles.md` + `validateV28CatalogSync` gate |
 | v0.24.0 | ✅ Released | First npm release · `npx taiyi-forge-install` zero-build install · README v28 convergence rewrite · IDE menu trimmed to 28 entries (umbrella Phase 2) |
+| v0.26.0 | ✅ Released | **Evidence gate**: acceptance criteria must carry `evidence{command,exitCode:0}` to prevent false passes · enforced commit trailers · status 5s debounce · profile expanded to 10 |
+| v0.27.0 | ✅ Released | **Event bus** + structured logger · CLI 62→18 diet (handlers map replacing giant switch) · milestone overview · schema expansion + 10 SKILL.md rewrites |
+| v0.30.0 | ✅ Released | **Data-driven Mermaid chain**: SSOT triple binding + rollback trace · `is_cli_only` skips UI-stage contract · ast-grep pitfalls (8 patterns) + `scan.sh` |
+| v0.35.0 | ✅ Released | **ChangeGraph knowledge graph**: load/edges/query/render — 49 tests · `PHASE-CONTEXT.md` graph-driven generation (replaces sequential upstream reads) |
+| v0.40.0 | ✅ Latest | review date binding + SSOT cross-refs · E2E fixtures extended 7 fields · graph context compression · CI/Playwright/vitest timeout fixes |
 | v1.0.0 | ⏳ Planned | Lock 9-stage API · 4-platform parity · external case-study collection |
 
 **Ready today**: full nine-stage pipeline · four-harness shared Skills · forced TDD ·
-token compression · platform-smoke CI · zero-build one-liner install (v0.24)
+evidence anti-fake-pass gate · token compression · ChangeGraph knowledge graph · platform-smoke CI · zero-build one-liner install (v0.24+)
 **Not yet**: production-grade SLA · full i18n
 
 ### 5.4 · Community & Contributing
