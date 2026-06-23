@@ -59,6 +59,8 @@ export type ChangeState = {
   auxiliaryCompleted: string[];
   createdAt: string;
   updatedAt: string;
+  /** Optimistic concurrency version — incremented on every writeState call to detect stale writes */
+  version?: number;
 };
 
 export type ComplexityLevel = "low" | "medium" | "high";

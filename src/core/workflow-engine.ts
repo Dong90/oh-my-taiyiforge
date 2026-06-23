@@ -12,6 +12,7 @@ import {
 import { formatChangeNotFound, formatWrongPhaseError } from "./cli-hints.js";
 import { assertValidSlug, validateSlug } from "./slug.js";
 import { evaluateQualityGate } from "./gates/quality-gate.js";
+import { safeWriteFileSync } from "./file-writer.js";
 import { canEnterPhase, getNextPhase, getPhase, listPhases } from "./phase-registry.js";
 import { skippedPhasesForProfile, isPhaseSkipped, changeHasUiSignals } from "./profile.js";
 import { loadProjectConfig } from "./project-config.js";
@@ -185,8 +186,31 @@ export class WorkflowEngine {
     try {
       const file = this.statePath(state.slug);
       fs.mkdirSync(path.dirname(file), { recursive: true });
+
+      // OCC: read existing state version to detect concurrent writes
+      let existingVersion = 0;
+      try {
+        const existing = JSON.parse(fs.readFileSync(file, "utf8")) as ChangeState;
+        existingVersion = existing.version ?? 0;
+      } catch {
+        // File doesn't exist or is corrupt — first write
+      }
+
+      const incomingVersion = state.version ?? 0;
+      if (incomingVersion > 0 && incomingVersion < existingVersion) {
+        process.stderr.write(
+          `[workflow-engine] stale state version for ${state.slug}: ` +
+          `incoming ${incomingVersion} < disk ${existingVersion}, auto-resolving\n`,
+        );
+      }
+
+      const nextState: ChangeState = { ...state, version: existingVersion + 1 };
+
+      // Propagate version back to caller's state object for correct OCC on subsequent writes
+      state.version = nextState.version;
+
       const tmp = `${file}.tmp.${process.pid}`;
-      fs.writeFileSync(tmp, JSON.stringify(state, null, 2), "utf8");
+      safeWriteFileSync(tmp, JSON.stringify(nextState, null, 2) + "\n", { skipRedact: true, skipFormat: true });
       fs.renameSync(tmp, file);
     } finally {
       lock.release();
