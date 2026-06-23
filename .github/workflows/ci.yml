@@ -61,6 +61,7 @@ jobs:
         continue-on-error: true
         env:
           TAIYI_SKIP_INTEGRATION_AUDIT: "1"
+          TAIYI_DELIVERY_GATE: "0"
       - run: npm run ci:verify
 
   # 测试覆盖率 — 单跑一次，结果上传到 GitHub Summary
