@@ -1,0 +1,62 @@
+version: 1
+name: taiyi-agent-providers
+description: OpenCode / Claude / Codex / Cursor 共用 taiyi-* Skill 与工件契约
+
+# Skill 目录（仓库内，开源分发）
+skill_root: skills
+runtime_root: .taiyi/changes
+
+providers:
+  opencode:
+    label: OpenCode
+    plugin_install:
+      - npm install oh-my-taiyiforge
+      - 在 opencode.json 的 plugin 数组添加 "oh-my-taiyiforge"
+    invoke:
+      tools: "taiyi_init, taiyi_status, taiyi_phases, taiyi_complete, taiyi_assess"
+      docs: docs/opencode-setup.md
+    notes:
+      - postinstall 同步 skills 到 ~/.config/opencode/skills/
+      - 与 oh-my-openagent、opencode-mem 等同属 plugin 数组，可并存
+
+  claude:
+    label: Claude Code
+    skill_install:
+      - npm install oh-my-taiyiforge && ./scripts/install-skills.sh claude
+      - 或 copy skills/taiyi-* 到 ~/.claude/skills/
+      - 在 CLAUDE.md 或 AGENTS.md 中 @ 引用本仓库 AGENTS.md
+    invoke:
+      per_phase: "使用 Skill /taiyi-<phase> 或读取 skills/taiyi-<phase>/SKILL.md"
+      example: "/taiyi-dev 在 TASK.md 约束下 TDD 实现"
+    notes:
+      - 与 gstack / superpowers 可并存，taiyi 负责九阶段工件与双门禁
+      - 关键决策须满足 OMO：人工审批后再 advance
+
+  codex:
+    label: OpenAI Codex CLI
+    skill_install:
+      - npm install oh-my-taiyiforge && ./scripts/install-skills.sh codex
+      - 将 AGENTS.md 链入项目根或 ~/.codex/AGENTS.md
+    invoke:
+      per_phase: "加载 skills/taiyi-<phase>/SKILL.md 作为阶段契约"
+      example: "codex exec -- 按 taiyi-dev 完成当前 slug 的 dev 阶段"
+    notes:
+      - 与 oh-my-codex (OMX) 编排兼容：OMX 管多 Agent，taiyi 管阶段工件
+      - 使用 scripts/taiyi.sh 做状态机与门禁校验（与 Agent 解耦）
+
+  cursor:
+    label: Cursor IDE
+    skill_install:
+      - 将 skills 同步到 .cursor/skills/ 或通过 @oh-my-taiyiforge 引用本仓库
+    invoke:
+      per_phase: "@taiyi-<phase> 或读取 skills/taiyi-<phase>/SKILL.md"
+    notes:
+      - Composer / Auto 与 Claude 订阅共用同一 skill 正文
+
+# 阶段 → 推荐 Provider 能力（均可跑，仅提示差异）
+stage_hints:
+  change: { claude: office-hours, codex: plan }
+  design: { claude: plan-eng-review, codex: review }
+  dev: { claude: agent, codex: apply }
+  review: { claude: review, codex: codex-review }
+  integration: { claude: document-release, codex: ship }

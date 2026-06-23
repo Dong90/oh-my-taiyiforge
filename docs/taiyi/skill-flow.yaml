@@ -1,0 +1,3 @@
+# DEPRECATED — 已合并至 workflow-manifest.yaml
+# 引擎仅读取 docs/taiyi/workflow-manifest.yaml
+redirect: workflow-manifest.yaml
