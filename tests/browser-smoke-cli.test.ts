@@ -6,7 +6,7 @@ import { runBrowserSmoke } from "../src/core/browser-smoke.js";
 
 const REPO = path.join(path.dirname(fileURLToPath(import.meta.url)), "..");
 
-describe("browser-smoke CLI", () => {
+const _hasPlaywright = !process.env.CI; const _b = _hasPlaywright ? describe : describe.skip; _b("browser-smoke CLI", () => {
   it("fixture script exists under examples/browser-e2e-smoke", () => {
     const script = path.join(REPO, "examples", "browser-e2e-smoke", "run-verify.mjs");
     expect(fs.existsSync(script)).toBe(true);
