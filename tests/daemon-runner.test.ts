@@ -88,8 +88,9 @@ describe("daemon run（无人 Agent 闭环）", { timeout: 120_000 }, () => {
 describe("daemon-agent helpers", () => {
   it("buildDaemonAgentCommand 替换占位符", () => {
     const cmd = buildDaemonAgentCommand("/tmp/p.txt", "my-slug", "dev", "codex");
-    expect(cmd).toContain("/tmp/p.txt");
-    expect(cmd).toMatch(/codex exec/);
+    expect(cmd.bin).toBe("codex");
+    expect(cmd.args).toContain("--full-auto");
+    expect(cmd.display).toMatch(/codex/);
   });
 
   it("invokeDaemonAgent engine-only 跳过", () => {
