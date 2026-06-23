@@ -1,3 +1,11 @@
+---
+phase: test
+skill: taiyi-test
+gate: auto
+produces: TEST.md
+upstream: [task, dev]
+downstream: [review]
+---
 <!-- phase:test skill:taiyi-test gate:auto est:20min produces:TEST.md upstream:[task,dev] downstream:[review] cplx:[ALL]5steps +[M+]4 +[H]2 -->
 # TEST: {{title}}
 
