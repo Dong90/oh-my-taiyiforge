@@ -19,6 +19,7 @@ function runGit(workspaceDir: string, args: string): string {
     cwd: workspaceDir,
     encoding: "utf8",
     stdio: ["ignore", "pipe", "pipe"],
+    timeout: 10000,
   }).trim();
 }
 
@@ -160,6 +161,7 @@ export function evaluateDeliveryGate(
         cwd: workspaceDir,
         encoding: "utf8",
         stdio: ["ignore", "pipe", "pipe"],
+        timeout: 30000,
       });
     } catch (e) {
       const detail =

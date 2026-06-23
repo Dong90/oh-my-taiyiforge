@@ -23,6 +23,7 @@ function listUncommitted(workspaceDir: string): string[] {
         cwd: workspaceDir,
         encoding: "utf8",
         stdio: ["ignore", "pipe", "pipe"],
+        timeout: 5000,
       }).trim();
       if (out) parts.push(...out.split("\n").filter(Boolean));
     } catch {
