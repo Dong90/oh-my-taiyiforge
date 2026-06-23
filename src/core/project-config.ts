@@ -11,6 +11,9 @@ export type ProjectScenarioId =
   | "mvp"
   | "micro"
   | "nano"
+  | "refactor"
+  | "prototype"
+  | "docs"
   | "devops"
   | "default";
 
@@ -73,6 +76,12 @@ export function profileForScenario(scenario: ProjectScenarioId): ChangeProfile {
     case "micro":
       return "micro";
     case "nano":
+      return "nano";
+    case "refactor":
+      return "lite";
+    case "prototype":
+      return "spike";
+    case "docs":
       return "nano";
     case "service":
       return "api";
