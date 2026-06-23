@@ -79,11 +79,11 @@ downstream: [integration]
 | {{dimension}} | {{score}}/10 | {{note}} |
 {{/each}}
 {{else}}
-| 可读性 | _待评估_ | _待评估_ |
-| 可测试性 | _待评估_ | _待评估_ |
-| 一致性 | _待评估_ | _待评估_ |
-| 复杂度 | _待评估_ | _待评估_ |
-| 文档 | _待评估_ | _待评估_ |
+| 可读性 | _待评估（建议参考：7/10 基准值）_ | _待评估_ |
+| 可测试性 | _待评估（建议参考：7/10 基准值）_ | _待评估_ |
+| 一致性 | _待评估（建议参考：7/10 基准值）_ | _待评估_ |
+| 复杂度 | _待评估（建议参考：7/10 基准值）_ | _待评估_ |
+| 文档 | _待评估（建议参考：7/10 基准值）_ | _待评估_ |
 {{/if}}
 
 <!-- Validate: 每维有具体改进建议而非仅打分？ -->
@@ -99,9 +99,9 @@ downstream: [integration]
 | {{layer}} | {{passed}}/{{total}} | {{coverage}} | {{status}} |
 {{/each}}
 {{else}}
-| 单元 | _通过/总_ | _覆盖率_ | _待评估_ |
-| 集成 | _通过/总_ | _覆盖率_ | _待评估_ |
-| E2E | _通过/总_ | _覆盖率_ | _待评估_ |
+| 单元 | _通过/总_ | _覆盖率_ | _待评估（目标：≥90%）_ |
+| 集成 | _通过/总_ | _覆盖率_ | _待评估（目标：≥80%）_ |
+| E2E | _通过/总_ | _覆盖率_ | _待评估（目标：≥90%）_ |
 {{/if}}
 
 <!-- Validate: 与TEST.md数据一致？gap有补救计划？ -->
@@ -121,7 +121,7 @@ downstream: [integration]
 - [ ] npm audit无critical/high
 {{/if}}
 
-&lt;!-- Validate: OWASP Top10全覆盖？跑过审计工具？ -->
+<!-- Validate: OWASP Top10全覆盖？跑过审计工具？ -->
 
 > 📎 **SSOT 规则**: 安全评审应交叉验证 [CHANGE.md §Risks](CHANGE.md) + [REQUIREMENT.md §Security](REQUIREMENT.md) + [DESIGN.md §Security Model](DESIGN.md) 的三者一致性，不独立重评。发现不一致即标记为 blocking。
 
