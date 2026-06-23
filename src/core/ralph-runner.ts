@@ -42,6 +42,7 @@ function runVerifyCmd(workspaceDir: string, cmd: string): number {
       encoding: "utf8",
       stdio: ["ignore", "pipe", "pipe"],
       shell: "/bin/bash",
+      timeout: 30000,
     });
     return 0;
   } catch (e: unknown) {

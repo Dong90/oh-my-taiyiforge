@@ -18,13 +18,13 @@ downstream: [review]
 <!-- Action: 单元/集成/E2E分层+覆盖率目标+重点 -->
 
 ### 单元: {{#if unit_framework}}{{unit_framework}}{{else}}_vitest_{{/if}} | 目标≥{{#if unit_coverage_target}}{{unit_coverage_target}}{{else}}_X_%{{/if}}
-- 重点:
+- 重点: _核心逻辑、边界条件、错误路径的测试覆盖_
 
 ### 集成:
-- 重点:
+- 重点: _模块间契约验证、外部mock策略_
 
 ### E2E: [Playwright/Cypress]
-- 重点:
+- 重点: _关键用户旅程、跨系统端到端验证_
 
 <!-- Validate: 三层全覆盖？覆盖率目标明确？ -->
 
@@ -35,12 +35,34 @@ downstream: [review]
 | Round | 范围 | 状态 | 跳过理由 |
 |-------|------|:--:|---------|
 | Round 1 · 功能 | 全部 AC | ✅ 必跑 | — |
-| Round 2 · 性能 | Lighthouse / k6 / bundle | ⚠️ / ❌ | _填写理由_ |
-| Round 3 · 安全 | 依赖审计 / SAST / OWASP | ⚠️ / ❌ | _填写理由_ |
-| Round 4 · 兼容 | 浏览器 / 视口 / 数据迁移 | ⚠️ / ❌ | _填写理由_ |
-| Round 5 · 可观测 | 日志 / 指标 / 告警 | ⚠️ / ❌ | _填写理由_ |
+| Round 2 · 性能 | Lighthouse / k6 / bundle | ⚠️ / ❌ | _如果跳过，请在此说明理由_ |
+| Round 3 · 安全 | 依赖审计 / SAST / OWASP | ⚠️ / ❌ | _如果跳过，请在此说明理由_ |
+| Round 4 · 兼容 | 浏览器 / 视口 / 数据迁移 | ⚠️ / ❌ | _如果跳过，请在此说明理由_ |
+| Round 5 · 可观测 | 日志 / 指标 / 告警 | ⚠️ / ❌ | _如果跳过，请在此说明理由_ |
 
 <!-- Validate: 每轮状态明确？跳过有理由？ -->
+
+## Step 1c: Mocking Boundaries
+> **[ALL]** Goal: 明确定义 mock 边界，防 mock 污染 | Inputs: DESIGN.md §5
+<!-- Action: 每层标注 can_mock + 理由。外部 API / DB / 时间 / 文件系统可 mock；核心业务逻辑 / 验证 / 公开 API 契约禁止 mock -->
+
+| 层级/模块 | Mock? | 理由 |
+|----------|:-----:|------|
+{{#if mocking_boundaries}}
+{{#each mocking_boundaries}}
+| {{layer}} | {{#if can_mock}}✅ 允许{{else}}❌ 禁止{{/if}} | {{reason}} |
+{{/each}}
+{{else}}
+| _外部 HTTP API_ | ✅ 允许 | _网络不稳定，mock 保证确定性_ |
+| _数据库_ | ✅ 允许 | _避免测试污染生产数据_ |
+| _时间/Date.now_ | ✅ 允许 | _时间敏感逻辑需要确定性_ |
+| _文件系统_ | ✅ 允许 | _避免测试残留_ |
+| _核心业务逻辑_ | ❌ 禁止 | _mock 后测试无实际验证意义_ |
+| _输入验证_ | ❌ 禁止 | _必须用真实验证逻辑_ |
+| _公开 API 契约_ | ❌ 禁止 | _契约测试必须走真实端点_ |
+{{/if}}
+
+<!-- Validate: 外部依赖可 mock 但核心逻辑不许 mock？每个 mock 有理由？ -->
 
 ## Step 2: Test Cases
 > **[ALL]** Goal: 每TC可独立执行 | Inputs: REQUIREMENT.md §3
@@ -108,7 +130,7 @@ GAPS: N (N need E2E, N eval)
 {{else}}
 | 场景 | TC | 状态 |
 |------|-----|------|
-| _并发_ | _待补充_ | _⚠_ |
+| _并发_ | _待设计_ | _⚠_ |
 {{/if}}
 
 <!-- Validate: 典型边界全覆盖？ -->
@@ -157,7 +179,7 @@ GAPS: N (N need E2E, N eval)
 - [ ] 无硬编码密钥
 {{/if}}
 
-&lt;!-- Validate: OWASP Top10全覆盖？跑过npm audit/trivy？ -->
+<!-- Validate: OWASP Top10全覆盖？跑过npm audit/trivy？ -->
 
 > 📎 **SSOT 规则**: 安全测试应 1:1 映射 [REQUIREMENT.md §Non-Functional Security](REQUIREMENT.md) 的 NFR-S* 和 [DESIGN.md §Security Model](DESIGN.md) 的威胁建模，不独立重评估。
 

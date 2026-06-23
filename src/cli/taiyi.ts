@@ -41,6 +41,7 @@ import {
   runContinueRepeat, runLoopUntilComplete,
 } from "../core/loop-runner.js";
 import { SLASH_ONLY, LEGACY_REDIRECT } from "../core/command-registry.js";
+import { registerSignalHandlers } from "../core/graceful-shutdown.js";
 import { getLogger } from "../core/logger.js";
 import { logActivity } from "../core/activity-log.js";
 
@@ -88,6 +89,7 @@ function normalizeCliCommand(raw?: string): string | undefined {
 
 const templatesDir = resolveTemplatesDir(import.meta.url);
 const engine = new WorkflowEngine(taiyiRoot, templatesDir);
+registerSignalHandlers(taiyiRoot);
 const argv = process.argv.slice(2).filter((a: string) => a !== "--json" && a !== "--compact");
 const [rawCmd, ...args] = argv;
 const cmd = normalizeCliCommand(rawCmd);

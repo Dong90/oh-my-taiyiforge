@@ -14,6 +14,22 @@ downstream: [task, dev]
 ---
 
 ## Step 1: Component Inventory
+
+> **样式契约**（Strict — 所有代码强制遵守）
+{{#if styling_contract}}
+> - **CSS 方案**: {{styling_contract.scheme}}
+> - **内联样式**: {{#if styling_contract.no_inline_styles}}❌ 禁止（动态值通过 CSS 变量例外）{{else}}✅ 允许{{/if}}
+> - **主题变量**: {{#if styling_contract.theme_var_only}}✅ 仅用主题变量{{else}}❌ 允许直接值{{/if}}
+{{#if styling_contract.exceptions}}
+> - **例外**: {{styling_contract.exceptions}}
+{{/if}}
+{{else}}
+> - _待选定 CSS 方案（Tailwind / CSS Modules / styled-components）_
+> - _内联样式禁止策略_
+> - _主题变量规则_
+{{/if}}
+> 
+> <!-- Validate: CSS 方案单一无混用？无内联 style？颜色/间距/字体仅用主题变量？ -->
 > **[ALL]** Goal: 知道改了什么 | Inputs: DESIGN.md §2
 <!-- Action: 页面/组件+操作(新增/修改)+路径+变更描述 -->
 
@@ -22,7 +38,7 @@ downstream: [task, dev]
 {{#if is_cli_only}}
 | _N/A — {{scope}}_ |
 {{else}}
-| _待补充_ | _待补充_ | _待补充_ | _待补充_ |
+| _待列出页面/组件_ | _新增/修改/删除_ | _路径_ | _变更描述_ |
 {{/if}}
 
 <!-- Validate: 公共组件(Header/Footer/ErrorBoundary)是否遗漏？ -->
@@ -109,7 +125,7 @@ ComponentRoot
 {{#if is_cli_only}}
 | _N/A — {{scope}}_ |
 {{else}}
-| _待补充_ | _待补充_ | _待补充_ | _待补充_ |
+| _交互描述_ | _触发条件_ | _动效内容_ | _时长_ |
 {{/if}}
 
 <!-- Validate: 动效增强可用性而非纯装饰？有reduced-motion方案？ -->
@@ -144,7 +160,7 @@ ComponentRoot
 {{#if is_cli_only}}
 | _N/A — {{scope}}_ |
 {{else}}
-| _待补充_ | _待补充_ | _待补充_ |
+| _Token名称_ | _值_ | _来源_ |
 {{/if}}
 
 <!-- Validate: 新增组件复用现有Token？与DESIGN.md一致？ -->

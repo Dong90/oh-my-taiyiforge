@@ -39,9 +39,44 @@ downstream: [task, ui-design]
 {{#if techStack.excluded}}
 - **明确排除**: {{techStack.excluded}}
 {{/if}}
-- **约束**: [列出]
+- **约束**: {{#if techStack.constraints}}{{techStack.constraints}}{{else}}_在此列出技术/性能/兼容性/时间/团队约束_{{/if}}
 
 <!-- Validate: 约束覆盖技术/性能/兼容性/时间/团队？ -->
+
+## Step 1a: Current State
+> **[ALL]** Goal: 变更前基线，ADR 强制覆写模式 | Inputs: CHANGE.md §1
+<!-- Action: 记录变更前的架构/行为状态。ADR 模式：强制覆写 DESIGN.md，不准 append-only -->
+
+**当前架构/行为**:
+
+{{#if current_state}}
+{{current_state}}
+{{else}}
+_待补充变更前的架构/行为快照（如：当前登录模块使用 Session 中间件，无 JWT 支持）_
+{{/if}}
+
+> ⚠️ **ADR 覆写规则**: 此 DESIGN.md 是当前变更的设计真源，**强制覆写**而非追加。每次设计变更请覆写/更新相关节段，不要保留过时的旧设计 —— 半年后的 Agent 从此文档拼出系统全貌，不看历史版本。变更记录由 CHANGELOG.md 和 git log 承担。
+
+<!-- Validate: 基线状态可度量？下一次变更能从此出发？ -->
+
+## Step 1b: Dependency Sandbox
+> **[ALL]** Goal: 每个依赖有版本/用途/替代方案/过时检查 | Inputs: package.json / 项目配置
+<!-- Action: 列出所有新增/变更的依赖，标注版本范围、用途、替代方案、npm 最新版 -->
+
+| 依赖 | 版本范围 | 用途 | 考虑过的替代 | npm 最新 | 过时检查 |
+|------|---------|------|------------|:-------:|:--------:|
+{{#if dependency_sandbox}}
+{{#each dependency_sandbox}}
+| {{name}} | `{{version_range}}` | {{purpose}} | {{alternatives_considered}} | `{{npm_latest}}` | {{staleness_check}} |
+{{/each}}
+{{else}}
+| _待列新增/变更依赖_ | _^X.Y_ | _用途_ | _替代方案(可选)_ | _latest_ | _✅ 已检查_ |
+{{/if}}
+
+> 💡 写模板时 `npm view <pkg> version` 检查最新版本；若有 major bump 警告需说明。
+> SSOT 规则：依赖变更的真源在 `package.json` / lockfile，此表为设计视角的验证清单。
+
+<!-- Validate: 每个依赖有最新版本确认？替代方案已搜索？→如果依赖陈旧则应在此说明已在最近的 minor 上 -->
 
 ## Step 2: Architecture Overview
 > **[ALL]** Goal: 一眼看清整体结构 | Inputs: Step1+REQUIREMENT.md §2
@@ -69,7 +104,7 @@ flowchart LR
 | {{name}} | {{operation}} | {{path}} | {{description}} |
 {{/each}}
 {{else}}
-| _待补充_ | _新增/修改/删除_ | _路径_ | _说明_ |
+| _待补充模块名_ | _新增/修改/删除_ | _路径_ | _变更说明_ |
 {{/if}}
 
 {{#if existingArchitecture}}
@@ -127,16 +162,16 @@ flowchart LR
 
 ### 数据模型
 ```sql
--- 待补充
+-- 在此处填写数据模型 DDL（如有变更）
 ```
 
 ### API 设计
 ```
-待补充
+在此处描述 API 变更（如新增 / 修改端点）
 ```
 
 ### 关键流程
-_Mermaid时序图待补充_
+_在此处用 Mermaid 时序图描述关键流程（如有）_
 
 <!-- Validate: DDL有索引？API有rate limit？流程有错误路径？ -->
 
@@ -203,8 +238,8 @@ _累计: {{#if design_innovation_tokens}}{{design_innovation_tokens.length}}{{el
 <!-- Action: 新artifact类型？CI/CD变更？回滚方式？ -->
 
 - **新artifact**: {{#if new_artifact}}{{new_artifact}}{{else}}_无_{{/if}}
-- **CI/CD变更**: {{#if rollout_steps}}{{#each rollout_steps}}{{this}}{{#unless @last}}; {{/unless}}{{/each}}{{else}}_待补充_{{/if}}
-- **回滚方式**: {{#if rollback_trigger}}{{rollback_trigger}}{{else}}_待补充_{{/if}}
+- **CI/CD变更**: {{#if rollout_steps}}{{#each rollout_steps}}{{this}}{{#unless @last}}; {{/unless}}{{/each}}{{else}}_在此列出 CI/CD 配置变更（如 workflow / deploy / npm publish）_{{/if}}
+- **回滚方式**: {{#if rollback_trigger}}{{rollback_trigger}}{{else}}_在此描述回滚触发条件与操作步骤_{{/if}}
 
 <!-- Validate: 新artifact的build/publish/update流程完整？ -->
 
@@ -224,7 +259,7 @@ _累计: {{#if design_innovation_tokens}}{{design_innovation_tokens.length}}{{el
 | _本次变更无新增攻击面_ | _纯测试代码，无运行时暴露_ | _N/A_ |
 {{/if}}
 
-&lt;!-- Validate: OWASP Top10全覆盖？敏感数据加密+日志脱敏？ -->
+<!-- Validate: OWASP Top10全覆盖？敏感数据加密+日志脱敏？ -->
 
 > 📎 **SSOT 规则**: 安全策略真源见 [CHANGE.md §Risks](CHANGE.md) + [REQUIREMENT.md §Non-Functional Security](REQUIREMENT.md)。STRIDE 威胁建模从此派生，不独立重评估。
 

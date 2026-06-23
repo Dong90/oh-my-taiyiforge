@@ -12,6 +12,7 @@ import { TaskSchema } from "../schemas/task.js";
 import { TestSchema } from "../schemas/test.js";
 import { ReviewSchema } from "../schemas/review.js";
 import { IntegrationSchema } from "../schemas/integration.js";
+import { ChangeStateSchema } from "../schemas/state.js";
 import type { ZodSchema } from "zod";
 
 function stripComments(text: string): string {
@@ -47,6 +48,22 @@ const ZOD_SCHEMAS: Record<Exclude<PhaseId, "dev">, ZodSchema> = {
 };
 
 export const ZOD_PHASES: PhaseId[] = Object.keys(ZOD_SCHEMAS) as PhaseId[];
+
+/**
+ * Validate state.json using ChangeStateSchema.
+ * Returns hints array (empty = valid, non-empty = validation failures).
+ */
+export function validateStateFile(statePath: string): string[] {
+  if (!fs.existsSync(statePath)) return ["[Zod] 缺少 state.json"];
+  try {
+    const json = JSON.parse(fs.readFileSync(statePath, "utf-8"));
+    ChangeStateSchema.parse(json);
+    return [];
+  } catch (e: unknown) {
+    const msg = e instanceof Error ? e.message : String(e);
+    return [`[Zod 校验失败] state.json: ${msg}`];
+  }
+}
 
 export function validateArtifactFile(
   artifactPath: string,

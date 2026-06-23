@@ -79,7 +79,7 @@ run "v28 #1 /taiyi:new（engine: new）" \
 # 取真实生成的 slug（new 输出含 "变更: <slug>"）
 SLUG="$(bash "$ROOT/scripts/taiyi-forge.sh" list --all 2>&1 | head -1 | cut -f1)"
 say ""
-say "[SLUG 解析] 实际生成: $SLUG（new 输出 '变更: $SLUG'）"
+say "[SLUG 解析] 实际生成: ${SLUG}（new 输出 '变更: ${SLUG}'）"
 
 prompt "write" "#3 · /taiyi:write（九阶段统一写工件入口）"
 prompt "continue" "#4 · /taiyi:continue（pass 当前 phase · 人工门需 --approver）"

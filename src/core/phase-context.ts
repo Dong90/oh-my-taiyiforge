@@ -135,6 +135,9 @@ function footerForPhase(
   }
   lines.push("");
   lines.push("*引擎生成 · Agent 读此文件即可*");
+  lines.push("");
+  lines.push("<!-- ⚠️ SSOT 声明: 以下摘要仅作快速参考。各阶段真源始终是对应的上游工件 (CHANGE.md / DESIGN.md / TASK.md 等)。");
+  lines.push("     版本发生变更或阶段有冲突时，请直接读取工件文件而非本摘要。 -->");
   return lines.join("\n");
 }
 

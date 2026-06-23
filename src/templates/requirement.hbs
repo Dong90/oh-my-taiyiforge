@@ -13,6 +13,20 @@ downstream: [design, ui-design]
 
 ---
 
+> ⛔ **Out of Scope — 本变更明确不覆盖以下事项**
+> <!-- 放置在最顶部，让读者第一眼知道什么不做。与 Step 2 的 scope_out 内容一致无需重复详述，此处为硬性提醒 -->
+{{#if scope_out}}
+{{#each scope_out}}
+> - {{this}}
+{{/each}}
+{{else}}
+> - _待补充（至少列 1 条「明确不做」以防范围蔓延）_
+{{/if}}
+>
+> 📌 *完整范围切分见下方 §Step 2 Scope Partitioning*
+
+---
+
 ## Step 1: User Stories
 > **[ALL]** Goal: 从用户视角说清需求 | Inputs: CHANGE.md §1, §2
 <!-- Action: As a [角色] I want [功能] so that [价值]. 覆盖所有角色 -->
@@ -68,7 +82,7 @@ downstream: [design, ui-design]
 
 {{#each acceptance_criteria}}
 - [{{#if is_checked}}x{{else}} {{/if}}] **{{id}}**: {{description}}
-  - **验证**: {{#if verify}}`{{verify}}`{{else}}[待补充]{{/if}}
+  - **验证**: {{#if verify}}`{{verify}}`{{else}}[待补充验证命令]{{/if}}
 {{/each}}
 
 <!-- Validate: 每个AC可独立验收？Given/When/Then完整？验证命令可执行？ -->
@@ -107,7 +121,7 @@ downstream: [design, ui-design]
 - **NFR-A01**: [可用性指标]
 {{/if}}
 
-&lt;!-- Validate: 每个指标有具体数字？ -->
+<!-- Validate: 每个指标有具体数字？ -->
 
 > 📎 **SSOT 规则**: NFR-S* 安全要求应基于 [CHANGE.md §Risks](CHANGE.md) 做非功能性拆解，不独立重评估。每条 NFR-S 应与 CHANGE 的 risks[] 可追溯。
 

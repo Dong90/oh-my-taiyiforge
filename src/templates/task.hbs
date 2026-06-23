@@ -36,7 +36,7 @@ flowchart LR
 
 {{#each slices}}
 ### Slice {{id}}: {{label}}
-> **[ALL]** | ⇧ {{#if dependencies}}Slice {{dependencies}}{{else}}无{{/if}} | ⇶ {{#if parallelizable}}✅可并行{{else}}❌须顺序{{/if}} | Score: [N]/10
+> **[ALL]** | ⇧ {{#if dependencies}}Slice {{dependencies}}{{else}}无{{/if}} | ⇶ {{#if parallelizable}}✅可并行{{else}}❌须顺序{{/if}} | Score: {{#if completeness_score}}{{completeness_score}}/10{{else}}[N]/10 — 评估基准: read_files√ + write_files√ + verify√ + checkpoints≥3 + rollback√ = 8/10+{{/if}}
 
 {{#if description}}
 {{description}}
@@ -48,7 +48,7 @@ flowchart LR
 - `{{this}}`
 {{/each}}
 {{else}}
-- _待补充_
+- _在此列出只读参考文件（不需要修改的源头代码）_
 {{/if}}
 
 **write_files**（写边界 · 不越界）:
@@ -58,11 +58,19 @@ flowchart LR
 - `{{this}}`
 {{/each}}
 {{else}}
-- _待补充_
+- _在此列出需要创建或修改的文件_
 {{/if}}
 
 {{#if test_command}}
 **验证**: `{{test_command}}`
+
+**物理锚点**（git-diff 确认 write_files 已被实际修改）:
+{{#if physical_verification}}
+> 🪝 `{{physical_verification}}`
+{{else}}
+> 🪝 实现完成后执行 `git diff --name-only` 确认以下文件出现在 diff 中：
+> {{#if write_files}}{{#each write_files}}`{{this}}`{{/each}}{{else}}_write_files 列表_{{/if}}
+{{/if}}
 {{/if}}
 
 **验收点**:
@@ -71,7 +79,7 @@ flowchart LR
 - ⬜ {{this}}
 {{/each}}
 {{else}}
-⬜ _待补充_
+⬜ _在此列出验收项（各至少一条通过条件）_
 {{/if}}
 
 <!-- Validate: 可独立merge/deploy？文件范围精确？ -->
@@ -132,7 +140,7 @@ flowchart LR
 | _S1_ | _git revert_ | ≤_5_min | _无数据影响_ |
 {{/if}}
 
-&lt;!-- Validate: 每个Slice可独立回滚？数据一致性？ -->
+<!-- Validate: 每个Slice可独立回滚？数据一致性？ -->
 
 > 📎 **SSOT 规则**: 切片风险基于 [DESIGN.md §Blast Radius](DESIGN.md) 细分，不回重新评估。切片回滚基于 [CHANGE.md](CHANGE.md) 的 rollback_{trigger,ops,time} 做切片级适配（≤5min/md-only）。
 >
