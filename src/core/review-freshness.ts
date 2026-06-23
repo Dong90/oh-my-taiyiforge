@@ -21,7 +21,7 @@ function gitChangedFiles(workspaceDir: string): string[] {
   const files = new Set<string>();
   const run = (cmd: string) => {
     try {
-      const out = execSync(cmd, { cwd: workspaceDir, encoding: "utf8", stdio: ["pipe", "pipe", "ignore"] });
+      const out = execSync(cmd, { cwd: workspaceDir, encoding: "utf8", stdio: ["pipe", "pipe", "ignore"], timeout: 5000 });
       for (const line of out.split("\n").map((l) => l.trim()).filter(Boolean)) {
         files.add(line);
       }

@@ -1,4 +1,4 @@
-import { execSync } from "node:child_process";
+import { spawnSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
 
@@ -23,26 +23,65 @@ export type BreakerState = {
 
 const BREAKER_FILE = ".taiyi/breaker-state.json";
 
+/** Sanitize a label for use in git branch/commit messages (alphanumeric + hyphens). */
+function sanitizeLabel(label: string): string {
+  return label.replace(/[^a-zA-Z0-9_-]/g, "-").replace(/-+/g, "-").replace(/^-|-$/g, "");
+}
+
+/** Run `git <args>` via spawnSync array-form. Returns { stdout, status } or throws on error. */
+function gitSpawn(args: string[], opts: { cwd: string; timeout?: number }): { stdout: string; status: number } {
+  const r = spawnSync("git", args, {
+    cwd: opts.cwd,
+    encoding: "utf8",
+    timeout: opts.timeout ?? 15000,
+    stdio: ["ignore", "pipe", "pipe"],
+  });
+  if (r.error) throw r.error;
+  return { stdout: (r.stdout ?? "").trim(), status: r.status ?? 1 };
+}
+
+/** git checkout -b <branch>, ignoring errors if branch already exists. */
+function gitCheckoutNewBranch(repoRoot: string, branchName: string): void {
+  spawnSync("git", ["checkout", "-b", branchName], {
+    cwd: repoRoot,
+    timeout: 5000,
+    stdio: ["ignore", "pipe", "pipe"],
+    encoding: "utf8",
+  });
+  // Silently ignore errors (branch may already exist, etc.)
+}
+
+/** git checkout -, ignoring errors. */
+function gitCheckoutPrevious(repoRoot: string): void {
+  spawnSync("git", ["checkout", "-"], {
+    cwd: repoRoot,
+    timeout: 5000,
+    stdio: ["ignore", "pipe", "pipe"],
+    encoding: "utf8",
+  });
+}
+
 /** Create a shadow snapshot (git commit on a temp branch before risky operation). */
 export function createSnapshot(repoRoot: string, label: string): SnapshotResult {
   try {
-    const branchName = `${SNAPSHOT_PREFIX}-${label}-${Date.now()}`;
+    const safeLabel = sanitizeLabel(label);
+    const branchName = `${SNAPSHOT_PREFIX}-${safeLabel}-${Date.now()}`;
     // Stage all changes
-    execSync("git add -A", { cwd: repoRoot, encoding: "utf8", timeout: 10000 });
-    // Check if there are changes to commit
-    const status = execSync("git diff --cached --quiet", { cwd: repoRoot, encoding: "utf8", timeout: 5000 });
-    // Commit on a snapshot branch
-    execSync(`git checkout -b ${branchName} 2>/dev/null || true`, { cwd: repoRoot, timeout: 5000 });
-    execSync(`git commit -m "taiyi-snapshot: ${label}"`, { cwd: repoRoot, timeout: 10000 });
-    const sha = execSync("git rev-parse HEAD", { cwd: repoRoot, encoding: "utf8", timeout: 5000 }).trim();
-    // Return to original branch
-    execSync("git checkout - 2>/dev/null || true", { cwd: repoRoot, timeout: 5000 });
-    return { ok: true, sha };
-  } catch (e) {
-    // No changes to snapshot is OK
-    if (e instanceof Error && e.message.includes("nothing to commit")) {
+    gitSpawn(["add", "-A"], { cwd: repoRoot, timeout: 10000 });
+    // Check if there are changes to commit (exit code 0 = clean, 1 = dirty)
+    const diffStatus = gitSpawn(["diff", "--cached", "--quiet"], { cwd: repoRoot, timeout: 5000 }).status;
+    // No changes — skip snapshot
+    if (diffStatus === 0) {
       return { ok: true };
     }
+    // Commit on a snapshot branch
+    gitCheckoutNewBranch(repoRoot, branchName);
+    gitSpawn(["commit", "-m", `taiyi-snapshot: ${safeLabel}`], { cwd: repoRoot, timeout: 10000 });
+    const sha = gitSpawn(["rev-parse", "HEAD"], { cwd: repoRoot, timeout: 5000 }).stdout;
+    // Return to original branch
+    gitCheckoutPrevious(repoRoot);
+    return { ok: true, sha };
+  } catch (e) {
     return { ok: false, error: e instanceof Error ? e.message : String(e) };
   }
 }
@@ -83,12 +122,17 @@ export function rollbackToSnapshot(repoRoot: string): SnapshotResult {
   if (!state.lastGoodSnapshot) {
     return { ok: false, error: "No good snapshot to rollback to" };
   }
+  // Validate SHA: must be a 40-char hex string
+  const sha = state.lastGoodSnapshot.trim();
+  if (!/^[0-9a-fA-F]{40}$/.test(sha)) {
+    return { ok: false, error: `Invalid snapshot SHA: ${sha}` };
+  }
   try {
-    execSync(`git reset --hard ${state.lastGoodSnapshot}`, { cwd: repoRoot, timeout: 10000 });
-    execSync("git clean -fd", { cwd: repoRoot, timeout: 5000 });
+    gitSpawn(["reset", "--hard", sha], { cwd: repoRoot, timeout: 10000 });
+    gitSpawn(["clean", "-fd"], { cwd: repoRoot, timeout: 5000 });
     // Reset breaker
     writeBreakerState(repoRoot, { failures: 0 });
-    return { ok: true, sha: state.lastGoodSnapshot };
+    return { ok: true, sha };
   } catch (e) {
     return { ok: false, error: e instanceof Error ? e.message : String(e) };
   }
