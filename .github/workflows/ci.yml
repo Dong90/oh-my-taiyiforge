@@ -23,7 +23,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - uses: actions/setup-node@v6
         with:
           node-version: "22"
@@ -44,7 +44,7 @@ jobs:
         os: [ubuntu-latest, macos-latest]
         node: ["20", "22"]
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - uses: actions/setup-node@v6
         with:
           node-version: ${{ matrix.node }}
@@ -68,7 +68,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - uses: actions/setup-node@v6
         with:
           node-version: "22"
@@ -112,13 +112,15 @@ jobs:
       matrix:
         platform: [opencode, claude, codex, cursor]
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - uses: actions/setup-node@v6
         with:
           node-version: "22"
           cache: npm
       - run: npm ci
       - run: npm run build
+      # 确保 @types/node 在多端 smoke 环境可用
+      - run: npm ls @types/node || npm i --no-save @types/node
       - run: npx taiyi ci platform ${{ matrix.platform }}
 
   # 真装包验证 — npm pack 出 tgz → 全新临时目录 install → CLI smoke
@@ -133,7 +135,7 @@ jobs:
       matrix:
         os: [ubuntu-latest, macos-latest]
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - uses: actions/setup-node@v6
         with:
           node-version: "22"
@@ -207,7 +209,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - uses: actions/setup-node@v6
         with:
           node-version: "22"
@@ -261,7 +263,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - uses: actions/setup-node@v6
         with:
           node-version: "22"

@@ -1,31 +1,21 @@
 # CONTEXT: {{title}}
 
-> 由 `taiyi-intel-scan` 产出 · slug: {{slug}}
+> taiyi-intel-scan · {{slug}}
 
-## Tech Stack
-
+## Stack
 - 
 
 ## Conventions
-
 - 
 
-## Pattern Inventory
+## Patterns
+| Area | Convention |
+|------|-----------|
+| dirs | |
+| tests | |
+| api | |
 
-| 类别 | 惯例 |
+## Risks
+| Path | Risk |
 |------|------|
-| 目录 | |
-| 测试 | |
-| API | |
-
-## Risk Areas
-
-| 路径 | 风险 | 证据 |
-|------|------|------|
-| | | |
-
-## Scan Scope
-
-- 关键词:
-- 必读目录:
-- 参考目录:
+| | |

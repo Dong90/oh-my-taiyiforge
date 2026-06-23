@@ -1,0 +1,17 @@
+# ast-grep rule: detect `as any` type assertions
+id: as-any
+language: typescript
+severity: warning
+message: |
+  PITFALL [arch]: `as any` 类型断言 —— 绕过类型检查，丢失类型安全。
+rule:
+  pattern: $EXPR as any
+fix: |
+  // TODO: 用正确的类型替代 as any
+  $EXPR as any
+note: |
+  排查清单:
+  - 能否用 as unknown as TargetType 替代？
+  - 能否用类型守卫（type guard）替代？
+  - 如果确实无法避免：加 // SAFETY: 注释说明原因
+  - 参考: src/schemas/PITFALLS.md #S-002

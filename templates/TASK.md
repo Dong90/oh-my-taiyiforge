@@ -1,16 +1,15 @@
 # TASK: {{title}}
 
-## Slices (vertical, smallest shippable first)
+## Slices
+| # | Slice | Depends | Done |
+|---|-------|---------|------|
+| 1 | | — | green + demoable |
 
-| # | Slice | Depends | Done when |
-|---|-------|---------|-----------|
-| 1 | | — | 测试绿 + 可演示 |
-
-## Checklist per slice
-
-- [ ] 测试先行（RED）
-- [ ] 最小实现（GREEN）
-- [ ] 重构（REFACTOR）
-- [ ] 更新追溯（REQUIREMENT AC）
+## Checklist
+- [ ] RED — test first
+- [ ] GREEN — minimal impl
+- [ ] REFACTOR
+- [ ] trace REQUIREMENT AC
 
 ## Non-goals
+- 

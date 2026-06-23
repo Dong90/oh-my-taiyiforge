@@ -1,0 +1,25 @@
+{
+  "version": 1,
+  "slug": "bench-delta-final",
+  "totalTokens": 45,
+  "estimatedCostUsd": 0.000135,
+  "byPhase": {
+    "change": 45
+  },
+  "entries": [
+    {
+      "at": "2026-06-22T03:53:18.957Z",
+      "phase": "change",
+      "kind": "scan",
+      "tokens": 25,
+      "label": "1 files"
+    },
+    {
+      "at": "2026-06-22T03:53:19.048Z",
+      "phase": "change",
+      "kind": "scan",
+      "tokens": 20,
+      "label": "1 files"
+    }
+  ]
+}

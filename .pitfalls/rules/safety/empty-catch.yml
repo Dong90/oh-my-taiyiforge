@@ -1,0 +1,22 @@
+# ast-grep rule: detect empty catch blocks
+id: empty-catch
+language: typescript
+severity: error
+message: |
+  PITFALL [sec]: 空的 catch 块 —— 吞掉异常且无日志，导致问题不可追踪。
+rule:
+  pattern: |
+    catch ($ERR) {
+      
+    }
+fix: |
+  catch ($ERR) {
+    // TODO: 决定处理策略
+    console.error("<描述>:", $ERR);
+  }
+note: |
+  排查清单:
+  - 真的应该吞掉这个异常吗？（几乎没有合理场景）
+  - 至少记录日志：console.error / logger.error
+  - 如果是预期内的错误：用 if/else 前置判断而非 try/catch
+  - 参考: .pitfalls/rules/safety/
