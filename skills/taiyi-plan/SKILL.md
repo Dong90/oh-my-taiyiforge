@@ -48,19 +48,23 @@ change  change change change（各自走九阶段）
 
 ## 拆解清单
 
-| # | Slug | 范围 | Profile | 依赖 | 优先级 |
-|---|------|------|---------|------|--------|
-| 1 | user-auth | 注册/登录/权限 | full | — | P0 |
-| 2 | product-crud | 商品增删改查 | full | — | P0 |
-| 3 | order-flow | 下单/支付/状态机 | full | user-auth, product-crud | P1 |
+| # | Slug | 范围 | Profile | 共享资源 | 可并行 | 优先级 |
+|---|------|------|---------|----------|--------|--------|
+| 1 | user-auth | 注册/登录/权限 | full | auth 框架 | ✅ 与 product-crud | P0 |
+| 2 | product-crud | 商品增删改查 | full | auth 框架 | ✅ 与 user-auth | P0 |
+| 3 | order-flow | 下单/支付/状态机 | full | user-auth 的 session API | ❌ 等 1,2 | P1 |
 
-## 依赖关系图
+## 依赖关系与并行度
 
-user-auth ──┐
-            ├──→ order-flow
-product-crud┘
+```
+真并行组：user-auth ⚡ product-crud（不共享业务文件）
+     │              │
+     └──────┬───────┘
+            ▼
+       order-flow（依赖 session API，等前两者到 dev）
+```
 
-admin-dashboard ←── user-auth
+> 并行标记：⚡ = 不共享文件可同时推进，❌ = 有共享资源需排队
 
 ## 执行建议
 
@@ -106,13 +110,34 @@ Wave 2（Wave 1 到 dev 后说「启动 Wave 2」手动创建）：
 
 ### 2. 识别独立模块
 
-按以下规则判断一个功能是否独立：
+按功能拆分，用以下规则判断是否可并行：
 
-| 判定 | 规则 |
-|------|------|
-| 可独立开发 | 不依赖其他模块的 API/数据库表/类型定义 |
-| 有少量依赖 | 只依赖已存在的基础设施（auth 框架、数据库连接） |
-| 有强依赖 | 必须等另一个模块先完成 |
+**第一步：功能边界**
+看 README 中的功能描述，每个独立用户故事就是一个候选 change：
+- 「用户可以注册登录」→ user-auth
+- 「用户可以浏览商品」→ product-browse
+- 「用户可以下单支付」→ order-flow
+
+**第二步：共享资源检测（关键——借鉴 Claude Code 的隔离策略）**
+
+Claude Code 的 sub-agent 能真并行，是因为它们操作不同目录、不共享文件。我们的 change 也一样：
+
+| 共享什么 | 判定 | 处理 |
+|----------|------|------|
+| 不共享文件/表/接口 | **真并行** | 同时 `/taiyi:new`，各自推进 |
+| 共享基础设施（auth/DB 连接） | **弱依赖** | 可并行创建，但 dev 阶段注意不要同时改同一个文件 |
+| 共享业务表或 API 接口 | **强依赖，需排队** | A 到 dev 后 B 再开始 |
+| 用同一个文件 | **冲突，必须串行** | 合并为一个 change，或拆分文件 |
+
+**第三步：上下文隔离评估**
+
+每个 change 的 CONTEXT.md 只包含它需要的文件，不加载整个项目：
+
+```
+user-auth    → 只需关注 src/auth/、src/middleware/
+order-flow   → 只需关注 src/orders/、src/payment/
+              ← 两者不重叠 → 真并行
+```
 
 ### 3. 推荐 profile
 
