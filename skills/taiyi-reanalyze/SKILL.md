@@ -30,6 +30,12 @@ change → requirement → /taiyi:sp reanalyze（重新理解）
 | review 阶段发现设计和需求对不上 | 必跑 |
 | 刚写完 change，记忆还新鲜 | 跳过 |
 
+## 何时不用
+
+- 刚写完 change 和 requirement，记忆清晰
+- 只有 1-2 个 AC 的简单 change
+- micro/nano profile 的变更（文档太少，没东西可重分析）
+
 ## 输入
 
 - `.taiyi/changes/<slug>/CHANGE.md`
