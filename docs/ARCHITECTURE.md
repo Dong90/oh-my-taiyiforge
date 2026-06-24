@@ -24,15 +24,7 @@
 
 ## 架构总览
 
-<p align="center">
-  <img
-    src="taiyiforge-architecture.png"
-    alt="TaiyiForge 架构图 — 六大标准 × 中心引擎 × 九阶段 × 23 Skill × 三重门禁"
-    width="960"
-  />
-</p>
-
-> 可编辑真源：[taiyiforge-architecture.svg](./taiyiforge-architecture.svg)（v0.22 · Flow-X 布局）· 高清位图（6× / 16800×11280）：[taiyiforge-architecture.png](./taiyiforge-architecture.png) · 重生成：`python3 scripts/generate-architecture-svg.py`  
+> 可编辑真源：[taiyiforge-architecture.svg](./taiyiforge-architecture.svg)（v0.22 · Flow-X 布局）· 重生成：`python3 scripts/generate-architecture-svg.py`  
 > **C4 真源**：[c4/README.md](./c4/README.md) · [c4/containers.md](./c4/containers.md) · **工程补充**：[diagrams/architecture.md](./diagrams/architecture.md) · **流程图**：[diagrams/flows.md](./diagrams/flows.md) · **C4 预览 SVG**：[c4/png/](./c4/png/) · 流水线：[diagrams/pipeline.md](./diagrams/pipeline.md) · `/taiyi:diagram-pipeline --repo`
 
 ## 核心引擎能力（对齐架构图）
