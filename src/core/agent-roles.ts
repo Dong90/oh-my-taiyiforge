@@ -32,13 +32,6 @@ export const AGENT_ROLES: Record<string, AgentRoleDef> = {
     load: ["superpowers/writing-plans", "taiyi-task"],
     when: "bite-sized 切片与依赖顺序",
   },
-  "project-planner": {
-    id: "project-planner",
-    label: "项目规划",
-    phases: ["change"],
-    load: ["taiyi-plan", "taiyi-task"],
-    when: "README/PRD → 模块拆分 + profile 推荐 + 批量创建 change",
-  },
   architect: {
     id: "architect",
     label: "架构师",

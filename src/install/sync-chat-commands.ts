@@ -10,7 +10,7 @@ export const CHAT_COMMAND_MARKER = "TAIYI-FORGE:CHAT-COMMAND";
 /** @deprecated 旧 Cursor 标记；新安装统一用 CHAT_COMMAND_MARKER */
 export const CURSOR_COMMAND_MARKER = "TAIYI-FORGE:CURSOR-COMMAND";
 
-/** v28 顶栏 28 提示词 — 默认只同步这 28 个到 IDE 菜单。设 TAIYI_FORGE_ALL_PROMPTS=1 恢复全量同步。 */
+/** v28 顶栏 29 提示词（含 /taiyi:plan）— 默认只同步这些到 IDE 菜单。设 TAIYI_FORGE_ALL_PROMPTS=1 恢复全量同步。 */
 export const V28_CANONICAL_PROMPTS: ReadonlySet<string> = new Set([
   "taiyi-new.md", "taiyi-plan.md", "taiyi-status.md", "taiyi-write.md", "taiyi-continue.md", "taiyi-apply.md", "taiyi-archive.md",
   "taiyi-pause.md", "taiyi-resume.md", "taiyi-cancel.md", "taiyi-list.md",
