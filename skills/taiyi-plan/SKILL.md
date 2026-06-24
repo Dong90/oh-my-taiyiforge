@@ -1,20 +1,20 @@
 ---
-name: taiyi-decompose
-description: TaiyiForge 辅助 — 把项目 README/PRD 拆解为独立可执行的 change slug 清单。OpenCode / Claude / Codex / Cursor 通用。
+name: taiyi-plan
+description: TaiyiForge /taiyi:plan — 项目规划入口：把 README/PRD 拆解为独立 change 清单，推荐 profile 和依赖关系。OpenCode / Claude / Codex / Cursor 通用。
 ---
 
-# taiyi-decompose
+# taiyi-plan
 
 ## 目的
 
-把一份大的需求文档（README、PRD、技术方案）拆成一组互不阻塞的 TaiyiForge change，每个 change 带推荐 profile、依赖关系和优先级。
+作为 TaiyiForge 的规划阶段，在 `/taiyi:new` 之前运行。把一份大的需求文档（README、PRD、技术方案）拆成一组互不阻塞的 change，每个 change 带推荐 profile、依赖关系和优先级，然后批量创建。
 
 ## 何时使用
 
-decompose 跑在九阶段之前，是整个流程的上游：
+`/taiyi:plan` 跑在九阶段之前，是整个流程的第一个入口：
 
 ```
-/taiyi:sp decompose（拆解）
+/taiyi:plan（规划阶段）
        │
        ▼ 产出 DECOMPOSE.md + 批量 /taiyi:new
        │
