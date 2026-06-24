@@ -1,0 +1,71 @@
+name: Release
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "package.json"
+
+permissions:
+  contents: write
+
+jobs:
+  tag-and-release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Read version
+        id: version
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "v$VERSION" | grep -qP '^\d+\.\d+\.\d+$' && echo "valid=true" >> $GITHUB_OUTPUT || echo "valid=false" >> $GITHUB_OUTPUT
+
+      - name: Check tag exists
+        if: steps.version.outputs.valid == 'true'
+        id: check
+        run: |
+          if git rev-parse "v${{ steps.version.outputs.version }}" >/dev/null 2>&1; then
+            echo "exists=true" >> $GITHUB_OUTPUT
+            echo "Tag v${{ steps.version.outputs.version }} already exists, skipping."
+          else
+            echo "exists=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Create tag
+        if: steps.version.outputs.valid == 'true' && steps.check.outputs.exists == 'false'
+        run: |
+          git tag "v${{ steps.version.outputs.version }}"
+          git push origin "v${{ steps.version.outputs.version }}"
+
+      - name: Generate release notes
+        if: steps.version.outputs.valid == 'true' && steps.check.outputs.exists == 'false'
+        id: notes
+        run: |
+          PREV_TAG=$(git tag --sort=-version:refname | head -1)
+          if [ -z "$PREV_TAG" ]; then
+            NOTES=$(git log --oneline --no-merges)
+          else
+            NOTES=$(git log "$PREV_TAG..HEAD" --oneline --no-merges)
+          fi
+          # Escape for GitHub Actions output
+          NOTES="${NOTES//'%'/'%25'}"
+          NOTES="${NOTES//$'\n'/'%0A'}"
+          NOTES="${NOTES//$'\r'/'%0D'}"
+          echo "notes=$NOTES" >> $GITHUB_OUTPUT
+
+      - name: Create GitHub Release
+        if: steps.version.outputs.valid == 'true' && steps.check.outputs.exists == 'false'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ steps.version.outputs.version }}
+          name: v${{ steps.version.outputs.version }}
+          body: |
+            ## Commits
+
+            ${{ steps.notes.outputs.notes }}
+          draft: false
+          prerelease: false
