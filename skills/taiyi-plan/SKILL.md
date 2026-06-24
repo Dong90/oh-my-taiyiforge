@@ -32,9 +32,21 @@ change  change change change（各自走九阶段）
 
 ## 输入
 
-- 项目需求文档（README.md / PRD / 技术方案）
-- （可选）项目现有代码结构
-- （可选）已有 change 列表（`/taiyi:list`）
+`/taiyi:plan` 可以接文件路径，支持任何能读出文字的内容：
+
+| 输入 | 用法 | 提取方式 |
+|------|------|---------|
+| 本地 Markdown | `/taiyi:plan docs/PRD.md` | 直接读取 |
+| 纯文本 | `/taiyi:plan requirements.txt` | 直接读取 |
+| PDF | `/taiyi:plan docs/spec.pdf` | 提取文本后分析 |
+| Word 文档 | `/taiyi:plan docs/设计文档.docx` | 提取文本后分析 |
+| 网页 / 在线文档 | `/taiyi:plan https://wiki.example.com/prd` | 抓取后分析 |
+| 不指定文件 | `/taiyi:plan` | 自动找 README.md，找不到则询问 |
+
+**执行方式**：
+1. 读取指定文件 → 提取全部文字内容
+2. 如果是非文本格式（PDF/docx），先用对应工具提取文本
+3. 将提取的文字作为需求输入，进入正常的拆解流程
 
 ## 输出
 

@@ -109,7 +109,7 @@ change → requirement → design → ui-design → task → dev → test → re
 
 | 命令 | 做什么 |
 |------|-------|
-| `/taiyi:plan` | 项目规划：README → 模块拆分 + 批量创建 |
+| `/taiyi:plan [file]` | 项目规划：README/PRD/PDF/URL → 模块拆分 |
 | `/taiyi:new` | 创建变更 |
 | `/taiyi:status` | 查看进度 |
 | `/taiyi:write` | 写当前阶段 |
