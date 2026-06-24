@@ -51,6 +51,7 @@
     "prepare": "npm run build",
     "postinstall": "node postinstall.mjs",
     "test": "vitest run",
+    "test:py": "python -m pytest tests/ -v",
     "test:watch": "vitest",
     "taiyi": "node --import tsx src/cli/taiyi.ts",
     "install:all": "node dist/cli/install-cli.js --all",
@@ -93,6 +94,6 @@
     "vitest": "^4.1.9"
   },
   "taiyi": {
-    "deliveryVerifyCmd": "npm test"
+    "deliveryVerifyCmd": "npm run test:py"
   }
 }
