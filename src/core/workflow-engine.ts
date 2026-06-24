@@ -1,6 +1,6 @@
 import fs from "node:fs";
 import path from "node:path";
-import type { ChangeProfile, ChangeState, GateInput, PhaseId } from "./types.js";
+import type { ChangeProfile, ChangeState, GateInput, PhaseId, QualityScores } from "./types.js";
 import { clearRuntimeForSlug } from "./runtime/orphan-runtime.js";
 import { evaluateHumanGate } from "./gates/human-gate.js";
 import { rejectAutomatedHumanApproval, requiresHumanGate } from "./gates/human-gate-config.js";
@@ -21,6 +21,7 @@ import { inferComplexitySignals } from "./routing/infer-complexity.js";
 import { resolveChangeDir } from "./taiyi-archive.js";
 import { resetChangeArtifacts } from "./change-artifact-reset.js";
 import { seedChangeTemplates, seedPhaseTemplate } from "./template-seed.js";
+import type { CodeStyleContract, ModuleManifestEntry, SeedVars } from "./template-engine.js";
 import {
   artifactPathForPhase,
   validateArtifactFile,
@@ -34,8 +35,10 @@ import {
 import { enforceTokenBudgetBeforeComplete } from "./token-runner.js";
 import { expectedPhaseCount, isChangeAborted, isWorkflowCompleted } from "./change-status.js";
 import { normalizeState } from "./normalize-state.js";
-import { deliveryGateEnabled, evaluateDeliveryGate } from "./gates/delivery-gate.js";
-import { auditChange } from "./workflow-audit.js";
+import { deliveryGateEnabled, evaluateDeliveryGate, evaluateProductionReadiness } from "./gates/delivery-gate.js";
+import { auditChange, crossChangeFindings } from "./workflow-audit.js";
+import { resolveArchTemplateForChange } from "./profile.js";
+import { evaluateArchitecture } from "./review-arch-check.js";
 import { syncRootChangelog } from "./sync-root-changelog.js";
 import { syncChangeState } from "./state-sync.js";
 import {
@@ -49,12 +52,24 @@ import { appendPhaseToContext, generateGraphPhaseContext } from "./phase-context
 
 export type InitChangeOptions = {
   title?: string;
+  /** 一句话变更描述（渲染到 CHANGE.md 的「一句话」行和 Problem Statement） */
+  motivation?: string;
+  /** 较长的变更背景描述（motivation 的第二 fallback） */
+  description?: string;
   templatesDir?: string;
   profile?: ChangeProfile;
   strictDev?: boolean;
   autoHarness?: boolean;
   /** Reinitialize even when state.json already exists (resets progress). */
   force?: boolean;
+  /** 架构设计模式列表 */
+  architecture_patterns?: string[];
+  /** 技术栈偏好 */
+  tech_stack_preferences?: SeedVars["tech_stack_preferences"];
+  /** 代码质量契约 */
+  code_style?: CodeStyleContract;
+  /** 模块清单 */
+  module_manifest?: ModuleManifestEntry[];
 };
 
 export type StateLookup =
@@ -111,6 +126,12 @@ export class WorkflowEngine {
         ? seedChangeTemplates(dir, templatesDir, {
             slug,
             title: options?.title,
+            motivation: options?.motivation,
+            description: options?.description,
+            architecture_patterns: options?.architecture_patterns,
+            tech_stack_preferences: options?.tech_stack_preferences,
+            code_style: options?.code_style,
+            module_manifest: options?.module_manifest,
           })
         : [];
 
@@ -281,6 +302,75 @@ export class WorkflowEngine {
     return { signals: inferred, assessment: complexity };
   }
 
+  private evaluatePhaseQuality(
+    slug: string,
+    phaseId: PhaseId,
+    changeDir: string,
+    qualityGateScores: QualityScores,
+    state: { strictDev?: boolean },
+    workingState: ChangeState,
+    options?: { skipArtifactValidation?: boolean },
+  ): { ok: true; qualityScores: QualityScores; qualityHints?: string[] } | { ok: false; error: string; qualityHints?: string[] } {
+    let qualityScores: QualityScores = { ...qualityGateScores };
+    let qualityHints: string[] | undefined;
+
+    // ── 反向同步：本地上传人类 MD 修改 ──
+    if (!options?.skipArtifactValidation && ZOD_PHASES.includes(phaseId) && this.templatesDir) {
+      const candidates = [
+        this.templatesDir ? path.join(path.dirname(this.templatesDir), "src", "templates") : null,
+        path.join(this.workspaceRoot, "..", "src", "templates"),
+      ].filter(Boolean) as string[];
+      const hbsTemplatesDir = candidates.find(d => fs.existsSync(d));
+      if (hbsTemplatesDir) {
+        const syncResult = autoSyncLocalEdits(phaseId, this.changeDir(slug), hbsTemplatesDir);
+        if (syncResult.needsLlm) {
+          qualityHints = (qualityHints ?? []).concat(syncResult.message);
+        }
+      }
+    }
+
+    if (!options?.skipArtifactValidation) {
+      const artifactFile = artifactPathForPhase(this.changeDir(slug), phaseId);
+      const inferred = validateArtifactFile(artifactFile, phaseId);
+      if (inferred) {
+        qualityHints = inferred.hints;
+        qualityScores = {
+          completeness: qualityScores.completeness && inferred.scores.completeness,
+          consistency: qualityScores.consistency && inferred.scores.consistency,
+          verifiability: qualityScores.verifiability && inferred.scores.verifiability,
+          traceability: qualityScores.traceability && inferred.scores.traceability,
+          engineering_quality: qualityScores.engineering_quality && inferred.scores.engineering_quality,
+        };
+      }
+
+      if (phaseId === "dev" && state.strictDev) {
+        const devPath = this.artifactPath(slug, "dev");
+        const devText = fs.readFileSync(devPath, "utf8");
+        if (!/strict:\s*true/i.test(devText)) {
+          qualityHints = [
+            ...(qualityHints ?? []),
+            "init 时启用了 strictDev：.dev-complete 首行写 strict: true",
+          ];
+          qualityScores.verifiability = false;
+          qualityScores.completeness = false;
+        }
+      }
+    }
+
+    if (process.env.TAIYI_SKIP_QUALITY_GATE !== "1") {
+      const isLowComplexity = workingState.complexity?.level === "low";
+      const isHumanGated = requiresHumanGate(phaseId);
+      const quality = evaluateQualityGate(qualityScores);
+      const qualityStrict = !isLowComplexity || isHumanGated || phaseId === "integration";
+      if (!quality.passed && qualityStrict) {
+        const hintText = qualityHints?.length ? ` — ${qualityHints.join("; ")}` : "";
+        return { ok: false, error: `Quality gate failed: ${quality.failed.join(", ")}${hintText}`, qualityHints };
+      }
+    }
+
+    return { ok: true, qualityScores, qualityHints };
+  }
+
   completePhase(
     slug: string,
     phaseId: PhaseId,
@@ -370,6 +460,27 @@ export class WorkflowEngine {
       return { ok: false, error: earlyCode.message };
     }
 
+    if (phaseId === "dev" && !options?.skipArtifactValidation) {
+      const archTemplate = resolveArchTemplateForChange(workingState.profile, workspaceDir);
+      const archResult = evaluateArchitecture(workspaceDir, archTemplate);
+      if (!archResult.passed) {
+        const failedLabels = archResult.findings
+          .filter((f) => !f.passed)
+          .map((f) => `${f.label}: ${f.detail ?? "未通过"}`)
+          .join("; ");
+        this.log.warn(`[dev] 架构检查未通过: ${failedLabels}`);
+        logActivity(this.taiyiRoot, {
+          event: "dev:arch-failed",
+          slug,
+          details: failedLabels,
+        });
+        return {
+          ok: false,
+          error: `架构检查未通过，请确保代码与架构约定一致:\n${failedLabels}`,
+        };
+      }
+    }
+
     if (phaseId === "integration" && process.env.TAIYI_SKIP_INTEGRATION_AUDIT !== "1") {
       const audit = auditChange(workspaceDir, this.workspaceRoot, slug, {
         pretendIntegrationComplete: true,
@@ -383,6 +494,46 @@ export class WorkflowEngine {
           ok: false,
           error: `Integration audit failed:\n${highs.join("\n")}`,
         };
+      }
+
+      // 跨变更兼容性检查：是否有其他 active 变更尚未集成？
+      const crossFindings = crossChangeFindings(this.workspaceRoot, slug);
+      for (const f of crossFindings) {
+        this.log.warn(`[integration] ${f.code}: ${f.message}`);
+        logActivity(this.taiyiRoot, {
+          event: "integration:cross-change-warning",
+          slug,
+          code: f.code,
+          message: f.message,
+        });
+      }
+
+      // 架构检查：根据 profile 检测项目代码结构质量
+      const archTemplate = resolveArchTemplateForChange(workingState.profile, workspaceDir);
+      const archResult = evaluateArchitecture(workspaceDir, archTemplate);
+      if (!archResult.passed) {
+        const failedLabels = archResult.findings
+          .filter((f) => !f.passed)
+          .map((f) => `${f.label}: ${f.detail ?? "未通过"}`)
+          .join("; ");
+        this.log.warn(`[integration] 架构检查未通过: ${failedLabels}`);
+        logActivity(this.taiyiRoot, {
+          event: "integration:arch-warning",
+          slug,
+          details: failedLabels,
+        });
+      }
+
+      // 投产就绪检查：health endpoint / package.json scripts / CORS
+      const readinessResult = evaluateProductionReadiness(workspaceDir, archTemplate);
+      if (!readinessResult.passed) {
+        const warnings = readinessResult.warnings.join("; ");
+        this.log.warn(`[integration] 投产就绪检查警告: ${warnings}`);
+        logActivity(this.taiyiRoot, {
+          event: "integration:readiness-warning",
+          slug,
+          warnings: readinessResult.warnings,
+        });
       }
     }
 
@@ -412,74 +563,8 @@ export class WorkflowEngine {
       return { ok: false, error: tokenCheck.error };
     }
 
-    let qualityScores = { ...gates.quality };
-    let qualityHints: string[] | undefined;
-
-    // ── 反向同步：本地上传人类 MD 修改 ──
-    if (!options?.skipArtifactValidation && ZOD_PHASES.includes(phaseId) && this.templatesDir) {
-      const candidates = [
-        this.templatesDir ? path.join(path.dirname(this.templatesDir), "src", "templates") : null,
-        path.join(this.workspaceRoot, "..", "src", "templates"),
-      ].filter(Boolean) as string[];
-      const hbsTemplatesDir = candidates.find(d => fs.existsSync(d));
-      if (hbsTemplatesDir) {
-        const syncResult = autoSyncLocalEdits(
-          phaseId,
-          this.changeDir(slug),
-          hbsTemplatesDir
-        );
-        if (syncResult.needsLlm) {
-          qualityHints = (qualityHints ?? []).concat(syncResult.message);
-        }
-      }
-    }
-
-    if (!options?.skipArtifactValidation) {
-      const artifactFile = artifactPathForPhase(this.changeDir(slug), phaseId);
-      const inferred = validateArtifactFile(artifactFile, phaseId);
-      if (inferred) {
-        qualityHints = inferred.hints;
-        qualityScores = {
-          completeness: qualityScores.completeness && inferred.scores.completeness,
-          consistency: qualityScores.consistency && inferred.scores.consistency,
-          verifiability:
-            qualityScores.verifiability && inferred.scores.verifiability,
-          traceability:
-            qualityScores.traceability && inferred.scores.traceability,
-          engineering_quality:
-            qualityScores.engineering_quality && inferred.scores.engineering_quality,
-        };
-      }
-
-      if (phaseId === "dev" && state.strictDev) {
-        const devPath = this.artifactPath(slug, "dev");
-        const devText = fs.readFileSync(devPath, "utf8");
-        if (!/strict:\s*true/i.test(devText)) {
-          qualityHints = [
-            ...(qualityHints ?? []),
-            "init 时启用了 strictDev：.dev-complete 首行写 strict: true",
-          ];
-          qualityScores.verifiability = false;
-          qualityScores.completeness = false;
-        }
-      }
-    }
-
-    if (process.env.TAIYI_SKIP_QUALITY_GATE !== "1") {
-      const isLowComplexity = workingState.complexity?.level === "low";
-      const isHumanGated = requiresHumanGate(phaseId);
-      const quality = evaluateQualityGate(qualityScores);
-      const qualityStrict = !isLowComplexity || isHumanGated || phaseId === "integration";
-      if (!quality.passed && qualityStrict) {
-        const hintText = qualityHints?.length ? ` — ${qualityHints.join("; ")}` : "";
-        logActivity(this.taiyiRoot, { event: "gate:failed", slug, phase: phaseId, reason: quality.failed.join(", ") });
-        return {
-          ok: false,
-          error: `Quality gate failed: ${quality.failed.join(", ")}${hintText}`,
-          qualityHints,
-        };
-      }
-    }
+    const qualityResult = this.evaluatePhaseQuality(slug, phaseId, changeDir, gates.quality, state, workingState, options);
+    if (!qualityResult.ok) return qualityResult;
 
     const needsHuman = requiresHumanGate(phaseId) || options?.forceHuman;
     if (needsHuman) {

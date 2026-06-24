@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="{{#if lang}}{{lang}}{{else}}zh-CN{{/if}}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{app_name}}</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>{{#if favicon}}{{favicon}}{{else}}🚀{{/if}}</text></svg>">
+    <script src="https://cdn.jsdelivr.net/npm/marked@9.1.6/marked.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>{{app_name}}</h1>
+            <p class="subtitle">{{#if app_description}}{{app_description}}{{else}}AI-powered application{{/if}}</p>
+            <span id="backend-status" class="status-error">⏳ Connecting...</span>
+        </header>
+
+        <main>
+            <div class="card">
+                <div class="card-header">输入</div>
+                {{#if select_options}}
+                <div class="form-group">
+                    <label for="direction">{{#if select_label}}{{select_label}}{{else}}选项{{/if}}</label>
+                    <select id="direction">
+                        {{#each select_options}}<option value="{{value}}">{{label}}</option>{{/each}}
+                    </select>
+                </div>
+                {{/if}}
+                <div class="form-group">
+                    <label for="inputText">{{#if input_label}}{{input_label}}{{else}}输入内容{{/if}}</label>
+                    <textarea id="inputText" placeholder="{{#if input_placeholder}}{{input_placeholder}}{{else}}请输入内容...{{/if}}" rows="6"></textarea>
+                </div>
+                <div class="btn-group">
+                    <button id="primaryBtn" class="btn btn-primary">{{#if primary_button_label}}{{primary_button_label}}{{else}}提交{{/if}}</button>
+                    {{#if secondary_button_label}}<button id="secondaryBtn" class="btn btn-secondary">{{secondary_button_label}}</button>{{/if}}
+                    <button id="clearBtn" class="btn btn-secondary">清空</button>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">{{#if output_label}}{{output_label}}{{else}}结果{{/if}}</div>
+                <div id="outputText" class="output-area"></div>
+                <div id="loading" style="display:none;text-align:center;padding:2rem;">
+                    <span class="spinner"></span>
+                    <span style="margin-left:.5rem;">处理中...</span>
+                </div>
+            </div>
+        </main>
+
+        <footer>
+            <p>{{#if footer_text}}{{footer_text}}{{else}}Powered by {{app_name}}{{/if}}</p>
+            {{#if has_metrics}}<p><a href="metrics.html" style="color:var(--color-primary);text-decoration:none;">📊 查看指标</a></p>{{/if}}
+        </footer>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>

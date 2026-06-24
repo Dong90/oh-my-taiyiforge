@@ -1,4 +1,6 @@
 #!/usr/bin/env node
+import fs from "node:fs";
+import path from "node:path";
 import { WorkflowEngine } from "../core/workflow-engine.js";
 import { buildDoctorJsonCompact } from "../core/doctor.js";
 import { buildAuditJsonCompact } from "../core/workflow-audit.js";
@@ -15,6 +17,8 @@ import { formatChangeNotFound, parseProfileFlag } from "../core/cli-hints.js";
 import { resolveDefaultProfile } from "../core/project-config.js";
 import { runInitWizard } from "../commands/init-wizard.js";
 import { importFromGitBranch } from "../commands/import-tool.js";
+import { runAutoPlan, decomposeReadme } from "../core/auto-plan.js";
+import { getTemplateCatalog } from "../core/template-catalog.js";
 import type { ChangeProfile, PhaseId } from "../core/types.js";
 import {
   taiyiArchive, taiyiAudit, taiyiCancel, taiyiDoctor, taiyiHandoff,
@@ -614,7 +618,107 @@ const handlers: Record<string, CliHandler> = {
     const r = importFromGitBranch(branch, workspaceDir);
     r.then(slug => { if (jsonMode) console.log(JSON.stringify({ slug }, null, 2)); else console.log("导入完成: " + slug); }).catch((err: unknown) => { log.error(err instanceof Error ? err.message : String(err)); process.exitCode = 1; });
   },
+  "auto-plan": (a: string[]) => {
+    const args = stripFlags(a);
+    const target = args[0] ?? ".";
+    const workspace = path.resolve(target);
+    const readmePath = path.join(workspace, "README.md");
+    if (!fs.existsSync(readmePath)) { log.error("auto-plan: " + readmePath + " 不存在，请确保目标目录有 README.md"); process.exitCode = 1; return; }
+    if (a.includes("--list-templates")) { console.log(getTemplateCatalog()); process.exit(0); }
+    if (a.includes("--prompt")) {
+      const readme = fs.readFileSync(readmePath, "utf8");
+      const lang = detectLanguage(readme);
+      console.log(`你是全栈架构师。请基于 README 分析项目，生成 manifest JSON。
+
+## 项目检测
+**技术栈**: ${lang.name} · ${lang.stack} · 文件扩展名: ${lang.extension}
+**类型**: ${lang.type}
+
+## CRITICAL RULES
+1. **防幻觉**: 每个模块的 source_quote 字段必须摘录 README 原文。纯推导填 "SYSTEM_INFERRED"。
+2. **降级**: confidence_score < 0.7 时仅生成最简骨架（不推演不存在的模块）。
+3. **反循环**: depends_on 只能引用更小的 id（拓扑排序）。严禁循环依赖。
+4. **黑名单**: 严禁生成 core/exceptions.py、core/logger.py、tests/conftest.py（引擎自动生成）。
+
+## 输出 Schema (JSON)
+{
+  "changes": [{
+    "slug": "kebab-case-slug",
+    "title": "原始中文标题",
+    "profile": "api|ui|lite|micro",
+    "motivation": "一句话描述",
+    "dependsOn": [],
+    "manifest": [{
+      "id": "M1",
+      "file": "${lang.examplePath}",
+      "pattern": "从模板目录中选",
+      "class_name": "PascalCase",
+      "extends": null,
+      "depends_on": [],
+      "methods": [{"name": "methodName", "return_type": "str", "is_abstract": false}],
+      "prompt_style": "advanced|standard|minimal",
+      "constraints": ["约束"],
+      "source_quote": "README 中摘录的原文",
+      "confidence_score": 0.95,
+      "extension_metadata": {}
+    }]
+  }]
+}
+
+## 可用的 pattern
+${getTemplateCatalog()}
+
+## README
+${readme.slice(0, 8000)}`);
+      process.exit(0);
+    }
+    const auto = a.includes("--auto") || a.includes("-a");
+    const fullMode = a.includes("--full");
+    const manifestJson = a.includes("--manifest-json") ? (a[a.indexOf("--manifest-json") + 1] ?? null) : null;
+    const manifestFile = a.includes("--manifest-file") ? (a[a.indexOf("--manifest-file") + 1] ?? null) : null;
+    const templatesDir = path.join(resolvePackageRoot(import.meta.url), "src", "templates");
+    if (!auto) {
+      // Manual mode: show plan, wait for confirmation
+      const readme = fs.readFileSync(readmePath, "utf8");
+      const changes = decomposeReadme(readme);
+      console.log("\n📋 自动拆解结果 (" + changes.length + " changes):\n");
+      for (const c of changes) {
+        console.log("  " + c.priority + "  " + c.slug.padEnd(18) + "  " + c.profile.padEnd(6) + "  " + c.title);
+      }
+      console.log("\n  ──  依赖关系  ──");
+      for (const c of changes) {
+        if (c.dependsOn.length > 0) console.log("  " + c.slug + " ← " + c.dependsOn.join(", "));
+      }
+      console.log("\n加 --auto 跳过确认直接执行\n");
+      return;
+    }
+    // Auto mode: full pipeline
+    const flag = fullMode ? " --auto --full" : " --auto";
+    console.log("⚡ auto-plan" + flag + ": " + workspace + "\n");
+    const r = runAutoPlan({
+      workspaceDir: workspace, readmePath, templatesDir, codeGen: true,
+      forceProfile: fullMode ? "full" : undefined,
+      manifestInput: manifestJson ?? manifestFile ?? undefined,
+    });
+    console.log("\n✅ auto-plan 完成！" + r.changes.length + " changes, " + r.generated + " files generated");
+    if (r.errors.length > 0) {
+      console.log("⚠️ errors:");
+      for (const e of r.errors) console.log("  - " + e);
+      process.exitCode = 1;
+    }
+  },
 };
+
+function detectLanguage(readme: string) {
+  const text = readme.slice(0, 2000);
+  if (/fastapi|flask|django|python|pip|uvicorn|pytest|\.py/i.test(text))
+    return { name: "Python + FastAPI", stack: "FastAPI / pydantic / pytest", type: "后端API服务", language: "Python", extension: ".py", examplePath: "adapters/base.py" };
+  if (/express|node\.js|npm|javascript|typescript|react|next\.js|vue/i.test(text))
+    return { name: "Node.js / TypeScript", stack: "Express / React / vitest", type: "全栈项目", language: "TypeScript", extension: ".ts", examplePath: "src/adapters/base.ts" };
+  if (/golang|gin|go mod|\.go/i.test(text))
+    return { name: "Go + Gin", stack: "Gin / sqlc / go test", type: "后端API服务", language: "Go", extension: ".go", examplePath: "internal/adapters/base.go" };
+  return { name: "通用项目", stack: "自动检测中", type: "待确认", language: "Python", extension: ".py", examplePath: "adapters/base.py" };
+}
 
 // ── Dispatch ──
 function dispatch(cmd: string, rawCmd: string, args: string[]): void {

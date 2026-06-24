@@ -3,6 +3,7 @@ import path from "node:path";
 import type { PhaseId, ChangeState } from "./types.js";
 import { getPhase } from "./phase-registry.js";
 import { AgentContext } from "./change-graph/agent-sdk.js";
+import { resolveArchTemplateForChange } from "./profile.js";
 
 /* ──────────────────────────────────────────────
  * Graph-native Phase Context (Phase B)
@@ -206,6 +207,18 @@ export function appendPhaseToContext(
     ? `## ${justCompletedPhase} (✓)\n${summary}\n`
     : `## ${justCompletedPhase} (✓)\n`;
 
+  // Bridge: when design phase completes, resolve arch template and inject
+  // architecture conventions into PHASE-CONTEXT.md so dev agents read them
+  let archBlock = "";
+  if (justCompletedPhase === "design") {
+    try {
+      const archTemplate = resolveArchTemplateForChange(state.profile, changeDir);
+      if (archTemplate.contextGuide) {
+        archBlock = `\n**架构约定**:\n\`\`\`\n${archTemplate.contextGuide}\n\`\`\`\n`;
+      }
+    } catch { /* best-effort — arch template is optional */ }
+  }
+
   let projectContext = "";
   let existing = "";
   if (fs.existsSync(ctxPath)) {
@@ -224,15 +237,15 @@ export function appendPhaseToContext(
       const sepIdx = existing.indexOf("\n---", insertPos);
       const before = sepIdx >= 0 ? existing.slice(0, sepIdx) : existing;
       const after = sepIdx >= 0 ? existing.slice(sepIdx) : "";
-      existing = before + "\n" + appendBlock + "\n" + after.trimStart();
+      existing = before + "\n" + appendBlock + (archBlock ? "\n" + archBlock : "") + "\n" + after.trimStart();
     } else {
       const headerEnd = existing.indexOf("\n---");
       const before = headerEnd >= 0 ? existing.slice(0, headerEnd) : existing;
       const after = headerEnd >= 0 ? existing.slice(headerEnd) : "";
-      existing = before + "\n" + appendBlock + "\n" + after.trimStart();
+      existing = before + "\n" + appendBlock + (archBlock ? "\n" + archBlock : "") + "\n" + after.trimStart();
     }
   } else {
-    existing = `# Phase Context — ${slug}\n\n${appendBlock}`;
+    existing = `# Phase Context — ${slug}\n\n${appendBlock}` + (archBlock ? "\n" + archBlock : "");
   }
 
   // Replace footer with current phase info

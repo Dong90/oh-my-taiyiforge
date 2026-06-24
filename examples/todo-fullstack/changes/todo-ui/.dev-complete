@@ -1,0 +1,3 @@
+command: npm test
+exitCode: 0
+dev complete

@@ -18,9 +18,10 @@ describe("artifact-validator with Zod (mandatory)", () => {
   const requirementData = {
     title: "用户登录功能",
     features: ["邮箱密码登录", "手机验证码登录"],
+    scope_out: ["微信扫码登录", "SSO 集成"],
     acceptance_criteria: [
-      { id: "AC-01", description: "用户输入邮箱和密码后点击登录", is_checked: false },
-      { id: "AC-02", description: "错误密码显示红色提示", is_checked: false },
+      { id: "AC-01", description: "用户输入邮箱和密码后点击登录", is_checked: false, verify: "npm run test:login" },
+      { id: "AC-02", description: "错误密码显示红色提示", is_checked: false, verify: "npm run test:error" },
     ],
   };
 
@@ -146,7 +147,7 @@ describe("artifact-validator with Zod (mandatory)", () => {
       "change"
     );
     expect(result).not.toBeNull();
-    expect(result!.scores.completeness).toBe(false);
+    expect(result!.scores.consistency).toBe(false);
     expect(result!.hints.some((h) => /Zod 校验失败/.test(h))).toBe(true);
   });
 });

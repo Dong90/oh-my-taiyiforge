@@ -6,6 +6,7 @@ import {
   evaluateCommitTrailers,
 } from "./commit-trailer.js";
 import { resolveDeliveryVerifyCmd } from "./consumer-config.js";
+import type { ArchitectureTemplate } from "../types.js";
 
 export type DeliveryGateResult = {
   passed: boolean;
@@ -197,4 +198,145 @@ export function evaluateDeliveryGate(
   }
 
   return { passed: true };
+}
+
+export type ProductionReadinessResult = {
+  passed: boolean;
+  warnings: string[];
+};
+
+/** Check that package.json contains required scripts. */
+function checkPackageScripts(
+  workspaceDir: string,
+  required: string[],
+): ProductionReadinessResult {
+  const pkgPath = path.join(workspaceDir, "package.json");
+  if (!fs.existsSync(pkgPath)) {
+    return { passed: false, warnings: ["missing package.json"] };
+  }
+  try {
+    const pkg = JSON.parse(fs.readFileSync(pkgPath, "utf8")) as {
+      scripts?: Record<string, string>;
+    };
+    const missing = required.filter((s) => !pkg.scripts?.[s]);
+    if (missing.length > 0) {
+      return {
+        passed: false,
+        warnings: [`package.json 缺少 script: ${missing.join(", ")}`],
+      };
+    }
+    return { passed: true, warnings: [] };
+  } catch {
+    return { passed: false, warnings: ["package.json 解析失败"] };
+  }
+}
+
+/** Scan source files for health endpoint pattern (GET /health, GET /api/health, /ready, /live). */
+function scanHealthEndpoint(workspaceDir: string): ProductionReadinessResult {
+  const patterns = [
+    /(?:\/health|\/api\/health|\/ready|\/live)/i,
+    /healthCheck|health_check|\/healthz/i,
+  ];
+  const srcDir = path.join(workspaceDir, "src");
+  if (!fs.existsSync(srcDir)) {
+    return { passed: false, warnings: ["src/ 目录不存在，无法检查 health endpoint"] };
+  }
+  try {
+    const files = listFilesRecursive(srcDir).filter(
+      (f) => f.endsWith(".ts") || f.endsWith(".js") || f.endsWith(".py"),
+    );
+    const found = files.some((f) => {
+      const content = fs.readFileSync(path.join(workspaceDir, f), "utf8");
+      return patterns.some((p) => p.test(content));
+    });
+    if (!found) {
+      return {
+        passed: false,
+        warnings: ["未发现 health endpoint（GET /health 或 /api/health）"],
+      };
+    }
+    return { passed: true, warnings: [] };
+  } catch {
+    return { passed: false, warnings: ["health endpoint 检查失败"] };
+  }
+}
+
+/** Scan source files for CORS middleware usage. */
+function scanCorsUsage(workspaceDir: string): ProductionReadinessResult {
+  const corsPattern = /cors|cors\(|allow_origins|Access-Control-/i;
+  const srcDir = path.join(workspaceDir, "src");
+  if (!fs.existsSync(srcDir)) {
+    return { passed: false, warnings: ["src/ 目录不存在，无法检查 CORS"] };
+  }
+  try {
+    const files = listFilesRecursive(srcDir).filter(
+      (f) => f.endsWith(".ts") || f.endsWith(".js") || f.endsWith(".py"),
+    );
+    const found = files.some((f) => {
+      const content = fs.readFileSync(path.join(workspaceDir, f), "utf8");
+      return corsPattern.test(content);
+    });
+    if (!found) {
+      return { passed: false, warnings: ["未发现 CORS 配置"] };
+    }
+    return { passed: true, warnings: [] };
+  } catch {
+    return { passed: false, warnings: ["CORS 检查失败"] };
+  }
+}
+
+function listFilesRecursive(dir: string): string[] {
+  const result: string[] = [];
+  try {
+    for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+      const full = path.join(dir, entry.name);
+      if (entry.isDirectory()) {
+        if (!entry.name.startsWith(".") && entry.name !== "node_modules") {
+          result.push(...listFilesRecursive(full));
+        }
+      } else {
+        result.push(full);
+      }
+    }
+  } catch {
+    /* permission denied or missing — skip */
+  }
+  return result;
+}
+
+/** evaluateProductionReadiness: check arch-template production-readiness constraints.
+ *  Does not block integration, returns warnings for the audit report.
+ */
+export function evaluateProductionReadiness(
+  workspaceDir: string,
+  archTemplate?: ArchitectureTemplate,
+): ProductionReadinessResult {
+  if (!archTemplate?.productionReadiness) {
+    return { passed: true, warnings: [] };
+  }
+  const pr = archTemplate.productionReadiness;
+  const warnings: string[] = [];
+
+  if (pr.requiredScripts && pr.requiredScripts.length > 0) {
+    const scriptsResult = checkPackageScripts(workspaceDir, pr.requiredScripts);
+    if (!scriptsResult.passed) {
+      warnings.push(...scriptsResult.warnings);
+    }
+  }
+
+  if (pr.healthEndpoint) {
+    const healthResult = scanHealthEndpoint(workspaceDir);
+    if (!healthResult.passed) {
+      warnings.push(...healthResult.warnings);
+    }
+  }
+
+  if (pr.corsCheck) {
+    const corsResult = scanCorsUsage(workspaceDir);
+    if (!corsResult.passed) {
+      warnings.push(...corsResult.warnings);
+    }
+  }
+
+  return { passed: warnings.length === 0, warnings };
 }

@@ -19,6 +19,8 @@ export type FanOutPlan = {
   workers: DispatchWorker[];
   maxParallel: number;
   platforms: Platform[];
+  /** Architecture context guide injected into per-worker prompts (dev phase only). */
+  archGuide?: string;
 };
 
 // ── Build workers ──
@@ -49,7 +51,8 @@ export function buildFanOutPlan(
   slug: string,
   phase: PhaseId,
   task: TaskSpec,
-  platforms: Platform[] = ["opencode", "claude", "cursor", "codex"]
+  platforms: Platform[] = ["opencode", "claude", "cursor", "codex"],
+  archGuide?: string,
 ): FanOutPlan {
   return {
     slug,
@@ -57,6 +60,7 @@ export function buildFanOutPlan(
     workers: buildWorkers(task, phase),
     maxParallel: MAX_PARALLEL_AGENTS,
     platforms,
+    archGuide,
   };
 }
 
@@ -71,16 +75,20 @@ export function generateOpenCodeDispatch(plan: FanOutPlan): string {
   ];
   for (const w of plan.workers) {
     const safeLabel = w.label.replace(/"/g, '\\"').replace(/`/g, '\\`').slice(0, 40);
-    const prompt = [
+    const promptParts = [
       `TaiyiForge worker ${w.id} · slug=${plan.slug} · phase=${plan.phase}`,
       `Role: executor — ${w.label}`,
       `Task: ${w.task}`,
+    ];
+    if (plan.archGuide) {
+      promptParts.push("", "## 架构约定", plan.archGuide, "");
+    }
+    promptParts.push(
       w.testCommand ? `Verify: ${w.testCommand}` : "",
       "TDD first: write failing test, then minimal implementation.",
       "When done: output SUMMARY + test results.",
-    ]
-      .filter(Boolean)
-      .join("\n");
+    );
+    const prompt = promptParts.filter(Boolean).join("\n");
     lines.push(
       `Task(subagent_type="general", description="taiyi ${w.id}: ${safeLabel}", prompt="""`
     );
@@ -99,14 +107,18 @@ export function generateClaudeDispatch(plan: FanOutPlan): string {
     "",
   ];
   for (const w of plan.workers) {
-    const prompt = [
+    const promptParts = [
       `You are worker ${w.id} for change "${plan.slug}" in phase "${plan.phase}".`,
       `Task: ${w.task}`,
+    ];
+    if (plan.archGuide) {
+      promptParts.push("Architecture conventions:", plan.archGuide);
+    }
+    promptParts.push(
       w.testCommand ? `Verify: ${w.testCommand}` : "",
       "Use TDD. Output SUMMARY + test results when done.",
-    ]
-      .filter(Boolean)
-      .join(" ");
+    );
+    const prompt = promptParts.filter(Boolean).join(" ");
     lines.push(`## Worker ${w.id}: ${w.label}`);
     lines.push("```bash");
     lines.push(`claude -p '${prompt}'`);
@@ -130,14 +142,20 @@ export function generateCursorDispatch(plan: FanOutPlan): string {
   ];
   for (const w of plan.workers) {
     const safeLabel = w.label.replace(/"/g, '\\"').replace(/`/g, '\\`').slice(0, 40);
-    const prompt = [
+    const promptParts = [
       `TaiyiForge worker ${w.id} · slug=${plan.slug} · phase=${plan.phase}`,
       `Role: /taiyi:agent executor`,
       `Task: ${w.task}`,
+    ];
+    if (plan.archGuide) {
+      promptParts.push("## 架构约定", plan.archGuide);
+    }
+    promptParts.push(
       w.testCommand ? `Test: ${w.testCommand}` : "Test: npm test",
       "TDD: /taiyi:sp test-driven-development",
       "Done: summary + test results",
-    ].join("\n");
+    );
+    const prompt = promptParts.join("\n");
     lines.push(
       `Task(subagent_type="generalPurpose", description="taiyi ${w.id}: ${safeLabel}", prompt="""`
     );
@@ -156,11 +174,15 @@ export function generateCodexDispatch(plan: FanOutPlan): string {
     "",
   ];
   for (const w of plan.workers) {
-    const prompt = [
+    const promptParts = [
       `You are worker ${w.id} for change "${plan.slug}" in phase "${plan.phase}".`,
       `Task: ${w.task}`,
-      "Use TDD. Output summary when done.",
-    ].join(" ");
+    ];
+    if (plan.archGuide) {
+      promptParts.push("Architecture conventions:", plan.archGuide);
+    }
+    promptParts.push("Use TDD. Output summary when done.");
+    const prompt = promptParts.join(" ");
     lines.push(`codex exec --full-auto --prompt "${prompt.replace(/"/g, '\\"')}"`);
     lines.push("");
   }

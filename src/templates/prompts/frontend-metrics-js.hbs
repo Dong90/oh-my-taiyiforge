@@ -1,0 +1,39 @@
+/**
+ * Metrics Dashboard — {{app_name}}
+ * Auto-refreshes every 10 seconds. Powered by /api/metrics endpoint.
+ */
+const API_BASE_URL = '{{api_base_url}}';
+
+async function fetchJSON(url) {
+  const r = await fetch(url);
+  if (!r.ok) throw new Error('HTTP ' + r.status);
+  return r.json();
+}
+
+function fmtUptime(s) {
+  if (!s) return '—';
+  const h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60), sec = Math.floor(s % 60);
+  return h + 'h ' + m + 'm ' + sec + 's';
+}
+
+function fmtMs(ms) { return ms ? ms.toFixed(1) + 'ms' : '—'; }
+
+async function refresh() {
+  try {
+    const m = await fetchJSON(API_BASE_URL + '/api/metrics');
+    $('total-translations').textContent = m.total_requests || '—';
+    $('success-rate').textContent = m.error_rate_percent != null ? (100 - m.error_rate_percent).toFixed(1) + '%' : '—';
+    $('avg-response-time').textContent = m.endpoints ? fmtMs(Object.values(m.endpoints).reduce((s, e) => s + (e.avg_ms || 0), 0) / Math.max(1, Object.keys(m.endpoints).length)) : '—';
+    $('uptime').textContent = fmtUptime(m.uptime_seconds);
+    const tbody = $('perf-table');
+    if (m.endpoints) tbody.innerHTML = Object.entries(m.endpoints).map(([ep, d]) => '<tr><td>' + ep + '</td><td>' + (d.requests || 0) + '</td><td>' + (d.errors || 0) + '</td><td>' + fmtMs(d.avg_ms) + '</td><td>' + fmtMs(d.p95_ms) + '</td></tr>').join('');
+    if (m.direction_distribution) {
+      const entries = Object.entries(m.direction_distribution), max = Math.max(1, ...entries.map(([, v]) => v));
+      $('dir-chart').innerHTML = entries.map(([n, c]) => '<div class="bar-row"><span class="bar-label">' + n + '</span><div class="bar" style="width:' + (c / max * 100).toFixed(0) + '%"></div><span class="bar-value">' + c + '</span></div>').join('');
+    }
+    if (m.error_log && m.error_log.length) $('error-log').innerHTML = m.error_log.slice(-10).map(e => '<div class="error-entry"><span class="error-time">' + (e.timestamp || '') + '</span> <span class="error-type">' + (e.type || '') + '</span>: ' + (e.message || '') + '</div>').join('');
+  } catch (e) { console.error('Metrics refresh failed:', e); }
+}
+
+function $(id) { return document.getElementById(id); }
+document.addEventListener('DOMContentLoaded', () => { refresh(); setInterval(refresh, 10000); });

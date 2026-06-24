@@ -76,4 +76,48 @@ EOF
     expect(commitTrailersEnabled(undefined, { TAIYI_COMMIT_TRAILERS: "0" })).toBe(false);
     expect(commitTrailersEnabled(undefined, { TAIYI_COMMIT_TRAILERS: "false" })).toBe(false);
   });
+
+  it("passes when a commit has multiple Taiyi-Change trailers and one matches slug", () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), "taiyi-multi-ok-"));
+    initGitRepo(dir);
+    fs.writeFileSync(path.join(dir, "feat.txt"), "x\n");
+    execSync("git add feat.txt", { cwd: dir });
+    execSync(
+      `git commit -m "$(cat <<'EOF'
+feat: multi-slug commit
+
+Taiyi-Change: api-layer
+Taiyi-Change: frontend-ui
+Taiyi-Phase: dev
+EOF
+)"`,
+      { cwd: dir, shell: "/bin/bash" },
+    );
+    // 两个 slug 都应该匹配
+    expect(evaluateCommitTrailers(dir, "api-layer").passed).toBe(true);
+    expect(evaluateCommitTrailers(dir, "frontend-ui").passed).toBe(true);
+    // 不在列表的 slug 不应匹配
+    expect(evaluateCommitTrailers(dir, "backend-foundation").passed).toBe(false);
+    fs.rmSync(dir, { recursive: true, force: true });
+  });
+
+  it("fails when a commit has other Taiyi-Change trailers but not the target slug", () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), "taiyi-multi-bad-"));
+    initGitRepo(dir);
+    fs.writeFileSync(path.join(dir, "feat.txt"), "x\n");
+    execSync("git add feat.txt", { cwd: dir });
+    execSync(
+      `git commit -m "$(cat <<'EOF'
+feat: unrelated change
+
+Taiyi-Change: unrelated-feature
+EOF
+)"`,
+      { cwd: dir, shell: "/bin/bash" },
+    );
+    const r = evaluateCommitTrailers(dir, "ship-it");
+    expect(r.passed).toBe(false);
+    expect(r.reason).toMatch(/无 Taiyi-Change/);
+    fs.rmSync(dir, { recursive: true, force: true });
+  });
 });

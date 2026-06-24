@@ -6,10 +6,7 @@ import { isSeedTemplate, wrapSeedTemplate } from "./seed-marker.js";
 import { ZOD_PHASES } from "./artifact-validator.js";
 import { renderTemplate as engineRender } from "./template-engine.js";
 
-export type SeedVars = {
-  slug: string;
-  title?: string;
-};
+import type { SeedVars } from "./template-engine.js";
 
 export type SeedOptions = {
   /** 仅铺指定阶段工件；默认仅 change（避免 new 后九阶段文件全在）。 */
@@ -22,23 +19,44 @@ function renderTemplate(raw: string, vars: SeedVars): string {
   return wrapSeedTemplate(engineRender(raw, vars));
 }
 
+// Map artifact filenames to phase IDs (handles CHANGELOG.md → integration)
+const ARTIFACT_TO_PHASE_ID: Record<string, string> = {
+  "CHANGE.md": "change",
+  "REQUIREMENT.md": "requirement",
+  "DESIGN.md": "design",
+  "UI-DESIGN.md": "ui-design",
+  "TASK.md": "task",
+  "TEST.md": "test",
+  "REVIEW.md": "review",
+  "CHANGELOG.md": "integration",
+};
+
 function seedArtifactFile(
   changeDir: string,
   templatesDir: string,
   artifact: string,
   vars: SeedVars,
 ): boolean {
-  const templateFile = path.join(templatesDir, artifact);
-  if (!fs.existsSync(templateFile)) return false;
-
-  const dest = path.join(changeDir, artifact);
-  if (fs.existsSync(dest)) {
-    try {
-      const existing = fs.readFileSync(dest, "utf8");
-      if (!isSeedTemplate(existing)) return false;
-    } catch {
+  let templateFile = path.join(templatesDir, artifact);
+  if (!fs.existsSync(templateFile)) {
+    // Fallback: try .hbs naming convention (artifact "CHANGE.md" → "change.hbs")
+    const phaseId = ARTIFACT_TO_PHASE_ID[artifact];
+    if (phaseId) {
+      const hbsPath = path.join(templatesDir, `${phaseId}.hbs`);
+      if (fs.existsSync(hbsPath)) templateFile = hbsPath;
+      else return false;
+    } else {
       return false;
     }
+  }
+
+  const dest = path.join(changeDir, artifact);
+  // Skip if file already exists — callers should use clear=true to force overwrite
+  if (fs.existsSync(dest) && fs.statSync(dest).size > 0) {
+    const existing = fs.readFileSync(dest, "utf8");
+    if (!isSeedTemplate(existing)) return false;
+    // Only overwrite seed templates if flag allows (prevent completePhase from stomping enriched content)
+    if (!(vars as any).__forceOverwrite) return false;
   }
 
   const raw = fs.readFileSync(templateFile, "utf8");

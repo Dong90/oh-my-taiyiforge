@@ -1,0 +1,119 @@
+{
+  "title": "E2E Demo",
+  "motivation": "Validate TaiyiForge nine-phase workflow end-to-end in CI and dogfood runs.",
+  "scope": {
+    "includes": [
+      "workflow engine smoke test across all 9 phases",
+      "artifact generation and validation for each phase",
+      "gate verification (quality + human approval)",
+      "verify-report generation and CI integration"
+    ],
+    "excludes": [
+      "production feature changes",
+      "browser E2E testing",
+      "multi-tenant support"
+    ]
+  },
+  "visual_tone": "简洁·技术风 - Minimalist dev-tool aesthetic",
+  "visual_reason": "CLI 工具适合等宽字体+高对比度配色，兼顾终端可读性和 CI 日志友好",
+  "visual_references": "Vitest CLI · ESLint · Biome",
+  "visual_excluded": "彩色图标、复杂仪表盘、非等宽字体",
+  "success_criteria": [
+    {
+      "id": "SC-01",
+      "description": "All nine phases complete with gates passing",
+      "is_checked": true
+    },
+    {
+      "id": "SC-02",
+      "description": "Fresh .taiyi/changes/ artifact dir contains 11/11 files",
+      "is_checked": true
+    },
+    {
+      "id": "SC-03",
+      "description": "verify-report.json ok:true with zero errors",
+      "is_checked": true
+    }
+  ],
+  "do_nothing_cost": "缺乏自动化回归，每次发版需人工走九阶段，耗时 30min+，容易漏步骤",
+  "target_state": "一键 E2E 回归 < 60s，CI 自动通过全部九阶段门控",
+  "premise_redefine": "不是'写个测试'，而是'让 CI 能自动验证整个研发流水线'",
+  "premise_cost": "缺乏自动化回归时：每次 30min 手工验证 × 每周 2 次发版 = 1h/周浪费",
+  "premise_existing": "Vitest 已有 126 文件，仅需加 E2E 夹具即可复用",
+  "premise_scrap": "不做 E2E，改用 Playwright 全真机测试 → 成本高 10x，CI 慢 3x，不符合当前阶段需求",
+  "migration_steps": "npm install (无额外步骤) — 测试代码纯增量，无数据迁移",
+  "rollback_trigger": "E2E 测试持续失败 (>2 次重试)",
+  "rollback_ops": "git revert <commit>",
+  "rollback_time": "5min",
+  "impact_map": [
+    {
+      "module": "CI/CD pipeline",
+      "impact": "新测试用例加入回归矩阵",
+      "owner": "CI/CD"
+    },
+    {
+      "module": "Workflow Engine",
+      "impact": "覆盖九个阶段的完整E2E路径",
+      "owner": "Engine Team"
+    },
+    {
+      "module": "examples/full-flow-demo",
+      "impact": "作为可复现验证入口",
+      "owner": "Docs Team"
+    }
+  ],
+  "risks": [
+    {
+      "risk": "E2E 测试假阳性",
+      "probability": "中",
+      "impact": "误拦发布",
+      "mitigation": "CI 重试 + 人工确认"
+    },
+    {
+      "risk": "测试超时",
+      "probability": "低",
+      "impact": "CI 队列堵塞",
+      "mitigation": "各阶段独立超时预算"
+    },
+    {
+      "risk": "模板与实际工件漂移",
+      "probability": "低",
+      "impact": "E2E 失效",
+      "mitigation": "共享 E2E_ARTIFACTS 夹具保证同源"
+    }
+  ],
+  "innovation_tokens": [
+    {
+      "decision": "Vitest 全量回归",
+      "is_token": false,
+      "reason": "已有技术栈，无新引入"
+    },
+    {
+      "decision": "Handlebars 模板引擎",
+      "is_token": false,
+      "reason": "团队已在使用，非新技术"
+    }
+  ],
+  "stakeholders": [
+    {
+      "role": "Engine Team",
+      "name": "CI/CD",
+      "needs": "自动化回归通过即可合并"
+    },
+    {
+      "role": "QA",
+      "name": "N/A",
+      "needs": "E2E 测试覆盖 smog check"
+    },
+    {
+      "role": "Maintainer",
+      "name": "OpenSource",
+      "needs": "示例工程可复现，降低贡献门槛"
+    }
+  ],
+  "evidence": {
+    "command": "taiyi-forge.sh status --json --compact",
+    "exitCode": 0,
+    "capturedAt": "2026-06-22T12:00:00Z"
+  }
+}

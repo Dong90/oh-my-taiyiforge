@@ -1,0 +1,78 @@
+{"ts":"2026-06-24T09:11:39.554Z","event":"change:created","slug":"todo-api","profile":"api"}
+{"ts":"2026-06-24T09:11:39.643Z","event":"phase:complete","slug":"todo-api","phase":"change"}
+{"ts":"2026-06-24T09:11:39.649Z","event":"phase:complete","slug":"todo-api","phase":"requirement"}
+{"ts":"2026-06-24T09:11:39.655Z","event":"phase:complete","slug":"todo-api","phase":"design"}
+{"ts":"2026-06-24T09:11:39.662Z","event":"phase:complete","slug":"todo-api","phase":"task"}
+{"ts":"2026-06-24T09:11:39.671Z","event":"phase:complete","slug":"todo-api","phase":"dev"}
+{"ts":"2026-06-24T09:11:39.676Z","event":"phase:complete","slug":"todo-api","phase":"test"}
+{"ts":"2026-06-24T09:11:39.679Z","event":"aux:completed","slug":"todo-api","skill":"taiyi-health"}
+{"ts":"2026-06-24T09:11:39.683Z","event":"phase:complete","slug":"todo-api","phase":"review"}
+{"ts":"2026-06-24T09:11:39.701Z","event":"integration:readiness-warning","slug":"todo-api","warnings":["missing package.json"]}
+{"ts":"2026-06-24T09:11:39.703Z","event":"phase:complete","slug":"todo-api","phase":"integration"}
+{"ts":"2026-06-24T09:11:39.704Z","event":"change:created","slug":"todo-ui","profile":"ui"}
+{"ts":"2026-06-24T09:11:39.751Z","event":"phase:complete","slug":"todo-ui","phase":"change"}
+{"ts":"2026-06-24T09:11:39.756Z","event":"phase:complete","slug":"todo-ui","phase":"requirement"}
+{"ts":"2026-06-24T09:11:39.759Z","event":"phase:complete","slug":"todo-ui","phase":"design"}
+{"ts":"2026-06-24T09:11:39.764Z","event":"phase:complete","slug":"todo-ui","phase":"ui-design"}
+{"ts":"2026-06-24T09:11:39.767Z","event":"phase:complete","slug":"todo-ui","phase":"task"}
+{"ts":"2026-06-24T09:11:39.774Z","event":"phase:complete","slug":"todo-ui","phase":"dev"}
+{"ts":"2026-06-24T09:11:39.777Z","event":"phase:complete","slug":"todo-ui","phase":"test"}
+{"ts":"2026-06-24T09:11:39.780Z","event":"aux:completed","slug":"todo-ui","skill":"taiyi-health"}
+{"ts":"2026-06-24T09:11:39.783Z","event":"phase:complete","slug":"todo-ui","phase":"review"}
+{"ts":"2026-06-24T09:11:39.791Z","event":"integration:readiness-warning","slug":"todo-ui","warnings":["missing package.json"]}
+{"ts":"2026-06-24T09:11:39.792Z","event":"phase:complete","slug":"todo-ui","phase":"integration"}
+{"ts":"2026-06-24T09:11:39.793Z","event":"change:created","slug":"todo-e2e","profile":"micro"}
+{"ts":"2026-06-24T09:11:39.828Z","event":"phase:complete","slug":"todo-e2e","phase":"change"}
+{"ts":"2026-06-24T09:11:39.834Z","event":"phase:complete","slug":"todo-e2e","phase":"dev"}
+{"ts":"2026-06-24T09:11:39.841Z","event":"integration:readiness-warning","slug":"todo-e2e","warnings":["missing package.json"]}
+{"ts":"2026-06-24T09:11:39.842Z","event":"phase:complete","slug":"todo-e2e","phase":"integration"}
+{"ts":"2026-06-24T11:59:46.473Z","event":"change:created","slug":"todo-api","profile":"api"}
+{"ts":"2026-06-24T11:59:46.562Z","event":"phase:complete","slug":"todo-api","phase":"change"}
+{"ts":"2026-06-24T11:59:46.569Z","event":"phase:complete","slug":"todo-api","phase":"requirement"}
+{"ts":"2026-06-24T12:01:36.036Z","event":"change:created","slug":"todo-api","profile":"api"}
+{"ts":"2026-06-24T12:01:36.128Z","event":"phase:complete","slug":"todo-api","phase":"change"}
+{"ts":"2026-06-24T12:01:36.133Z","event":"phase:complete","slug":"todo-api","phase":"requirement"}
+{"ts":"2026-06-24T12:01:36.140Z","event":"phase:complete","slug":"todo-api","phase":"design"}
+{"ts":"2026-06-24T12:01:36.142Z","event":"change:created","slug":"todo-ui","profile":"ui"}
+{"ts":"2026-06-24T12:01:36.188Z","event":"phase:complete","slug":"todo-ui","phase":"change"}
+{"ts":"2026-06-24T12:01:36.191Z","event":"phase:complete","slug":"todo-ui","phase":"requirement"}
+{"ts":"2026-06-24T12:01:36.196Z","event":"phase:complete","slug":"todo-ui","phase":"design"}
+{"ts":"2026-06-24T12:01:36.200Z","event":"phase:complete","slug":"todo-ui","phase":"ui-design"}
+{"ts":"2026-06-24T12:01:36.206Z","event":"phase:complete","slug":"todo-ui","phase":"task"}
+{"ts":"2026-06-24T12:01:36.210Z","event":"phase:complete","slug":"todo-ui","phase":"dev"}
+{"ts":"2026-06-24T12:01:36.214Z","event":"phase:complete","slug":"todo-ui","phase":"test"}
+{"ts":"2026-06-24T12:01:36.217Z","event":"aux:completed","slug":"todo-ui","skill":"taiyi-health"}
+{"ts":"2026-06-24T12:01:36.220Z","event":"phase:complete","slug":"todo-ui","phase":"review"}
+{"ts":"2026-06-24T12:01:36.237Z","event":"integration:cross-change-warning","slug":"todo-ui","code":"cross-change.pending-changes","message":"todo-ui 集成完成但还有 1 个变更正在开发中: todo-api(task)。请确认兼容性后整体验证。"}
+{"ts":"2026-06-24T12:01:36.240Z","event":"integration:readiness-warning","slug":"todo-ui","warnings":["missing package.json"]}
+{"ts":"2026-06-24T12:01:36.241Z","event":"phase:complete","slug":"todo-ui","phase":"integration"}
+{"ts":"2026-06-24T12:01:36.242Z","event":"change:created","slug":"todo-e2e","profile":"micro"}
+{"ts":"2026-06-24T12:01:36.274Z","event":"phase:complete","slug":"todo-e2e","phase":"change"}
+{"ts":"2026-06-24T12:02:12.580Z","event":"change:created","slug":"todo-api","profile":"api"}
+{"ts":"2026-06-24T12:02:12.661Z","event":"phase:complete","slug":"todo-api","phase":"change"}
+{"ts":"2026-06-24T12:02:12.665Z","event":"phase:complete","slug":"todo-api","phase":"requirement"}
+{"ts":"2026-06-24T12:02:12.670Z","event":"phase:complete","slug":"todo-api","phase":"design"}
+{"ts":"2026-06-24T12:02:12.675Z","event":"phase:complete","slug":"todo-api","phase":"task"}
+{"ts":"2026-06-24T12:02:12.679Z","event":"phase:complete","slug":"todo-api","phase":"dev"}
+{"ts":"2026-06-24T12:02:12.683Z","event":"phase:complete","slug":"todo-api","phase":"test"}
+{"ts":"2026-06-24T12:02:12.686Z","event":"aux:completed","slug":"todo-api","skill":"taiyi-health"}
+{"ts":"2026-06-24T12:02:12.690Z","event":"phase:complete","slug":"todo-api","phase":"review"}
+{"ts":"2026-06-24T12:02:12.713Z","event":"integration:readiness-warning","slug":"todo-api","warnings":["missing package.json"]}
+{"ts":"2026-06-24T12:02:12.714Z","event":"phase:complete","slug":"todo-api","phase":"integration"}
+{"ts":"2026-06-24T12:02:12.716Z","event":"change:created","slug":"todo-ui","profile":"ui"}
+{"ts":"2026-06-24T12:02:12.770Z","event":"phase:complete","slug":"todo-ui","phase":"change"}
+{"ts":"2026-06-24T12:02:12.774Z","event":"phase:complete","slug":"todo-ui","phase":"requirement"}
+{"ts":"2026-06-24T12:02:12.779Z","event":"phase:complete","slug":"todo-ui","phase":"design"}
+{"ts":"2026-06-24T12:02:12.783Z","event":"phase:complete","slug":"todo-ui","phase":"ui-design"}
+{"ts":"2026-06-24T12:02:12.788Z","event":"phase:complete","slug":"todo-ui","phase":"task"}
+{"ts":"2026-06-24T12:02:12.794Z","event":"phase:complete","slug":"todo-ui","phase":"dev"}
+{"ts":"2026-06-24T12:02:12.799Z","event":"phase:complete","slug":"todo-ui","phase":"test"}
+{"ts":"2026-06-24T12:02:12.801Z","event":"aux:completed","slug":"todo-ui","skill":"taiyi-health"}
+{"ts":"2026-06-24T12:02:12.805Z","event":"phase:complete","slug":"todo-ui","phase":"review"}
+{"ts":"2026-06-24T12:02:12.813Z","event":"integration:readiness-warning","slug":"todo-ui","warnings":["missing package.json"]}
+{"ts":"2026-06-24T12:02:12.813Z","event":"phase:complete","slug":"todo-ui","phase":"integration"}
+{"ts":"2026-06-24T12:02:12.815Z","event":"change:created","slug":"todo-e2e","profile":"micro"}
+{"ts":"2026-06-24T12:02:12.849Z","event":"phase:complete","slug":"todo-e2e","phase":"change"}
+{"ts":"2026-06-24T12:02:12.853Z","event":"phase:complete","slug":"todo-e2e","phase":"dev"}
+{"ts":"2026-06-24T12:02:12.860Z","event":"integration:readiness-warning","slug":"todo-e2e","warnings":["missing package.json"]}
+{"ts":"2026-06-24T12:02:12.861Z","event":"phase:complete","slug":"todo-e2e","phase":"integration"}

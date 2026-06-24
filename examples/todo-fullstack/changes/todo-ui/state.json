@@ -1,0 +1,35 @@
+{
+  "slug": "todo-ui",
+  "currentPhase": "integration",
+  "completedPhases": [
+    "change",
+    "requirement",
+    "design",
+    "ui-design",
+    "task",
+    "dev",
+    "test",
+    "review",
+    "integration"
+  ],
+  "profile": "ui",
+  "skippedPhases": [],
+  "strictDev": false,
+  "autoHarness": false,
+  "complexity": {
+    "level": "medium",
+    "score": 8,
+    "recommendedSkills": [
+      "taiyi-intel-scan",
+      "taiyi-architect",
+      "taiyi-health"
+    ]
+  },
+  "auxiliaryCompleted": [
+    "taiyi-health"
+  ],
+  "workflowStatus": "completed",
+  "createdAt": "2026-06-24T12:02:12.715Z",
+  "updatedAt": "2026-06-24T12:02:12.813Z",
+  "version": 12
+}
