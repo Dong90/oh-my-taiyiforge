@@ -55,6 +55,31 @@ admin-dashboard ←── user-auth
 1. P0 可以并行 `taiyi:new`，互不阻塞
 2. `order-flow` 等 user-auth 和 product-crud 都到 dev 阶段后再开始
 3. `deploy-scripts` 用 micro profile，直接走不排队
+
+## 数量与排队策略
+
+| 规则 | 说明 |
+|------|------|
+| **最多同时活跃** | 建议 ≤ 5 个 change 并行，人脑追太多会乱 |
+| **超过 5 个** | 分波执行：Wave 1 跑完 → Wave 2 启动，不是全挤一起 |
+| **排队方式** | 后面的 wave 先挂在计划里，等前面 wave 到 dev 阶段后再 `/taiyi:new` |
+| **micro/nano** | 不受排队限制，随时插队跑（几秒就完） |
+
+**示例：8 个 change，分两波**
+
+```
+Wave 1（立即创建，并行推进）：
+  /taiyi:new "user-auth" --profile full
+  /taiyi:new "product-crud" --profile full
+  /taiyi:new "order-flow" --profile full
+  /taiyi:new "admin-dashboard" --profile full
+  /taiyi:new "deploy-scripts" --profile micro
+
+Wave 2（等 Wave 1 全部到 dev 后再创建）：
+  /taiyi:new "payment-gateway" --profile api
+  /taiyi:new "notification" --profile lite
+  /taiyi:new "analytics" --profile lite
+```
 ```
 
 ## 执行步骤
@@ -112,9 +137,17 @@ admin-dashboard ←── user-auth
 ### 4. 输出拆解计划
 
 1. 先列出所有 change slug 和一句话范围
-2. 标注每个的 profile 和依赖
+2. 标注每个的 profile 和理由、依赖关系
 3. 画出依赖关系（文字图即可）
 4. 给出推荐执行顺序
+5. **超过 5 个必须分波**：Wave 1 先跑 ≤5 个，后面按依赖排队
+6. 如果超过 5 个，询问用户：
+
+> 一共拆出 N 个 change，超过 5 个了。建议分两波：
+> - Wave 1（立即创建）：<列出>
+> - Wave 2（等 Wave 1 到 dev 后再建）：<列出>
+> 
+> 这样安排可以吗？
 
 ### 5. 用户确认
 
