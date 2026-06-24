@@ -77,15 +77,37 @@ admin-dashboard ←── user-auth
 
 ### 3. 推荐 profile
 
-| 特征 | 推荐 |
-|------|------|
-| 涉及多阶段 + 多人 review | `full` |
-| 独立小功能，不需要 UI | `api` |
-| 涉及前端 UI | `full` |
-| 快速修复，5 阶段够 | `lite` |
-| 原型验证 | `spike` |
-| 单文件配置/脚本 | `micro` |
-| typo/注释 | `nano` |
+对每个待拆解的模块，按决策树判断：
+
+```
+这个改动涉及前端 UI？
+├── 是 → 涉及多个模块 + 需要多人 review？
+│        ├── 是 → full（九阶段全走，有 UI 设计 + 人类评审）
+│        └── 否 → 一个人能搞定？
+│                 ├── 是 → lite（跳过设计/评审，5 阶段）
+│                 └── 否 → full
+│
+└── 否 → 纯后端 / 脚本 / 工具？
+         ├── 需要写设计文档 + 多人 review？→ api（跳过 UI 阶段，其他全走）
+         ├── 原型验证/技术探索？→ spike（4 阶段：change→dev→test→integration）
+         ├── 单文件改动/配置？→ micro（3 阶段：change→dev→integration）
+         └── typo/注释/格式化？→ nano（2 阶段：dev→integration，零文档）
+```
+
+**追问清单**（不确定时问用户）：
+
+1. 「这个模块有前端 UI 吗？」
+2. 「需要别人 review 还是你一个人拍板？」
+3. 「是要上线还是探索性验证？」
+4. 「改动范围多大——几个文件？」
+
+**输出时必须在每个 slug 后标注推荐理由**：
+
+| Slug | Profile | 理由 |
+|------|---------|------|
+| user-auth | full | 涉及登录 UI + 权限模型，需多人 review |
+| product-crud | full | 有管理后台 UI，核心业务 |
+| deploy-scripts | micro | 纯 CI 脚本，单文件改动 |
 
 ### 4. 输出拆解计划
 
