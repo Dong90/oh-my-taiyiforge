@@ -11,6 +11,18 @@ description: TaiyiForge 辅助 — 把项目 README/PRD 拆解为独立可执行
 
 ## 何时使用
 
+decompose 跑在九阶段之前，是整个流程的上游：
+
+```
+/taiyi:sp decompose（拆解）
+       │
+       ▼ 产出 DECOMPOSE.md + 批量 /taiyi:new
+       │
+  ┌────┴────┬────┬────┐
+  ▼         ▼    ▼    ▼
+change  change change change（各自走九阶段）
+```
+
 | 信号 | 建议 |
 |------|------|
 | 新项目拿到 README / PRD，不知道从哪开始 | 必跑 |
@@ -52,18 +64,13 @@ admin-dashboard ←── user-auth
 
 ## 执行建议
 
-1. P0 可以并行 `taiyi:new`，互不阻塞
-2. `order-flow` 等 user-auth 和 product-crud 都到 dev 阶段后再开始
-3. `deploy-scripts` 用 micro profile，直接走不排队
-
-## 数量与排队策略
-
 | 规则 | 说明 |
 |------|------|
-| **最多同时活跃** | 建议 ≤ 5 个 change 并行，人脑追太多会乱 |
-| **超过 5 个** | 分波执行：Wave 1 跑完 → Wave 2 启动，不是全挤一起 |
-| **排队方式** | 后面的 wave 先记录在 `.taiyi/DECOMPOSE.md`，Agent 提醒你在前面 wave 到 dev 后手动启动 |
-| **micro/nano** | 不受排队限制，随时插队跑（几秒就完） |
+| **最多同时活跃** | ≤ 5 个 change 并行，人脑追太多会乱 |
+| **超过 5 个** | 分波：Wave 1 先跑 ≤5 个，到 dev 后手动启动 Wave 2 |
+| **micro/nano** | 不受限制，随时插队 |
+| **依赖处理** | 强依赖的 change 先建但不推进，等被依赖方到 dev 后再走 |
+
 
 **Wave 2 手动启动**：
 
@@ -157,16 +164,12 @@ Wave 2（Wave 1 到 dev 后说「启动 Wave 2」手动创建）：
 
 ### 5. 用户确认
 
-把计划展示给用户，确认以下内容：
-- slug 命名是否合理
-- profile 选择是否合适
-- 是否有遗漏的功能
+把计划展示给用户，**一次问完**：
 
-**必须同时询问**：
-
-> 确认后要自动创建还是手动创建？
-> - **自动**：我立刻调用 `/taiyi:new` 把上面所有 change 建好，直接进入 change 阶段
-> - **手动**：你自己逐个 `/taiyi:new`，可以调整 slug 名或 profile
+> 计划如上，一共 N 个 change。确认吗？
+> - **自动创建**：我立刻 `/taiyi:new` 全部建好
+> - **手动创建**：你自己逐个调，可以改 slug 名或 profile
+> - **调整**：哪部分需要改？
 
 ### 6. 自动创建（用户选「自动」时执行）
 

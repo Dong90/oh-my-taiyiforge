@@ -11,6 +11,17 @@ description: TaiyiForge 辅助 — 重新理解已有需求工件，找出矛盾
 
 ## 何时使用
 
+reanalyze 跑在 requirement 写完之后、dev 开始之前：
+
+```
+change → requirement → /taiyi:sp reanalyze（重新理解）
+                │               │
+                ▼               ▼ 产出 REANALYZE.md
+              design → ui-design → task → dev → ...
+                              │
+              缺口/歧义 → 回到 requirement 补 AC
+```
+
 | 信号 | 建议 |
 |------|------|
 | change 写完后放了一周以上才开始 dev | 必跑 |
@@ -103,6 +114,15 @@ description: TaiyiForge 辅助 — 重新理解已有需求工件，找出矛盾
 - 需要补充的 AC
 - 需要向上游确认的问题
 - 建议缩小 scope 的部分
+
+### 6. 自动修复（报告展示后询问）
+
+报告展示完后，**必须询问**：
+
+> 要自动修复发现的问题吗？
+> - **自动修**：我直接更新 CHANGE.md / REQUIREMENT.md 中的缺口和歧义
+> - **手动修**：你自己对着报告改，我把 REANALYZE.md 保存下来
+> - **不修**：只看报告不做改动
 
 ## 与其他阶段的衔接
 
