@@ -96,21 +96,43 @@ admin-dashboard ←── user-auth
 
 ### 5. 用户确认
 
-把计划展示给用户，确认以下内容后再执行：
+把计划展示给用户，确认以下内容：
 - slug 命名是否合理
 - profile 选择是否合适
 - 是否有遗漏的功能
 
-## 一键执行模板
+### 6. 自动创建（用户确认后必须执行）
 
-用户确认后，可以批量创建 change：
+用户说「确认」或「执行」后，**立即按依赖顺序自动创建所有 change**：
 
-```bash
+**执行规则**：
+1. P0、无依赖的 slug → **立即并行创建**（互不阻塞）
+2. P1、有依赖的 slug → 先创建但标记依赖关系
+3. 按拆解计划中的 profile 参数
+
+**执行方式**：自动调用 `/taiyi:new`，每个 slug 一行，不要等用户手动敲。
+
+```
 /taiyi:new "user-auth" --profile full
 /taiyi:new "product-crud" --profile full
 /taiyi:new "order-flow" --profile full
-/taiyi:new "admin-dashboard" --profile full
 /taiyi:new "deploy-scripts" --profile micro
+```
+
+创建完后输出汇总：
+
+```
+✅ 已创建 4 个 change：
+
+| Slug | Profile | 状态 |
+|------|---------|------|
+| user-auth | full | change 阶段 |
+| product-crud | full | change 阶段 |
+| order-flow | full | change 阶段 |
+| deploy-scripts | micro | change 阶段 |
+
+下一步：/taiyi:status 看进度，/taiyi:continue 推进
+  建议先并行推进 user-auth 和 product-crud
 ```
 
 ## 质量自检
@@ -126,4 +148,4 @@ admin-dashboard ←── user-auth
 - 在拆解阶段就开始写 CHANGE.md
 - 把明显耦合的功能拆进不同 slug
 - 给 P0 功能推荐 nano/micro profile
-- 跳过用户确认直接创建 change
+- 跳过用户确认直接创建 change（确认后必须自动批量创建）
