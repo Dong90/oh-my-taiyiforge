@@ -1,5 +1,20 @@
 # Changelog
 
+## [0.42.0] - 2026-06-24
+
+### Added
+
+- **docs(readme)**: README 深度优化，362→169 行（-53%），面向开源项目重构结构与文案
+- **chore**: 压缩架构 PNG（18.7MB→5.7MB，节省 13MB），添加 `.prettierrc`
+- **chore**: 删除冗余 `taiyiforge-architecture.png`，更新 ARCHITECTURE.md 引用
+
+### Changed
+
+- 移除 npm badges（包已下架），安装方式改为源码安装
+- 合并「30秒开始」+「安装」为统一「快速开始」
+- 新增「直接跟 AI 对话 vs TaiyiForge」对比表
+- 顶部新增 TOC 导航栏
+
 ## [0.27.0] - 2026-06-21
 
 ### Added
