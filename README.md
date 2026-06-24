@@ -107,19 +107,24 @@ change → requirement → design → ui-design → task → dev → test → re
 
 不管是 Claude Code 的 `/taiyi:new`、Cursor 的同名 slash、Codex 的 `$taiyi-new`，还是 OpenCode 的插件工具——**同一套词汇，同一种行为**。
 
-| 版本 | 状态 | 关键里程碑 |
-|------|------|----------|
-| v0.23.0 | ✅ 已发布 | **canonical v28**: 28 顶栏 slashes + 6 umbrellas(`token`/`test`/`review`/`diagram`/`mode`/`workflow`) + `skill-fusion-principles.md` + `validateV28CatalogSync` gate |
-| v0.24.0 | ✅ 已发布 | 首次 npm 发布 · `npx taiyi-forge-install` 零构建安装 · README v28 收敛重写 · IDE 菜单裁剪为 28 条（umbrella Phase 2） |
-| v0.26.0 | ✅ 已发布 | **evidence 强校验**: AC 必配 `evidence{command,exitCode:0}` 防假过门 · commit trailer 强制执行 · status 5s 防抖 · profile 扩容 10 种 |
-| v0.27.0 | ✅ 已发布 | **event bus** + structured logger · CLI 62→18 瘦身（handlers map 替代巨型 switch）· TODO 里程碑总览 · schema 扩展 + 10 个 SKILL.md 重写 |
-| v0.30.0 | ✅ 已发布 | **data-driven Mermaid chain**: 设计图 SSOT 三源绑定 + rollback 追溯 · `is_cli_only` 跳过 UI 阶段契约 · ast-grep 陷阱规则(8 patterns) + `scan.sh` |
-| v0.35.0 | ✅ 已发布 | **ChangeGraph 知识图谱**: load/edges/query/render — 49 tests · `PHASE-CONTEXT.md` 图谱驱动生成（替代逐份读上游工件） |
-| v0.40.0 | ✅ 最新 | review 日绑定 + SSOT 交叉引用 · E2E fixtures 扩 7 字段 · graph 上下文压缩 · 平台冒烟 CI / Playwright / vitest 超时修复 |
-| v1.0.0 | ⏳ 计划 | 锁定 9 阶段 API · 四端 parity · 外部案例收集 |
+| 命令 | 做什么 |
+|------|-------|
+| `/taiyi:plan` | 项目规划：README → 模块拆分 + 批量创建 |
+| `/taiyi:new` | 创建变更 |
+| `/taiyi:status` | 查看进度 |
+| `/taiyi:write` | 写当前阶段 |
+| `/taiyi:continue` | 推进下一阶段 |
+| `/taiyi:apply` | 进入实现 |
+| `/taiyi:archive` | 全阶段归档 |
 
-**已就绪**: 完整九阶段流水线 · 四端共享 Skill · 强制 TDD · evidence 防假过门 · token 压缩 · ChangeGraph 知识图谱 · 平台冒烟 CI · 零构建一行安装(v0.24+)
-**未就绪**: 生产级 SLA · 完整 i18n
+[29 条完整命令表 →](docs/taiyi/canonical-commands.md)
+
+### 项目级 vs Change 级
+
+| 层级 | 入口 | 做什么 | 产出 |
+|------|------|--------|------|
+| **项目级** | `/taiyi:plan` | 把大需求拆成模块 + 推荐 profile + 处理冲突 | 批量 `/taiyi:new` |
+| **Change 级** | `/taiyi:new` | 单模块走九阶段 | CHANGE → CHANGELOG |
 
 ### 不止流水线
 
@@ -150,7 +155,7 @@ change → requirement → design → ui-design → task → dev → test → re
 | [QUICKSTART](docs/QUICKSTART.md) | 5 分钟走通全流程 | 第一次用 |
 | [USAGE](docs/USAGE.md) | 日常节奏、场景、交付链 | 跑通之后 |
 | [ARCHITECTURE](docs/ARCHITECTURE.md) | 系统架构 + 代码布局 | 想改引擎 |
-| [canonical-commands](docs/taiyi/canonical-commands.md) | 28 条 slack 命令表 | 查命令 |
+| [canonical-commands](docs/taiyi/canonical-commands.md) | 29 条 slash 命令表 | 查命令 |
 | [control-plane](docs/taiyi/control-plane.md) | Agent 纪律 + token 纪律 | 给 Agent 配 onboarding |
 | [full-oss-flow](docs/taiyi/full-oss-flow.md) | Superpowers + 全插件端到端 | 想看完整流程 |
 | [CONTRIBUTING](CONTRIBUTING.md) | 贡献指南 | 开 PR 之前 |
