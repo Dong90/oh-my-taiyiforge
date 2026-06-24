@@ -225,7 +225,7 @@ export const AGENT_ROLES: Record<string, AgentRoleDef> = {
 
 /** 每阶段默认启用的专 Agent（可多角色并行） */
 export const PHASE_AGENT_ROLES: Record<PhaseId, string[]> = {
-  change: ["analyst", "explore", "project-planner"],
+  change: ["analyst", "explore"],
   requirement: ["analyst", "planner", "document-specialist"],
   design: ["architect", "critic", "scientist"],
   "ui-design": ["designer"],
