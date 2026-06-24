@@ -7,6 +7,11 @@
 **把 AI 写代码的玄学，变成一条可执行、可审计的工程流水线。**
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![Node](https://img.shields.io/badge/node-%3E%3D20-brightgreen)](package.json)
+[![npm version](https://img.shields.io/npm/v/oh-my-taiyiforge.svg)](https://www.npmjs.com/package/oh-my-taiyiforge)
+[![npm downloads](https://img.shields.io/npm/dm/oh-my-taiyiforge.svg)](https://www.npmjs.com/package/oh-my-taiyiforge)
+[![Version](https://img.shields.io/badge/version-0.40.0-orange)](CHANGELOG.md)
+[![v28 canonical](https://img.shields.io/badge/v28-28%20slashes%20%C2%B7%206%20umbrellas-blue)](docs/taiyi/canonical-commands.md)
 [![CI](https://img.shields.io/github/actions/workflow/status/Dong90/oh-my-taiyiforge/ci.yml?branch=main&label=CI)](https://github.com/Dong90/oh-my-taiyiforge/actions/workflows/ci.yml)
 [![Platforms](https://img.shields.io/badge/platforms-OpenCode%20%7C%20Claude%20%7C%20Codex%20%7C%20Cursor-8a2be2)](docs/QUICKSTART.md)
 
@@ -103,16 +108,19 @@ change → requirement → design → ui-design → task → dev → test → re
 
 不管是 Claude Code 的 `/taiyi:new`、Cursor 的同名 slash、Codex 的 `$taiyi-new`，还是 OpenCode 的插件工具——**同一套词汇，同一种行为**。
 
-| 命令 | 做什么 |
-|------|-------|
-| `/taiyi:new` | 创建变更 |
-| `/taiyi:status` | 查看进度 |
-| `/taiyi:write` | 写当前阶段 |
-| `/taiyi:continue` | 推进下一阶段 |
-| `/taiyi:apply` | 进入实现 |
-| `/taiyi:archive` | 全阶段归档 |
+| 版本 | 状态 | 关键里程碑 |
+|------|------|----------|
+| v0.23.0 | ✅ 已发布 | **canonical v28**: 28 顶栏 slashes + 6 umbrellas(`token`/`test`/`review`/`diagram`/`mode`/`workflow`) + `skill-fusion-principles.md` + `validateV28CatalogSync` gate |
+| v0.24.0 | ✅ 已发布 | 首次 npm 发布 · `npx taiyi-forge-install` 零构建安装 · README v28 收敛重写 · IDE 菜单裁剪为 28 条（umbrella Phase 2） |
+| v0.26.0 | ✅ 已发布 | **evidence 强校验**: AC 必配 `evidence{command,exitCode:0}` 防假过门 · commit trailer 强制执行 · status 5s 防抖 · profile 扩容 10 种 |
+| v0.27.0 | ✅ 已发布 | **event bus** + structured logger · CLI 62→18 瘦身（handlers map 替代巨型 switch）· TODO 里程碑总览 · schema 扩展 + 10 个 SKILL.md 重写 |
+| v0.30.0 | ✅ 已发布 | **data-driven Mermaid chain**: 设计图 SSOT 三源绑定 + rollback 追溯 · `is_cli_only` 跳过 UI 阶段契约 · ast-grep 陷阱规则(8 patterns) + `scan.sh` |
+| v0.35.0 | ✅ 已发布 | **ChangeGraph 知识图谱**: load/edges/query/render — 49 tests · `PHASE-CONTEXT.md` 图谱驱动生成（替代逐份读上游工件） |
+| v0.40.0 | ✅ 最新 | review 日绑定 + SSOT 交叉引用 · E2E fixtures 扩 7 字段 · graph 上下文压缩 · 平台冒烟 CI / Playwright / vitest 超时修复 |
+| v1.0.0 | ⏳ 计划 | 锁定 9 阶段 API · 四端 parity · 外部案例收集 |
 
-[28 条完整命令表 →](docs/taiyi/canonical-commands.md)
+**已就绪**: 完整九阶段流水线 · 四端共享 Skill · 强制 TDD · evidence 防假过门 · token 压缩 · ChangeGraph 知识图谱 · 平台冒烟 CI · 零构建一行安装(v0.24+)
+**未就绪**: 生产级 SLA · 完整 i18n
 
 ### 不止流水线
 
