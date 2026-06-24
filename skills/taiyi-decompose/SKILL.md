@@ -101,16 +101,22 @@ admin-dashboard ←── user-auth
 - profile 选择是否合适
 - 是否有遗漏的功能
 
-### 6. 自动创建（用户确认后必须执行）
+**必须同时询问**：
 
-用户说「确认」或「执行」后，**立即按依赖顺序自动创建所有 change**：
+> 确认后要自动创建还是手动创建？
+> - **自动**：我立刻调用 `/taiyi:new` 把上面所有 change 建好，直接进入 change 阶段
+> - **手动**：你自己逐个 `/taiyi:new`，可以调整 slug 名或 profile
+
+### 6. 自动创建（用户选「自动」时执行）
+
+用户选择自动后，**立即按依赖顺序创建所有 change**：
 
 **执行规则**：
 1. P0、无依赖的 slug → **立即并行创建**（互不阻塞）
-2. P1、有依赖的 slug → 先创建但标记依赖关系
+2. P1、有依赖的 slug → 紧接其后创建
 3. 按拆解计划中的 profile 参数
 
-**执行方式**：自动调用 `/taiyi:new`，每个 slug 一行，不要等用户手动敲。
+**执行方式**：自动调用 `/taiyi:new`，不要等用户手动敲。
 
 ```
 /taiyi:new "user-auth" --profile full
@@ -122,17 +128,16 @@ admin-dashboard ←── user-auth
 创建完后输出汇总：
 
 ```
-✅ 已创建 4 个 change：
+✅ 已创建 N 个 change：
 
 | Slug | Profile | 状态 |
 |------|---------|------|
 | user-auth | full | change 阶段 |
 | product-crud | full | change 阶段 |
-| order-flow | full | change 阶段 |
-| deploy-scripts | micro | change 阶段 |
+| ... | | |
 
 下一步：/taiyi:status 看进度，/taiyi:continue 推进
-  建议先并行推进 user-auth 和 product-crud
+  建议先并行推进 <P0无依赖的slug>
 ```
 
 ## 质量自检
