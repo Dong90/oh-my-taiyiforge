@@ -62,25 +62,17 @@ admin-dashboard ←── user-auth
 |------|------|
 | **最多同时活跃** | 建议 ≤ 5 个 change 并行，人脑追太多会乱 |
 | **超过 5 个** | 分波执行：Wave 1 跑完 → Wave 2 启动，不是全挤一起 |
-| **排队方式** | 后面的 wave 先记录在 `.taiyi/DECOMPOSE.md`，等前面的 wave 到 dev 后自动触发 |
+| **排队方式** | 后面的 wave 先记录在 `.taiyi/DECOMPOSE.md`，Agent 提醒你在前面 wave 到 dev 后手动启动 |
 | **micro/nano** | 不受排队限制，随时插队跑（几秒就完） |
 
-**Wave 2 自动触发**：
+**Wave 2 手动启动**：
 
-Wave 1 的 change 全部到达 dev 阶段后，**自动创建 Wave 2 的 change**，不需要用户手动提醒。
+Wave 1 创建完后，Agent 输出提醒并记录到 DECOMPOSE.md：
 
-检测方式：每次跑 `/taiyi:status` 或 `/taiyi:list` 时，检查 `.taiyi/DECOMPOSE.md` 中记录的下一波是否满足启动条件。满足则自动执行。
+> ⏳ Wave 2 待启动：payment-gateway, notification, analytics
+> 等 Wave 1 的 change 都到 dev 阶段后，说「启动 Wave 2」我立刻创建。
 
-```
-当前状态检查 →
-  Wave 1 的 user-auth: dev ✅
-  Wave 1 的 product-crud: dev ✅
-  Wave 1 的 order-flow: dev ✅
-  → 条件满足，自动创建 Wave 2：
-    /taiyi:new "payment-gateway" --profile api
-    /taiyi:new "notification" --profile lite
-    ✅ Wave 2 已创建，可以开始推进
-```
+用户说「启动 Wave 2」后，Agent 从 DECOMPOSE.md 读计划并批量 `/taiyi:new`。
 
 **示例：8 个 change，分两波**
 
@@ -92,7 +84,7 @@ Wave 1（立即创建，并行推进）：
   /taiyi:new "admin-dashboard" --profile full
   /taiyi:new "deploy-scripts" --profile micro
 
-Wave 2（Wave 1 全部到 dev 后自动创建）：
+Wave 2（Wave 1 到 dev 后说「启动 Wave 2」手动创建）：
   payment-gateway (api), notification (lite), analytics (lite)
 ```
 ```
@@ -123,9 +115,8 @@ Wave 2（Wave 1 全部到 dev 后自动创建）：
 这个改动涉及前端 UI？
 ├── 是 → 涉及多个模块 + 需要多人 review？
 │        ├── 是 → full（九阶段全走，有 UI 设计 + 人类评审）
-│        └── 否 → 一个人能搞定？
-│                 ├── 是 → lite（跳过设计/评审，5 阶段）
-│                 └── 否 → full
+│        ├── 否，仅前端 UI 改动，后端不动 → ui（走 UI 设计阶段，跳过需求/设计）
+│        └── 否，一个人前后端全栈 → lite（跳过设计/评审，5 阶段）
 │
 └── 否 → 纯后端 / 脚本 / 工具？
          ├── 需要写设计文档 + 多人 review？→ api（跳过 UI 阶段，其他全走）
