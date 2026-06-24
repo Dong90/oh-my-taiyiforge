@@ -85,6 +85,10 @@
 | `/taiyi:ai-slop-cleaner` |
 | `/taiyi:ecomode` |
 | `/taiyi:team` |
+| `/taiyi:ultrawork` |
+| `/taiyi:agent` |
+| `/taiyi:step` |
+| `/taiyi:stop-mode` |
 
 #### Legacy · phase_write
 
