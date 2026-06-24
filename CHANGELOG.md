@@ -15,6 +15,82 @@
 - 新增「直接跟 AI 对话 vs TaiyiForge」对比表
 - 顶部新增 TOC 导航栏
 
+## [0.41.0] - 2026-06-24
+
+- 新增 6 个开发场景到 playbook 系统
+- 大规模文档清理：移除过期/未引用文件
+- 场景覆盖：refactor (lite), hotfix (nano), prototype (spike), config (micro), docs (nano), dep-upgrade (micro)
+
+## [0.40.0] - 2026-06-23
+
+- 评审门控增强：新增 SSOT 交叉引用验证
+- E2E fixtures 扩展至 7 字段（one_liner, review_date, rollback_trigger, is_cli_only, has_config_changes, modules）
+- 图谱上下文压缩，防止 token 超限
+- 平台冒烟 CI 修复，Playwright/vitest 超时优化
+
+## [0.39.0] - 2026-06-23
+
+- 静默 JSON 解析失败修复：区分 ENOENT vs SyntaxError，LLM JSON 自修复
+- 类型守卫替代 `as` 断言，提升类型安全
+- remark + remark-gfm 引入，Markdown AST 解析替换正则
+- 影子快照 + 熔断器：连续 3 次失败自动回滚
+- code slicer：提取 exports/imports 为聚焦的 LLM 上下文
+
+## [0.38.0] - 2026-06-23
+
+- Skill 文档同步 + 示例一致性清理
+
+## [0.37.0] - 2026-06-23
+
+- ChangeGraph 集成到 completePhase 生命周期
+- 模板测试更新 + 剩余 fixture 同步
+
+## [0.36.0] - 2026-06-23
+
+- PHASE-CONTEXT.md 图谱驱动生成：`generateGraphPhaseContext()` 替代正则提取
+- AgentContext：图谱原生上下文 API（安全审计、回滚计划、SSOT 报告）
+
+## [0.35.0] - 2026-06-23
+
+- ChangeGraph 知识图谱：load/edges/query/render 完整实现
+- 4 个测试文件，49 个测试用例
+
+## [0.34.0] - 2026-06-23
+
+- ChangeGraph agent 上下文渲染 + 序列化 + 类组装
+- 12 条边规则目录 + SSOT 违规检测 + 跨切面查询
+
+## [0.33.0] - 2026-06-23
+
+- ast-grep 陷阱规则：8 种模式 + scan.sh 编排脚本
+- 按模块拆分 PITFALLS.md：6 个模块文件 + GLOBAL.md
+
+## [0.32.0] - 2026-06-23
+
+- E2E JSON fixtures 扩展：one_liner, review_date, rollback_trigger, is_cli_only 等字段
+
+## [0.31.0] - 2026-06-23
+
+- UI-DESIGN 支持 `is_cli_only` 条件章节，CLI-only 变更自动跳过 UI 阶段
+- integration schema 增强：日期修复 + config 占位符 + System State Update 章节
+- TASK.md 引入 PITFALLS 引用 + 多切片并行模式 + SSOT 交叉引用
+
+## [0.30.0] - 2026-06-23
+
+- 数据驱动 Mermaid 链：设计图 SSOT 三源绑定 + 回滚追溯
+- `is_cli_only` 跳过 UI 阶段契约
+
+## [0.29.0] - 2026-06-23
+
+- REVIEW 绑定 review_date + SSOT 交叉引用
+- REQUIREMENT 绑定 one_liner + SSOT 交叉引用
+- CHANGE 绑定 one-liner 到 motivation 字段
+- 质量门控占位符检测增强
+
+## [0.28.0] - 2026-06-21
+
+- 用户对话中去掉 `/taiyi:` 斜杠命令语气，改用自然语言引导
+
 ## [0.27.0] - 2026-06-21
 
 ### Added
