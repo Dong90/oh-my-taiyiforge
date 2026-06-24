@@ -62,8 +62,25 @@ admin-dashboard ←── user-auth
 |------|------|
 | **最多同时活跃** | 建议 ≤ 5 个 change 并行，人脑追太多会乱 |
 | **超过 5 个** | 分波执行：Wave 1 跑完 → Wave 2 启动，不是全挤一起 |
-| **排队方式** | 后面的 wave 先挂在计划里，等前面 wave 到 dev 阶段后再 `/taiyi:new` |
+| **排队方式** | 后面的 wave 先记录在 `.taiyi/DECOMPOSE.md`，等前面的 wave 到 dev 后自动触发 |
 | **micro/nano** | 不受排队限制，随时插队跑（几秒就完） |
+
+**Wave 2 自动触发**：
+
+Wave 1 的 change 全部到达 dev 阶段后，**自动创建 Wave 2 的 change**，不需要用户手动提醒。
+
+检测方式：每次跑 `/taiyi:status` 或 `/taiyi:list` 时，检查 `.taiyi/DECOMPOSE.md` 中记录的下一波是否满足启动条件。满足则自动执行。
+
+```
+当前状态检查 →
+  Wave 1 的 user-auth: dev ✅
+  Wave 1 的 product-crud: dev ✅
+  Wave 1 的 order-flow: dev ✅
+  → 条件满足，自动创建 Wave 2：
+    /taiyi:new "payment-gateway" --profile api
+    /taiyi:new "notification" --profile lite
+    ✅ Wave 2 已创建，可以开始推进
+```
 
 **示例：8 个 change，分两波**
 
@@ -75,10 +92,8 @@ Wave 1（立即创建，并行推进）：
   /taiyi:new "admin-dashboard" --profile full
   /taiyi:new "deploy-scripts" --profile micro
 
-Wave 2（等 Wave 1 全部到 dev 后再创建）：
-  /taiyi:new "payment-gateway" --profile api
-  /taiyi:new "notification" --profile lite
-  /taiyi:new "analytics" --profile lite
+Wave 2（Wave 1 全部到 dev 后自动创建）：
+  payment-gateway (api), notification (lite), analytics (lite)
 ```
 ```
 
