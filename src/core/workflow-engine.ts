@@ -37,6 +37,7 @@ import { expectedPhaseCount, isChangeAborted, isWorkflowCompleted } from "./chan
 import { normalizeState } from "./normalize-state.js";
 import { deliveryGateEnabled, evaluateDeliveryGate, evaluateProductionReadiness } from "./gates/delivery-gate.js";
 import { auditChange, crossChangeFindings } from "./workflow-audit.js";
+import { auditTaskPlan, formatPlanAudit, type PlanAuditResult } from "./plan-audit.js";
 import { resolveArchTemplateForChange } from "./profile.js";
 import { evaluateArchitecture } from "./review-arch-check.js";
 import { syncRootChangelog } from "./sync-root-changelog.js";
@@ -82,6 +83,8 @@ export { normalizeState } from "./normalize-state.js";
 export class WorkflowEngine {
   private locks = new Map<string, ChangeLock>();
   private log = getLogger();
+  /** Cache phases already plan-audited per slug to avoid re-reading TASK.md */
+  private _auditedPhases = new Set<string>();
 
   constructor(
     private readonly workspaceRoot: string,
@@ -458,6 +461,33 @@ export class WorkflowEngine {
     const earlyCode = detectEarlyCodeChanges(workspaceDir, phaseId);
     if (earlyCode && earlyCodeBlockOnContinue()) {
       return { ok: false, error: earlyCode.message };
+    }
+
+    if (phaseId === "task" && !options?.skipArtifactValidation) {
+      const cacheKey = `${slug}::${phaseId}`;
+      if (!this._auditedPhases.has(cacheKey)) {
+        const taskMdPath = path.join(changeDir, "TASK.md");
+        if (!fs.existsSync(taskMdPath)) {
+          return { ok: false, error: "TASK.md 不存在 — 无法进入 dev 阶段" };
+        }
+        const taskContent = fs.readFileSync(taskMdPath, "utf8");
+        const isSeed = taskContent.includes("<!-- taiyi:seed-template -->");
+        if (!isSeed) {
+          const audit: PlanAuditResult = auditTaskPlan(taskMdPath);
+          if (!audit.passed) {
+            logActivity(this.taiyiRoot, {
+              event: "plan-audit:blocked",
+              slug,
+              findings: audit.findings.filter(f => !f.passed).map(f => f.message),
+            });
+            return {
+              ok: false,
+              error: `TASK.md 质量审查未通过。请完善后重试。\n${formatPlanAudit(audit)}`,
+            };
+          }
+        }
+        this._auditedPhases.add(cacheKey);
+      }
     }
 
     if (phaseId === "dev" && !options?.skipArtifactValidation) {
