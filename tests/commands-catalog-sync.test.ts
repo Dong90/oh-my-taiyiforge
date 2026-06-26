@@ -16,6 +16,7 @@ const COMMANDS_YAML = path.join(REPO, "docs/taiyi/commands.yaml");
 /** 子路由 / 引擎路由 — 不要求出现在 slash_catalog 列表行 */
 const PROMPT_ALLOWLIST = new Set([
   "taiyi-milestone.md",
+  "taiyi-plan.md",
   "taiyi-skill.md",
   "taiyi.md",
   "taiyi-forge.md",

@@ -9,7 +9,7 @@ downstream: [requirement]
 <!-- phase:change skill:taiyi-change gate:human est:15min produces:CHANGE.md upstream:[] downstream:[requirement] cplx:[ALL]5steps +[UI]1 +[M+]4 +[H]1 -->
 # CHANGE: {{title}}
 
-> **一句话**: {{#if motivation}}{{motivation}}{{else}}[变更目的和价值]{{/if}} | **Status**: active | **Slug**: {{slug}}
+> **一句话**: {{#if motivation}}{{motivation}}{{else}}{{#if description}}{{description}}{{else}}[变更目的和价值]{{/if}}{{/if}} | **Status**: active | **Slug**: {{slug}}
 
 ---
 
@@ -17,7 +17,7 @@ downstream: [requirement]
 > **[ALL]** Goal: 证明值得做 | Inputs: 用户反馈/监控/业务指标
 <!-- Action: 用数据回答: 当前多痛、不改多惨、改了多好 -->
 
-**当前状态**: {{motivation}}
+**当前状态**: {{#if motivation}}{{motivation}}{{else}}{{#if description}}{{description}}{{else}}[变更目的和价值]{{/if}}{{/if}}
 
 **不改的代价**: {{#if do_nothing_cost}}{{do_nothing_cost}}{{else}}[量化]{{/if}}
 

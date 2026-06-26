@@ -1,0 +1,20 @@
+{
+  "name": "taiyi-todo-fullstack",
+  "private": true,
+  "type": "module",
+  "description": "全栈 Todo 示例 — 前端(vanilla JS) + 后端(Express) + E2E",
+  "scripts": {
+    "dev": "node backend/src/index.js",
+    "test": "node --test backend/test/api.test.js && node --test frontend/test/app.test.js",
+    "test:api": "node --test backend/test/api.test.js",
+    "test:frontend": "node --test frontend/test/app.test.js",
+    "test:e2e": "node --test e2e/smoke.test.js"
+  },
+  "taiyi": {
+    "deliveryVerifyCmd": "npm test"
+  },
+  "devDependencies": {
+    "express": "^4.21.0",
+    "jsdom": "^29.1.1"
+  }
+}

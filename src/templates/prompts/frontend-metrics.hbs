@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{{app_name}} · Metrics</title>
+<link rel="stylesheet" href="style.css"><link rel="stylesheet" href="metrics.css">
+</head>
+<body>
+<div class="container">
+<header><h1>📊 Metrics Dashboard</h1><p class="subtitle">{{app_name}} 实时运行状态</p><a href="index.html">← Back</a></header>
+<main>
+<div class="card"><div class="card-header">Overview</div>
+<div class="metrics-grid">
+<div class="metric-card"><div class="metric-value" id="total-translations">—</div><div class="metric-label">Total Requests</div></div>
+<div class="metric-card"><div class="metric-value" id="success-rate">—</div><div class="metric-label">Success Rate</div></div>
+<div class="metric-card"><div class="metric-value" id="avg-response-time">—</div><div class="metric-label">Avg Response (ms)</div></div>
+<div class="metric-card"><div class="metric-value" id="uptime">—</div><div class="metric-label">Uptime</div></div>
+</div></div>
+<div class="card"><div class="card-header">Direction Distribution</div><div id="dir-chart" class="chart-container"></div></div>
+<div class="card"><div class="card-header">Performance</div><table><thead><tr><th>Endpoint</th><th>Requests</th><th>Errors</th><th>Avg (ms)</th><th>P95 (ms)</th></tr></thead><tbody id="perf-table"></tbody></table></div>
+<div class="card"><div class="card-header">Recent Errors</div><div id="error-log" class="error-log"></div></div>
+</main></div>
+<script src="metrics.js"></script>
+</body></html>

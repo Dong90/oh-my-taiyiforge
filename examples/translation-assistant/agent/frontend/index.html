@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>沟通翻译助手</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="container">
+  <header class="header">
+    <h1>沟通翻译助手</h1>
+    <p class="subtitle">帮助产品经理、开发工程师和运营更好地理解彼此</p>
+  </header>
+
+  <main class="main">
+    <div class="controls">
+      <label for="direction">翻译方向</label>
+      <select id="direction">
+        <option value="product_to_dev">产品经理 → 开发工程师</option>
+        <option value="dev_to_product">开发工程师 → 产品经理</option>
+        <option value="dev_to_ops">开发工程师 → 运营</option>
+        <option value="ops_to_dev">运营 → 开发工程师</option>
+        <option value="product_to_ops">产品经理 → 运营</option>
+        <option value="ops_to_product">运营 → 产品经理</option>
+      </select>
+
+      <label class="checkbox-label">
+        <input type="checkbox" id="stream-mode">
+        <span>流式输出</span>
+      </label>
+    </div>
+
+    <div class="input-area">
+      <label for="input-text">输入文本</label>
+      <textarea id="input-text" placeholder="请输入需要翻译的内容..." rows="6" aria-describedby="input-hint"></textarea>
+      <small id="input-hint">支持最多 10000 字符</small>
+    </div>
+
+    <button id="translate-btn" class="btn-primary" disabled>翻译</button>
+
+    <div class="result-area" id="result-area" hidden>
+      <h3>翻译结果</h3>
+      <div id="result-content" class="result-content"></div>
+      <button id="retry-btn" class="btn-secondary" hidden>重试</button>
+    </div>
+
+    <div class="metrics-bar" id="metrics-bar">
+      <span>次数: <strong id="metric-count">0</strong></span>
+      <span>平均响应: <strong id="metric-avg">0</strong>ms</span>
+    </div>
+  </main>
+</div>
+<script src="app.js"></script>
+<script src="metrics.js"></script>
+</body>
+</html>

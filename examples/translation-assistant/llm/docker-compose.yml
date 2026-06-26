@@ -1,0 +1,16 @@
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+      - OPENAI_API_BASE_URL=${OPENAI_API_BASE_URL:-https://s.lconai.com/v1}
+      - OPENAI_MODEL=${OPENAI_MODEL:-gpt-4}
+      - ENVIRONMENT=${ENVIRONMENT:-production}
+      - LOG_LEVEL=${LOG_LEVEL:-info}
+    volumes:
+      - ./backend/app:/app/app
+    restart: unless-stopped

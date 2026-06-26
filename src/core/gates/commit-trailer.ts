@@ -48,11 +48,16 @@ function resolveBaseBranch(workspaceDir: string): string {
   }
 }
 
-function parseTrailers(body: string): Record<string, string> {
-  const out: Record<string, string> = {};
+function parseTrailers(body: string): Record<string, string[]> {
+  const out: Record<string, string[]> = {};
   for (const line of body.split("\n")) {
     const m = line.match(/^([A-Za-z][A-Za-z0-9-]*):\s*(.+)$/);
-    if (m) out[m[1]!] = m[2]!.trim();
+    if (m) {
+      const key = m[1]!;
+      const val = m[2]!.trim();
+      if (out[key]) out[key]!.push(val);
+      else out[key] = [val];
+    }
   }
   return out;
 }
@@ -114,7 +119,7 @@ export function evaluateCommitTrailers(
   for (const c of commits) {
     const trailers = parseTrailers(c.body);
     const change = trailers[TRAILER_CHANGE];
-    if (change === slug) matched++;
+    if (change?.includes(slug)) matched++;
     else if (!change) missing++;
   }
 

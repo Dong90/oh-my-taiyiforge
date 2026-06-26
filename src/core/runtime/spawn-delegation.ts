@@ -17,6 +17,8 @@ export type SpawnPlan = {
   phase: PhaseId;
   workers: SpawnWorker[];
   maxParallel: number;
+  /** Architecture context guide injected into spawn plans (dev phase only). */
+  archGuide?: string;
 };
 
 function parseTaskSlices(taskMd: string): string[] {
@@ -42,6 +44,7 @@ export function buildSpawnPlan(
   slug: string,
   phase: PhaseId,
   taskMd?: string,
+  archGuide?: string,
 ): SpawnPlan {
   const roles = rolesForPhase(phase);
   const slices = taskMd ? parseTaskSlices(taskMd) : [];
@@ -72,7 +75,7 @@ export function buildSpawnPlan(
     }
   }
 
-  return { slug, phase, workers, maxParallel: MAX_PARALLEL_AGENTS };
+  return { slug, phase, workers, maxParallel: MAX_PARALLEL_AGENTS, archGuide };
 }
 
 export function formatSpawnPlanPlain(plan: SpawnPlan): string {
@@ -85,6 +88,11 @@ export function formatSpawnPlanPlain(plan: SpawnPlan): string {
     lines.push(`  [${w.id}] /taiyi:agent ${w.role} — ${w.label}`);
     lines.push(`       任务: ${w.task}`);
     if (w.slice) lines.push(`       切片: ${w.slice}`);
+  }
+  if (plan.archGuide) {
+    lines.push("");
+    lines.push("── 架构约定（注入至 dev agent prompt）──");
+    lines.push(plan.archGuide);
   }
   lines.push("");
   lines.push("主会话协议:");
@@ -107,13 +115,19 @@ export function formatUltraworkTaskProtocol(plan: SpawnPlan, options?: { autoDis
     "",
   ];
   for (const w of plan.workers) {
-    const taskPrompt = [
+    const taskPromptParts = [
       `Taiyi ultrawork worker ${w.id} · slug=${plan.slug} · phase=${plan.phase}`,
       `Role: /taiyi:agent ${w.role}`,
       `Slice: ${w.task}`,
+    ];
+    if (plan.archGuide) {
+      taskPromptParts.push("Architecture conventions:", plan.archGuide);
+    }
+    taskPromptParts.push(
       "TDD: /taiyi:sp test-driven-development",
       "Done: ralph green + brief summary for merge",
-    ].join("\n");
+    );
+    const taskPrompt = taskPromptParts.join("\n");
     lines.push(`Task(subagent_type="generalPurpose", description="ulw ${w.id}: ${(w.slice ?? w.task).slice(0, 48)}", prompt="""
 ${taskPrompt}
 """)`);

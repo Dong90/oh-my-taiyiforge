@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>沟通翻译助手</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<nav class="nav">
+  <div class="nav-inner">
+    <span class="nav-title">🗣️ 沟通翻译助手</span>
+    <a href="metrics.html" class="nav-link">📊 指标</a>
+  </div>
+</nav>
+
+<main class="container">
+  <div class="card">
+    <div class="card-header">
+      <h2>翻译</h2>
+      <p class="card-desc">在 产品经理 / 开发工程师 / 运营 之间翻译沟通语言</p>
+    </div>
+
+    <div class="form-group">
+      <label for="direction">翻译方向</label>
+      <select id="direction" class="select">
+        <option value="product_to_dev">产品经理 → 开发工程师</option>
+        <option value="dev_to_product">开发工程师 → 产品经理</option>
+        <option value="dev_to_ops">开发工程师 → 运营</option>
+        <option value="ops_to_dev">运营 → 开发工程师</option>
+        <option value="product_to_ops">产品经理 → 运营</option>
+        <option value="ops_to_product">运营 → 产品经理</option>
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label for="text">输入文本</label>
+      <textarea id="text" class="textarea" rows="6" placeholder="请输入需要翻译的内容…"></textarea>
+    </div>
+
+    <div class="btn-group">
+      <button id="btn-translate" class="btn btn-primary">翻译</button>
+      <button id="btn-stream" class="btn btn-secondary">流式翻译</button>
+    </div>
+  </div>
+
+  <div class="card" id="result-card" style="display:none">
+    <div class="card-header">
+      <h2>翻译结果</h2>
+      <button id="btn-copy" class="btn btn-sm">📋 复制</button>
+    </div>
+    <div id="result" class="result-content"></div>
+  </div>
+
+  <div class="card" id="error-card" style="display:none">
+    <div class="card-header">
+      <h2>⚠️ 错误</h2>
+    </div>
+    <div id="error-message" class="result-content error"></div>
+  </div>
+</main>
+
+<script src="app.js"></script>
+</body>
+</html>

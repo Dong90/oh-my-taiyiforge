@@ -1,0 +1,33 @@
+/* Metrics page */
+.metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+.metric-card {
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  padding: 20px;
+  text-align: center;
+}
+.metric-label { font-size: 0.8rem; color: #6b7280; margin-bottom: 8px; }
+.metric-value {
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: #4F46E5;
+}
+.directions-table { margin-top: 8px; }
+.direction-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 0;
+  border-bottom: 1px solid #f3f4f6;
+}
+.direction-row:last-child { border-bottom: none; }
+.direction-name { font-weight: 500; font-size: 0.9rem; }
+.direction-stats { font-size: 0.85rem; color: #6b7280; }
+@media (max-width: 540px) {
+  .metrics-grid { grid-template-columns: 1fr; }
+}

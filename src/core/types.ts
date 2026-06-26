@@ -42,6 +42,51 @@ export type GateInput = {
 
 export type ChangeProfile = "full" | "api" | "ui" | "lite" | "spike" | "micro" | "nano";
 
+/** Architecture template defines expected code structure (layers, file count, patterns). */
+export type ArchTemplateId = "express-3layer" | "fastapi-6layer" | "react-component" | "generic";
+
+/** Constraint: minimum expected items for a codebase dimension. */
+export type ArchConstraint = {
+  /** Label for diagnostic output (e.g. "分层模块数", "测试文件数", "错误处理模式") */
+  label: string;
+  /** Minimum count or "must" for boolean checks */
+  min: number;
+  /** Glob pattern for file count, or path prefix, or pattern to grep */
+  glob?: string;
+  /** Alternative: grep for a pattern (e.g. error handling middleware pattern) */
+  grep?: string;
+  /** File extension filter when counting */
+  ext?: string | string[];
+};
+
+/** Full architecture template definition. */
+export type ArchitectureTemplate = {
+  id: ArchTemplateId;
+  label: string;
+  /** Minimum total source files (excl. config, tests, node_modules) */
+  minSourceFiles: number;
+  /** Minimum total test files */
+  minTestFiles: number;
+  /** Expected directory structure prefixes */
+  expectedDirs: string[];
+  /** Expected patterns (checked via grep) */
+  expectedPatterns: { label: string; grep: string; path?: string }[];
+  /** Context guide injected into dev-phase agent prompts (TDD mode).
+   *  Plain text (no markdown headings) describing architecture conventions,
+   *  directory structure, code patterns, and production readiness expectations.
+   *  Agents read this BEFORE generating code. */
+  contextGuide?: string;
+  /** Additional constraints for the delivery-gate production-readiness check */
+  productionReadiness?: {
+    /** Check that health endpoint returns 200 */
+    healthEndpoint?: boolean;
+    /** Check package.json contains these scripts */
+    requiredScripts?: string[];
+    /** Check CORS config exists (backend projects) */
+    corsCheck?: boolean;
+  };
+};
+
 export type WorkflowStatus = "active" | "completed" | "aborted";
 
 export type ChangeState = {

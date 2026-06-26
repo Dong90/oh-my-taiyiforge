@@ -1,3 +1,12 @@
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.activity.jsonl
+
+# Embedded example repos (full standalone copies)
+examples/test/
+
 .DS_Store
 node_modules/
 dist/
