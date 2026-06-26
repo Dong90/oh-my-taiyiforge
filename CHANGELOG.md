@@ -2,51 +2,19 @@
 
 > 📦 较早的变更已归档至 [CHANGELOG-ARCHIVE.md](CHANGELOG-ARCHIVE.md)。
 
-<!-- taiyi:api-layer --> 2026-06-24
-
-# CHANGELOG: api-layer
-
-## Added
-
-- FastAPI routing layer for translation API
-- POST /translate endpoint for text translation
-- GET /translate?stream=true for SSE streaming
-- GET /health endpoint for service health checks
-- GET /metrics endpoint for usage statistics
-- Dependency injection via app.api.deps module
-
-## Changed
-
--
-
-## Fixed
-
--
-
-## Docs
-
-- [ ] README / AGENTS.md synced
-- [ ] OpenSpec archived
-
-## Rollback
-
--
-
-<!-- taiyi:backend-foundation --> 2026-06-24
-
-# CHANGELOG: backend-foundation
+<!-- taiyi:agent-mode-translation-api-backend-core --> 2026-06-27
+# CHANGELOG: agent-mode-translation-api-backend-core
 
 ## Added
 
-- `app/__init__.py`, `app/main.py`: FastAPI application entry point with lifespan
-- `app/config/`: Configuration module via `pydantic-settings`
-- `app/core/`: Core processing logic (translation, metrics)
-- `app/models/`: Pydantic request/response schemas
-- `app/api/`: FastAPI routes, dependencies, error handlers
-- `requirements.txt`: Python dependencies (FastAPI, uvicorn, pydantic, httpx)
-- `Dockerfile`: Multi-stage Python image (slim → runtime, 194MB)
-- `docker-compose.yml`: Service + persistent volume mount
-- `Makefile`: Build/run/stop/dev shortcuts
+- `services/translation_api/`: Full backend translation API with Adapter + Strategy architecture
+- 6 translation direction strategies (dev↔product, dev↔ops, product↔ops)
+- OpenAI LLM adapter with streaming support
+- SSE streaming endpoint (`POST /api/translation/translate/stream`)
+- 3 health endpoints (GET /health, /ready, /live)
+- Middleware chain: request logging, error handling, response time
+- Pydantic v2 request/response schemas with role validation
+- 21 pytest tests covering config, strategies, services, middleware, controllers
 
 ## Changed
 
@@ -56,46 +24,22 @@
 
 - (none)
 
-## Docs
+## Success Criteria Met
 
-- [x] README / AGENTS.md synced
-- [ ] OpenSpec archived
-
-## Rollback
-
--
-
-<!-- taiyi:llm-integration --> 2026-06-24
-
-# CHANGELOG: llm-integration
-
-## Added
-
-- `app/llm/`: LLM integration layer (client, service, router)
-- `TranslationService`: translate & translate_stream methods with LLMClient
-- Streaming SSE endpoint (`/api/v1/translate-stream`)
-- `LLMClient` for external LLM API calls (mock in tests)
-- `app/api/__init__.py`, `app/llm/__init__.py` exports
-
-## Changed
-
-- (none)
-
-## Fixed
-
-- (none)
-
-## Docs
-
-- [x] README / AGENTS.md synced
-- [ ] OpenSpec archived
+- [x] All 21 tests pass (config 3, strategies 5, services 6, middleware 1, controllers 6)
+- [x] POST /api/translation/translate returns 200 with translated text
+- [x] POST /api/translation/translate/stream returns SSE with content-type text/event-stream
+- [x] 6 translation directions routable via TranslationService factory
+- [x] 3 health endpoints return HTTP 200 with `{"status": "ok"}`
+- [x] Middleware chain operational (logging, error handling, X-Response-Time)
 
 ## Rollback
 
--
+```
+git revert HEAD --no-edit
+```
 
 <!-- taiyi:frontend-ui --> 2026-06-24
-
 # CHANGELOG: frontend-ui
 
 ## Added
@@ -125,7 +69,6 @@
 -
 
 <!-- taiyi:todo-api --> 2026-06-24
-
 # CHANGELOG: todo-api
 
 ## Added
@@ -144,7 +87,6 @@
 - 无
 
 <!-- taiyi:todo-e2e --> 2026-06-24
-
 # CHANGELOG: todo-e2e
 
 ## Added
@@ -160,7 +102,6 @@
 - 无
 
 <!-- taiyi:todo-ui --> 2026-06-24
-
 # CHANGELOG: todo-ui
 
 ## Added
@@ -183,3 +124,36 @@
 ## Rollback
 
 -
+
+<!-- taiyi:template-translation-api-core-backend --> 2026-06-26
+# CHANGELOG: Translation API — Core Backend
+
+## Added
+
+- Translation API: FastAPI-based service with 6 direction-specific LLM strategies
+  - product↔dev, dev↔ops, product↔ops bi-directional translation
+  - Strategy pattern: each direction has its own system prompt
+  - Adapter pattern: pluggable LLM backends (OpenAI default)
+  - Streaming SSE endpoint for real-time translation
+- Middleware: request logging, error handling, response time tracking
+- Tests: 11/11 passing (unit + integration with mocked LLM)
+- Pydantic models for request/response validation
+- Settings management via pydantic-settings (env-based)
+
+## Changed
+
+- N/A (greenfield change)
+
+## Fixed
+
+- N/A (greenfield change)
+
+## Docs / Skills
+
+- [ ] README / AGENTS.md 已同步（若对外行为变化）
+- [ ] OpenSpec / 规格已 archive（若适用）
+
+## Rollback
+
+Revert the `.taiyi/changes/template-translation-api-core-backend/` directory and remove `dev_bundle/` from deployment
+path.

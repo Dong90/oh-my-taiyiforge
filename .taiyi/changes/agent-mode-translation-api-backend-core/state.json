@@ -1,0 +1,30 @@
+{
+  "slug": "agent-mode-translation-api-backend-core",
+  "currentPhase": "integration",
+  "completedPhases": [
+    "change",
+    "requirement",
+    "design",
+    "ui-design",
+    "task",
+    "dev",
+    "test",
+    "review"
+  ],
+  "profile": "full",
+  "skippedPhases": [],
+  "strictDev": false,
+  "autoHarness": false,
+  "complexity": {
+    "level": "low",
+    "score": 3,
+    "recommendedSkills": [
+      "taiyi-intel-scan"
+    ]
+  },
+  "auxiliaryCompleted": [],
+  "workflowStatus": "active",
+  "createdAt": "2026-06-26T16:12:08.347Z",
+  "updatedAt": "2026-06-26T16:31:52.677Z",
+  "version": 4
+}
