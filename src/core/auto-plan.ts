@@ -9,6 +9,7 @@ import { generateCodeFromChange, generateCode } from "./code-gen.js";
 import { ADVANCED_CODE_STYLE, ADVANCED_MODULE_MANIFEST } from "./e2e-fixtures.js";
 import { DEV_COMPLETE_EVIDENCE } from "./dev-complete.js";
 import { getLogger } from "./logger.js";
+import { auditTaskPlan } from "./plan-audit.js";
 import type { ChangeProfile } from "./types.js";
 import { parseManifestInput, type LlmDecomposedResult } from "./llm-plan.js";
 
@@ -300,6 +301,30 @@ export function runAutoPlan(options: AutoPlanOptions): AutoPlanResult {
           generated += r.filter((x) => x.ok).length;
         }
       }
+    }
+  }
+
+  // 4. Plan quality audit summary (CLI-visible for /taiyi:plan users)
+  console.log("\n=== Plan 质量审查 ===");
+  for (const change of changes) {
+    const taskMdPath = path.join(workspaceDir, "changes", change.slug, "TASK.md");
+    if (!fs.existsSync(taskMdPath)) {
+      console.log(`  ${change.slug}: TASK.md 未生成`);
+      continue;
+    }
+    const taskContent = fs.readFileSync(taskMdPath, "utf8");
+    if (taskContent.includes("<!-- taiyi:seed-template -->")) {
+      console.log(`  ${change.slug}: seed 占位 — 进入 dev 前需补充`);
+      continue;
+    }
+    const audit = auditTaskPlan(taskMdPath);
+    if (!audit.passed) {
+      console.log(`  ${change.slug}: 需完善 — ${audit.summary}`);
+      for (const f of audit.findings.filter(f => !f.passed)) {
+        console.log(`    [${f.severity}] ${f.message}`);
+      }
+    } else {
+      console.log(`  ${change.slug}: ✓ 通过`);
     }
   }
 
