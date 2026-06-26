@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>沟通翻译助手</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="app-container">
+        <header class="app-header">
+            <h1>沟通翻译助手</h1>
+            <p class="subtitle">让产品、开发和运营团队无障碍沟通</p>
+        </header>
+
+        <nav class="tab-nav">
+            <button class="tab-btn active" data-tab="translate">翻译</button>
+            <button class="tab-btn" data-tab="metrics">指标</button>
+        </nav>
+
+        <main>
+            <!-- Translate Tab -->
+            <section id="translate-tab" class="tab-content active">
+                <div class="input-section">
+                    <textarea id="source-text" placeholder="输入需要翻译的内容..." rows="6"></textarea>
+                    <div class="controls">
+                        <select id="direction-select">
+                            <option value="product_to_dev">产品 → 开发</option>
+                            <option value="dev_to_product">开发 → 产品</option>
+                            <option value="dev_to_ops">开发 → 运营</option>
+                            <option value="ops_to_dev">运营 → 开发</option>
+                            <option value="product_to_ops">产品 → 运营</option>
+                            <option value="ops_to_product">运营 → 产品</option>
+                        </select>
+                        <label class="stream-toggle">
+                            <input type="checkbox" id="stream-check">
+                            <span>流式输出</span>
+                        </label>
+                        <button id="translate-btn" class="btn-primary">翻译</button>
+                    </div>
+                </div>
+                <div class="output-section">
+                    <div id="direction-badge" class="direction-badge">产品 → 开发</div>
+                    <div id="output-area" class="output-area">
+                        <p class="placeholder">翻译结果将显示在这里</p>
+                    </div>
+                    <div id="loading-indicator" class="loading hidden">
+                        <div class="spinner"></div>
+                        <span>翻译中...</span>
+                    </div>
+                    <div id="error-message" class="error hidden"></div>
+                </div>
+            </section>
+
+            <!-- Metrics Tab -->
+            <section id="metrics-tab" class="tab-content">
+                <div class="metrics-dashboard">
+                    <h2>翻译指标</h2>
+                    <div class="metrics-grid" id="metrics-grid">
+                        <div class="metric-card" id="metric-total">
+                            <div class="metric-value">-</div>
+                            <div class="metric-label">总翻译次数</div>
+                        </div>
+                        <div class="metric-card" id="metric-success">
+                            <div class="metric-value">-</div>
+                            <div class="metric-label">成功次数</div>
+                        </div>
+                        <div class="metric-card" id="metric-avg-time">
+                            <div class="metric-value">-</div>
+                            <div class="metric-label">平均响应(ms)</div>
+                        </div>
+                        <div class="metric-card" id="metric-chars">
+                            <div class="metric-value">-</div>
+                            <div class="metric-label">总字符数</div>
+                        </div>
+                    </div>
+                    <h3>方向分布</h3>
+                    <table class="metrics-table" id="direction-table">
+                        <thead>
+                            <tr>
+                                <th>方向</th>
+                                <th>次数</th>
+                            </tr>
+                        </thead>
+                        <tbody id="direction-body">
+                            <tr><td colspan="2">暂无数据</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        </main>
+    </div>
+    <script src="app.js"></script>
+    <script src="metrics.js"></script>
+</body>
+</html>
