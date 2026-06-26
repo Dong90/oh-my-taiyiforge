@@ -1,9 +1,3 @@
-{
-  "exitCode": 0,
-  "command": "python -m pytest services/translation_api/tests/ -v --tb=short",
-  "passed": 21,
-  "failed": 0,
-  "errored": 0,
-  "timestamp": "2026-06-27T00:00:00Z",
-  "summary": "All 21 tests pass. Config(3), Strategies(5), Services(6), Middleware(1), Controllers(6)."
-}
+command: python -m pytest services/translation_api/tests/ -v --tb=short
+exitCode: 0
+dev complete
