@@ -9,7 +9,8 @@
     "task",
     "dev",
     "test",
-    "review"
+    "review",
+    "integration"
   ],
   "profile": "full",
   "skippedPhases": [],
@@ -23,8 +24,8 @@
     ]
   },
   "auxiliaryCompleted": [],
-  "workflowStatus": "active",
+  "workflowStatus": "completed",
   "createdAt": "2026-06-26T16:12:08.347Z",
-  "updatedAt": "2026-06-26T16:31:52.677Z",
-  "version": 4
+  "updatedAt": "2026-06-26T16:34:48.436Z",
+  "version": 5
 }
