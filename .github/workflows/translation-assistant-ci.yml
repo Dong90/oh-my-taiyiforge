@@ -1,0 +1,44 @@
+name: Translation Assistant CI
+
+on:
+  push:
+    paths:
+      - 'examples/translation-assistant/**'
+  pull_request:
+    paths:
+      - 'examples/translation-assistant/**'
+
+jobs:
+  lint-and-test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: examples/translation-assistant/agent/backend
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+          pip install ruff
+
+      - name: Lint with ruff
+        run: ruff check app/ --ignore=E501
+
+      - name: Run tests
+        run: pytest tests/ -v --tb=short
+        env:
+          OPENAI_API_KEY: test-key-ci-placeholder
+
+  docker-build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build Docker image
+        run: docker build -t translation-assistant:ci -f examples/translation-assistant/Dockerfile examples/translation-assistant/
