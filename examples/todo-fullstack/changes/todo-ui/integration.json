@@ -1,0 +1,67 @@
+{
+  "title": "E2E Demo",
+  "release_version": "1.0.0",
+  "release_date": "2026-06-22",
+  "status": "deployed",
+  "has_config_changes": false,
+  "changelog_entries": [
+    {
+      "type": "test",
+      "description": "E2E workflow regression test and dogfood script covering all nine phases."
+    },
+    {
+      "type": "refactor",
+      "description": "E2E_ARTIFACTS fixtures enriched with production-quality content depth (更多 FR/AC, visual_* fields, richer design options)."
+    },
+    {
+      "type": "docs",
+      "description": "full-flow-demo example now generates inspectable artifacts in .taiyi/archive/."
+    }
+  ],
+  "breaking_changes": [],
+  "dashboard_url": "GitHub Actions CI Dashboard",
+  "alerts": [
+    {
+      "alert": "E2E 失败",
+      "condition": "vitest 非零退出",
+      "severity": "high",
+      "channel": "GitHub Actions / Slack"
+    },
+    {
+      "alert": "工件数不匹配",
+      "condition": "文件数 != 预期",
+      "severity": "medium",
+      "channel": "GitHub Actions"
+    }
+  ],
+  "post_launch": {
+    "period": "24h",
+    "metrics": "CI pass rate, E2E 耗时, artifact count",
+    "exit_criteria": "24h 内 E2E pass rate = 100%, 工件完整",
+    "incident_response": "Slack #eng-alerts → on-call 处理"
+  },
+  "rollback_trigger": "E2E 测试持续失败 (>2 次重试) 或 verify-report 出现 error",
+  "rollback_step1": "git revert HEAD~1",
+  "rollback_step2": "npm test && npm run build 确认通过",
+  "rollback_time": "5min",
+  "monitoring": [
+    {
+      "metric": "E2E pass rate",
+      "baseline": "100%",
+      "threshold": "<100%",
+      "severity": "high"
+    },
+    {
+      "metric": "CI 耗时",
+      "baseline": "~35s",
+      "threshold": ">60s",
+      "severity": "medium"
+    },
+    {
+      "metric": "artifact count",
+      "baseline": "11",
+      "threshold": "<11",
+      "severity": "medium"
+    }
+  ]
+}

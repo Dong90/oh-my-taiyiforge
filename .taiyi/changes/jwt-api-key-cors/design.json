@@ -1,0 +1,25 @@
+{
+  "title": "安全机制方案",
+  "options": [
+    {
+      "id": "A",
+      "name": "python-jose + slowapi + CORSMiddleware",
+      "summary": "python-jose JWT + slowapi 限流 + FastAPI CORS",
+      "pros": ["各库职责单一", "组合灵活", "独立升级"],
+      "cons": ["多依赖版本协调"],
+      "cost": "中"
+    },
+    {
+      "id": "B",
+      "name": "FastAPI Users 框架",
+      "summary": "FastAPI Users 开箱即用认证框架",
+      "pros": ["开箱即用（注册/登录/密码重置）"],
+      "cons": ["耦合度高", "定制困难"],
+      "cost": "低"
+    }
+  ],
+  "decision": {
+    "chosen": "A",
+    "reason": "python-jose 是 JWT 标准实现，slowapi 支持多存储后端，组合式方案更灵活可控，各库独立升级降低风险。"
+  }
+}

@@ -285,6 +285,75 @@ _累计: {{#if design_innovation_tokens}}{{design_innovation_tokens.length}}{{el
 {{/if}}
 
 ---
+## Step 13: Code Generation Contract
+> **[ALL]** Goal: DESIGN→TASK→DEV 三阶段代码生成链 | Inputs: Step 2+5
+<!-- Action: 结构化文件清单 → TASK 按文件拆分 Slice → DEV 逐文件生成 -->
+
+{{#if module_manifest}}
+### Module Manifest
+
+| # | File | Pattern | Class | Extends | Depends On |
+|---|------|---------|-------|---------|------------|
+{{#each module_manifest}}
+| {{id}} | `{{file}}` | {{pattern}} | `{{class_name}}` | {{#if extends}}`{{extends}}`{{else}}—{{/if}} | {{#if depends_on}}{{depends_on}}{{else}}—{{/if}} |
+{{/each}}
+
+### Code Style Contract
+{{#if code_style}}
+- **Type Hints**: {{#if code_style.type_hints}}required{{else}}optional{{/if}}
+- **Docstrings**: {{#if code_style.docstrings}}required{{else}}optional{{/if}}
+- **Error Handling**: {{code_style.error_handling}} ({{#if code_style.error_handling}}custom exceptions with error codes{{/if}})
+- **Logging**: {{code_style.logging_style}}{{#if code_style.request_tracing}} + request tracing{{/if}}
+- **Prompt Engineering**: {{code_style.prompt_engineering}} level
+{{else}}
+> ⚠️ `code_style` 未设置 — DEV 阶段将按默认级别生成
+{{/if}}
+
+### Per-Module Spec
+{{#each module_manifest}}
+{{#if prompt_style}}
+#### {{id}} — {{file}}
+- **Pattern**: {{pattern}}
+- **Class**: `{{class_name}}{{#if extends}}({{extends}}){{/if}}`
+- **Prompt Style**: {{prompt_style}} {{#if (eq prompt_style "advanced")}}(XML tags, CoT, structured output){{/if}}
+- **Methods**:
+{{#each methods}}
+  - `{{name}}() -> {{return_type}}`{{#if is_abstract}} (abstract){{/if}}
+{{/each}}
+- **Constraints**: {{#each constraints}}{{this}}{{#unless @last}}; {{/unless}}{{/each}}
+{{/if}}
+{{/each}}
+
+> 📎 **SSOT 规则**: module_manifest 是 DESIGN→TASK→DEV 的代码生成真源。TASK 阶段读取此表生成文件级 Slice，DEV 阶段按此表逐个生成代码。
+{{else}}
+> ⚠️ **module_manifest 未设置** — TASK 阶段将只能按粗粒度拆分（后端/前端），DEV 阶段将只能生成骨架代码。要生成高质量代码，请在此填写模块清单。
+>
+> 示例：
+> ```markdown
+> | M1 | adapters/base.py | Adapter | LLMAdapter | — | — |
+> | M2 | adapters/openai_adapter.py | Adapter | OpenAIAdapter | LLMAdapter | M1 |
+> | M3 | strategies/base.py | Strategy | TranslationStrategy | — | — |
+> | M4 | strategies/product_to_dev.py | Strategy | ProductToDevStrategy | TranslationStrategy | M3 |
+> ```
+{{/if}}
+
+{{#if code_style}}
+### Generated File Checklist
+<!-- DEV 阶段根据 module_manifest + code_style 生成以下文件 -->
+{{#each module_manifest}}
+- [ ] `{{file}}` — {{pattern}}, `{{class_name}}`
+{{/each}}
+- [ ] `app/core/exceptions.py` — 自定义异常类 ({{code_style.error_handling}} level)
+- [ ] `app/core/logger.py` — JSON 结构化日志 ({{code_style.logging_style}})
+{{#if code_style.request_tracing}}- [ ] `app/core/request_id.py` — contextvars 请求追踪
+{{/if}}
+- [ ] `app/config/settings.py` — pydantic-settings 配置管理
+- [ ] `tests/conftest.py` — pytest fixtures
+- [ ] `tests/` — 每层独立测试目录
+{{/if}}
+<!-- Validate: module_manifest 覆盖所有模块？每模块 pattern 匹配实际代码结构？ -->
+
+---
 ## Quality Gate
 <!-- Evidence-first: 每项通过需要可验证证据，不是"感觉对了"。Superpowers verification-before-completion -->
 

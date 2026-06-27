@@ -5,6 +5,7 @@ import { E2E_ARTIFACTS, E2E_PHASE_ORDER } from "./e2e-fixtures.js";
 import { getPhase } from "./phase-registry.js";
 import { DEV_COMPLETE_EVIDENCE } from "./dev-complete.js";
 import { renderE2ePhaseArtifact } from "./run-e2e-workflow.js";
+import { generateCodeFromChange } from "./code-gen.js";
 import { listAgentRoleIds, PHASE_AGENT_ROLES } from "./agent-roles.js";
 import { requiresHumanGate } from "./gates/human-gate-config.js";
 import { skippedPhasesForProfile } from "./profile.js";
@@ -148,6 +149,12 @@ export function runTaiyiCli(repoRoot: string, cwd: string, argv: string[]): Forg
 function seedPhaseArtifact(changeDir: string, phaseId: PhaseId, templatesDir?: string): void {
   if (phaseId === "dev") {
     fs.writeFileSync(path.join(changeDir, ".dev-complete"), DEV_COMPLETE_EVIDENCE, "utf8");
+    // Trigger code generation from module_manifest
+    const tpl = templatesDir ?? path.join(process.cwd(), "src/templates");
+    const promptDir = path.join(tpl, "prompts");
+    if (fs.existsSync(promptDir)) {
+      generateCodeFromChange(changeDir, tpl, path.join(changeDir, "generated"));
+    }
     return;
   }
   const { md, json } = E2E_ARTIFACTS[phaseId];

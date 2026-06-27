@@ -1,8 +1,19 @@
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.activity.jsonl
+
+# Embedded example repos (full standalone copies)
+examples/test/
+
 .DS_Store
 node_modules/
 dist/
 coverage/
-.taiyi/
+.taiyi/**/.lock
+.taiyi/**/__pycache__/
+.taiyi/**/.token-usage.json
 .flow-x/
 *.log
 .gstack/

@@ -1,0 +1,18 @@
+{
+  "version": 1,
+  "slug": "todo-api",
+  "totalTokens": 9143,
+  "estimatedCostUsd": 0.027429,
+  "byPhase": {
+    "integration": 9143
+  },
+  "entries": [
+    {
+      "at": "2026-06-24T12:02:12.698Z",
+      "phase": "integration",
+      "kind": "scan",
+      "tokens": 9143,
+      "label": "9 files"
+    }
+  ]
+}

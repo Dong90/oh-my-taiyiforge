@@ -1,0 +1,4 @@
+{"title":"可观测性","changelog_entries":[
+{"type":"feat","description":"Prometheus metrics 中间件 + /metrics 端点"},
+{"type":"feat","description":"OpenTelemetry tracing 配置"}
+]}

@@ -169,7 +169,9 @@ const E2E_JSON_ARTIFACTS: Record<Exclude<PhaseId, "dev">, object> = {
       deployment: "npm registry / GitHub Actions",
       keyDeps: "handlebars, zod, vitest, commander",
       excluded: "Docker, Kubernetes (无容器化需求)",
+      constraints: "Node 18+; macOS/Linux CI; 仅新增测试依赖无生产依赖变更",
     },
+    current_state: "当前项目已有 WorkflowEngine + phase-registry + template-engine 核心模块，但缺少 E2E 全流程覆盖。单元测试覆盖各模块内部逻辑，但无跨九阶段的集成验证。",
     existingArchitecture: {
       touchedModules: ["src/core/workflow-engine.ts", "src/core/phase-registry.ts", "src/core/run-slash-flow-cli.ts"],
       newModules: ["src/core/e2e-fixtures.ts"],
@@ -180,6 +182,11 @@ const E2E_JSON_ARTIFACTS: Record<Exclude<PhaseId, "dev">, object> = {
       { name: "Workflow Engine", operation: "修改", path: "src/core/workflow-engine.ts", description: "E2E 流程编排" },
       { name: "Phase Registry", operation: "读取", path: "src/core/phase-registry.ts", description: "阶段定义与依赖" },
       { name: "Verify Logic", operation: "修改", path: "src/core/run-slash-flow-cli.ts", description: "验收报告生成 (writeVerifyReport)" },
+    ],
+    dependency_sandbox: [
+      { name: "vitest", version_range: "^2.0", purpose: "测试框架（含 E2E 夹具）", alternatives_considered: "jest（配置更重）", npm_latest: "2.1.0", staleness_check: "✅" },
+      { name: "handlebars", version_range: "^4.7", purpose: "模板引擎（渲染夹具到工件）", alternatives_considered: "ejs, pug（团队不熟悉）", npm_latest: "4.7.8", staleness_check: "✅" },
+      { name: "zod", version_range: "^3.23", purpose: "数据校验", alternatives_considered: "yup（功能相近，生态略弱）", npm_latest: "3.24.0", staleness_check: "✅" },
     ],
     options: [
       { id: "A", name: "Inline script", approach: "Bash 脚本直调 taiyi-forge.sh，手动验证", pros: ["Fast", "Simple"], cons: ["Manual", "No CI"], cost: "Low" },
@@ -237,6 +244,8 @@ const E2E_JSON_ARTIFACTS: Record<Exclude<PhaseId, "dev">, object> = {
         test_command: "npm test -- tests/e2e-workflow.test.ts",
         dependencies: "",
         parallelizable: true,
+        completeness_score: 9,
+        physical_verification: "git diff --name-only",
         checkpoints: [
           "All nine phases complete in state.json",
           "Gates pass without manual intervention",
@@ -253,6 +262,8 @@ const E2E_JSON_ARTIFACTS: Record<Exclude<PhaseId, "dev">, object> = {
         test_command: "node examples/full-flow-demo/scripts/run-inplace-verify.mjs",
         dependencies: "S1",
         parallelizable: false,
+        completeness_score: 8,
+        physical_verification: "git diff --name-only",
         checkpoints: [
           "Archive dir has 11 files",
           "verify-report.json shows ok:true",
@@ -588,3 +599,233 @@ Revert commit; no schema migration.
 };
 
 export const E2E_PHASE_ORDER: PhaseId[] = listPhases().map((p) => p.id);
+
+// ── ADVANCED 级别夹具：含 module_manifest + code_style，用于验证完整代码生成链 ──
+
+export const ADVANCED_CODE_STYLE = {
+  type_hints: true,
+  docstrings: true,
+  error_handling: "defensive" as const,
+  logging_style: "json" as const,
+  request_tracing: true,
+  prompt_engineering: "advanced" as const,
+};
+
+export const ADVANCED_MODULE_MANIFEST = [
+  {
+    id: "M1", file: "adapters/base.py", pattern: "Adapter" as const,
+    class_name: "LLMAdapter", depends_on: [],
+    methods: [
+      { name: "complete", return_type: "str", is_abstract: true },
+      { name: "stream_complete", return_type: "AsyncIterator[str]", is_abstract: true },
+    ],
+    constraints: ["type hints mandatory", "module-level docstring"],
+  },
+  {
+    id: "M2", file: "adapters/openai_adapter.py", pattern: "Adapter" as const,
+    class_name: "OpenAIAdapter", extends: "LLMAdapter", depends_on: ["M1"],
+    methods: [
+      { name: "complete", return_type: "str", is_abstract: false },
+      { name: "stream_complete", return_type: "AsyncIterator[str]", is_abstract: false },
+    ],
+    constraints: ["handle API errors with AdapterException", "support custom base_url", "timeout + retry config"],
+  },
+  {
+    id: "M3", file: "strategies/base.py", pattern: "Strategy" as const,
+    class_name: "TranslationStrategy", depends_on: [],
+    methods: [
+      { name: "get_system_prompt", return_type: "str", is_abstract: true },
+      { name: "format_prompt", return_type: "str", is_abstract: true },
+      { name: "get_direction_name", return_type: "str", is_abstract: true },
+    ],
+    prompt_style: "advanced" as const,
+    constraints: ["@abstractmethod all three methods"],
+  },
+  {
+    id: "M4", file: "strategies/product_to_dev.py", pattern: "Strategy" as const,
+    class_name: "ProductToDevStrategy", extends: "TranslationStrategy", depends_on: ["M3"],
+    methods: [
+      { name: "get_system_prompt", return_type: "str", is_abstract: false },
+      { name: "format_prompt", return_type: "str", is_abstract: false },
+      { name: "get_direction_name", return_type: "str", is_abstract: false },
+    ],
+    prompt_style: "advanced" as const,
+    constraints: ["80-120 lines", "XML tags + CoT in prompt", "structured output format"],
+  },
+  {
+    id: "M5", file: "strategies/dev_to_product.py", pattern: "Strategy" as const,
+    class_name: "DevToProductStrategy", extends: "TranslationStrategy", depends_on: ["M3"],
+    methods: [
+      { name: "get_system_prompt", return_type: "str", is_abstract: false },
+      { name: "format_prompt", return_type: "str", is_abstract: false },
+      { name: "get_direction_name", return_type: "str", is_abstract: false },
+    ],
+    prompt_style: "advanced" as const,
+    constraints: ["80-120 lines", "focus on business value translation"],
+  },
+  {
+    id: "M6", file: "services/llm_service.py", pattern: "Service" as const,
+    class_name: "LLMService", depends_on: ["M2"],
+    methods: [
+      { name: "translate", return_type: "str", is_abstract: false },
+      { name: "translate_stream", return_type: "AsyncIterator[str]", is_abstract: false },
+    ],
+    constraints: ["structured JSON logging", "request_id propagation"],
+  },
+  {
+    id: "M7", file: "services/translation_service.py", pattern: "Service" as const,
+    class_name: "TranslationService", depends_on: ["M3", "M4", "M5", "M6"],
+    methods: [
+      { name: "translate", return_type: "str", is_abstract: false },
+      { name: "translate_stream", return_type: "AsyncIterator[str]", is_abstract: false },
+    ],
+    constraints: ["factory pattern for strategy selection", "input validation", "empty result handling"],
+  },
+  {
+    id: "M8", file: "controllers/translation_controller.py", pattern: "Controller" as const,
+    class_name: "router", depends_on: ["M7"],
+    methods: [
+      { name: "translate", return_type: "JSONResponse", is_abstract: false },
+      { name: "translate_stream", return_type: "StreamingResponse", is_abstract: false },
+    ],
+    constraints: ["Pydantic model validation", "rate limit placeholder"],
+  },
+  {
+    id: "M9", file: "middleware/logging.py", pattern: "Middleware" as const,
+    class_name: "LoggingMiddleware", depends_on: [],
+    methods: [
+      { name: "dispatch", return_type: "Response", is_abstract: false },
+    ],
+    constraints: ["JSON structured logs", "request_id injection via contextvars"],
+  },
+  {
+    id: "M10", file: "config/settings.py", pattern: "Config" as const,
+    class_name: "Settings", depends_on: [],
+    methods: [],
+    constraints: ["pydantic-settings BaseSettings", "env var validation", "type coercion"],
+  },
+  {
+    id: "M11", file: "models/request.py", pattern: "Model" as const,
+    class_name: "TranslationRequest", depends_on: [],
+    methods: [],
+    constraints: ["Pydantic BaseModel", "Field validators", "example doc"],
+  },
+  {
+    id: "M12", file: "models/response.py", pattern: "Model" as const,
+    class_name: "TranslationResponse", depends_on: [],
+    methods: [],
+    constraints: ["Pydantic BaseModel", "model_config"],
+  },
+  {
+    id: "M13", file: "controllers/health_controller.py", pattern: "Health" as const,
+    class_name: "health_router", depends_on: ["M10"],
+    methods: [
+      { name: "health", return_type: "dict", is_abstract: false },
+      { name: "ready", return_type: "JSONResponse", is_abstract: false },
+      { name: "live", return_type: "dict", is_abstract: false },
+    ],
+    constraints: ["/health, /ready, /live 三个端点", "ready 含依赖检查", "Kubernetes 兼容"],
+  },
+  {
+    id: "M14", file: "main.py", pattern: "Main" as const,
+    class_name: "app", depends_on: ["M8", "M9", "M13"],
+    methods: [],
+    constraints: ["CORS middleware", "middleware ordering (logging→timing→error)", "router registration", "root endpoint"],
+  },
+  {
+    id: "M15", file: "services/metrics_service.py", pattern: "Metrics" as const,
+    class_name: "MetricsService", depends_on: [],
+    methods: [
+      { name: "record_request", return_type: "None", is_abstract: false },
+      { name: "record_error", return_type: "None", is_abstract: false },
+      { name: "get_metrics", return_type: "dict", is_abstract: false },
+    ],
+    constraints: ["singleton pattern (__new__ + _lock)", "thread-safe counters", "p50/p95/p99 latency"],
+  },
+  {
+    id: "M16", file: "core/exception_handler.py", pattern: "ExceptionHandler" as const,
+    class_name: "setup_exception_handlers", depends_on: [],
+    methods: [],
+    constraints: ["registers 5 handlers (400/404/502/500/unhandled)", "JSON error responses"],
+  },
+  {
+    id: "M17", file: "middleware/response_time.py", pattern: "ResponseTimeMiddleware" as const,
+    class_name: "ResponseTimeMiddleware", depends_on: [],
+    methods: [
+      { name: "dispatch", return_type: "Response", is_abstract: false },
+    ],
+    constraints: ["X-Response-Time header", "slow request warning at 1000ms"],
+  },
+  // Remaining 4 translation strategies (completing the 6-strategy set from README)
+  {
+    id: "M18", file: "strategies/dev_to_ops.py", pattern: "Strategy" as const,
+    class_name: "DevToOpsStrategy", extends: "TranslationStrategy", depends_on: ["M3"],
+    methods: [
+      { name: "get_system_prompt", return_type: "str", is_abstract: false },
+      { name: "format_prompt", return_type: "str", is_abstract: false },
+      { name: "get_direction_name", return_type: "str", is_abstract: false },
+    ],
+    prompt_style: "advanced" as const,
+    constraints: ["focus on business value translation for ops"],
+  },
+  {
+    id: "M19", file: "strategies/ops_to_dev.py", pattern: "Strategy" as const,
+    class_name: "OpsToDevStrategy", extends: "TranslationStrategy", depends_on: ["M3"],
+    methods: [
+      { name: "get_system_prompt", return_type: "str", is_abstract: false },
+      { name: "format_prompt", return_type: "str", is_abstract: false },
+      { name: "get_direction_name", return_type: "str", is_abstract: false },
+    ],
+    prompt_style: "advanced" as const,
+    constraints: ["technical implementation planning for ops requirements"],
+  },
+  {
+    id: "M20", file: "strategies/product_to_ops.py", pattern: "Strategy" as const,
+    class_name: "ProductToOpsStrategy", extends: "TranslationStrategy", depends_on: ["M3"],
+    methods: [
+      { name: "get_system_prompt", return_type: "str", is_abstract: false },
+      { name: "format_prompt", return_type: "str", is_abstract: false },
+      { name: "get_direction_name", return_type: "str", is_abstract: false },
+    ],
+    prompt_style: "advanced" as const,
+    constraints: ["product requirements → ops strategy translation"],
+  },
+  {
+    id: "M21", file: "strategies/ops_to_product.py", pattern: "Strategy" as const,
+    class_name: "OpsToProductStrategy", extends: "TranslationStrategy", depends_on: ["M3"],
+    methods: [
+      { name: "get_system_prompt", return_type: "str", is_abstract: false },
+      { name: "format_prompt", return_type: "str", is_abstract: false },
+      { name: "get_direction_name", return_type: "str", is_abstract: false },
+    ],
+    prompt_style: "advanced" as const,
+    constraints: ["ops requirements → product feature translation"],
+  },
+  {
+    id: "M22", file: "middleware/error_handler.py", pattern: "ErrorHandlerMiddleware" as const,
+    class_name: "ErrorHandlerMiddleware", depends_on: [],
+    methods: [{ name: "dispatch", return_type: "Response", is_abstract: false }],
+    constraints: ["catch-all error handler", "JSON error responses", "method+path+status logging"],
+  },
+  {
+    id: "M23", file: "controllers/metrics_controller.py", pattern: "Controller" as const,
+    class_name: "metrics_router", depends_on: ["M15"],
+    methods: [
+      { name: "get_metrics", return_type: "JSONResponse", is_abstract: false },
+      { name: "get_metrics_summary", return_type: "dict", is_abstract: false },
+    ],
+    constraints: ["/api/metrics 端点", "summary 简化版", "prometheus-ready 格式"],
+  },
+];
+
+/** ADVANCED 级别 E2E 夹具：design/task 阶段含完整 module_manifest + code_style */
+export const E2E_ARTIFACTS_ADVANCED: Record<"design" | "task", { md: string; json: object }> = {
+  design: {
+    md: E2E_ARTIFACTS.design.md,
+    json: { ...E2E_JSON_ARTIFACTS.design, code_style: ADVANCED_CODE_STYLE, module_manifest: ADVANCED_MODULE_MANIFEST },
+  },
+  task: {
+    md: E2E_ARTIFACTS.task.md,
+    json: { ...E2E_JSON_ARTIFACTS.task, code_style: ADVANCED_CODE_STYLE, module_manifest: ADVANCED_MODULE_MANIFEST },
+  },
+};

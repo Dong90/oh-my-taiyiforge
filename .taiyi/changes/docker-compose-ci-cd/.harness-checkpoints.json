@@ -1,0 +1,12 @@
+{
+  "change": {
+    "superpowers/brainstorming": true
+  },
+  "dev": {
+    "superpowers/test-driven-development": true
+  },
+  "integration": {
+    "superpowers/finishing-a-development-branch": true,
+    "superpowers/verification-before-completion": true
+  }
+}

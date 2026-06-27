@@ -1,9 +1,16 @@
-import type { ZodSchema } from "zod";
 import type { LlmClient } from "./executor-types.js";
+
+/** Convert a Zod v4 schema to JSON Schema for LLM function parameters. */
+function schemaToParams<T>(schema: { toJSONSchema(): Record<string, unknown> }): Record<string, unknown> {
+  const js = schema.toJSONSchema();
+  // Strip the $schema meta-key — LLM providers require only type/properties/etc
+  const { $schema: _, ...params } = js;
+  return params;
+}
 
 export async function generateStageData<T>(
   stage: string,
-  schema: ZodSchema<T>,
+  schema: { toJSONSchema(): Record<string, unknown>; parse(input: unknown): T },
   context: string,
   llmClient: LlmClient,
   maxRetries = 3
@@ -11,6 +18,7 @@ export async function generateStageData<T>(
   const messages: Array<{ role: string; content: string }> = [
     { role: "system", content: context },
   ];
+  const parameters = schemaToParams(schema);
 
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
     try {
@@ -21,8 +29,7 @@ export async function generateStageData<T>(
             type: "function",
             function: {
               name: `commit_${stage}`,
-              // 空 schema — 实际结构由 call 时传入的 Zod schema 控制，此处仅声明函数签名
-              parameters: {},
+              parameters,
             },
           },
         ],

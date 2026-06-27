@@ -1,0 +1,98 @@
+{
+  "title": "E2E Demo",
+  "total_slices": 2,
+  "estimated_days": "3d",
+  "max_parallel": 2,
+  "slices": [
+    {
+      "id": "S1",
+      "label": "E2E workflow test",
+      "description": "Vitest-based E2E that validates all nine phases complete with gates passing. Seeds change artifacts via E2E_ARTIFACTS fixtures, runs completePhase for each, and asserts final workflowStatus === 'completed'.",
+      "read_files": [
+        "src/core/workflow-engine.ts",
+        "src/core/e2e-fixtures.ts",
+        "src/core/run-e2e-workflow.ts"
+      ],
+      "write_files": [
+        "tests/e2e-workflow.test.ts"
+      ],
+      "test_command": "npm test -- tests/e2e-workflow.test.ts",
+      "dependencies": "",
+      "parallelizable": true,
+      "checkpoints": [
+        "All nine phases complete in state.json",
+        "Gates pass without manual intervention",
+        "Verify report generated with ok:true",
+        "11/11 expected artifacts present on disk"
+      ]
+    },
+    {
+      "id": "S2",
+      "label": "Inplace verify demo script",
+      "description": "Node.js script that runs the full SlashFlow in examples/full-flow-demo/.taiyi/archive/ and writes verify-report.json for human inspection.",
+      "read_files": [
+        "src/core/run-slash-flow-cli.ts",
+        "examples/full-flow-demo/scripts/run-inplace-verify.mjs"
+      ],
+      "write_files": [
+        "examples/full-flow-demo/scripts/run-inplace-verify.mjs"
+      ],
+      "test_command": "node examples/full-flow-demo/scripts/run-inplace-verify.mjs",
+      "dependencies": "S1",
+      "parallelizable": false,
+      "checkpoints": [
+        "Archive dir has 11 files",
+        "verify-report.json shows ok:true",
+        "Example appears in docs/QUICKSTART.md runnable list"
+      ]
+    }
+  ],
+  "waves": [
+    {
+      "name": "1 (无依赖,并行)",
+      "slices": [
+        {
+          "slice_id": "S1",
+          "description": "e2e workflow test"
+        }
+      ]
+    },
+    {
+      "name": "2 (依赖 S1)",
+      "slices": [
+        {
+          "slice_id": "S2",
+          "description": "inplace verify demo script"
+        }
+      ]
+    }
+  ],
+  "slice_risks": [
+    {
+      "slice": "S1",
+      "risk": "E2E 假阳性",
+      "probability": "中",
+      "mitigation": "CI 重试 + 人工确认"
+    },
+    {
+      "slice": "S2",
+      "risk": "夹具数据漂移",
+      "probability": "低",
+      "mitigation": "E2E_ARTIFACTS 作为唯一真源"
+    }
+  ],
+  "slice_rollbacks": [
+    {
+      "slice": "S1",
+      "rollback": "git revert",
+      "time": "≤5 min",
+      "data_impact": "无数据影响"
+    },
+    {
+      "slice": "S2",
+      "rollback": "git revert",
+      "time": "≤5 min",
+      "data_impact": "无数据影响"
+    }
+  ]
+}

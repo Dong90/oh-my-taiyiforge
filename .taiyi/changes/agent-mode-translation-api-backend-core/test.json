@@ -1,0 +1,11 @@
+{
+  "title": "agent-mode-translation-api-backend-core",
+  "test_plan": [
+    {
+      "level": "unit",
+      "scope": "config, strategies, services, middleware, controllers",
+      "command": "python -m pytest services/translation_api/tests/ -v --tb=short",
+      "result": "21/21 passed"
+    }
+  ]
+}

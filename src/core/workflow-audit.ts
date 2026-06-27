@@ -9,6 +9,7 @@ import { deliveryGateEnabled, evaluateDeliveryGate } from "./gates/delivery-gate
 import { getOpenspecStatus } from "../integrations/openspec.js";
 import { detectAheadArtifacts } from "./ahead-artifacts.js";
 import { resolveChangeDir } from "./taiyi-archive.js";
+import { isChangeActive } from "./change-status.js";
 
 export type AuditFinding = {
   severity: "high" | "medium" | "low";
@@ -294,6 +295,42 @@ export function auditWorkspace(
     changes,
     notes,
   };
+}
+
+/**
+ * 跨变更兼容性检查：当前变更 complete integration 时，
+ * 检查是否有其他 active 变更尚未完成集成。
+ * 返回 findings（仅 medium 级别，不阻塞过关），仅在有多变更场景报警。
+ */
+export function crossChangeFindings(
+  taiyiRoot: string,
+  currentSlug: string,
+): AuditFinding[] {
+  const changesDir = path.join(taiyiRoot, "changes");
+  if (!fs.existsSync(changesDir)) return [];
+
+  const others: string[] = [];
+  for (const ent of fs.readdirSync(changesDir, { withFileTypes: true })) {
+    if (!ent.isDirectory()) continue;
+    if (ent.name === currentSlug) continue;
+    const raw = readRawState(path.join(changesDir, ent.name));
+    if (raw) {
+      const state = normalizeState(raw);
+      if (isChangeActive(state)) {
+        others.push(`${ent.name}(${state.currentPhase})`);
+      }
+    }
+  }
+
+  if (others.length === 0) return [];
+
+  return [
+    {
+      severity: "medium",
+      code: "cross-change.pending-changes",
+      message: `${currentSlug} 集成完成但还有 ${others.length} 个变更正在开发中: ${others.join(", ")}。请确认兼容性后整体验证。`,
+    },
+  ];
 }
 
 export function formatAuditPlain(report: WorkflowAuditReport): string {

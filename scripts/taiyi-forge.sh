@@ -163,7 +163,7 @@ case "$cmd" in
     run_taiyi stop-mode --force "$@" 2>/dev/null || true
     echo "[taiyi-forge] smoke-reset: 已 force 停止全部运行时模式"
     ;;
-  audit|health|verify|doctor|init|next|harness|harness-check|complete|assess|mark-aux|status|guide|sync|sync-openspec|walkthrough|browser-smoke|ci|token|loop|review-check|review-loop|ralph|autopilot|team|ultrawork|agent|write|feature|bug|change|requirement|design|ui-design|task|dev|test|review|integration|phases|cancel|handoff|pause|commit-trailers|step|stop-mode|modes|remember|keyword|plan|ralplan|ultraqa|visual-verdict|deep-interview|ai-slop-cleaner|ecomode|daemon|trim-ahead|prune|smoke-reset|flow|service|mvp|micro|nano|design-system|devops|ci-scenario|chat|code-review)
+  audit|health|verify|doctor|init|next|harness|harness-check|complete|assess|mark-aux|status|guide|sync|sync-openspec|walkthrough|browser-smoke|ci|token|loop|review-check|review-loop|ralph|autopilot|team|ultrawork|agent|write|feature|bug|change|requirement|design|ui-design|task|dev|test|review|integration|phases|cancel|handoff|pause|commit-trailers|step|stop-mode|modes|remember|keyword|plan|auto-plan|ralplan|ultraqa|visual-verdict|deep-interview|ai-slop-cleaner|ecomode|daemon|trim-ahead|prune|smoke-reset|flow|service|mvp|micro|nano|design-system|devops|ci-scenario|chat|code-review)
     run_taiyi "$cmd" "$@"
     ;;
   help|--help|-h)

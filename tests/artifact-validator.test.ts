@@ -33,7 +33,7 @@ describe("evidence 强校验(change/requirement/test 阶段)", () => {
       },
     });
     const r = validateArtifactFile(path.join(dir, "CHANGE.md"), "change");
-    expect(r?.scores.completeness).toBe(false);
+    expect(r?.scores.verifiability).toBe(false);
     expect(r?.hints.some((h) => h.includes("[Evidence]"))).toBe(true);
   });
 
@@ -78,7 +78,7 @@ describe("evidence 强校验(change/requirement/test 阶段)", () => {
       },
     });
     const r = validateArtifactFile(path.join(dir, "CHANGE.md"), "change");
-    expect(r?.scores.completeness).toBe(false);
+    expect(r?.scores.consistency).toBe(false);
     expect(r?.hints.some((h) => h.toLowerCase().includes("exitcode"))).toBe(true);
   });
 
@@ -94,7 +94,7 @@ describe("evidence 强校验(change/requirement/test 阶段)", () => {
       },
     });
     const r = validateArtifactFile(path.join(dir, "CHANGE.md"), "change");
-    expect(r?.scores.completeness).toBe(false);
+    expect(r?.scores.consistency).toBe(false);
     expect(r?.hints.some((h) => h.toLowerCase().includes("capturedat") || h.toLowerCase().includes("iso"))).toBe(true);
   });
 
@@ -106,7 +106,7 @@ describe("evidence 强校验(change/requirement/test 阶段)", () => {
       acceptance_criteria: [{ id: "AC-01", description: "d", is_checked: true }],
     }));
     const r = validateArtifactFile(path.join(dir, "REQUIREMENT.md"), "requirement");
-    expect(r?.scores.completeness).toBe(false);
+    expect(r?.scores.verifiability).toBe(false);
     expect(r?.hints.some((h) => h.includes("[Evidence]"))).toBe(true);
   });
 });

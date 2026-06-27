@@ -88,10 +88,88 @@ flowchart LR
 
 {{/each}}
 
+{{#if module_manifest}}
+## Step 2b: Code-Gen Slices (from DESIGN Step 13)
+> **[ALL]** Goal: 按文件粒度拆解 | Source: DESIGN.md §13 module_manifest
+<!-- 每个 module_manifest 条目 → 一个 Slice。与 Step 2 的 hand-crafted slices 互不冲突。 -->
+
+### Dependency Graph (generated)
+```mermaid
+flowchart LR
+{{#each module_manifest}}
+  {{id}}[{{file}}]
+{{/each}}
+{{#each module_manifest}}
+{{#each depends_on}}
+  {{this}} --> {{../id}}
+{{/each}}
+{{/each}}
+```
+
+### Code Style
+{{#if code_style}}
+- Type Hints: {{#if code_style.type_hints}}required{{else}}optional{{/if}}
+- Docstrings: {{#if code_style.docstrings}}required{{else}}optional{{/if}}
+- Error Handling: {{code_style.error_handling}}
+- Logging: {{code_style.logging_style}}{{#if code_style.request_tracing}} + request tracing{{/if}}
+- Prompt Engineering: {{code_style.prompt_engineering}}
+{{else}}
+- Default quality level (no code_style contract)
+{{/if}}
+
+{{#each module_manifest}}
+### Slice {{id}}: {{file}}
+> **[ALL]** | Pattern: {{pattern}} | ⇧ {{#if depends_on}}{{depends_on}}{{else}}无{{/if}} | ⇶ ✅可并行 | Score: 8/10
+
+**Class**: `{{class_name}}{{#if extends}}({{extends}}){{/if}}`
+
+**write_files**（仅此文件 · 不越界）:
+- `{{file}}`
+
+**Methods**:
+{{#each methods}}
+- `{{name}}() -> {{return_type}}`{{#if is_abstract}} (abstract){{/if}}
+{{/each}}
+
+**验收点**:
+- ⬜ `{{class_name}}` 类已定义在 `{{file}}`
+- ⬜ 所有 {{#if methods}}{{methods.length}}{{else}}0{{/if}} 个方法签名匹配、type hints 完整
+- ⬜ {{#if is_abstract}}抽象方法未实现具体逻辑{{else}}方法实现完备{{/if}}
+{{#if constraints}}
+{{#each constraints}}
+- ⬜ {{this}}
+{{/each}}
+{{/if}}
+- ⬜ Module-level docstring 存在
+
+{{#if (eq ../code_style.prompt_engineering "advanced")}}
+**Prompt Style**: Advanced — 使用 XML 标签、Chain of Thought、结构化输出格式
+{{/if}}
+
+---
+
+{{/each}}
+{{/if}}
+
 ## Step 3: Execution Plan
-> **[MEDIUM+]** Goal: 分Wave并行执行 | Inputs: Step2
+> **[MEDIUM+]** Goal: 分Wave并行执行 | Inputs: Step2{{#if module_manifest}}+Step2b{{/if}}
 <!-- Action: 按依赖图分组，无依赖的同Wave并行 -->
 
+{{#if module_manifest}}
+### Wave 1 (无依赖 · 并行)
+{{#each module_manifest}}
+{{#unless depends_on}}
+- {{id}}: `{{file}}` ({{pattern}})
+{{/unless}}
+{{/each}}
+
+{{#each module_manifest}}
+{{#if depends_on}}
+### Wave {{@index}} (依赖 {{depends_on}})
+- {{id}}: `{{file}}` ({{pattern}})
+{{/if}}
+{{/each}}
+{{else}}
 {{#if waves}}
 {{#each waves}}
 ### Wave {{name}}
@@ -102,6 +180,7 @@ flowchart LR
 {{else}}
 ### Wave 1 (无依赖,并行)
 - Slice N: _描述_
+{{/if}}
 {{/if}}
 
 <!-- Validate: 每Wave内部确实无依赖？ -->

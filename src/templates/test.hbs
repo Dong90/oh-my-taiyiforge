@@ -139,12 +139,18 @@ GAPS: N (N need E2E, N eval)
 > **[ALL]** Goal: 手动测试有脚本 | Inputs: REQUIREMENT.md §3
 <!-- Action: 前置条件→步骤→期望→实际→执行人。集成阶段直接跑 -->
 
-### UAT-1 · _场景名_
-- **前置**: 
-- **步骤**: 1.  2.  3. 
-- **期望**: -  - 
-- **实际**: 通过 / 失败 / [描述]
-- **执行人 / 时间**:
+{{#if uat_scripts}}
+{{#each uat_scripts}}
+### {{name}}
+- **前置**: {{precondition}}
+- **步骤**: {{steps}}
+- **期望**: {{expected}}
+- **实际**: {{actual}}
+- **执行人 / 时间**: {{executor}}
+{{/each}}
+{{else}}
+> ⚠️ 未提供 UAT 脚本 — 集成阶段前请补充手动验证步骤
+{{/if}}
 
 <!-- Validate: 覆盖所有需手动验证的 AC？ -->
 

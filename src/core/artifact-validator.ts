@@ -19,19 +19,45 @@ function stripComments(text: string): string {
   return text.replace(/<!--[\s\S]*?-->/g, "").trim();
 }
 
+type JsonParseResult =
+  | { ok: true; data: unknown }
+  | { ok: false; code: string; error: string };
+
+function readAndParseJson(jsonPath: string, schema: ZodSchema): JsonParseResult {
+  try {
+    const data = JSON.parse(fs.readFileSync(jsonPath, "utf-8"));
+    schema.parse(data);
+    return { ok: true, data };
+  } catch (e: unknown) {
+    const err = e as NodeJS.ErrnoException;
+    if (err.code === "ENOENT") {
+      return { ok: false, code: "ENOENT", error: "file not found" };
+    }
+    const msg = e instanceof Error ? e.message : String(e);
+    return { ok: false, code: "PARSE_ERR", error: msg };
+  }
+}
+
 /** DEV-only validation (last remaining non-Zod phase) */
 export function validateArtifactContent(
   phaseId: PhaseId,
   content: string,
 ): { scores: QualityScores; hints: string[] } {
   const hints: string[] = [];
-  const ok = isDevCompleteEvidence(stripComments(content));
-  if (!ok) {
-    if (!/command:\s*\S+/i.test(content)) hints.push(".dev-complete 需含 command: <npm test>");
-    if (!/exit(?:Code)?:\s*0\b/i.test(content)) hints.push(".dev-complete 需含 exitCode: 0");
-  }
+  const hasMarker = /complete|done|dev/i.test(content);
+  const cmdOk = /command:\s*\S+/i.test(content);
+  const exitOk = /exit(?:Code)?:\s*0\b/i.test(content);
+  const allOk = hasMarker && cmdOk && exitOk;
+  if (!cmdOk) hints.push(".dev-complete 需含 command: <npm test>");
+  if (!exitOk) hints.push(".dev-complete 需含 exitCode: 0");
   return {
-    scores: { completeness: ok, consistency: ok, verifiability: ok, traceability: ok, engineering_quality: ok },
+    scores: {
+      completeness: hasMarker,
+      consistency: cmdOk && exitOk,
+      verifiability: exitOk,
+      traceability: cmdOk,
+      engineering_quality: allOk,
+    },
     hints,
   };
 }
@@ -77,52 +103,64 @@ export function validateArtifactFile(
   const zodSchema = ZOD_SCHEMAS[phaseId as Exclude<PhaseId, "dev">];
   if (!zodSchema) return null;
 
-  const allFalse: QualityScores = { completeness: false, consistency: false, verifiability: false, traceability: false, engineering_quality: false };
   const jsonPath = path.join(path.dirname(artifactPath), `${phaseId}.json`);
+  const strippedLen = stripComments(content).length;
+  const hints: string[] = [];
+  let scores: QualityScores = { completeness: true, consistency: true, verifiability: true, traceability: true, engineering_quality: true };
 
-  try {
-    const json = JSON.parse(fs.readFileSync(jsonPath, "utf-8"));
-    zodSchema.parse(json);
-  } catch (e: unknown) {
-    const code = (e as NodeJS.ErrnoException).code;
-    if (code === 'ENOENT') {
-      return { scores: allFalse, hints: [`[Zod] 缺少 ${phaseId}.json，用 executor.generateStageData 生成`] };
-    }
-    const msg = e instanceof Error ? e.message : String(e);
-    return { scores: allFalse, hints: [`[Zod 校验失败] ${phaseId}.json: ${msg}`] };
-  }
-
-  if (isSeedTemplate(content)) return { scores: allFalse, hints: ["仍为引擎模板占位"] };
-  if (/\{\{title\}\}|\{\{slug\}\}/.test(content)) return { scores: allFalse, hints: ["仍含占位符"] };
-  if (stripComments(content).length < 40) return { scores: allFalse, hints: ["MD 过短"] };
-
-  // evidence 强校验:change/requirement/test 三阶段,success_criteria/acceptance_criteria 标 is_checked=true 时必填 evidence
-  if (phaseId === "change" || phaseId === "requirement" || phaseId === "test") {
-    try {
-      const json = JSON.parse(fs.readFileSync(jsonPath, "utf-8"));
-      const criteria = (json as { acceptance_criteria?: unknown[]; success_criteria?: unknown[] }).acceptance_criteria
-        ?? (json as { success_criteria?: unknown[] }).success_criteria;
-      const hasChecked = Array.isArray(criteria) && criteria.some((c: unknown) => {
-        return typeof c === "object" && c !== null && (c as { is_checked?: boolean }).is_checked === true;
-      });
-      if (hasChecked && !json.evidence) {
-        return {
-          scores: allFalse,
-          hints: ["[Evidence] acceptance_criteria/success_criteria 有 is_checked=true,必填 evidence{command, exitCode:0, capturedAt}"],
-        };
-      }
-    } catch {
-      /* jsonPath 已经在 try 块解析过,这里不重复 */
+  const parsed = readAndParseJson(jsonPath, zodSchema);
+  if (!parsed.ok) {
+    scores.consistency = false;
+    if (parsed.code === "ENOENT") {
+      hints.push(`[Zod] 缺少 ${phaseId}.json，用 executor.generateStageData 生成`);
+      scores.completeness = false;
+    } else {
+      hints.push(`[Zod 校验失败] ${phaseId}.json: ${parsed.error}`);
     }
   }
 
-  // 内容质量门控: 占位符/空表/问题描述检测
+  if (isSeedTemplate(content)) {
+    scores.completeness = false;
+    hints.push("仍为引擎模板占位");
+  }
+  if (/\{\{title\}\}|\{\{slug\}\}/.test(content)) {
+    scores.completeness = false;
+    if (!hints.some((h) => h.includes("占位"))) hints.push("仍含占位符");
+  }
+  if (strippedLen < 40) {
+    scores.completeness = false;
+    if (!hints.some((h) => h.includes("MD 过短"))) hints.push("MD 过短");
+  }
+
+  if (parsed.ok && (phaseId === "change" || phaseId === "requirement" || phaseId === "test")) {
+    const raw = parsed.data as Record<string, unknown>;
+    const criteria: unknown =
+      (raw.acceptance_criteria as unknown[]) ?? (raw.success_criteria as unknown[]);
+    const hasChecked =
+      Array.isArray(criteria) &&
+      criteria.some(
+        (c: unknown) =>
+          typeof c === "object" && c !== null && (c as { is_checked?: boolean }).is_checked === true,
+      );
+    if (hasChecked && !raw.evidence) {
+      scores.verifiability = false;
+      hints.push(
+        "[Evidence] acceptance_criteria/success_criteria 有 is_checked=true,必填 evidence{command, exitCode:0, capturedAt}",
+      );
+    }
+  }
+
   const qualityHints = contentQualityGate(phaseId, content);
   if (qualityHints.length > 0) {
-    return { scores: allFalse, hints: qualityHints };
+    scores.engineering_quality = false;
+    hints.push(...qualityHints);
   }
 
-  return { scores: { completeness: true, consistency: true, verifiability: true, traceability: true, engineering_quality: true }, hints: [] };
+  if (!scores.completeness || !scores.consistency) {
+    scores.traceability = false;
+  }
+
+  return { scores, hints };
 }
 
 /** 内容质量门控 — 检测残留占位符/空表/问题描述错误 */
@@ -131,10 +169,37 @@ export function contentQualityGate(phaseId: PhaseId, content: string): string[] 
 
   // 1. 占位符模式扫描
   const PLACEHOLDER_PATTERNS: RegExp[] = [
-    /\[TODO:/, /\bTODO\b/, /-- TODO/, /\[填写理由\]/, /\[Minimal\s/,
-    /\[现状\]/, /\[N\]min\b/, /\[命令\]/, /\[日期\]/, /\[deployed\/pending\]/,
-    /\[X人天\]/, /\[最多N\]/, /0\.0\.0/, /\[场景名\]/,
+    /\[TODO:/, /\bTODO\b/, /-- TODO/, /\[Minimal\s/,
+    /\[deployed\/pending\]/, /0\.0\.0/,
+    /\[有没有完全不同的方案更值得做/,
+    /\[变更目的和价值\]/,
+    /\[重新定义问题会怎样\]/,
+    /\[有无现成方案\]/,
+    /\[技术方案概述\]/,
+    /\[待补充验证命令\]/,
+    /\[涉及页面\/组件\]/,
+    /\[精确到命令\]/,
+    /\[理想结果\]/,
+    /\[量化条件\]/,
+    /\[填写理由\]/,
+    /\[待决策\]/,
+    /\[X人天\]/,
+    /\[现状\]/,
+    /\[场景名\]/,
+    /\[最多N\]/,
+    /\[量化\]/,
+    /\[步骤\]/,
+    /\[命令\]/,
+    /\[描述\]/,
+    /\[理由\]/,
+    /\[待定\]/,
+    /\[N\]min\b/,
+    /\[日期\]/,
     /\[无\/CLI\/npm\/Docker\/其他\]/,
+    /_待补充/, /_待定_/, /_待估_/, /_待选定_/,
+    /_在此列出/, /_write_files 列表_/,
+    /_结合业务说明_/, /_3 个参考产品_/,
+    /_N_min\b/, /\[N\]\/10/, /\[N天\/小时\]/,
   ];
   for (const regex of PLACEHOLDER_PATTERNS) {
     if (regex.test(content)) {

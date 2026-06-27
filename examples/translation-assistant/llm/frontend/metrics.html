@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>指标 — 沟通翻译助手</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<nav class="nav">
+  <div class="nav-inner">
+    <span class="nav-title">🗣️ 沟通翻译助手</span>
+    <a href="index.html" class="nav-link">← 翻译</a>
+  </div>
+</nav>
+
+<main class="container">
+  <div class="card">
+    <div class="card-header">
+      <h2>📊 使用指标</h2>
+      <button id="btn-refresh" class="btn btn-sm">🔄 刷新</button>
+    </div>
+
+    <div class="metrics-grid">
+      <div class="metric-card">
+        <div class="metric-label">总翻译次数</div>
+        <div id="total-translations" class="metric-value">—</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-label">平均耗时</div>
+        <div id="avg-duration" class="metric-value">—</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-label">最长耗时</div>
+        <div id="max-duration" class="metric-value">—</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header"><h2>📈 各方向统计</h2></div>
+    <div id="directions-table" class="directions-table">
+      <p class="card-desc">暂无数据</p>
+    </div>
+  </div>
+</main>
+
+<script src="metrics.js"></script>
+</body>
+</html>

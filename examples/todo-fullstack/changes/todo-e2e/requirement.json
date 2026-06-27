@@ -1,0 +1,206 @@
+{
+  "title": "E2E Demo",
+  "one_liner": "九阶段 E2E 自动化回归：一键验证全流程工件生成、门控通过与 CI 集成",
+  "features": [
+    "As a developer, I want the E2E workflow to validate all nine phases so that I trust every release",
+    "As a CI maintainer, I want automated gate verification so that human errors are caught early",
+    "As a contributor, I want example artifacts I can inspect so that I understand the workflow without reading source code"
+  ],
+  "scope_v1": [
+    "Nine-phase workflow runs to completion",
+    "All gates pass including quality and human",
+    "example/ 内可复现的 inplace 验证脚本",
+    "verify-report.json 含 ok/errors/stepCount"
+  ],
+  "scope_v2": [
+    "External test runner integration (non-Vitest)",
+    "Browser E2E smoke tests via Playwright",
+    "CI matrix across 4 platforms (OpenCode/Claude/Codex/Cursor)"
+  ],
+  "scope_out": [
+    "Production deployment changes",
+    "Multi-tenant support",
+    "UI/frontend components"
+  ],
+  "functional_requirements": [
+    {
+      "module": "Workflow Engine",
+      "items": [
+        {
+          "id": "FR-01",
+          "description": "E2E test validates all nine phases complete from init to archive"
+        },
+        {
+          "id": "FR-02",
+          "description": "Gates pass including quality and human approvals"
+        },
+        {
+          "id": "FR-03",
+          "description": "Phase artifacts are generated with correct content (markdown + JSON)"
+        }
+      ]
+    },
+    {
+      "module": "Example Scripts",
+      "items": [
+        {
+          "id": "FR-04",
+          "description": "run-inplace-verify.mjs writes .taiyi/archive/ with 11/11 expected files"
+        },
+        {
+          "id": "FR-05",
+          "description": "verify-report.json contains generatedAt/ok/errors/stepCount"
+        }
+      ]
+    }
+  ],
+  "non_functional": {
+    "performance": [
+      {
+        "id": "NFR-P01",
+        "description": "全流程 E2E < 60s"
+      },
+      {
+        "id": "NFR-P02",
+        "description": "单阶段 artifact 写入 < 500ms"
+      }
+    ],
+    "security": [
+      {
+        "id": "NFR-S01",
+        "description": "无硬编码密钥/令牌"
+      },
+      {
+        "id": "NFR-S02",
+        "description": "state.json 不包含敏感路径信息"
+      }
+    ],
+    "availability": [
+      {
+        "id": "NFR-A01",
+        "description": "CI 可用性 99%+"
+      }
+    ]
+  },
+  "acceptance_criteria": [
+    {
+      "id": "AC-01",
+      "description": "State shows integration completed",
+      "is_checked": true,
+      "verify": "taiyi-forge.sh status --json --compact | grep completed"
+    },
+    {
+      "id": "AC-02",
+      "description": "Artifact count equals expected 11 files",
+      "is_checked": true,
+      "verify": "ls .taiyi/changes/*/CHANGE.md .taiyi/changes/*/REQUIREMENT.md .taiyi/changes/*/state.json | wc -l"
+    },
+    {
+      "id": "AC-03",
+      "description": "verify-report.json ok:true with zero errors",
+      "is_checked": true,
+      "verify": "cat verify-report.json | grep -q '\"ok\": true'"
+    }
+  ],
+  "error_rescue_map": [
+    {
+      "error": "CLI 参数错误",
+      "trigger": "无效参数",
+      "catch": "commander",
+      "user_sees": "错误提示+用法",
+      "recovery": "重新输入"
+    },
+    {
+      "error": "state.json 格式错误",
+      "trigger": "手动修改 state",
+      "catch": "Zod schema 校验",
+      "user_sees": "校验失败提示",
+      "recovery": "回退 state 备份"
+    },
+    {
+      "error": "模板丢失",
+      "trigger": "散装项目缺少 .hbs",
+      "catch": "回退到硬编码 md",
+      "user_sees": "生成完整但无模板增强",
+      "recovery": "安装模板目录"
+    }
+  ],
+  "shadow_paths": [
+    {
+      "flow": "E2E Workflow",
+      "happy_input": "完整九阶段输入",
+      "happy_expected": "全部通过+门禁绿",
+      "nil_input": "空输入",
+      "nil_expected": "CLI 提示用法",
+      "empty_input": "空 workspace",
+      "empty_expected": "初始化 change",
+      "upstream_input": "上游 CI 取消",
+      "upstream_expected": "跳过回归标记"
+    },
+    {
+      "flow": "Artifact Verification",
+      "happy_input": "生成 11/11 文件",
+      "happy_expected": "verify ok",
+      "nil_input": "空 change 目录",
+      "nil_expected": "assertExpectedArtifacts 报 missing",
+      "empty_input": "部分文件缺失",
+      "empty_expected": "assert 列出缺失文件清单",
+      "upstream_input": "profile 跳过阶段",
+      "upstream_expected": "缩小 expectedArtifacts"
+    }
+  ],
+  "non_happy_path_cases": [
+    {
+      "scenario": "空输入",
+      "behavior": "显示用法提示"
+    },
+    {
+      "scenario": "无效 slug",
+      "behavior": "报错退出"
+    },
+    {
+      "scenario": "跳过阶段",
+      "behavior": "缩小验证范围"
+    },
+    {
+      "scenario": "不完整工件",
+      "behavior": "assert 失败并提示缺失文件"
+    }
+  ],
+  "dependencies": [
+    {
+      "dependency": "vitest",
+      "type": "测试框架",
+      "status": "已安装",
+      "risk": "无"
+    },
+    {
+      "dependency": "handlebars",
+      "type": "模板引擎",
+      "status": "已安装",
+      "risk": "无"
+    },
+    {
+      "dependency": "commander",
+      "type": "CLI 框架",
+      "status": "已安装",
+      "risk": "无"
+    },
+    {
+      "dependency": "zod",
+      "type": "校验库",
+      "status": "已安装",
+      "risk": "无"
+    }
+  ],
+  "security_compliance": [
+    "npm audit 无 critical/high",
+    "无硬编码密钥",
+    "测试数据无 PII"
+  ],
+  "evidence": {
+    "command": "taiyi-forge.sh status --json --compact",
+    "exitCode": 0,
+    "capturedAt": "2026-06-22T12:00:00Z"
+  }
+}

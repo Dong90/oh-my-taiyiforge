@@ -1,0 +1,1 @@
+# Architecture Sync: prometheus-opentelemetry

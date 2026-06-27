@@ -1,0 +1,14 @@
+{
+  "title": "jwt-api-key-cors",
+  "motivation": "为 translation-assistant 添加 JWT 认证、请求限流、API Key 管理，保护 API 不被滥用。",
+  "scope": {
+    "includes": ["JWT 认证中间件", "Token 签发/验证", "请求限流（令牌桶）", "API Key 管理", "CORS 细粒度配置"],
+    "excludes": ["OAuth2 第三方登录", "RBAC 权限系统"]
+  },
+  "success_criteria": [
+    {"id": "SC-01", "description": "未认证请求返回 401", "is_checked": false},
+    {"id": "SC-02", "description": "登录接口返回 access + refresh token", "is_checked": false},
+    {"id": "SC-03", "description": "超过限流的请求返回 429", "is_checked": false},
+    {"id": "SC-04", "description": "CORS 仅允许配置的域名", "is_checked": false}
+  ]
+}

@@ -1,0 +1,18 @@
+{
+  "version": 1,
+  "slug": "agent-mode-translation-api-backend-core",
+  "totalTokens": 3230,
+  "estimatedCostUsd": 0.00969,
+  "byPhase": {
+    "dev": 3230
+  },
+  "entries": [
+    {
+      "at": "2026-06-26T16:25:12.515Z",
+      "phase": "dev",
+      "kind": "scan",
+      "tokens": 3230,
+      "label": "5 files"
+    }
+  ]
+}

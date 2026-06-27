@@ -1,0 +1,36 @@
+{
+  "slug": "api-swagger",
+  "currentPhase": "integration",
+  "completedPhases": [
+    "change",
+    "requirement",
+    "design",
+    "task",
+    "dev",
+    "test",
+    "review"
+  ],
+  "profile": "api",
+  "skippedPhases": [
+    "ui-design"
+  ],
+  "strictDev": false,
+  "autoHarness": true,
+  "complexity": {
+    "level": "low",
+    "score": 4,
+    "recommendedSkills": [
+      "taiyi-intel-scan"
+    ]
+  },
+  "auxiliaryCompleted": [
+    "taiyi-intel-scan",
+    "taiyi-architect",
+    "taiyi-compress",
+    "taiyi-evolve"
+  ],
+  "workflowStatus": "active",
+  "createdAt": "2026-06-27T11:58:08.303Z",
+  "updatedAt": "2026-06-27T13:56:18.922Z",
+  "version": 20
+}
