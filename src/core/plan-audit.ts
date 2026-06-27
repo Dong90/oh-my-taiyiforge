@@ -83,9 +83,9 @@ export function auditTaskPlan(taskMdPath: string): PlanAuditResult {
     // Check for slices or task list
     const hasSliceTable = content.includes("| # |") && content.includes("| Slice |");
     const hasTaskList = /[-*]\s+\[.?\]/.test(content);
-    const hasNonGoals = /##\s*Non[- ]?goals/i.test(content);
-    const hasScopeOut = /##\s*(?:Out of scope|非目标|Scope Out|Non[- ]?goals)/i.test(content);
-    const hasBoundary = hasNonGoals || hasScopeOut;
+    const hasNonGoals = /#*\s*Non[- ]?goals/i.test(content);
+    const hasScopeOut = /#*\s*(?:Out of scope|非目标|Scope Out)/i.test(content);
+    const hasBoundary = hasNonGoals || hasScopeOut || /\bnon[- ]?goals?\b/i.test(content);
 
     if (!hasSliceTable && !hasTaskList) {
       dimFindings.push("缺少任务列表（Slice table 或 task list）");
@@ -156,10 +156,11 @@ export function auditTaskPlan(taskMdPath: string): PlanAuditResult {
     const dimFindings: string[] = [];
 
     const hasDependency =
-      /##\s*(?:Depend|依赖|Depends|Prerequisite|Dependencies)/i.test(content) ||
+      /#*\s*(?:Depend|依赖|Depends|Prerequisite|Dependencies)/i.test(content) ||
       /\|\s*(?:Depends(?:\s+\||\s*$)|依赖|dependencies)\s*\|/i.test(content) ||
-      /depends_on|depends on/i.test(content);
-    const hasRisk = /##\s*(?:Risk|风险|Risks|Blockers)/i.test(content) || /风险|注意|⚠️|阻塞|edge case/i.test(content);
+      /depends[_ ]?on/i.test(content) ||
+      /\bdependenc/i.test(content);
+    const hasRisk = /#*\s*(?:Risk|风险|Risks|Blockers)/i.test(content) || /风险|注意|⚠️|阻塞|edge case/i.test(content);
 
     if (!hasDependency) {
       dimFindings.push("缺少依赖关系说明");
