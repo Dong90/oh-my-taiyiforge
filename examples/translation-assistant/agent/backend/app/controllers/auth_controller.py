@@ -1,5 +1,5 @@
 """Authentication API endpoints."""
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter
 from pydantic import BaseModel
 from app.middleware.auth import create_access_token, create_refresh_token
 

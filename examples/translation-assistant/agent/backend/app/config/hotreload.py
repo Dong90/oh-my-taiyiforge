@@ -1,5 +1,4 @@
 """Configuration hot-reload via watchfiles."""
-import os
 from app.config.settings import settings as _settings
 
 def reload_settings():

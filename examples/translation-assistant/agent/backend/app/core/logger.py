@@ -1,7 +1,6 @@
 import json
 import logging
 import sys
-import uuid
 from datetime import datetime, timezone
 from contextvars import ContextVar
 

@@ -1,4 +1,4 @@
-from .base import TranslationStrategy
+from .base import TranslationStrategy  # noqa: F401
 from .product_to_dev import ProductToDevStrategy
 from .dev_to_product import DevToProductStrategy
 from .dev_to_ops import DevToOpsStrategy

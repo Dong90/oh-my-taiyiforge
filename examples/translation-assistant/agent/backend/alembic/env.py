@@ -1,7 +1,6 @@
 from alembic import context
 from sqlalchemy import engine_from_config, pool
 from app.db.base import Base
-from app.models.db_models import User, TranslationRecord
 
 target_metadata = Base.metadata
 
