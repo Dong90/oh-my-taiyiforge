@@ -1,0 +1,14 @@
+{
+  "title": "translation-assistant-tests",
+  "motivation": "补充集成测试、E2E 测试、性能测试和覆盖率报告，提升代码质量保障。",
+  "scope": {
+    "includes": ["集成测试 6 翻译方向", "E2E 前端到后端", "性能测试基准", "pytest-cov 覆盖率"],
+    "excludes": ["JMeter/K6 部署"]
+  },
+  "success_criteria": [
+    {"id": "SC-01", "description": "集成测试覆盖 6 个翻译方向", "is_checked": false},
+    {"id": "SC-02", "description": "E2E 测试通过前端到后端全链路", "is_checked": false},
+    {"id": "SC-03", "description": "性能测试 P95 < 3s", "is_checked": false},
+    {"id": "SC-04", "description": "覆盖率 > 80%", "is_checked": false}
+  ]
+}

@@ -1,0 +1,28 @@
+{
+  "slug": "jwt-api-key-cors",
+  "currentPhase": "design",
+  "completedPhases": [
+    "change",
+    "requirement"
+  ],
+  "profile": "api",
+  "skippedPhases": [
+    "ui-design"
+  ],
+  "strictDev": false,
+  "autoHarness": true,
+  "complexity": {
+    "level": "low",
+    "score": 3,
+    "recommendedSkills": [
+      "taiyi-intel-scan"
+    ]
+  },
+  "auxiliaryCompleted": [
+    "taiyi-intel-scan"
+  ],
+  "workflowStatus": "active",
+  "createdAt": "2026-06-27T11:59:07.267Z",
+  "updatedAt": "2026-06-27T13:31:51.661Z",
+  "version": 6
+}

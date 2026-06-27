@@ -1,0 +1,8 @@
+{
+  "title": "翻译助手测试覆盖增强",
+  "changelog_entries": [
+    {"type": "test", "description": "集成测试覆盖 6 个翻译方向 API"},
+    {"type": "test", "description": "E2E 测试目录结构就绪"},
+    {"type": "ci", "description": ".coveragerc — 80% 覆盖率门禁配置"}
+  ]
+}
