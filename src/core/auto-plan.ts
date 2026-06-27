@@ -3,6 +3,7 @@
 
 import fs from "node:fs";
 import path from "node:path";
+import { execSync } from "node:child_process";
 import { WorkflowEngine } from "./workflow-engine.js";
 import { seedAllPhaseTemplates } from "./template-seed.js";
 import { generateCodeFromChange, generateCode } from "./code-gen.js";
@@ -12,6 +13,9 @@ import { getLogger } from "./logger.js";
 import { auditTaskPlan } from "./plan-audit.js";
 import type { ChangeProfile } from "./types.js";
 import { parseManifestInput, type LlmDecomposedResult } from "./llm-plan.js";
+import { allocateWaves } from "./wave-allocator.js";
+import { scanPythonModules } from "./wiring-detector.js";
+import { generateWiring } from "./wiring-generator.js";
 
 const log = getLogger();
 
@@ -202,6 +206,9 @@ export function runAutoPlan(options: AutoPlanOptions): AutoPlanResult {
   if (options.forceProfile) for (const c of changes) c.profile = options.forceProfile;
   log.info("Decomposed README", { changes: changes.length, forced: !!options.forceProfile, agentManifest: !!options.manifestInput });
 
+  const waves = allocateWaves(changes.map((c) => ({ slug: c.slug, dependsOn: c.dependsOn })));
+  for (const wave of waves) log.info(`${wave.label}: ${wave.changes.map((w) => w.slug).join(", ")}`);
+
   // 2. Run for each change
   const engine = new WorkflowEngine(workspaceDir, templatesDir);
   const results: AutoPlanResult["changes"] = [];
@@ -303,6 +310,9 @@ export function runAutoPlan(options: AutoPlanOptions): AutoPlanResult {
       }
     }
   }
+
+  // 3.5 Post-dev wiring
+  applyWiringToWorkspace(workspaceDir, log);
 
   // 4. Plan quality audit summary (CLI-visible for /taiyi:plan users)
   console.log("\n=== Plan 质量审查 ===");
@@ -420,15 +430,89 @@ function isSkippableSection(section: Section): boolean {
 
 function detectDependencies(section: Section, allSlugs: string[]): string[] {
   const deps: string[] = [];
-  // Frontend depends on backend
+  const slug = toSlug(section.title);
+
   if (/前端|frontend|界面|ui/i.test(section.title)) {
     const apiSlug = allSlugs.find((s) => /api|backend|服务/.test(s));
-    if (apiSlug && apiSlug !== toSlug(section.title)) deps.push(apiSlug);
+    if (apiSlug && apiSlug !== slug) deps.push(apiSlug);
   }
-  // Test depends on API
+
   if (/test|e2e|测试/i.test(section.title)) {
     const apiSlug = allSlugs.find((s) => /api|backend|服务/.test(s));
-    if (apiSlug && apiSlug !== toSlug(section.title)) deps.push(apiSlug);
+    if (apiSlug && apiSlug !== slug) deps.push(apiSlug);
+    const dataSlug = allSlugs.find((s) => /data|数据库|存储|model|repo/i.test(s));
+    if (dataSlug && dataSlug !== slug) deps.push(dataSlug);
   }
-  return deps;
+
+  if (/auth|security|认证|鉴权|登录|jwt|权限|安全/i.test(section.title)) {
+    const dataSlug = allSlugs.find((s) => /data|数据库|存储|model|repo|sqlalchemy|orm/i.test(s));
+    if (dataSlug && dataSlug !== slug) deps.push(dataSlug);
+  }
+
+  if (/rate|限流|limit/i.test(section.title)) {
+    const authSlug = allSlugs.find((s) => /auth|认证|登录|jwt|安全/i.test(s));
+    if (authSlug && authSlug !== slug) deps.push(authSlug);
+  }
+
+  if (/cache|缓存|redis/i.test(section.title)) {
+    const dataSlug = allSlugs.find((s) => /data|数据库|存储|model|repo|sqlalchemy/i.test(s));
+    if (dataSlug && dataSlug !== slug) deps.push(dataSlug);
+  }
+
+  if (/docs|文档|readme|changelog/i.test(section.title)) {
+    for (const s of allSlugs) if (s !== slug) deps.push(s);
+  }
+
+  const text = section.content.toLowerCase();
+  for (const s of allSlugs) {
+    if (s === slug || deps.includes(s)) continue;
+    if (text.includes(s.replace(/-/g, "")) || text.includes(s)) deps.push(s);
+  }
+
+  return [...new Set(deps)];
+}
+
+export function applyWiringToWorkspace(workspaceDir: string, logger: ReturnType<typeof getLogger>): void {
+  const appDir = path.join(workspaceDir, "backend", "app");
+  if (!fs.existsSync(appDir)) return;
+
+  try {
+    const pyFiles = execSync(`find ${appDir} -name "*.py" -type f`, { encoding: "utf8" }).trim().split("\n").filter(Boolean);
+    if (pyFiles.length === 0) return;
+    const fileContents = pyFiles.map((f) => ({
+      path: path.relative(workspaceDir, f),
+      content: fs.readFileSync(f, "utf8"),
+    }));
+    const scan = scanPythonModules(fileContents);
+    if (scan.routers.length === 0 && scan.middlewares.length === 0) return;
+
+    const wiringCode = generateWiring(scan);
+    const wiringPath = path.join(appDir, "wiring.py");
+
+    if (fs.existsSync(wiringPath)) {
+      const existing = fs.readFileSync(wiringPath, "utf8");
+      if (!existing.includes("AUTO-GENERATED")) {
+        logger.warn("Wiring skipped — existing wiring.py is hand-authored", { path: wiringPath });
+        return;
+      }
+    }
+    fs.writeFileSync(wiringPath, wiringCode, "utf8");
+
+    const mainPyPath = path.join(appDir, "main.py");
+    if (fs.existsSync(mainPyPath)) {
+      let mainContent = fs.readFileSync(mainPyPath, "utf8");
+      if (!mainContent.includes("from wiring import apply_wiring")) {
+        const hasLifespan = scan.inits.some((i) => i.callStyle === "yield");
+        mainContent = mainContent.trimEnd() + "\n\nfrom wiring import apply_wiring" +
+          (hasLifespan ? "\nfrom wiring import lifespan" : "") +
+          "\napply_wiring(app)\n";
+        if (hasLifespan && mainContent.includes("app = FastAPI")) {
+          mainContent = mainContent.replace(/app\s*=\s*FastAPI\s*\(/, "app = FastAPI(lifespan=lifespan, ");
+        }
+        fs.writeFileSync(mainPyPath, mainContent, "utf8");
+      }
+    }
+
+    logger.info("Wiring generated", { routers: scan.routers.length, middlewares: scan.middlewares.length, inits: scan.inits.length, output: wiringPath });
+  } catch (e) { logger.warn("Wiring scan skipped", { error: String(e) }); }
 }
