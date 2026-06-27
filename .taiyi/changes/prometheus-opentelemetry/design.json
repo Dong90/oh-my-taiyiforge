@@ -1,0 +1,25 @@
+{
+  "title": "可观测性方案",
+  "options": [
+    {
+      "id": "A",
+      "name": "prometheus_client + OpenTelemetry SDK",
+      "summary": "prometheus_client 收集指标 + OpenTelemetry SDK 分布式追踪 + Console exporter",
+      "pros": ["CNCF 标准", "厂商中立", "Console 零配置"],
+      "cons": ["两个独立库", "需手动关联 trace_id"],
+      "cost": "中"
+    },
+    {
+      "id": "B",
+      "name": "Sentry SDK 一站式",
+      "summary": "Sentry SDK 错误追踪 + 性能监控",
+      "pros": ["一键集成", "托管 Dashboard"],
+      "cons": ["不适合 FastAPI 深度定制", "有成本"],
+      "cost": "低"
+    }
+  ],
+  "decision": {
+    "chosen": "A",
+    "reason": "prometheus_client 是 CNCF 标准，OpenTelemetry 厂商中立，Console exporter 适合本地开发且生产可切 OTLP。"
+  }
+}

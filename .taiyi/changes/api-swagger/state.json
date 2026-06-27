@@ -1,5 +1,5 @@
 {
-  "slug": "jwt-api-key-cors",
+  "slug": "api-swagger",
   "currentPhase": "integration",
   "completedPhases": [
     "change",
@@ -18,7 +18,7 @@
   "autoHarness": true,
   "complexity": {
     "level": "low",
-    "score": 3,
+    "score": 4,
     "recommendedSkills": [
       "taiyi-intel-scan"
     ]
@@ -30,7 +30,7 @@
     "taiyi-evolve"
   ],
   "workflowStatus": "active",
-  "createdAt": "2026-06-27T11:59:07.267Z",
-  "updatedAt": "2026-06-27T13:56:34.175Z",
+  "createdAt": "2026-06-27T11:58:08.303Z",
+  "updatedAt": "2026-06-27T13:56:18.922Z",
   "version": 20
 }

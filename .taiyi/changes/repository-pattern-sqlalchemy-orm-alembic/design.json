@@ -1,0 +1,25 @@
+{
+  "title": "数据层设计方案",
+  "options": [
+    {
+      "id": "A",
+      "name": "SQLAlchemy 2.0 async + Repository",
+      "summary": "SQLAlchemy 2.0 async engine + async session + BaseRepository 抽象",
+      "pros": ["FastAPI async 原生支持", "Alembic 迁移成熟", "团队熟悉"],
+      "cons": ["async ORM 调试较难", "session 生命周期管理复杂"],
+      "cost": "中"
+    },
+    {
+      "id": "B",
+      "name": "Tortoise ORM + Pydantic",
+      "summary": "Tortoise ORM (async-first, Django 风格)",
+      "pros": ["代码简洁", "内置 Pydantic 集成"],
+      "cons": ["社区较小", "迁移工具不如 Alembic"],
+      "cost": "低"
+    }
+  ],
+  "decision": {
+    "chosen": "A",
+    "reason": "SQLAlchemy 是 Python 生态最成熟的 ORM，Alembic 经过大规模生产验证，async session 与 FastAPI 的 async/await 范式一致。"
+  }
+}
