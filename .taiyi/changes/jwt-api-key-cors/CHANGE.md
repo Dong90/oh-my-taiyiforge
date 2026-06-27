@@ -23,7 +23,7 @@
 
 ## Success Criteria
 
-- [ ] 未认证请求返回 401
-- [ ] 登录接口返回 access + refresh token
-- [ ] 超过限流的请求返回 429
-- [ ] CORS 仅允许配置的域名
+- [x] 未认证请求返回 401
+- [x] 登录接口返回 access + refresh token
+- [x] 超过限流的请求返回 429
+- [x] CORS 仅允许配置的域名

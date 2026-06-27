@@ -22,7 +22,7 @@
 
 ## Success Criteria
 
-- [ ] Swagger UI 在 /docs 可访问
-- [ ] /api/v1/translation/translate 路径可用
-- [ ] 配置修改后无需重启即可生效
-- [ ] 输入验证拒绝非法请求并返回结构化错误
+- [x] Swagger UI 在 /docs 可访问
+- [x] /api/v1/translation/translate 路径可用
+- [x] 配置修改后无需重启即可生效
+- [x] 输入验证拒绝非法请求并返回结构化错误

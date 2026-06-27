@@ -22,7 +22,7 @@
 
 ## Success Criteria
 
-- [ ] /metrics 端点输出 Prometheus 格式
-- [ ] HTTP 请求自动生成 trace span
-- [ ] 异常自动计数并暴露为 metric
-- [ ] 日志包含 trace_id 关联
+- [x] /metrics 端点输出 Prometheus 格式
+- [x] HTTP 请求自动生成 trace span
+- [x] 异常自动计数并暴露为 metric
+- [x] 日志包含 trace_id 关联

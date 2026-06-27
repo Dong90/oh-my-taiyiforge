@@ -23,7 +23,7 @@ translation-assistant 项目当前无持久化层。README 评估中「数据持
 
 ## Success Criteria
 
-- [ ] SQLAlchemy 模型可在 pytest 中创建/查询
-- [ ] Alembic migration 可正常运行
-- [ ] Repository 基类抽象可用
-- [ ] 数据库连接池配置生效
+- [x] SQLAlchemy 模型可在 pytest 中创建/查询
+- [x] Alembic migration 可正常运行
+- [x] Repository 基类抽象可用
+- [x] 数据库连接池配置生效
