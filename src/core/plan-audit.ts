@@ -2,25 +2,21 @@ import fs from "node:fs";
 import { getLogger } from "./logger.js";
 import { isSeedTemplate } from "./seed-marker.js";
 
-export type PlanAuditDimension =
-  | "scope_clarity"
-  | "task_breakdown"
-  | "risk_dependency"
-  | "implementation_readiness";
+export type PlanAuditDimension = "scope_clarity" | "task_breakdown" | "risk_dependency" | "implementation_readiness";
 
-export type PlanAuditFinding = {
+export interface PlanAuditFinding {
   dimension: PlanAuditDimension;
   passed: boolean;
   severity: "high" | "medium" | "low";
   message: string;
-};
+}
 
-export type PlanAuditResult = {
+export interface PlanAuditResult {
   passed: boolean;
   findings: PlanAuditFinding[];
   /** Short summary line for display */
   summary: string;
-};
+}
 
 const DIMENSION_LABELS: Record<PlanAuditDimension, string> = {
   scope_clarity: "Scope Clarity",
@@ -88,7 +84,7 @@ export function auditTaskPlan(taskMdPath: string): PlanAuditResult {
     const hasSliceTable = content.includes("| # |") && content.includes("| Slice |");
     const hasTaskList = /[-*]\s+\[.?\]/.test(content);
     const hasNonGoals = /##\s*Non[- ]?goals/i.test(content);
-    const hasScopeOut = /##\s*(?:Out of scope|非目标|Scope Out)/i.test(content);
+    const hasScopeOut = /##\s*(?:Out of scope|非目标|Scope Out|Non[- ]?goals)/i.test(content);
     const hasBoundary = hasNonGoals || hasScopeOut;
 
     if (!hasSliceTable && !hasTaskList) {
@@ -159,11 +155,11 @@ export function auditTaskPlan(taskMdPath: string): PlanAuditResult {
     const dim: PlanAuditDimension = "risk_dependency";
     const dimFindings: string[] = [];
 
-    const hasDependency = /##\s*(?:Depend|依赖|Depends|Prerequisite|Dependencies)/i.test(content) ||
-                          /\|\s*(?:Depends(?:\s+\||\s*$)|依赖|dependencies)\s*\|/i.test(content) ||
-                          /depends_on|depends on/i.test(content);
-    const hasRisk = /##\s*(?:Risk|风险|Risks|Blockers)/i.test(content) ||
-                    /风险|注意|⚠️|阻塞|edge case/i.test(content);
+    const hasDependency =
+      /##\s*(?:Depend|依赖|Depends|Prerequisite|Dependencies)/i.test(content) ||
+      /\|\s*(?:Depends(?:\s+\||\s*$)|依赖|dependencies)\s*\|/i.test(content) ||
+      /depends_on|depends on/i.test(content);
+    const hasRisk = /##\s*(?:Risk|风险|Risks|Blockers)/i.test(content) || /风险|注意|⚠️|阻塞|edge case/i.test(content);
 
     if (!hasDependency) {
       dimFindings.push("缺少依赖关系说明");
@@ -209,9 +205,9 @@ export function auditTaskPlan(taskMdPath: string): PlanAuditResult {
 
     const passed = dimFindings.length === 0;
     if (!passed) {
-      const hasSeed = findings.some(f => f.dimension === "implementation_readiness" && !f.passed);
+      const hasSeed = findings.some((f) => f.dimension === "implementation_readiness" && !f.passed);
       // If seed is already a finding, skip duplicate high
-      if (!hasSeed || !dimFindings.every(f => f.includes("占位符"))) {
+      if (!hasSeed || !dimFindings.every((f) => f.includes("占位符"))) {
         findings.push({
           dimension: dim,
           passed: false,
@@ -230,22 +226,23 @@ export function auditTaskPlan(taskMdPath: string): PlanAuditResult {
   }
 
   // ── Aggregate ──
-  const high = findings.filter(f => !f.passed && f.severity === "high");
-  const medium = findings.filter(f => !f.passed && f.severity === "medium");
+  const high = findings.filter((f) => !f.passed && f.severity === "high");
+  const medium = findings.filter((f) => !f.passed && f.severity === "medium");
   const passed = high.length === 0 && medium.length <= 1;
 
   const summaryParts: string[] = [];
   if (high.length > 0) summaryParts.push(`${high.length} high`);
   if (medium.length > 0) summaryParts.push(`${medium.length} medium`);
-  const summary = summaryParts.length > 0
-    ? `Plan 审查: ${summaryParts.join(", ")} 问题 — ${passed ? "可通过" : "需修改后重审"}`
-    : "Plan 审查: 全部通过 ✓";
+  const summary =
+    summaryParts.length > 0
+      ? `Plan 审查: ${summaryParts.join(", ")} 问题 — ${passed ? "可通过" : "需修改后重审"}`
+      : "Plan 审查: 全部通过 ✓";
 
   log.info("[plan-audit] TASK.md audit result", {
     passed,
     high: high.length,
     medium: medium.length,
-    findings: findings.filter(f => !f.passed).map(f => f.message),
+    findings: findings.filter((f) => !f.passed).map((f) => f.message),
   });
 
   return { passed, findings, summary };
