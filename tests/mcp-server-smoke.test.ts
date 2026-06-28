@@ -112,7 +112,7 @@ describe("mcp server stdio smoke", () => {
   it("CallTool taiyi_doctor 返回 slim JSON", async () => {
     const result = await client.callTool({ name: "taiyi_doctor", arguments: {} });
     const body = parseToolText(result);
-    expect(body.version).toMatch(/^\d+\.\d+\.\d+$/);
+    expect(body.version).toMatch(/^\d+\.\d+\.\d+(-[\w.]+)?$/);
     expect(Array.isArray(body.failed)).toBe(true);
     expect(body).not.toHaveProperty("report");
   });

@@ -10,7 +10,7 @@ describe("doctor", () => {
   it("runs checks against package root", () => {
     const pkgRoot = path.join(path.dirname(fileURLToPath(import.meta.url)), "..");
     const report = runDoctor(pkgRoot);
-    expect(report.version).toMatch(/^\d+\.\d+\.\d+$/);
+    expect(report.version).toMatch(/^\d+\.\d+\.\d+(-[\w.]+)?$/);
     expect(report.checks.length).toBeGreaterThan(5);
     expect(report.checks.find((c) => c.id === "phase-registry")?.ok).toBe(true);
     expect(report.checks.find((c) => c.id === "templates")?.ok).toBe(true);

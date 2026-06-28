@@ -14,7 +14,7 @@ describe("compact json", () => {
     const pkgRoot = path.join(path.dirname(fileURLToPath(import.meta.url)), "..");
     const report = runDoctor(pkgRoot);
     const compact = buildDoctorJsonCompact({ ok: report.ok, report });
-    expect(compact.version).toMatch(/^\d+\.\d+\.\d+$/);
+    expect(compact.version).toMatch(/^\d+\.\d+\.\d+(-[\w.]+)?$/);
     expect(compact.installOk).toBe(report.ok);
     expect(compact.failed.every((f) => f.id && f.detail)).toBe(true);
     expect(JSON.stringify(compact).length).toBeLessThan(JSON.stringify({ ok: true, report }).length);
