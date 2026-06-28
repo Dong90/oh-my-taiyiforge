@@ -33,7 +33,7 @@
 
 **TaiyiForge 的回答**：一套九阶段工件契约 + 状态机引擎。在四套 AI 终端里行为完全一致。
 
-> `/taiyi:new` → 引擎告诉你下一步。不用背阶段顺序，不用记工件模板。
+> `/taiyi:plan` 默认半自动（拆模块 + 推荐 profile，人确认后批量 `/taiyi:new`）；切到 auto 模式即可一键生成全栈骨架（见下方"一键生成"小节）。不用背阶段顺序，不用记工件模板。
 
 ---
 
@@ -59,6 +59,10 @@ npx taiyi-forge-install --all
 # 3. 在聊天里创建第一个 change
 /taiyi:new "优化登录流程"
 /taiyi:status
+
+# 或者：把整份需求丢给 /taiyi:plan，让引擎一次性拆出全部模块
+/taiyi:plan README.md           # 也可以是 PRD.md / PDF / URL
+# → 自动生成 examples/<项目>/agent/{backend,frontend}/ 全栈骨架（见下方"一键生成"小节）
 ```
 
 **你只管写 Markdown 和代码。阶段顺序、工件模板、门控校验全是引擎的活。**
@@ -109,7 +113,7 @@ change → requirement → design → ui-design → task → dev → test → re
 
 | 命令 | 做什么 |
 |------|-------|
-| `/taiyi:plan [file]` | 项目规划：README/PRD/PDF/URL → 模块拆分 |
+| `/taiyi:plan [file]` | **项目规划**：README / PRD / PDF / URL → 一次性拆出全部模块 + 一键生成代码骨架 |
 | `/taiyi:new` | 创建变更 |
 | `/taiyi:status` | 查看进度 |
 | `/taiyi:write` | 写当前阶段 |
@@ -125,6 +129,49 @@ change → requirement → design → ui-design → task → dev → test → re
 |------|------|--------|------|
 | **项目级** | `/taiyi:plan` | 把大需求拆成模块 + 推荐 profile + 处理冲突 | 批量 `/taiyi:new` |
 | **Change 级** | `/taiyi:new` | 单模块走九阶段 | CHANGE → CHANGELOG |
+
+### `/taiyi:plan` 一键生成的全栈骨架（auto 模式）
+
+`/taiyi:plan` 默认半自动——拆完模块后等人确认再批量 `/taiyi:new`。**auto 模式**则一口气把后端、前端、测试、迁移全跑完，单条命令生成可直接跑的全栈工程。
+
+下面就是 auto 模式一次产出的真实结构（[`examples/translation-assistant/agent/`](examples/translation-assistant/agent/)，79 文件 / 23 目录）：
+
+```
+agent/
+├── backend/                          # FastAPI 后端
+│   ├── app/
+│   │   ├── main.py                   # 入口
+│   │   ├── controllers/v1/           # HTTP 层（路由 + 校验）
+│   │   ├── services/                 # 业务编排（LLM 调用、缓存、限流）
+│   │   ├── strategies/               # ≥2 策略可替换（同步 / 异步 / 流式翻译）
+│   │   ├── repositories/             # 数据访问
+│   │   ├── models/                   # ORM / Schema
+│   │   ├── middleware/               # auth / logging / ratelimit / cors
+│   │   ├── adapters/                 # 外部服务接入（LLM provider、Redis）
+│   │   ├── tasks/                    # 异步任务
+│   │   ├── db/  cache/  telemetry/  core/  config/  # 横切关注点
+│   │   └── alembic/env.py            # 迁移入口
+│   └── tests/
+│       ├── test_controllers.py test_services.py test_core.py
+│       ├── test_models.py test_adapters.py test_strategies.py
+│       └── integration/  performance/  e2e/         # 三层测试套件
+└── frontend/                         # 前端
+    ├── index.html                    # 入口
+    ├── app.js                        # 业务逻辑
+    ├── style.css                     # 样式
+    └── metrics.js                    # 前端指标上报
+```
+
+**对应九阶段工件**：每个模块同步产出 `CHANGE.md → REQUIREMENT.md → DESIGN.md → TASK.md → TEST.md`（在 `.taiyi/changes/<slug>/` 下，仓库不提交，本地可见）。整个产物**过了 48 个单测 + e2e + integration**，CI 全绿。
+
+**怎么跑**：从需求文件开始
+
+```bash
+/taiyi:plan README.md --auto         # auto 模式：一键骨架
+/taiyi:plan PRD.pdf --profile=full   # 半自动：拆模块后等人确认
+```
+
+[完整示例 →](examples/translation-assistant/agent/) · [plan 命令参考 →](docs/taiyi/canonical-commands.md#taiyiplan)
 
 ### 不止流水线
 
@@ -156,6 +203,7 @@ change → requirement → design → ui-design → task → dev → test → re
 | [USAGE](docs/USAGE.md) | 日常节奏、场景、交付链 | 跑通之后 |
 | [ARCHITECTURE](docs/ARCHITECTURE.md) | 系统架构 + 代码布局 | 想改引擎 |
 | [canonical-commands](docs/taiyi/canonical-commands.md) | 29 条 slash 命令表 | 查命令 |
+| [examples/translation-assistant/agent/](examples/translation-assistant/agent/) | `/taiyi:plan --auto` 一次产出的全栈骨架 | 想要代码长什么样 |
 | [control-plane](docs/taiyi/control-plane.md) | Agent 纪律 + token 纪律 | 给 Agent 配 onboarding |
 | [full-oss-flow](docs/taiyi/full-oss-flow.md) | Superpowers + 全插件端到端 | 想看完整流程 |
 | [CONTRIBUTING](CONTRIBUTING.md) | 贡献指南 | 开 PR 之前 |
