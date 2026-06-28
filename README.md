@@ -134,7 +134,7 @@ change → requirement → design → ui-design → task → dev → test → re
 
 `/taiyi:plan` 默认半自动——拆完模块后等人确认再批量 `/taiyi:new`。**auto 模式**则一口气把后端、前端、测试、迁移全跑完，单条命令生成可直接跑的全栈工程。
 
-下面就是 auto 模式一次产出的真实结构（[`examples/translation-assistant/agent/`](examples/translation-assistant/agent/)，22 文件 / 19 目录）：
+下面就是 auto 模式一次产出的真实结构（[`examples/translation-assistant/agent/`](examples/translation-assistant/agent/)，79 文件 / 23 目录）：
 
 ```
 agent/
