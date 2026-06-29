@@ -15,7 +15,7 @@ jobs:
       run:
         working-directory: examples/translation-assistant/agent/backend
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -38,7 +38,7 @@ jobs:
   docker-build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Build Docker image
         run: docker build -t translation-assistant:ci -f examples/translation-assistant/Dockerfile examples/translation-assistant/
