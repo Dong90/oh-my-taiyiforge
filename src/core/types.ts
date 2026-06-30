@@ -1,3 +1,9 @@
+/** Discriminated-union result type used by all Registry modules.
+ *  Prefer over throwing for predictable error handling at boundaries. */
+export type Result<T, E = Error> =
+  | { ok: true; value: T }
+  | { ok: false; error: E };
+
 /** Base built-in phase IDs. Use PhaseId for autocomplete + custom extension. */
 export type PhaseIdBase =
   | "change"

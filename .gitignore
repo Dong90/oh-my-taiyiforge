@@ -4,6 +4,9 @@ __pycache__/
 *.pyd
 *.activity.jsonl
 
+# TaiyiForge: temporary scratch / introspection output
+.tmp/
+
 # Embedded example repos (full standalone copies)
 examples/test/
 

@@ -60,3 +60,57 @@ export { assertValidSlug, validateSlug } from "./core/slug.js";
 
 // Archive
 export { resolveChangeDir } from "./core/taiyi-archive.js";
+
+// ── Registries (added in v1.1, 2026-06) ──
+export {
+  ProfileRegistry,
+  getDefaultRegistry as getDefaultProfileRegistry,
+  resetProfileRegistry as resetDefaultProfileRegistry,
+  registerProfile,
+  resolveProfile,
+  getProfile,
+  listProfiles,
+  loadProfilesFromYaml,
+  loadProfilesFromNodeModules,
+  validateProfileYaml,
+} from "./core/profile-registry.js";
+export type { ProfileDefinition, ProfileSource, ProfileError } from "./core/profile-registry.js";
+
+export {
+  CodePatternRegistry,
+  getDefaultCodePatternRegistry,
+  resetDefaultCodePatternRegistry,
+  registerCodePattern,
+} from "./core/code-pattern-registry.js";
+export type { CodePatternDefinition, CodePatternSource } from "./core/code-pattern-registry.js";
+
+export {
+  SSOTRuleRegistry,
+  getDefaultSSOTRuleRegistry,
+  resetDefaultSSOTRuleRegistry,
+  registerSSOTRule,
+  buildEdgesWithRegistry,
+  detectSSOTViolationsWithRegistry,
+} from "./core/ssot-rule-registry.js";
+export type { SSOTRuleDefinition, SSOTRuleSource } from "./core/ssot-rule-registry.js";
+
+export {
+  ExtractorRegistry,
+  getDefaultExtractorRegistry,
+  resetDefaultExtractorRegistry,
+  registerExtractor,
+} from "./core/extractor-registry.js";
+export type { ExtractorDefinition, ExtractorSource } from "./core/extractor-registry.js";
+
+export {
+  RunnerPolicyRegistry,
+  getDefaultRunnerPolicyRegistry,
+  resetDefaultRunnerPolicyRegistry,
+  registerRunnerPolicy,
+  selectRunnerForPolicy,
+} from "./core/runner-policy-registry.js";
+export type {
+  RunnerPolicyDefinition,
+  RunnerPolicySource,
+  RunnerName,
+} from "./core/runner-policy-registry.js";

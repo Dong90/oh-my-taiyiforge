@@ -1,0 +1,96 @@
+import type { CodePatternDefinition } from "./code-pattern-registry.js";
+
+/** 引擎内置 13 个 code pattern —— port 自原 src/core/code-gen.ts 的 PATTERN_TO_TEMPLATE */
+export const BUILTIN_CODE_PATTERNS: CodePatternDefinition[] = [
+  {
+    pattern: "Adapter",
+    templateFile: "adapter.hbs",
+    outputExtension: ".py",
+    builtin: true,
+    description: "适配器模式：包装外部服务（LLM provider / Redis / 第三方 API）",
+  },
+  {
+    pattern: "Strategy",
+    templateFile: "strategy-advanced.hbs",
+    outputExtension: ".py",
+    builtin: true,
+    description: "策略模式：≥2 可替换策略（同步/异步/流式）",
+  },
+  {
+    pattern: "Service",
+    templateFile: "service.hbs",
+    outputExtension: ".py",
+    builtin: true,
+    description: "业务服务：编排 repository / adapter / strategy",
+  },
+  {
+    pattern: "Controller",
+    templateFile: "controller.hbs",
+    outputExtension: ".py",
+    builtin: true,
+    description: "FastAPI 路由层：HTTP 入口 + 参数校验",
+  },
+  {
+    pattern: "Middleware",
+    templateFile: "middleware.hbs",
+    outputExtension: ".py",
+    builtin: true,
+    description: "FastAPI 中间件：通用形态",
+  },
+  {
+    pattern: "ResponseTimeMiddleware",
+    templateFile: "middleware-response-time.hbs",
+    outputExtension: ".py",
+    builtin: true,
+    description: "响应时间中间件（埋点用）",
+  },
+  {
+    pattern: "ErrorHandlerMiddleware",
+    templateFile: "middleware-error-handler.hbs",
+    outputExtension: ".py",
+    builtin: true,
+    description: "错误处理中间件",
+  },
+  {
+    pattern: "Config",
+    templateFile: "config.hbs",
+    outputExtension: ".py",
+    builtin: true,
+    description: "配置 / settings 模块",
+  },
+  {
+    pattern: "Health",
+    templateFile: "health.hbs",
+    outputExtension: ".py",
+    builtin: true,
+    description: "健康检查端点",
+  },
+  {
+    pattern: "Model",
+    templateFile: "model.hbs",
+    outputExtension: ".py",
+    builtin: true,
+    description: "ORM / Schema 数据模型",
+  },
+  {
+    pattern: "Main",
+    templateFile: "main.hbs",
+    outputExtension: ".py",
+    builtin: true,
+    description: "FastAPI app 入口（main.py）",
+  },
+  {
+    pattern: "Metrics",
+    templateFile: "metrics.hbs",
+    outputExtension: ".py",
+    builtin: true,
+    description: "Prometheus metrics 端点",
+  },
+  {
+    pattern: "ExceptionHandler",
+    templateFile: "exception_handler.hbs",
+    outputExtension: ".py",
+    builtin: true,
+    description: "全局异常处理",
+  },
+];
