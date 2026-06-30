@@ -1,8 +1,17 @@
 /**
  * edges.ts — 跨阶段边目录、buildEdges、SSOT违规检测。
+ *
+ * 注意：EDGE_CATALOG 和下面的 buildEdges/detectSSOTViolations 函数保留为
+ * "legacy" 入口；真正的源是 SSOTRuleRegistry（src/core/ssot-rule-registry.ts）。
+ * 下面函数委托到 registry —— 任何 registerSSOTRule 加的规则会立即生效。
  */
 import type { PhaseId } from "../types.js";
 import type { Edge, EdgeRule, GraphNode, NodeKind, SSOTViolation, MatchStrategy } from "./types.js";
+import { getDefaultSSOTRuleRegistry } from "../ssot-rule-registry.js";
+import {
+  buildEdgesWithRegistry,
+  detectSSOTViolationsWithRegistry,
+} from "../ssot-rule-registry.js";
 
 export const EDGE_CATALOG: EdgeRule[] = [
   { fromPhases: ["change"], fromKind: "risk", toPhases: ["requirement"], toKind: "nfr", edgeKind: "derives_from", violationEnabled: true },
@@ -19,42 +28,14 @@ export const EDGE_CATALOG: EdgeRule[] = [
   { fromPhases: ["test"], fromKind: "test_case", toPhases: ["review"], toKind: "test_case", edgeKind: "tests" },
 ];
 
-/** Build edges between nodes based on EDGE_CATALOG rules.
- *  Uses positional pairing: sources & targets are sorted by ID (which encodes index),
- *  then zip-matched at same positions. Falls back to all-to-all when sizes differ. */
+/** Build edges via the default SSOTRuleRegistry (which loads BUILTIN_SSOT_RULES
+ *  on first access — same set as the legacy EDGE_CATALOG above).
+ *  Backward compatible: existing callers see identical behavior. */
 export function buildEdges(
   nodes: Map<string, GraphNode>,
   edges: Map<string, Edge[]>,
 ): void {
-  const nodeArr = [...nodes.values()];
-
-  for (const rule of EDGE_CATALOG) {
-    const sources = nodeArr
-      .filter((n) => rule.fromPhases.includes(n.phase) && n.kind === rule.fromKind)
-      .sort((a, b) => a.id.localeCompare(b.id));
-    const targets = nodeArr
-      .filter((n) => rule.toPhases.includes(n.phase) && n.kind === rule.toKind)
-      .sort((a, b) => a.id.localeCompare(b.id));
-
-    if (sources.length === 0 || targets.length === 0) continue;
-
-    if (rule.edgeKind === "duplicates") {
-      // Duplicate detection: link ALL pairs (we want to detect all possible mismatches)
-      for (const src of sources) {
-        for (const tgt of targets) {
-          addEdgeIfNew(edges, src.id, tgt.id, rule.edgeKind);
-        }
-      }
-    } else {
-      // Positional pairing: zip-match at same index
-      const maxLen = Math.max(sources.length, targets.length);
-      for (let i = 0; i < maxLen; i++) {
-        const src = sources[i % sources.length];
-        const tgt = targets[i % targets.length];
-        addEdgeIfNew(edges, src.id, tgt.id, rule.edgeKind);
-      }
-    }
-  }
+  buildEdgesWithRegistry(nodes, edges, getDefaultSSOTRuleRegistry());
 }
 
 function addEdgeIfNew(edges: Map<string, Edge[]>, from: string, to: string, kind: Edge["kind"]): void {
@@ -66,53 +47,14 @@ function addEdgeIfNew(edges: Map<string, Edge[]>, from: string, to: string, kind
 }
 
 /**
- * Detect SSOT violations using EDGE_CATALOG rules.
- * Only checks edges from rules with violationEnabled:true.
- * matchStrategy controls comparison strictness per rule.
+ * Detect SSOT violations via the default SSOTRuleRegistry.
+ * Backward compatible: existing callers see identical violations.
  */
 export function detectSSOTViolations(
   nodes: Map<string, GraphNode>,
   _edges: Map<string, Edge[]>,
 ): SSOTViolation[] {
-  const violations: SSOTViolation[] = [];
-
-  const violationRules = EDGE_CATALOG.filter((r) => r.violationEnabled === true);
-  if (violationRules.length === 0) return violations;
-
-  const severityMap: Record<string, SSOTViolation["severity"]> = {
-    rollback: "high", threat: "high", nfr: "high",
-    risk: "medium", deployment_step: "medium", monitoring_metric: "medium",
-    design_decision: "low",
-  };
-
-  for (const rule of violationRules) {
-    const sources = [...nodes.values()]
-      .filter((n) => rule.fromPhases.includes(n.phase) && n.kind === rule.fromKind)
-      .sort((a, b) => a.id.localeCompare(b.id));
-    const targets = [...nodes.values()]
-      .filter((n) => rule.toPhases.includes(n.phase) && n.kind === rule.toKind)
-      .sort((a, b) => a.id.localeCompare(b.id));
-
-    if (sources.length === 0 || targets.length === 0) continue;
-
-    const strategy: MatchStrategy = rule.matchStrategy ?? "substring";
-    const minLen = Math.min(sources.length, targets.length);
-
-    for (let i = 0; i < minLen; i++) {
-      const src = sources[i];
-      const tgt = targets[i];
-      if (!labelsDiffer(src.label, tgt.label, strategy)) continue;
-
-      violations.push({
-        field: `${rule.fromKind} (${String(src.phase)} vs ${String(tgt.phase)})`,
-        nodes: [src, tgt],
-        description: `${kindDescr(rule.fromKind)}跨阶段不一致: "${truncLabel(src.label)}" ≠ "${truncLabel(tgt.label)}"`,
-        severity: severityMap[rule.fromKind] ?? "low",
-      });
-    }
-  }
-
-  return violations;
+  return detectSSOTViolationsWithRegistry(nodes, getDefaultSSOTRuleRegistry());
 }
 
 /** Labels differ per strategy. */

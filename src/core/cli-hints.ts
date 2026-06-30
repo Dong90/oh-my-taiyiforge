@@ -1,6 +1,18 @@
 import type { ChangeProfile } from "./types.js";
+import { listProfiles } from "./profile-registry.js";
 
-export const VALID_PROFILES: readonly ChangeProfile[] = ["full", "api", "ui", "lite", "spike", "micro", "nano"];
+/** All valid profile ids from the registry (built-in + custom).
+ *  Note: this is a snapshot at module-load time. Profiles added after import
+ *  via registerProfile are still accepted by parseProfileFlag via the registry
+ *  resolution, but won't appear in this list for error messages. */
+export const VALID_PROFILES: readonly ChangeProfile[] = listProfiles().map(
+  (p) => p.id as ChangeProfile,
+);
+
+/** Check if a profile id is known to the default registry. */
+export function isKnownProfile(id: string): boolean {
+  return listProfiles().some((p) => p.id === id);
+}
 
 export const SLUG_EXAMPLE = "my-feature";
 
@@ -20,7 +32,8 @@ export function parseProfileFlag(argv: string[]): ParseProfileResult {
   if (!raw || raw.startsWith("--")) {
     return { ok: false, error: `缺少 --profile 参数值。合法值: ${VALID_PROFILES.join(", ")}` };
   }
-  if ((VALID_PROFILES as readonly string[]).includes(raw)) {
+  // Accept any profile known to the registry (built-in or custom)
+  if (isKnownProfile(raw)) {
     return { ok: true, profile: raw as ChangeProfile };
   }
   return { ok: false, error: formatInvalidProfile(raw) };

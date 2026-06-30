@@ -5,11 +5,14 @@ import fs from "node:fs";
 import path from "node:path";
 import { TemplateEngine, type CodeStyleContract, type ModuleManifestEntry } from "./template-engine.js";
 import { getLogger } from "./logger.js";
+import { getDefaultCodePatternRegistry } from "./code-pattern-registry.js";
 
 const log = getLogger();
 
-/** Map module patterns to prompt template files. */
-const PATTERN_TO_TEMPLATE: Record<string, string> = {
+/** @deprecated Use CodePatternRegistry instead. Kept as a fallback for any
+ *  pattern that isn't registered (e.g. legacy code paths). The default registry
+ *  is the source of truth for pattern → template mapping. */
+const LEGACY_PATTERN_TO_TEMPLATE: Record<string, string> = {
   Adapter: "adapter.hbs",
   Strategy: "strategy-advanced.hbs",
   Service: "service.hbs",
@@ -52,7 +55,14 @@ export function generateCode(options: CodeGenOptions): CodeGenResult {
   const results: CodeGenResult = [];
 
   for (const mod of options.manifest) {
-    const tplName = PATTERN_TO_TEMPLATE[mod.pattern];
+    // Resolve pattern → template via the default registry. Falls back to the
+    // legacy hardcoded map if the registry is empty (e.g. tests without
+    // setDefaultTemplatesDir called).
+    const registry = getDefaultCodePatternRegistry();
+    const resolved = registry.resolve(mod.pattern);
+    const tplName = resolved.ok
+      ? resolved.value.templateFile
+      : (LEGACY_PATTERN_TO_TEMPLATE[mod.pattern] ?? undefined);
     if (!tplName) {
       results.push({ file: mod.file, ok: false, error: `unknown pattern: ${mod.pattern}` });
       continue;
