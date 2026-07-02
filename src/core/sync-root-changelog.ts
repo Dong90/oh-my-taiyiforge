@@ -32,7 +32,7 @@ export function syncRootChangelog(workspaceDir: string, slug: string): RootChang
   const entry = `\n\n${marker} ${date}\n${raw}\n`;
 
   if (!fs.existsSync(dest)) {
-    safeWriteFileSync(dest, `# Changelog\n${entry}`, { skipRedact: true });
+    safeWriteFileSync(dest, `# Changelog\n${entry}`, { skipRedact: true, atomic: true });
     return { ok: true, action: "created", path: dest };
   }
 
@@ -41,7 +41,7 @@ export function syncRootChangelog(workspaceDir: string, slug: string): RootChang
     return { ok: true, action: "skipped", path: dest, reason: "already synced" };
   }
 
-  safeWriteFileSync(dest, existing + entry, { skipRedact: true });
+  safeWriteFileSync(dest, existing + entry, { skipRedact: true, atomic: true });
 
   // ── 滚动归档：超过 200 行时保留最近 5 条 → 其余移入 CHANGELOG-ARCHIVE.md ──
   const afterAppend = fs.readFileSync(dest, "utf8");
@@ -72,8 +72,8 @@ export function syncRootChangelog(workspaceDir: string, slug: string): RootChang
         .map((e) => `${e.header}\n${e.body}`)
         .join("\n\n");
       const headerNote = `> 📦 较早的变更已归档至 [CHANGELOG-ARCHIVE.md](CHANGELOG-ARCHIVE.md)。`;
-      safeWriteFileSync(dest, `# Changelog\n\n${headerNote}\n\n${keepBody}\n`, { skipRedact: true, skipFormat: true });
-      safeWriteFileSync(archivePath, newArchive, { skipRedact: true, skipFormat: true });
+      safeWriteFileSync(dest, `# Changelog\n\n${headerNote}\n\n${keepBody}\n`, { skipRedact: true, skipFormat: true, atomic: true });
+      safeWriteFileSync(archivePath, newArchive, { skipRedact: true, skipFormat: true, atomic: true });
       return { ok: true, action: "archived", path: dest, reason: `>200 lines → kept last 5 entries, archived rest to CHANGELOG-ARCHIVE.md (${allEntries.length - 5} entries)` };
     }
   }

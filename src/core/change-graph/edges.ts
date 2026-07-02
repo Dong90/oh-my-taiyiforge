@@ -1,9 +1,11 @@
 /**
  * edges.ts — 跨阶段边目录、buildEdges、SSOT违规检测。
  *
- * 注意：EDGE_CATALOG 和下面的 buildEdges/detectSSOTViolations 函数保留为
- * "legacy" 入口；真正的源是 SSOTRuleRegistry（src/core/ssot-rule-registry.ts）。
- * 下面函数委托到 registry —— 任何 registerSSOTRule 加的规则会立即生效。
+ * @deprecated 整个文件保留为 "legacy" 入口；真源已迁至：
+ *   - EDGE_CATALOG  → src/core/builtin-ssot-rules.ts (BUILTIN_SSOT_RULES)
+ *   - buildEdges / detectSSOTViolations → 委托到 SSOTRuleRegistry
+ *   任何 registerSSOTRule 加的规则会立即生效。
+ *   本文件保留只为向后兼容，新代码请直接用 registry。
  */
 import type { PhaseId } from "../types.js";
 import type { Edge, EdgeRule, GraphNode, NodeKind, SSOTViolation, MatchStrategy } from "./types.js";

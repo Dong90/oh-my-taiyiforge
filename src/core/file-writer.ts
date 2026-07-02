@@ -22,6 +22,8 @@ export type SafeWriteOptions = {
   formatterCmd?: string;
   skipRedact?: boolean;
   encoding?: BufferEncoding;
+  /** 原子写：tmp + rename，避免半截文件损坏（CHANGELOG.md / state.json 等关键文件建议开启） */
+  atomic?: boolean;
 };
 
 const SECRET_PATTERNS: RegExp[] = [
@@ -52,7 +54,15 @@ export function safeWriteFileSync(
 
   const dir = path.dirname(filePath);
   fs.mkdirSync(dir, { recursive: true });
-  fs.writeFileSync(filePath, cleaned, options?.encoding ?? "utf8");
+
+  if (options?.atomic) {
+    // 原子写：tmp + rename，避免半截文件
+    const tmp = `${filePath}.tmp.${process.pid}`;
+    fs.writeFileSync(tmp, cleaned, options?.encoding ?? "utf8");
+    fs.renameSync(tmp, filePath);
+  } else {
+    fs.writeFileSync(filePath, cleaned, options?.encoding ?? "utf8");
+  }
 
   // Optional formatter pass for markdown files
   if (!options?.skipFormat && filePath.endsWith(".md")) {

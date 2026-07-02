@@ -1,4 +1,4 @@
-import { execSync } from "node:child_process";
+import { execFileSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
 
@@ -14,19 +14,21 @@ export type CommitTrailerResult = {
 const TRAILER_CHANGE = "Taiyi-Change";
 const TRAILER_PHASE = "Taiyi-Phase";
 
-function runGit(workspaceDir: string, args: string): string {
-  return execSync(`git ${args}`, {
+/** 安全的 git 调用：禁用 shell，参数化（防命令注入） */
+function runGit(workspaceDir: string, args: string[]): string {
+  return execFileSync("git", args, {
     cwd: workspaceDir,
     encoding: "utf8",
     stdio: ["ignore", "pipe", "pipe"],
     timeout: 10000,
+    shell: false,
   }).trim();
 }
 
 function resolveBaseBranch(workspaceDir: string): string {
   let current = "HEAD";
   try {
-    current = runGit(workspaceDir, "rev-parse --abbrev-ref HEAD");
+    current = runGit(workspaceDir, ["rev-parse", "--abbrev-ref", "HEAD"]);
   } catch {
     /* keep HEAD */
   }
@@ -34,14 +36,14 @@ function resolveBaseBranch(workspaceDir: string): string {
   for (const candidate of ["origin/develop", "origin/main", "origin/master", "develop", "main", "master"]) {
     if (candidate === current) continue;
     try {
-      runGit(workspaceDir, `rev-parse --verify ${candidate}`);
+      runGit(workspaceDir, ["rev-parse", "--verify", candidate]);
       return candidate;
     } catch {
       /* next */
     }
   }
   try {
-    runGit(workspaceDir, "rev-parse --verify HEAD~1");
+    runGit(workspaceDir, ["rev-parse", "--verify", "HEAD~1"]);
     return "HEAD~1";
   } catch {
     return "HEAD";
@@ -64,11 +66,11 @@ function parseTrailers(body: string): Record<string, string[]> {
 
 function listCommitBodies(workspaceDir: string, base: string): { hash: string; body: string }[] {
   try {
-    const hashes = runGit(workspaceDir, `log ${base}..HEAD --format=%H`);
+    const hashes = runGit(workspaceDir, ["log", `${base}..HEAD`, "--format=%H"]);
     if (!hashes) return [];
     return hashes.split("\n").filter(Boolean).map((hash) => ({
       hash,
-      body: runGit(workspaceDir, `log -1 --format=%B ${hash}`),
+      body: runGit(workspaceDir, ["log", "-1", "--format=%B", hash]),
     }));
   } catch {
     return [];
