@@ -28,6 +28,8 @@ import {
   ZOD_PHASES,
 } from "./artifact-validator.js";
 import { autoSyncLocalEdits } from "./reverse-sync.js";
+import { resolveHbsTemplatesDir } from "./package-root.js";
+import { syncMarkdownFromJsonIfStale } from "./artifact-sync.js";
 import {
   enforceAutoHarnessBeforeComplete,
   runPostCompleteShellHooks,
@@ -58,6 +60,8 @@ export type InitChangeOptions = {
   /** 较长的变更背景描述（motivation 的第二 fallback） */
   description?: string;
   templatesDir?: string;
+  /** `null` disables canonical json+hbs seed (legacy .md only). */
+  hbsTemplatesDir?: string | null;
   profile?: ChangeProfile;
   strictDev?: boolean;
   autoHarness?: boolean;
@@ -135,7 +139,7 @@ export class WorkflowEngine {
             tech_stack_preferences: options?.tech_stack_preferences,
             code_style: options?.code_style,
             module_manifest: options?.module_manifest,
-          })
+          }, { hbsTemplatesDir: options?.hbsTemplatesDir })
         : [];
 
     let initialPhase: PhaseId = "change";
@@ -222,9 +226,10 @@ export class WorkflowEngine {
 
       const incomingVersion = state.version ?? 0;
       if (incomingVersion > 0 && incomingVersion < existingVersion) {
-        process.stderr.write(
-          `[workflow-engine] stale state version for ${state.slug}: ` +
-          `incoming ${incomingVersion} < disk ${existingVersion}, auto-resolving\n`,
+        throw new Error(
+          `stale state version for ${state.slug}: ` +
+          `incoming ${incomingVersion} < disk ${existingVersion}. ` +
+          `Please re-read state and retry.`,
         );
       }
 
@@ -317,14 +322,28 @@ export class WorkflowEngine {
     let qualityScores: QualityScores = { ...qualityGateScores };
     let qualityHints: string[] | undefined;
 
-    // ── 反向同步：本地上传人类 MD 修改 ──
-    if (!options?.skipArtifactValidation && ZOD_PHASES.includes(phaseId) && this.templatesDir) {
-      const candidates = [
-        this.templatesDir ? path.join(path.dirname(this.templatesDir), "src", "templates") : null,
-        path.join(this.workspaceRoot, "..", "src", "templates"),
-      ].filter(Boolean) as string[];
-      const hbsTemplatesDir = candidates.find(d => fs.existsSync(d));
-      if (hbsTemplatesDir) {
+    // ── JSON → MD：json 新于 md 时用 hbs 重渲染视图 ──
+    if (!options?.skipArtifactValidation && ZOD_PHASES.includes(phaseId)) {
+      const hbsTemplatesDir = resolveHbsTemplatesDir(import.meta.url);
+      if (fs.existsSync(path.join(hbsTemplatesDir, `${phaseId}.hbs`))) {
+        const syncMd = syncMarkdownFromJsonIfStale(
+          phaseId,
+          changeDir,
+          hbsTemplatesDir,
+          { slug },
+        );
+        if (syncMd.rendered) {
+          qualityHints = (qualityHints ?? []).concat(
+            `⚡ ${phaseId}.json → ${getPhase(phaseId).artifact} 已从 schema 重渲染`,
+          );
+        }
+      }
+    }
+
+    // ── 反向同步：人类改 MD 后拉回 JSON ──
+    if (!options?.skipArtifactValidation && ZOD_PHASES.includes(phaseId)) {
+      const hbsTemplatesDir = resolveHbsTemplatesDir(import.meta.url);
+      if (fs.existsSync(hbsTemplatesDir)) {
         const syncResult = autoSyncLocalEdits(phaseId, this.changeDir(slug), hbsTemplatesDir);
         if (syncResult.needsLlm) {
           qualityHints = (qualityHints ?? []).concat(syncResult.message);
@@ -364,10 +383,20 @@ export class WorkflowEngine {
       const isLowComplexity = workingState.complexity?.level === "low";
       const isHumanGated = requiresHumanGate(phaseId);
       const quality = evaluateQualityGate(qualityScores);
-      const qualityStrict = !isLowComplexity || isHumanGated || phaseId === "integration";
-      if (!quality.passed && qualityStrict) {
-        const hintText = qualityHints?.length ? ` — ${qualityHints.join("; ")}` : "";
-        return { ok: false, error: `Quality gate failed: ${quality.failed.join(", ")}${hintText}`, qualityHints };
+      if (!quality.passed) {
+        if (isLowComplexity && !isHumanGated && phaseId !== "integration") {
+          // Low complexity: still require basic dimensions (completeness, consistency)
+          const basicFailed = quality.failed.filter(
+            (d) => d === "completeness" || d === "consistency",
+          );
+          if (basicFailed.length > 0) {
+            const hintText = qualityHints?.length ? ` — ${qualityHints.join("; ")}` : "";
+            return { ok: false, error: `Quality gate failed (basic): ${basicFailed.join(", ")}${hintText}`, qualityHints };
+          }
+        } else {
+          const hintText = qualityHints?.length ? ` — ${qualityHints.join("; ")}` : "";
+          return { ok: false, error: `Quality gate failed: ${quality.failed.join(", ")}${hintText}`, qualityHints };
+        }
       }
     }
 
@@ -515,15 +544,17 @@ export class WorkflowEngine {
       const audit = auditChange(workspaceDir, this.workspaceRoot, slug, {
         pretendIntegrationComplete: true,
       });
-      if (audit && !audit.ok) {
-        const highs = audit.findings
-          .filter((f) => f.severity === "high")
-          .map((f) => `${f.code}: ${f.message}`);
-        logActivity(this.taiyiRoot, { event: "audit:high", slug, findings: highs.length });
-        return {
-          ok: false,
-          error: `Integration audit failed:\n${highs.join("\n")}`,
-        };
+      if (audit) {
+        const blocked = audit.findings
+          .filter((f) => f.severity === "high" || f.severity === "medium")
+          .map((f) => `${f.code} [${f.severity}]: ${f.message}`);
+        if (blocked.length > 0) {
+          logActivity(this.taiyiRoot, { event: "audit:blocked", slug, findings: blocked.length });
+          return {
+            ok: false,
+            error: `Integration audit failed:\n${blocked.join("\n")}`,
+          };
+        }
       }
 
       // 跨变更兼容性检查：是否有其他 active 变更尚未集成？
@@ -541,6 +572,8 @@ export class WorkflowEngine {
       // 架构检查：根据 profile 检测项目代码结构质量
       const archTemplate = resolveArchTemplateForChange(workingState.profile, workspaceDir);
       const archResult = evaluateArchitecture(workspaceDir, archTemplate);
+      const strictIntegration = process.env.TAIYI_STRICT_INTEGRATION === "1"
+        || process.env.TAIYI_STRICT_INTEGRATION === "true";
       if (!archResult.passed) {
         const failedLabels = archResult.findings
           .filter((f) => !f.passed)
@@ -552,6 +585,9 @@ export class WorkflowEngine {
           slug,
           details: failedLabels,
         });
+        if (strictIntegration) {
+          return { ok: false, error: `架构检查未通过（TAIYI_STRICT_INTEGRATION）:\n${failedLabels}` };
+        }
       }
 
       // 投产就绪检查：health endpoint / package.json scripts / CORS
@@ -564,9 +600,15 @@ export class WorkflowEngine {
           slug,
           warnings: readinessResult.warnings,
         });
+        if (strictIntegration) {
+          return { ok: false, error: `投产就绪检查未通过（TAIYI_STRICT_INTEGRATION）:\n${warnings}` };
+        }
       }
     }
 
+    // 交付门禁（双重检查）：
+    // 1. auditChange 已在 line 529 检查 deliveryFindings（含 audit 块内）
+    // 2. 此处为独立兜底 — 当 TAIYI_SKIP_INTEGRATION_AUDIT=1 跳过 audit 块时仍生效
     if (phaseId === "integration" && deliveryGateEnabled(workspaceDir)) {
       const delivery = evaluateDeliveryGate(workspaceDir, { slug, phase: "integration" });
       if (!delivery.passed) {

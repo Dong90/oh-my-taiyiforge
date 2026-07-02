@@ -28,13 +28,10 @@ describe("workflow-engine", () => {
   it("seeds templates when templatesDir provided", () => {
     const templates = path.join(root, "templates");
     fs.mkdirSync(templates);
-    fs.writeFileSync(
-      path.join(templates, "CHANGE.md"),
-      "# CHANGE: {{title}}\n\n## Motivation\nseed\n\n## Scope\nx\n\n## Success Criteria\n- [ ] ok\n",
-    );
     const eng = new WorkflowEngine(root, templates);
     const result = eng.initChange("seeded", { title: "Seeded Feature" });
     expect(result.seeded).toContain("CHANGE.md");
+    expect(result.seeded).toContain("change.json");
     expect(fs.existsSync(path.join(root, "changes", "seeded", "CHANGE.md"))).toBe(true);
   });
 
@@ -43,7 +40,7 @@ describe("workflow-engine", () => {
     fs.mkdirSync(templates);
     fs.writeFileSync(path.join(templates, "CHANGE.md"), "# CHANGE: {{title}}\n\n## Motivation\n\n## Scope\n\n## Success Criteria\n");
     const eng = new WorkflowEngine(root, templates);
-    eng.initChange("bad-change", { templatesDir: templates });
+    eng.initChange("bad-change", { templatesDir: templates, hbsTemplatesDir: null });
     const result = eng.completePhase("bad-change", "change", {
       quality: {
         completeness: true,
@@ -114,6 +111,87 @@ Demo motivation with enough detail for validation.
     const state = engine.getState("demo-feature");
     expect(state?.completedPhases).toContain("change");
     expect(state?.currentPhase).toBe("requirement");
+  });
+
+  it("low-complexity quality gate tolerates non-basic dimension failures on non-human-gated phases", () => {
+    engine.initChange("low-q", { profile: "lite" });
+    const changeDir = path.join(root, "changes", "low-q");
+    engine.assessComplexity("low-q", { touchedModules: 1, hasUi: false, testLevels: 0 });
+
+    // Advance to "requirement" (not human-gated) with all quality dims true
+    fs.writeFileSync(
+      path.join(changeDir, "CHANGE.md"),
+      `# CHANGE\n\n## Motivation\nFix bug.\n\n## Scope\n- In: x\n\n## Success Criteria\n- [x] fixed\n`,
+    );
+    fs.writeFileSync(
+      path.join(changeDir, "change.json"),
+      JSON.stringify({
+        title: "Low",
+        motivation: "Fix bug.",
+        scope: { includes: ["x"] },
+        success_criteria: [{ id: "SC-01", description: "fixed", is_checked: true }],
+      }),
+    );
+    const r1 = engine.completePhase("low-q", "change", {
+      quality: {
+        completeness: true,
+        consistency: true,
+        verifiability: true,
+        traceability: true,
+        engineering_quality: true,
+      },
+      human: { approved: true, approver: "test" },
+    }, { skipArtifactValidation: true });
+    expect(r1.ok).toBe(true);
+
+    // Now at "requirement" — not human-gated, low-complexity exemption applies
+    fs.writeFileSync(
+      path.join(changeDir, "REQUIREMENT.md"),
+      `# REQ\n\n## User Stories\n| ID | As a… | I want… | So that… |\n| US-1 | user | fix | works |\n\n## Acceptance Criteria\n### US-1\n- **Given** broken path\n- **When** user triggers action\n- **Then** completes without error\n`,
+    );
+    const r2 = engine.completePhase("low-q", "requirement", {
+      quality: {
+        completeness: true,
+        consistency: true,
+        verifiability: false,
+        traceability: false,
+        engineering_quality: false,
+      },
+      human: { approved: true, approver: "test" },
+    }, { skipArtifactValidation: true });
+    // Low complexity + not human gated → only completeness/consistency checked → passes
+    expect(r2.ok).toBe(true);
+  });
+
+  it("TAIYI_SKIP_QUALITY_GATE bypasses quality gate even with failing scores", () => {
+    engine.initChange("skip-q");
+    const changeDir = path.join(root, "changes", "skip-q");
+    fs.writeFileSync(
+      path.join(changeDir, "CHANGE.md"),
+      `# CHANGE\n\n## Motivation\n\n## Scope\n\n## Success Criteria\n`,
+    );
+
+    const prev = process.env.TAIYI_SKIP_QUALITY_GATE;
+    process.env.TAIYI_SKIP_QUALITY_GATE = "1";
+    try {
+      const r = engine.completePhase("skip-q", "change", {
+        quality: {
+          completeness: false,
+          consistency: false,
+          verifiability: false,
+          traceability: false,
+          engineering_quality: false,
+        },
+        human: { approved: true, approver: "test" },
+      }, { skipArtifactValidation: true });
+      expect(r.ok).toBe(true);
+    } finally {
+      if (prev === undefined) {
+        delete process.env.TAIYI_SKIP_QUALITY_GATE;
+      } else {
+        process.env.TAIYI_SKIP_QUALITY_GATE = prev;
+      }
+    }
   });
 
   it("rejects unknown auxiliary skill in markAuxiliary", () => {

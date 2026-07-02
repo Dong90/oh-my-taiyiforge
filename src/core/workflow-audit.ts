@@ -273,6 +273,15 @@ export function auditWorkspace(
     : listChanges(taiyiRoot).map((c) => c.slug);
 
   const changes: ChangeAuditReport[] = [];
+  if (slugs.length === 0) {
+    return {
+      ok: true,
+      workspaceDir,
+      taiyiRoot,
+      changes: [],
+      notes: [...notes, "无 .taiyi/changes/"],
+    };
+  }
   for (const slug of slugs) {
     const r = auditChange(workspaceDir, taiyiRoot, slug);
     if (r) changes.push(r);
