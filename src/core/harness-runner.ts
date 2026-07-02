@@ -8,7 +8,7 @@ import { auxiliaryForPhase, pendingAuxiliary } from "./routing/auxiliary-hints.j
 import { getPhase } from "./phase-registry.js";
 import { auxiliaryArtifactSatisfied } from "./auxiliary-artifacts.js";
 import { getOpenspecStatus } from "../integrations/openspec.js";
-import { syncTaiyiToOpenspec } from "../integrations/openspec-sync.js";
+import { ProviderRegistry } from "../config/providers.js";
 import { pendingIronTriangleHooks } from "./harness-checkpoints.js";
 import { loadTokenBudgetConfig } from "./token/budget-config.js";
 import { scanArtifactTokens } from "./token/scan-artifacts.js";
@@ -108,6 +108,14 @@ export function buildHarnessPlan(
   const phaseHooks = harness.hooks.filter(
     (h) => !(h.tool === "taiyi" && h.skill && auxSkillSet.has(h.skill)),
   );
+  /** 去重：同一 hook key 可能从 manifest + token-compress-hooks 多源添加 */
+  const seenHook = new Set<string>();
+  const dedupedHooks = phaseHooks.filter((h) => {
+    const key = `${h.tool}:${h.skill ?? ""}:${h.command ?? ""}`;
+    if (seenHook.has(key)) return false;
+    seenHook.add(key);
+    return true;
+  });
   const pending = pendingAuxiliary(recommended, state.auxiliaryCompleted);
   const blockers: string[] = [];
 
@@ -125,7 +133,7 @@ export function buildHarnessPlan(
     };
   });
 
-  const ironTriangle: HarnessStep[] = phaseHooks.map((h) => ({
+  const ironTriangle: HarnessStep[] = dedupedHooks.map((h) => ({
     kind: classifyHook(h),
     tool: h.tool,
     skill: h.skill,
@@ -168,7 +176,7 @@ export function buildHarnessPlan(
     const pendingHooks = pendingIronTriangleHooks(
       changeDir,
       phase,
-      phaseHooks,
+      dedupedHooks,
       openspec.detected,
     );
     for (const key of pendingHooks) {
@@ -234,7 +242,10 @@ export function runPostCompleteShellHooks(
       const openspec = getOpenspecStatus(workspaceDir, slug);
       if (openspec.detected) {
         const changeDir = resolveChangeDir(taiyiRoot, slug) ?? path.join(taiyiRoot, "changes", slug);
-        const sync = syncTaiyiToOpenspec(workspaceDir, slug, changeDir, { createChangeDir: true });
+        const registry = ProviderRegistry.forProject(workspaceDir);
+        const sync = registry.runCapability("spec_sync", {
+          slug, workspaceDir, taiyiChangeDir: changeDir, createChangeDir: true,
+        });
         results.push({
           kind: "shell",
           tool: "openspec",
