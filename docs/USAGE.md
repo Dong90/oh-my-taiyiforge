@@ -1,6 +1,6 @@
-# TaiyiForge 用法指南
+# TaiyiForge 用法指南（v30）
 
-> 从场景出发，不背命令。
+> 从场景出发，不背命令。**聊天顶栏 21 条**（主链 6 + 会话 4 + 排查 2 + 交付 3 + 项目 1 + 伞形 5），其余走引擎 CLI 或伞形子参数。
 
 ## 一分钟决定 profile
 
@@ -30,14 +30,16 @@
 
 用法：`/taiyi:new "标题" --profile lite` 或在 `.taiyi/config.json` 设 `defaultProfile`。
 
-**场景别名快速路由**（等同于指定 profile 的 `/taiyi:new`）：
+**场景快速路由**（引擎 CLI `flow` 替代旧 `/taiyi:flow`）：
 
-```
-/taiyi:feature       → full      /taiyi:service       → api
-/taiyi:bug           → lite      /taiyi:design-system  → ui
-/taiyi:mvp           → spike     /taiyi:flow           → 选型菜单
-/taiyi:micro         → micro     /taiyi:flow devops    → CI 指引
-/taiyi:nano          → nano
+```bash
+# 顶栏：/taiyi:plan 是项目级规划入口
+/taiyi:plan README.md          # 拆解 + 推荐 profile + 批量 /taiyi:new
+
+# 单 change 4 阶段 MVP：引擎 CLI（顶栏不暴露 flow mvp）
+scripts/taiyi-forge.sh flow mvp <slug>      # 4 阶段 lite
+scripts/taiyi-forge.sh flow micro <slug>    # 3 阶段
+scripts/taiyi-forge.sh flow nano <slug>     # 2 阶段
 ```
 
 ---
@@ -67,9 +69,9 @@
 dev 阶段才是真正写业务代码的时候。dev 之前的阶段只写 markdown 工件（引擎有 hook 硬拦）。流程：
 
 ```
-/taiyi:tdd plan                 # TDD 测试计划
-/taiyi:tdd dev                  # 红→绿→重构循环
-/taiyi:mode ralph               # 死磕：自动跑 npm test 直到全绿
+/taiyi:skill tdd plan           # TDD 测试计划（原 /taiyi:tdd plan）
+/taiyi:skill tdd dev            # 红→绿→重构循环（原 /taiyi:tdd dev）
+/taiyi:skill flow ralph         # 死磕：自动跑 npm test 直到全绿（原 /taiyi:mode ralph）
                                  # （写代码、写测试...）
 echo "command: npm test" > .taiyi/changes/<slug>/.dev-complete
 echo "exitCode: 0" >> .taiyi/changes/<slug>/.dev-complete
@@ -97,14 +99,15 @@ echo "exitCode: 0" >> .taiyi/changes/<slug>/.dev-complete
 # ---- 以下走 gstack 交付链 ----
 /taiyi:commit                   # 带 Taiyi-Change trailer 提交
 /taiyi:verify                   # PR 工件门禁（无 LLM）
-/taiyi:gstack review            # PR diff 审查
+/taiyi:skill gstack review      # PR diff 审查（原 /taiyi:gstack review）
 /taiyi:ship                     # 推送 + 创建 PR
 /taiyi:land                     # 合并 + 部署 + canary
-/taiyi:release                  # 文档发布
 
 /taiyi:continue integration     # 引擎过 integration
 /taiyi:archive                  # 归档
 ```
+
+> `/taiyi:release` 已从顶栏移除（合并入 `land` 或伞形 `/taiyi:skill gstack document-release`）。
 
 ---
 
@@ -113,15 +116,15 @@ echo "exitCode: 0" >> .taiyi/changes/<slug>/.dev-complete
 ### 新功能（full）
 ```
 /taiyi:new "用户登录"
-/taiyi:explore → write → continue --approver "张三"    # change
-write → continue                                      # requirement
-write → /taiyi:diagram c4 → continue --approver "张三" # design
-write → continue                                      # ui-design
-write → /taiyi:tdd plan → continue                    # task
-/taiyi:tdd dev → /taiyi:mode ralph → continue         # dev
-/taiyi:test smoke → write → continue                  # test
-/taiyi:review loop → /taiyi:health → continue --approver # review
-/taiyi:commit → verify → ship → land → release         # 交付
+/taiyi:skill explore → write → continue --approver "张三"    # change（原 /taiyi:explore）
+write → continue                                              # requirement
+write → /taiyi:diagram c4 → continue --approver "张三"        # design
+write → continue                                              # ui-design
+write → /taiyi:skill tdd plan → continue                      # task
+/taiyi:skill tdd dev → /taiyi:skill flow ralph → continue     # dev
+/taiyi:test smoke → write → continue                          # test
+/taiyi:review loop → /taiyi:review health → continue --approver  # review
+/taiyi:commit → verify → ship → land                          # 交付
 /taiyi:continue integration → archive
 ```
 
@@ -131,7 +134,7 @@ write → /taiyi:tdd plan → continue                    # task
 write → continue --approver "张三"    # change
 write → continue                     # requirement
 # 跳过 design / ui-design / task / review
-/taiyi:tdd dev → continue            # dev
+/taiyi:skill tdd dev → continue      # dev
 /taiyi:test smoke → write → continue # test
 /taiyi:commit → continue integration → archive
 ```
@@ -141,7 +144,7 @@ write → continue                     # requirement
 /taiyi:new "mvp-onboarding" --profile spike
 write → continue --approver     # change（动机 + 成功标准）
 # 跳过 requirement / design / ui-design / task / review
-/taiyi:tdd dev → continue       # dev
+/taiyi:skill tdd dev → continue # dev
 /taiyi:test smoke → write → continue  # test
 continue integration → archive
 # 可设 TAIYI_DELIVERY_GATE=0 本地跳过 commit；TAIYI_SKIP_QUALITY_GATE=1 加速
@@ -154,8 +157,8 @@ write → continue --approver "张三"    # change
 write → continue                     # requirement
 write → /taiyi:diagram c4 → continue # design
 # 跳过 ui-design
-write → /taiyi:tdd plan → continue   # task
-/taiyi:tdd dev → /taiyi:mode ralph → continue
+write → /taiyi:skill tdd plan → continue   # task
+/taiyi:skill tdd dev → /taiyi:skill flow ralph → continue
 /taiyi:test smoke → write → continue
 /taiyi:review loop → /taiyi:test security → continue --approver
 /taiyi:commit → ship → land → continue integration → archive
@@ -167,58 +170,37 @@ write → /taiyi:tdd plan → continue   # task
 write → continue --approver          # change
 write → continue                     # requirement
 write → /taiyi:diagram c4 → continue # design
-write → /taiyi:restyle → continue    # ui-design（restyle 辅助）
-write → /taiyi:tdd plan → continue   # task
-/taiyi:tdd dev → continue            # dev
+write → /taiyi:skill flow restyle → continue    # ui-design（restyle 辅助）
+write → /taiyi:skill tdd plan → continue   # task
+/taiyi:skill tdd dev → continue        # dev
 /taiyi:test ui → /taiyi:test smoke → write → continue  # test
-/taiyi:gstack design-review → /taiyi:review loop → continue --approver
-/ /taiyi:commit → ship → land → continue integration → archive
+/taiyi:skill gstack design-review → /taiyi:review loop → continue --approver
+/taiyi:commit → ship → land → continue integration → archive
 ```
 
 ### 极简改动（nano）
 ```
 /taiyi:new "hotfix" --profile nano
-/taiyi:tdd dev → continue       # dev（创建 .dev-complete）
+/taiyi:skill tdd dev → continue       # dev（创建 .dev-complete）
 continue integration → archive
 # 零文档，dev 直起，TAIYI_SKIP_QUALITY_GATE=1 可跳过门禁
 ```
 
 ---
 
-## 常用伞形命令（完整子命令树）
+## 伞形命令（v30 顶栏 · 5 条）
 
-### `/taiyi:mode` — 多 Agent 编排
-```
-/taiyi:mode ralph           # 死磕模式：自动跑 npm test 直到全绿
-/taiyi:mode autopilot       # 全自动：AutoPlanner → Executor → Verifier
-/taiyi:mode daemon          # 守候模式：持续 monitor 并自动推进
-/taiyi:mode team            # 团队模式：多 Agent 并行协作
-/taiyi:mode ultrawork       # 超并行：切片多 Agent 同时 dev+test
-/taiyi:mode agent list      # 列出可用 Agent 角色
-/taiyi:mode agent <角色>    # 启动指定 Agent 角色
-/taiyi:mode step <slug>     # 单步驱动（CI/daemon 内用）
-/taiyi:mode stop            # 停止所有活跃模式
-/taiyi:mode list            # 列出活跃模式
-/taiyi:mode keyword ralph   # 检测 OMC 关键词是否激活
-/taiyi:mode preflight       # 启动前自检
-```
+> 已砍掉 `/taiyi:mode` `/taiyi:workflow` `/taiyi:explore` `/taiyi:flow` `/taiyi:tdd` `/taiyi:gstack` `/taiyi:sp` 7 个独立伞形；功能合并入 `/taiyi:skill <name>` 单一伞形 + 引擎 CLI。
 
-### `/taiyi:workflow` — 工作流扩展
+### `/taiyi:skill <name>` — 外部 Skill 路由
+
 ```
-/taiyi:workflow plan          # GSD plan-phase 规划
-/taiyi:workflow ralplan       # Ralph + Plan 组合
-/taiyi:workflow loop          # 循环执行 continue 直到 blocked
-/taiyi:workflow sync          # 同步状态 → 去僵 block
-/taiyi:workflow ccg           # Codex Code Gen
-/taiyi:workflow sciomc        # Scientific OMC
-/taiyi:workflow deepinit      # Deep context initialization
-/taiyi:workflow remember      # 持久化记忆到 project-memory.json
-/taiyi:workflow ultraqa       # 并行多 Agent QA
-/taiyi:workflow deep-interview # 深度需求访谈
-/taiyi:workflow visual-verdict # 可视化评审
-/taiyi:workflow ai-slop-cleaner # AI 产出质量清洁
-/taiyi:workflow ecomode       # 经济模式（节能 token）
-/taiyi:workflow external-context # 加载外部上下文
+/taiyi:skill gstack <name>        # gstack 任意 Skill：review · qa · design-shotgun · autoplan · canary · design-review
+/taiyi:skill sp <name>            # Superpowers 任意 Skill：brainstorming · test-driven-development · writing-plans · verification
+/taiyi:skill explore              # 头脑风暴（同 brainstorming）
+/taiyi:skill tdd plan|dev         # TDD 红绿重构（plan=测试计划，dev=红→绿→重构）
+/taiyi:skill flow <verb>          # 全工具链剧本：ralph · autopilot · team · ultrawork · agent · step · stop · restyle …
+/taiyi:skill flow mvp|micro|nano  # lite 路径（短流程剧本）
 ```
 
 ### `/taiyi:test` — 测试链
@@ -262,14 +244,20 @@ continue integration → archive
 ```
 /taiyi:list              # 列出所有变更及阶段
 /taiyi:list --archived   # 已归档变更
-/taiyi:pause           # 暂停工作，写 HANDOFF.md
-/taiyi:resume            # 恢复工作
+/taiyi:pause             # 暂停工作，写 HANDOFF.md
+/taiyi:pause --resume    # 恢复工作（从 HANDOFF.md）
 /taiyi:cancel <slug>     # 放弃变更
-/taiyi:doctor            # 安装自检（四端 skills + CLI）
-/taiyi:audit             # 流程排查
-/taiyi:health             # 代码健康报告
-/taiyi:intel-scan         # 代码库情报扫描 → CONTEXT.md
-/taiyi:architect          # 架构决策记录 ADR
+```
+
+### Legacy（已从顶栏移除 · 引擎 CLI 仍可用）
+
+```bash
+scripts/taiyi-forge.sh doctor              # 安装自检（四端 skills + CLI）
+scripts/taiyi-forge.sh audit               # 流程排查（漂移、交付未闭环）
+scripts/taiyi-forge.sh health              # 代码健康报告
+scripts/taiyi-forge.sh release             # 文档发布
+scripts/taiyi-forge.sh plan <file>         # = /taiyi:plan（聊天等价）
+scripts/taiyi-forge.sh ralph|autopilot|... # = /taiyi:skill flow <verb>
 ```
 
 ---
@@ -308,4 +296,4 @@ continue integration → archive
 
 ## 一句话总结
 
-**写就 `/taiyi:write`，过就 `/taiyi:continue`，停就 `/taiyi:pause`，交就 `/taiyi:commit → ship → land → archive`。**
+**新建 `/taiyi:new`（项目级先 `/taiyi:plan`），写 `/taiyi:write`，过 `/taiyi:continue`，停 `/taiyi:pause`，交 `/taiyi:commit → ship → land → archive`。**

@@ -59,7 +59,7 @@
     "walkthrough": "node scripts/walkthrough.mjs",
     "ci:verify": "node scripts/ci.mjs verify",
     "ci:platforms": "node scripts/ci.mjs platform opencode && node scripts/ci.mjs platform claude && node scripts/ci.mjs platform codex && node scripts/ci.mjs platform cursor",
-    "prepublishOnly": "npm run build && npm run check:docs && npm test",
+    "prepublishOnly": "npm run build && node scripts/sync-hbs-templates.mjs && npm run check:docs && npm test",
     "taiyi:doctor": "taiyi doctor --strict-workspace",
     "taiyi:verify": "taiyi verify",
     "taiyi:smoke": "node -e \"const{spawnSync}=require('child_process');const r=spawnSync(process.execPath,['dist/cli/taiyi.js','--version']);process.exit(r.status)\"",

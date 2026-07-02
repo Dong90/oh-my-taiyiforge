@@ -1,6 +1,6 @@
 # TaiyiForge 快速开始
 
-> **何时读本文**：第一次安装或跑通 `new → status → continue → archive` 时。**命令全集** → [canonical-commands.md](./taiyi/canonical-commands.md) · **工件目录** → [artifact-layout.md](./taiyi/artifact-layout.md)
+> **何时读本文**：第一次安装或跑通 `new → status → continue → archive` 时。**命令全集** → [canonical-commands.md](./taiyi/canonical-commands.md) · **九阶段详解** → [nine-phase-flow.md](./taiyi/nine-phase-flow.md) · **工件目录** → [artifact-layout.md](./taiyi/artifact-layout.md)
 
 5 分钟跑通 **OpenCode / Claude / Codex / Cursor** 任一端。
 
@@ -58,17 +58,17 @@ npx taiyi init my-first --title "My First Change"   # 固定 slug / CI
 npx taiyi next my-first     # 人类可读下一步（推荐）
 ```
 
-编辑 `.taiyi/changes/my-first/CHANGE.md` 后：
+编辑 `.taiyi/changes/my-first/change.json`（语义真源），再渲染可读视图：
 
 ```bash
-# change / design / review 为人工门，需 --approver
-npx taiyi complete my-first change --approver "你的名字"
-npx taiyi next my-first
-npx taiyi list
+scripts/taiyi-forge.sh render my-first change
+scripts/taiyi-forge.sh status my-first --json --compact   # 预检 blockers
+# change / design / review 为人工门
+scripts/taiyi-forge.sh continue my-first --approver "你的名字"
+scripts/taiyi-forge.sh status my-first                      # 确认阶段已推进
 ```
 
-人工门阶段也可用：`npx taiyi continue my-first --approver "你的名字"` 或 `npx taiyi done my-first --approver "你的名字"`。  
-仅 CI/测试可设 `TAIYI_AUTO_HUMAN=1` 跳过审批。
+每阶段重复：**编辑 json → render → status → continue**（详见 [nine-phase-flow.md](./taiyi/nine-phase-flow.md) · [artifact-contract.md](./taiyi/artifact-contract.md)）。Legacy：`npx taiyi complete` 仍可用；聊天优先 `/taiyi:status` · `/taiyi:continue` · `/taiyi:render`。
 
 ## dev 后 commit + integration 交付门
 
