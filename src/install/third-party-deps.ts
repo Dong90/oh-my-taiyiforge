@@ -5,6 +5,7 @@ import { homeDir } from "./paths.js";
 import { addPluginEntryToConfigFile } from "./opencode-plugin.js";
 import { opencodeConfigCandidates } from "./paths.js";
 import type { InstallResult, InstallTarget } from "./types.js";
+import { ProviderRegistry } from "../config/providers.js";
 
 export const GSTACK_REPO = "https://github.com/garrytan/gstack.git";
 export const SUPERPOWERS_GIT_PLUGIN = "superpowers@git+https://github.com/obra/superpowers.git";
@@ -467,10 +468,92 @@ function installWebQualitySkills(targets: InstallTarget[]): InstallResult {
   };
 }
 
+/**
+ * 安装后检测 provider 可用性，写入 .taiyi/providers.yaml。
+ * 自动创建 .taiyi/ 目录（如果不存在）。
+ */
+export function writeDetectedProviderConfig(
+  workspaceDir: string,
+  targets: InstallTarget[],
+  home = homeDir(),
+): { ok: boolean; path: string; detail: string } {
+  const taiyiDir = path.join(path.resolve(workspaceDir), ".taiyi");
+  const configPath = path.join(taiyiDir, "providers.yaml");
+
+  fs.mkdirSync(taiyiDir, { recursive: true });
+
+  const results = detectThirdPartyDeps(targets, home);
+
+  const lines: string[] = [
+    "version: 1",
+    "",
+    "# 安装时自动检测到的 Provider assignment（仅供查阅）",
+    "# 如需覆盖某能力的 provider，修改下方 assignment 后保存即可生效",
+    "# 未列出的能力使用内置默认",
+    "",
+    "assignments:",
+  ];
+
+  const installed: Record<string, boolean> = {};
+  for (const r of results) installed[r.id] = r.installed;
+
+  if (installed.openspec) {
+    lines.push("  spec_archive: openspec");
+    lines.push("  spec_sync: openspec");
+  }
+  if (installed.gstack) {
+    lines.push("  browser_qa: gstack");
+    lines.push("  eng_review: gstack");
+    lines.push("  design_review: gstack");
+    lines.push("  code_review: gstack");
+    lines.push("  doc_release: gstack");
+  }
+  if (installed.superpowers) {
+    lines.push("  process_skills: superpowers");
+  }
+  if (installed["web-quality-skills"]) {
+    lines.push("  accessibility: web-quality");
+    lines.push("  design_guidelines: web-quality");
+  }
+
+  // 注释 header 告知用户：运行时 providers 定义和 defaults 来自引擎内置，
+  // 不写入 providers 段（auto-gen 格式无法被 parseSimpleYaml 回读）。
+  lines.push("", "# Provider 定义和默认分配见引擎内置 (src/config/providers.ts) 或插件的 package.json");
+
+  fs.writeFileSync(configPath, lines.join("\n") + "\n");
+
+  const count = results.filter((r) => r.installed).length;
+  return {
+    ok: true,
+    path: configPath,
+    detail: `检测到 ${count}/${results.length} 个 provider 已安装；配置写入 ${configPath}`,
+  };
+}
+
+/**
+ * 重新检测已安装的 provider，写入 .taiyi/providers.yaml，刷新 ProviderRegistry 缓存。
+ *
+ * 典型调用场景：
+ * - 安装后（installThirdPartyDeps 内部自动调用）
+ * - doctor 时重新检测
+ * - 用户手动触发 sync（/taiyi:doctor 或 CLI taiyi-forge-install --rescan）
+ */
+export function syncProviders(
+  workspaceDir: string,
+  targets: InstallTarget[],
+  home = homeDir(),
+): { ok: boolean; registry: ProviderRegistry; detail: string } {
+  const result = writeDetectedProviderConfig(workspaceDir, targets, home);
+  const registry = ProviderRegistry.forProjectFresh(workspaceDir);
+  return { ok: result.ok, registry, detail: result.detail };
+}
+
 export type InstallThirdPartyOptions = {
   targets: InstallTarget[];
   home?: string;
   silent?: boolean;
+  /** 如果提供 workspace 路径，安装完成后写入 .taiyi/providers.yaml */
+  workspaceDir?: string;
 };
 
 export function installThirdPartyDeps(opts: InstallThirdPartyOptions): InstallResult[] {
@@ -486,6 +569,14 @@ export function installThirdPartyDeps(opts: InstallThirdPartyOptions): InstallRe
     for (const r of results) {
       const mark = r.action === "failed" ? "✗" : "✓";
       console.log(`[oh-my-taiyiforge] ${mark} deps/${r.target}: ${r.action} — ${r.detail ?? r.path}`);
+      void mark;
+    }
+  }
+
+  if (opts.workspaceDir) {
+    const providerResult = syncProviders(opts.workspaceDir, opts.targets, home);
+    if (!opts.silent) {
+      console.log(`[oh-my-taiyiforge] ✓ providers: ${providerResult.detail}`);
     }
   }
 

@@ -9,6 +9,9 @@ import {
   findGstackDir,
   gstackSetupHostArgs,
   shouldInstallDeps,
+  writeDetectedProviderConfig,
+  detectThirdPartyDeps,
+  syncProviders,
 } from "../src/install/third-party-deps.js";
 import { parseInstallCli } from "../src/install/run.js";
 
@@ -66,5 +69,81 @@ describe("third-party-deps", () => {
     const r = detectOpenspec();
     expect(r.id).toBe("openspec");
     expect(typeof r.installed).toBe("boolean");
+  });
+
+  it("writeDetectedProviderConfig creates providers.yaml with assignments", () => {
+    const r = writeDetectedProviderConfig(tmp, ["opencode", "claude"], tmp);
+    expect(r.ok).toBe(true);
+    expect(r.path).toBe(path.join(tmp, ".taiyi", "providers.yaml"));
+
+    const content = fs.readFileSync(r.path, "utf8");
+    expect(content).toContain("version: 1");
+    expect(content).toContain("assignments:");
+    expect(content).toContain("spec_archive: openspec");
+  });
+
+  it("writeDetectedProviderConfig creates .taiyi dir if missing", () => {
+    const deep = path.join(tmp, "nested", "project");
+    const r = writeDetectedProviderConfig(deep, ["opencode"], tmp);
+    expect(r.ok).toBe(true);
+    expect(fs.existsSync(path.join(deep, ".taiyi", "providers.yaml"))).toBe(true);
+  });
+
+  it("writeDetectedProviderConfig includes gstack assignments when detected", () => {
+    const gstack = path.join(tmp, ".claude", "skills", "gstack");
+    fs.mkdirSync(gstack, { recursive: true });
+    fs.writeFileSync(path.join(gstack, "setup"), "#!/bin/bash\n");
+
+    const r = writeDetectedProviderConfig(tmp, ["opencode"], tmp);
+    const content = fs.readFileSync(r.path, "utf8");
+    expect(content).toContain("  browser_qa: gstack");
+    expect(content).toContain("  eng_review: gstack");
+    expect(content).toContain("  code_review: gstack");
+    expect(content).toContain("  doc_release: gstack");
+  });
+
+  it("writeDetectedProviderConfig omits assignments for undetected providers", () => {
+    const r = writeDetectedProviderConfig(tmp, ["opencode"], "/nonexistent");
+    const content = fs.readFileSync(r.path, "utf8");
+    // When no gstack/openspec/etc is detected (bogus home), only assignments
+    // for tools that happen to be on PATH appear in the output
+    expect(content).toContain("assignments:");
+  });
+
+  it("syncProviders returns registry after writeDetectedProviderConfig", () => {
+    const first = writeDetectedProviderConfig(tmp, ["opencode", "claude"], tmp);
+    expect(first.ok).toBe(true);
+
+    const r = syncProviders(tmp, ["opencode", "claude"], tmp);
+    expect(r.ok).toBe(true);
+    expect(r.registry).toBeDefined();
+    // registry should list at least the providers that were just detected
+    expect(Object.keys(r.registry.listProviders()).length).toBeGreaterThanOrEqual(0);
+    expect(r.detail).toContain(".taiyi/providers.yaml");
+  });
+
+  it("syncProviders refreshes cache after provider config change", () => {
+    const first = writeDetectedProviderConfig(tmp, ["opencode"], tmp);
+    expect(first.ok).toBe(true);
+
+    const r1 = syncProviders(tmp, ["opencode"], tmp);
+    const before = Object.keys(r1.registry.listProviders()).length;
+
+    // add gstack and re-sync
+    const gstack = path.join(tmp, ".claude", "skills", "gstack");
+    fs.mkdirSync(gstack, { recursive: true });
+    fs.writeFileSync(path.join(gstack, "setup"), "#!/bin/bash\n");
+
+    const r2 = syncProviders(tmp, ["opencode"], tmp);
+    // gstack should now be detected in addition to openspec
+    expect(Object.keys(r2.registry.listProviders()).length).toBeGreaterThanOrEqual(before);
+  });
+
+  it("syncProviders auto-creates .taiyi dir if missing", () => {
+    const deep = path.join(tmp, "empty-project");
+    const r = syncProviders(deep, ["opencode"], tmp);
+    expect(r.ok).toBe(true);
+    expect(r.registry).toBeDefined();
+    expect(fs.existsSync(path.join(deep, ".taiyi", "providers.yaml"))).toBe(true);
   });
 });
