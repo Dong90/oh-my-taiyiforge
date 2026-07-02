@@ -3,7 +3,7 @@
 > **何时读本文**：需要 **gstack + OpenSpec + Playwright + 安全扫描 + Changesets** 全链演示或 dogfood 时。日常开发 → [superpowers-flow.md](./superpowers-flow.md) · 命令索引 → [canonical-commands.md](./canonical-commands.md)。
 
 > **一条链跑通**：九阶段 × Superpowers 14 技能 × gstack × OpenSpec × web-quality × Playwright × Semgrep × Trivy × Changesets × taiyi 辅助 Skill。  
-> **单一真源**：[`workflow-manifest.yaml`](./workflow-manifest.yaml)（引擎读取）· 本页（人类剧本）
+> **分域真源**：[`workflow-manifest.yaml`](./workflow-manifest.yaml)（harness / Superpowers 目录）· [`phases.yaml`](./phases.yaml)（九阶段 DAG）· [`builtin-profiles.ts`](../../src/core/builtin-profiles.ts)（Profile skip）· [`artifact-contract.md`](./artifact-contract.md)（json+hbs+md）· 本页（人类剧本）
 
 ## 前置安装
 
@@ -61,7 +61,7 @@ flowchart LR
 |------|--------|------|
 | 1 | 头脑风暴澄清 | Superpowers `brainstorming` → `/taiyi:explore` |
 | 2 | 代码库情报（可选） | `taiyi-intel-scan` → `CONTEXT.md` |
-| 3 | 写变更提案 | `taiyi-change` → `CHANGE.md` |
+| 3 | 写变更提案 | `taiyi-change` → `change.json` → `render` → `CHANGE.md` |
 | 4 | 打卡 | `harness-check superpowers/brainstorming` |
 | 5 | 过关 | `/taiyi:continue` |
 
@@ -71,7 +71,7 @@ flowchart LR
 |------|--------|------|
 | 1 | 写可执行计划（建议） | Superpowers `writing-plans` |
 | 2 | 对照 OpenSpec（可选） | `openspec change show <slug>` |
-| 3 | 写需求与 AC | `taiyi-requirement` → `REQUIREMENT.md` |
+| 3 | 写需求与 AC | `taiyi-requirement` → `requirement.json` → `render` → `REQUIREMENT.md` |
 | 4 | 过关 | `/taiyi:continue` |
 
 ### ③ design — 技术设计
@@ -79,7 +79,7 @@ flowchart LR
 | 顺序 | 做什么 | 工具 |
 |------|--------|------|
 | 1 | 架构决策（medium+） | `taiyi-architect` → `adr/` |
-| 2 | 写 DESIGN ≥2 方案 | `taiyi-design` → `DESIGN.md` |
+| 2 | 写 DESIGN ≥2 方案 | `taiyi-design` → `design.json` → `render` → `DESIGN.md` |
 | 3 | 工程评审 | gstack `plan-eng-review` |
 | 4 | 打卡 | `harness-check gstack/plan-eng-review` |
 | 5 | 过关 | `/taiyi:continue` |
@@ -88,7 +88,7 @@ flowchart LR
 
 | 顺序 | 做什么 | 工具 |
 |------|--------|------|
-| 1 | 写 UI 契约 | `taiyi-ui-design` → `UI-DESIGN.md` |
+| 1 | 写 UI 契约 | `taiyi-ui-design` → `ui-design.json` → `render` → `UI-DESIGN.md` |
 | 2 | 设计计划评审（有 UI） | gstack `plan-design-review` |
 | 3 | 无障碍 | web-quality `accessibility` |
 | 4 | 设计规范 | web-quality `web-design-guidelines` |
@@ -103,7 +103,7 @@ flowchart LR
 | 顺序 | 做什么 | 工具 |
 |------|--------|------|
 | 1 | TDD 计划 | `/taiyi:tdd plan` → `writing-plans` + `test-driven-development` |
-| 2 | 写 TASK | `taiyi-task` → `TASK.md` |
+| 2 | 写 TASK | `taiyi-task` → `task.json` → `render` → `TASK.md` |
 | 3 | 打卡 | `harness-check superpowers/writing-plans` · `superpowers/test-driven-development` |
 | 4 | 过关 | `/taiyi:continue` |
 
@@ -127,7 +127,7 @@ flowchart LR
 | 3 | E2E（有 Web） | `npx playwright test` |
 | 4 | 站点 QA（有 Web） | gstack `qa` |
 | 5 | 无障碍复验 | web-quality `accessibility` |
-| 6 | 写 TEST | `taiyi-test` → `TEST.md` |
+| 6 | 写 TEST | `taiyi-test` → `test.json` → `render` → `TEST.md` |
 | 7 | 架构同步（可选） | `taiyi-evolve` → `architecture-sync.md` |
 | 8 | 打卡 | verification · qa · playwright（按项目） |
 | 9 | 过关 | `/taiyi:apply` 或 `/taiyi:continue` |
@@ -141,7 +141,7 @@ flowchart LR
 | 3 | PR 结构审查 | gstack `review` |
 | 4 | SAST | `semgrep scan --config auto` |
 | 5 | 漏洞扫描 | `trivy fs .` |
-| 6 | 写 REVIEW | `taiyi-review` → `REVIEW.md` |
+| 6 | 写 REVIEW | `taiyi-review` → `review.json` → `render` → `REVIEW.md` |
 | 7 | 打卡 | superpowers/review 必选 · gstack/semgrep/trivy 按项目 |
 | 8 | 过关 | `/taiyi:continue --approver` |
 
@@ -154,7 +154,7 @@ flowchart LR
 | 3 | 提交代码 | `git commit`（交付门） |
 | 4 | 文档发布 | gstack `document-release` |
 | 5 | 版本（monorepo） | Changesets `npx changeset version` |
-| 6 | 写 CHANGELOG | `taiyi-integration` → `CHANGELOG.md` |
+| 6 | 写 integration 工件 | `taiyi-integration` → `integration.json` → `render` → 变更目录 `CHANGELOG.md` |
 | 7 | 交付预检 | `/taiyi:audit` |
 | 8 | 打卡 | finishing-a-development-branch · verification · document-release |
 | 9 | 过关 | `/taiyi:continue` |
@@ -177,7 +177,7 @@ flowchart LR
 harness <slug>           # 看 §1 铁三角 + §2 辅助 + §3 主 Skill
 → 逐项加载并执行
 → harness-check 每项（必选必打，可选建议打）
-→ complete <phase>
+→ continue <phase>   # 聊天 /taiyi:continue；CLI 别名 complete
 → 重复至 integration
 ```
 
