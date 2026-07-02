@@ -231,7 +231,7 @@ export function runPhaseWriteGuide(
   lines.push(`  quality 就绪 → /taiyi:continue${requiresHumanGate(phase) ? ' --approver "名字"' : ""}`);
 
   if (phase === "dev") {
-    lines.push("  实现后: /taiyi:ralph → complete dev（或 test 阶段 continue）");
+    lines.push("  实现后: /taiyi:ralph → status → continue（dev；test 阶段同理）");
   }
 
   return {
