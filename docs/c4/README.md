@@ -26,7 +26,7 @@
 | OpenCode 插件入口 | `main` → `src/plugin/index.ts`；`src/plugin/handlers.ts` |
 | MCP 服务 | `bin.taiyi-mcp` → `src/mcp/server.ts` |
 | 核心引擎 | `src/core/workflow-engine.ts` 及子模块（gates、routing、token、runtime） |
-| 工作流真源 | `docs/taiyi/workflow-manifest.yaml`、`docs/taiyi/phases.yaml` |
+| 工作流真源 | `docs/taiyi/workflow-manifest.yaml`（harness）· `docs/taiyi/phases.yaml`（拓扑）· `builtin-profiles.ts`（Profile） |
 | 聊天契约 | `skills/taiyi-*/SKILL.md`（23 个）、`prompts/taiyi-*.md` |
 | 安装器 | `src/install/run.ts`（`taiyi-forge-install`） |
 | 工件目录 | `.taiyi/changes/<slug>/`（`src/core/paths.ts`） |

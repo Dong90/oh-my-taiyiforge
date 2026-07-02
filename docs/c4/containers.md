@@ -32,7 +32,7 @@ flowchart TB
       direction LR
       art[("变更工件<br/>.taiyi/changes/")]
       sk["Skill 契约<br/>skills/ · prompts/"]
-      man["工作流清单<br/>workflow-manifest.yaml"]
+      man["Harness 清单<br/>workflow-manifest.yaml"]
     end
   end
 
@@ -76,7 +76,7 @@ flowchart TB
 | 集成层 | `src/integrations/*.ts` |
 | 变更工件 | `.taiyi/changes/<slug>/` |
 | Skill 契约 | `skills/taiyi-*/`, `prompts/taiyi-*.md` |
-| 工作流清单 | `docs/taiyi/workflow-manifest.yaml` |
+| Harness 清单 | `docs/taiyi/workflow-manifest.yaml` |
 
 ---
 
