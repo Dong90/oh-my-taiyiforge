@@ -54,13 +54,13 @@ describe("prompt-stage-protocol", () => {
     expect(out).toContain("gstack Skill");
   });
 
-  it("replaces superpowers invoke placeholder", () => {
-    const out = renderTaiyiPrompt(
-      "taiyi-sp.md",
-      `sp\n\n{{SUPERPOWERS_INVOKE}}\n`,
-      promptsDir,
-    );
-    expect(out).not.toContain("{{SUPERPOWERS_INVOKE}}");
-    expect(out).toContain("Superpowers Skill");
+  it("taiyi-skill umbrella covers gstack + superpowers + explore + tdd + flow", () => {
+    const raw = fs.readFileSync(path.join(promptsDir, "taiyi-skill.md"), "utf8");
+    const out = renderTaiyiPrompt("taiyi-skill.md", raw, promptsDir);
+    expect(out).toContain("gstack");
+    expect(out).toContain("Superpowers");
+    expect(out).toContain("explore");
+    expect(out).toContain("tdd");
+    expect(out).toContain("flow");
   });
 });

@@ -40,19 +40,40 @@ change  change change change（各自走九阶段）
 
 `/taiyi:plan` 可以接文件路径，支持任何能读出文字的内容：
 
-| 输入 | 用法 | 提取方式 |
-|------|------|---------|
-| 本地 Markdown | `/taiyi:plan docs/PRD.md` | 直接读取 |
-| 纯文本 | `/taiyi:plan requirements.txt` | 直接读取 |
-| PDF | `/taiyi:plan docs/spec.pdf` | 提取文本后分析 |
-| Word 文档 | `/taiyi:plan docs/设计文档.docx` | 提取文本后分析 |
-| 网页 / 在线文档 | `/taiyi:plan https://wiki.example.com/prd` | 抓取后分析 |
-| 不指定文件 | `/taiyi:plan` | 自动找 README.md，找不到则询问 |
+| 输入 | 用法 | 提取方式 | 工具 |
+|------|------|---------|------|
+| 本地 Markdown | `/taiyi:plan docs/PRD.md` | `Read` 直接读取 | 内置 |
+| 纯文本 | `/taiyi:plan requirements.txt` | `Read` 直接读取 | 内置 |
+| PDF | `/taiyi:plan docs/spec.pdf` | `look_at` 或 `pdftotext` 提取文本 | `look_at` / `pdftotext` |
+| Word 文档 | `/taiyi:plan docs/设计文档.docx` | `python-docx` 或 `pandoc` 转文本 | `python-docx` / `pandoc` |
+| 网页 / 在线文档 | `/taiyi:plan https://wiki.example.com/prd` | `webfetch` 抓取后解析 | `webfetch` |
+| 不指定文件 | `/taiyi:plan` | 自动找 README.md，找不到则询问 | `glob **/README.md` |
 
 **执行方式**：
 1. 读取指定文件 → 提取全部文字内容
-2. 如果是非文本格式（PDF/docx），先用对应工具提取文本
+2. 如果是非文本格式（PDF/docx），先用对应工具提取文本（PDF 优先 `look_at`，docx 回退到 `python-docx`）
 3. 将提取的文字作为需求输入，进入正常的拆解流程
+
+## 自动模式（`--auto`）
+
+`/taiyi:plan README.md --auto` 与普通模式的核心区别：
+
+| 维度 | 普通模式 | `--auto` 模式 |
+|------|---------|---------------|
+| 用户确认 | **必须**等用户确认后再创建 | **跳过**用户确认，拆完即创建 |
+| 拆解计划 | 写到 `.taiyi/PLAN.md` + 聊天审阅 | 直接写到 `.taiyi/PLAN.md`，不展开聊 |
+| Profile 选择 | 按决策树问用户 | 按决策树**自动判断**（拿不准时默认 full） |
+| 创建方式 | 用户选"自动创建"才批量 `/taiyi:new` | 立即批量 `/taiyi:new` |
+| 交互节奏 | 慢：展示 → 确认 → 创建 | 快：一行命令跑完 |
+
+**执行差异**：
+
+1. 依然需要走完"读取需求 → 识别模块 → 冲突检测 → 拆解计划"全部步骤
+2. 拆解计划写完后，**不等用户确认**，直接进入批量创建（Step 6）
+3. 创建完成后输出汇总，用户直接进入 `/taiyi:status` 看进度
+4. `--auto` 模式下如果遇到模棱两可的选择（如不确定用 full 还是 api），**往大选**（full > api > lite），宁浪费一点流程也不能漏掉关键步骤
+
+> `--auto` 不改变拆解逻辑，只改变确认节奏。用户信任 AI 的拆解判断时可省一次来回。
 
 ## 输出
 
@@ -66,11 +87,11 @@ change  change change change（各自走九阶段）
 
 ## 拆解清单
 
-| # | Slug | 范围 | Profile | 共享资源 | 可并行 | 优先级 |
-|---|------|------|---------|----------|--------|--------|
-| 1 | user-auth | 注册/登录/权限 | full | auth 框架 | ✅ 与 product-crud | P0 |
-| 2 | product-crud | 商品增删改查 | full | auth 框架 | ✅ 与 user-auth | P0 |
-| 3 | order-flow | 下单/支付/状态机 | full | user-auth 的 session API | ❌ 等 1,2 | P1 |
+| # | Slug | 范围 | Profile | 依赖 (depends_on) | 共享资源 | 可并行 | 优先级 |
+|---|------|------|---------|--------------------|----------|--------|--------|
+| 1 | user-auth | 注册/登录/权限 | full | — | auth 框架 | ✅ 与 product-crud | P0 |
+| 2 | product-crud | 商品增删改查 | full | — | auth 框架 | ✅ 与 user-auth | P0 |
+| 3 | order-flow | 下单/支付/状态机 | full | user-auth | user-auth 的 session API | ❌ 等 1,2 | P1 |
 
 ## 依赖关系与并行度
 
@@ -79,10 +100,24 @@ change  change change change（各自走九阶段）
      │              │
      └──────┬───────┘
             ▼
-       order-flow（依赖 session API，等前两者到 dev）
+       order-flow（依赖 session API，等 user-auth 到 dev）
 ```
 
 > 并行标记：⚡ = 不共享文件可同时推进，❌ = 有共享资源需排队
+
+## 整体进度追踪
+
+此 PLAN.md 创建后，每次完成一个 change 的归档，手动更新进度行：
+
+```
+⏳ 进度: [░░░░░░░░░░] 0/3 change 完成
+         user-auth (change) · product-crud (change) · order-flow (pending)
+```
+
+格式惯例：
+- `pending` — 未创建
+- `(当前阶段名)` — 推进中
+- `✅` — 已完成归档
 
 ## 执行建议
 
@@ -136,6 +171,33 @@ Wave 2（Wave 1 到 dev 后说「启动 Wave 2」手动创建）：
 - 「用户可以注册登录」→ user-auth
 - 「用户可以浏览商品」→ product-browse
 - 「用户可以下单支付」→ order-flow
+
+**2.1a 粒度准则**（量化判定合并/拆分）
+
+拆太粗 → 一个 change 包含多个独立功能，无法并行。拆太细 → 多个 change 改同一堆文件，合代码时冲突爆炸。
+
+| 条件 | 判定 | 处理 |
+|------|------|------|
+| 两个功能**共享文件比例 > 50%**（如改同一个 controller 的所有方法） | 太碎 | **合并为一个 change** |
+| 两个功能**共享文件 20%–50%**（如改同一文件的不同区域） | 弱分离 | 各自独立 change，PLAN.md 标注共享文件，dev 阶段注意不重叠 |
+| 两个功能**共享文件 < 20%**（如不同包/不同目录） | 真分离 | 各自独立 change，真并行 |
+| 一个功能**内部可拆为互不重叠的子模块**（如 "登录" 和 "权限管理" 虽在 auth 域但文件不重叠） | 可再拆 | 拆为多个 change，标注 `真并行` |
+| 一个功能**估算工期 < 30 分钟**（如加一个配置项） | 太碎 | 并入关联 change 或改走 micro/nano |
+
+**量化方法**：看一眼两个功能预期改动的文件列表，数重叠文件数：
+
+```
+重叠比例 = 交集文件数 / 并集文件数 × 100%
+
+user-auth:  src/auth/login.ts, src/auth/session.ts, src/middleware/auth.ts
+admin-panel: src/auth/login.ts, src/admin/dash.ts, src/admin/users.ts
+
+交集: {src/auth/login.ts} → 1
+并集: {src/auth/login.ts, src/auth/session.ts, src/middleware/auth.ts, src/admin/dash.ts, src/admin/users.ts} → 5
+重叠比例: 1/5 = 20% → 弱分离 → 各自独立
+```
+
+> **不要对着代码做精确计算**。按功能描述估算文件级重叠度就可以，不用真的去读源码。重点是避免"把耦合的拆开"或"把可并行的合并"。
 
 **2.2 共享资源检测（借鉴 Claude Code 的隔离策略）**
 
@@ -235,6 +297,20 @@ order-flow   → 只需关注 src/orders/、src/payment/
 > - **手动创建**：你自己逐个调，可以改 slug 名或 profile
 > - **调整**：哪部分需要改？
 
+### 5a. 调整/重新规划
+
+用户选了"调整"时，不要从头开始。按修改类型走不同路径：
+
+| 用户说 | 处理方式 |
+|--------|---------|
+| "这几个合并" | 把涉及 slug 的预期文件列表合并，重新算冲突/依赖/profile |
+| "这个不要了" | 从拆解清单删掉这一行，更新总数和依赖关系 |
+| "这个改 profile" | 只改这一行的 profile 列，重算依赖关系 |
+| "再加一个功能" | 回到 Step 2 对这一功能做一遍拆解，追加到清单末尾 |
+| "顺序调整" | 只改优先级的数字，依赖关系不变 |
+
+调整完**重新展示**一遍完整清单，再次问用户确认。
+
 ### 6. 自动创建（用户选「自动」时执行）
 
 用户选择自动后，**立即按依赖顺序创建所有 change**：
@@ -244,6 +320,8 @@ order-flow   → 只需关注 src/orders/、src/payment/
 2. P1、有依赖的 slug → 紧接其后创建
 3. 按拆解计划中的 profile 参数
 
+**种子模板对齐**：同一批创建的 change 共享项目级上下文。对每个 change 的 CHANGE.md 种子（`--title` / `--motivation` / `--description`），从原始需求文档中提取该模块对应的段落填入，使得 CHANGE.md 的"Motivation"和"Description"一开始就有内容，不是空模板。
+
 **执行方式**：自动调用 `/taiyi:new`，不要等用户手动敲。
 
 ```
@@ -251,6 +329,31 @@ order-flow   → 只需关注 src/orders/、src/payment/
 /taiyi:new "product-crud" --profile full
 /taiyi:new "order-flow" --profile full
 /taiyi:new "deploy-scripts" --profile micro
+```
+
+**错误处理**：
+
+| 场景 | 处理 |
+|------|------|
+| slug 已存在（部分失败） | 跳过已存在的 slug，继续创建剩余的。**不从头回滚**。最终汇总标出哪些是新建、哪些已存在 |
+| slug 无效（含特殊字符） | 跳过该 slug，把问题打印出来，继续创建其他 |
+| 磁盘空间不足 / 权限错误 | 全部失败，打印错误信息，建议用户检查磁盘/权限 |
+| 批量中某个 `taiyi:new` 异常（如模板缺失） | 跳过该 slug，记到 `⚠️ 失败` 清单，继续创建其他 |
+| **全部失败** | 打印全部错误，建议 `taiyi doctor` 诊断环境 |
+| **部分成功** | 输出对比表：✅ 成功 / ⚠️ 失败 / ⏭️ 跳过 |
+
+```
+✅ 已创建 N 个 change（其中 ⚠️ 2 个失败）：
+
+| Slug | Profile | 结果 |
+|------|---------|------|
+| user-auth | full | ✅ change 阶段 |
+| product-crud | full | ✅ change 阶段 |
+| order-flow | full | ⚠️ slug 已存在，跳过 |
+| weird/name | full | ⚠️ 无效 slug，跳过 |
+
+失败可手动处理：taiyi:new "order-flow" --profile full --force
+下一步：/taiyi:status 看进度，/taiyi:continue 推进
 ```
 
 创建完后输出汇总：
@@ -264,21 +367,27 @@ order-flow   → 只需关注 src/orders/、src/payment/
 | product-crud | full | change 阶段 |
 | ... | | |
 
-下一步：/taiyi:status 看进度，/taiyi:continue 推进
+下一步：在 PLAN.md 更新进度追踪行
   建议先并行推进 <P0无依赖的slug>
 ```
 
 ## 质量自检
 
 - [ ] 每个 slug 的范围边界清晰，不重叠
-- [ ] 依赖关系标注完整
-- [ ] profile 选择有依据
+- [ ] 粒度：无超过 50% 文件重叠的独立 slug（应合并），无可进一步拆解的粗粒度 slug
+- [ ] 依赖关系标注完整（depends_on 列无遗漏）
+- [ ] profile 选择有依据（按决策树，不可凭感觉）
 - [ ] 执行顺序合理（无循环依赖）
-- [ ] 用户已确认计划
+- [ ] 用户已确认计划（普通模式）
+- [ ] 超过 5 个 change 已分波
+- [ ] PLAN.md 的进度追踪行已初始化
 
 ## 禁止
 
 - 在拆解阶段就开始写 CHANGE.md
 - 把明显耦合的功能拆进不同 slug
 - 给 P0 功能推荐 nano/micro profile
-- 跳过用户确认直接创建 change
+- 跳过用户确认直接创建 change（非 `--auto` 模式）
+- 不标注 `depends_on` 就结束拆解
+- 批量创建时部分失败不回滚（遇到错误只跳过，不删已成功的）
+- 调整重规划时从头重做——基于已有清单增删改查即可

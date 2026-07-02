@@ -94,9 +94,36 @@ export function parseInstallCli(argv: string[]): ParsedInstallCli {
   }
 
   const targets: InstallTarget[] = [];
-  for (const arg of argv) {
-    const t = TARGET_FLAGS[arg];
-    if (t && !targets.includes(t)) targets.push(t);
+  const unknownArgs: string[] = [];
+  for (let i = 0; i < argv.length; i++) {
+    const arg = argv[i];
+    if (arg.startsWith("--")) {
+      const t = TARGET_FLAGS[arg];
+      if (t) {
+        if (!targets.includes(t)) targets.push(t);
+      } else if (
+        arg !== "--all" &&
+        arg !== "--skip-deps" &&
+        arg !== "--manifest" &&
+        arg !== "--help" &&
+        arg !== "-h"
+      ) {
+        // --manifest <value> 跳过下个参数（值）
+        unknownArgs.push(arg);
+      } else if (arg === "--manifest") {
+        // 跳过 value（被 --manifest flag 消费）
+        i++;
+      }
+    }
+  }
+
+  if (unknownArgs.length > 0) {
+    const known = Object.keys(TARGET_FLAGS).concat(["--all", "--skip-deps", "--manifest <name>"]).join(", ");
+    throw new Error(
+      `Unknown argument(s): ${unknownArgs.join(" ")}\n` +
+      `Known arguments: ${known}\n` +
+      `Run with --help for usage.`,
+    );
   }
 
   if (targets.length === 0) {
@@ -126,9 +153,10 @@ export function shouldRunPostinstall(env = process.env): boolean {
 function pickOpencodeConfigPath(cwd: string): string {
   const home = process.env.HOME || process.env.USERPROFILE || "";
   const global = path.join(home, ".config", "opencode", "opencode.json");
-  if (fs.existsSync(global)) return global;
-  const found = opencodeConfigCandidates(cwd).find((p) => fs.existsSync(p));
-  return found ?? global;
+  // 项目内配置优先（避免污染全局配置）
+  const projectConfig = opencodeConfigCandidates(cwd).find((p) => fs.existsSync(p));
+  if (projectConfig) return projectConfig;
+  return global;
 }
 
 function formatInstallSummary(targets: InstallTarget[], dirs: ReturnType<typeof defaultSkillTargets>): string {
@@ -215,7 +243,11 @@ export async function runInstall(opts: RunInstallOptions = {}): Promise<InstallR
 
   const wantsDeps = opts.installDeps ?? shouldInstallDeps();
   if (wantsDeps) {
-    results.push(...installThirdPartyDeps({ targets, silent }));
+    results.push(...installThirdPartyDeps({
+      targets,
+      silent,
+      workspaceDir: opts.cwd ?? process.cwd(),
+    }));
   }
 
   if (process.env.TAIYI_FORGE_SKIP_PROJECT_WRAPPER !== "1") {
@@ -281,6 +313,13 @@ export function installResultsExitCode(results: InstallResult[]): number {
 export async function runInstallCli(argv: string[]): Promise<number> {
   const parsed = parseInstallCli(argv);
 
+  // 处理 --manifest <name> flag（注册式 manifest 选择）
+  const manifestIdx = argv.indexOf("--manifest");
+  if (manifestIdx >= 0 && argv[manifestIdx + 1]) {
+    process.env.TAIYI_WORKFLOW_MANIFEST = argv[manifestIdx + 1];
+    log(false, `[oh-my-taiyiforge] using manifest preset: ${argv[manifestIdx + 1]}`);
+  }
+
   if (parsed.help) {
     console.log(`Usage: taiyi-forge-install [--all] [--opencode] [--claude] [--codex] [--cursor]
 
@@ -290,10 +329,12 @@ export async function runInstallCli(argv: string[]): Promise<number> {
   --codex                 ~/.codex/skills/taiyi-* + prompts/taiyi-* + AGENTS.md + config.toml
   --cursor                ~/.cursor/skills/taiyi-* + commands/taiyi-*
   --skip-deps             不自动安装 OpenSpec / gstack / Superpowers / web-quality-skills
+  --manifest <name>       选择 manifest preset: default | optimized（激进：ECC 强约束）
 
 组合示例：
   taiyi-forge-install --claude --cursor
   taiyi-forge-install --opencode --cursor
+  TAIYI_WORKFLOW_MANIFEST=optimized taiyi status foo   # 运行时切换
 
 Env:
   TAIYI_FORGE_SKIP_POSTINSTALL=1      跳过 postinstall

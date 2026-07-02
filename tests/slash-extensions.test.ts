@@ -18,40 +18,37 @@ function rendered(name: string): string {
   return renderTaiyiPrompt(name, readPrompt(name), promptsDir);
 }
 
-/** 新增斜杠扩展 — 内容与占位符契约 */
+/** v30 斜杠扩展 — 单一 /taiyi:skill 伞形吸收原 gstack/sp/explore/tdd/flow */
 describe("slash extensions", () => {
-  it("taiyi-gstack routes named skills including user-requested four", () => {
-    const body = rendered("taiyi-gstack.md");
-    expect(body).toContain("/taiyi:gstack");
+  it("taiyi-skill routes umbrella for gstack + sp + explore + tdd + flow", () => {
+    const body = rendered("taiyi-skill.md");
+    expect(body).toContain("/taiyi:skill");
     for (const skill of ["design-shotgun", "autoplan", "canary", "gstack-upgrade"]) {
       expect(body, skill).toContain(skill);
     }
-    expect(body).toContain("gstack Skill");
-    expect(body).not.toContain("{{GSTACK_INVOKE}}");
-  });
-
-  it("taiyi-sp routes Superpowers including writing-skills", () => {
-    const body = rendered("taiyi-sp.md");
-    expect(body).toContain("/taiyi:sp");
+    expect(body).toContain("brainstorming");
     expect(body).toContain("writing-skills");
     expect(body).not.toContain(SUPERPOWERS_INVOKE_PLACEHOLDER);
     expect(body).toContain("verification-before-completion");
   });
 
-  it("taiyi-security|e2e|smoke moved to test umbrella", () => { const body = rendered("taiyi-test.md"); expect(body).toContain("/taiyi:test"); });
-  it("commands.yaml documents extension slashes", () => {
+  it("taiyi-security|e2e|smoke moved to test umbrella", () => {
+    const body = rendered("taiyi-test.md");
+    expect(body).toContain("/taiyi:test");
+  });
+
+  it("commands.yaml documents v30 umbrella + legacy slashes", () => {
     const yaml = fs.readFileSync(
       path.join(repoRoot, "docs/taiyi/commands.yaml"),
       "utf8",
     );
     for (const needle of [
       "/taiyi:write",
-      "/taiyi:resume",
+      "/taiyi:plan",
+      "/taiyi:skill <name>",
       "/taiyi:ralph",
       "/taiyi:autopilot",
       "/taiyi:team",
-      "/taiyi:gstack <skill>",
-      "/taiyi:sp <skill>",
     ]) {
       expect(yaml, needle).toContain(needle);
     }
