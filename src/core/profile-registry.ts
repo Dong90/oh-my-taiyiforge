@@ -197,7 +197,9 @@ export class ProfileRegistry {
         };
       }
       chain.push(entry.def);
-      currentId = entry.def.extends;
+      // 规范化：空字符串视为无 extends
+      const ext = entry.def.extends;
+      currentId = ext && ext.length > 0 ? ext : undefined;
     }
 
     // Apply from root (last in chain) → child (first in chain)

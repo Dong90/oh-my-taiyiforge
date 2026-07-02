@@ -1,19 +1,25 @@
+<!-- TAIYI-FORGE:CHAT-COMMAND:taiyi-audit.md -->
 ---
-description: "TaiyiForge /taiyi:audit — workflow & delivery bug hunt (not install doctor)"
+description: "TaiyiForge /taiyi:audit — delivery drift + git hygiene for a change"
+argument-hint: "[slug] [--json] [--compact]"
 ---
-User invoked **/taiyi:audit**. Run:
+User invoked **$taiyi-audit** (= `/taiyi:audit`). Run:
 
 ```bash
-scripts/taiyi-forge.sh audit $ARGUMENTS --json --compact
+scripts/taiyi-forge.sh audit $ARGUMENTS
 ```
 
-Parse **`ok`**, **`highCount`**, **`findings[]`** (high only). Human summary: omit `--json`.
+**流程/交付排查**（git 未入库、CHANGE 漂移、integration 交付门等）。非 doctor（安装）也非 review-check（仅 REVIEW.md）。
 
-排查流程/交付闭环问题（非 `/taiyi:doctor` 安装自检）：
-- legacy state.json（complete / string complexity）
-- 工件质量 / harness 阻塞
-- CHANGE checkbox 与 CHANGELOG 漂移
-- integration 已过关但 git 未交付
-- OpenSpec 目录缺失
+Agent 默认 `audit [slug] --json --compact`；单 active 变更可省略 slug。
 
-对照：`doctor`=安装 · `verify`=PR工件门禁 · `audit`=交付与漂移
+对照：`/taiyi:verify` = 工件+ harness · `/taiyi:audit` = 交付闭环与漂移 · `/taiyi:doctor` = 安装
+
+## Agent 协议（必须遵守）
+
+1. 代跑 `scripts/taiyi-forge.sh audit [slug] --json --compact`。
+2. 只摘 **high / 阻塞** findings；勿把完整 report 灌进聊天。
+3. 与 `/taiyi:status` 的 `engineTruth` 对照；blockers 以引擎为准。
+4. 用户只说 **`/taiyi:*` 斜杠**；禁止声称「已 audit」而未实际跑命令。
+
+{{TAIYI_STAGE_PROTOCOL}}

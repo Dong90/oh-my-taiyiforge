@@ -10,16 +10,21 @@ export const CHAT_COMMAND_MARKER = "TAIYI-FORGE:CHAT-COMMAND";
 /** @deprecated 旧 Cursor 标记；新安装统一用 CHAT_COMMAND_MARKER */
 export const CURSOR_COMMAND_MARKER = "TAIYI-FORGE:CURSOR-COMMAND";
 
-/** v28 顶栏 29 提示词（含 /taiyi:plan）— 默认只同步这些到 IDE 菜单。设 TAIYI_FORGE_ALL_PROMPTS=1 恢复全量同步。 */
-export const V28_CANONICAL_PROMPTS: ReadonlySet<string> = new Set([
+/** 顶栏 catalog 版本 — 与 docs/taiyi/commands.yaml canonical_commands.version 对齐 */
+export const CANONICAL_VERSION = 30;
+
+/** v30 顶栏 21 提示词 — 默认只同步这些到 IDE 菜单。设 TAIYI_FORGE_ALL_PROMPTS=1 恢复全量同步。 */
+export const CANONICAL_PROMPTS: ReadonlySet<string> = new Set([
   "taiyi-new.md", "taiyi-plan.md", "taiyi-status.md", "taiyi-write.md", "taiyi-continue.md", "taiyi-apply.md", "taiyi-archive.md",
-  "taiyi-pause.md", "taiyi-resume.md", "taiyi-cancel.md", "taiyi-list.md",
-  "taiyi-doctor.md", "taiyi-audit.md", "taiyi-verify.md",
-  "taiyi-commit.md", "taiyi-ship.md", "taiyi-land.md", "taiyi-release.md",
-  "taiyi-gstack.md", "taiyi-sp.md",
-  "taiyi-explore.md", "taiyi-tdd.md", "taiyi-flow.md",
-  "taiyi-token.md", "taiyi-test.md", "taiyi-review.md", "taiyi-diagram.md", "taiyi-mode.md", "taiyi-workflow.md",
+  "taiyi-pause.md", "taiyi-cancel.md", "taiyi-list.md",
+  "taiyi-verify.md", "taiyi-render.md",
+  "taiyi-commit.md", "taiyi-ship.md", "taiyi-land.md",
+  "taiyi-skill.md",
+  "taiyi-token.md", "taiyi-test.md", "taiyi-review.md", "taiyi-diagram.md",
 ]);
+
+/** @deprecated use CANONICAL_PROMPTS */
+export const V29_CANONICAL_PROMPTS = CANONICAL_PROMPTS;
 
 export type ChatCommandPlatform = "cursor" | "claude" | "codex" | "opencode";
 
@@ -83,9 +88,27 @@ export function syncTaiyiChatCommands(
   fs.mkdirSync(destDir, { recursive: true });
   let count = 0;
   const allPrompts = process.env.TAIYI_FORGE_ALL_PROMPTS === "1";
+
+  // 第一遍：先算出本次会写入的 taiyi-*.md 集合
+  const incoming = new Set<string>();
   for (const ent of fs.readdirSync(promptsSrc, { withFileTypes: true })) {
     if (!ent.isFile() || !ent.name.startsWith("taiyi-") || !ent.name.endsWith(".md")) continue;
-    if (!allPrompts && !V28_CANONICAL_PROMPTS.has(ent.name)) continue;
+    if (!allPrompts && !CANONICAL_PROMPTS.has(ent.name)) continue;
+    incoming.add(ent.name);
+  }
+
+  // 第二遍：清理目标目录里"不再属于新清单"的旧 taiyi-*.md（避免残留）
+  for (const existing of fs.readdirSync(destDir)) {
+    if (!existing.startsWith("taiyi-") || !existing.endsWith(".md")) continue;
+    if (!incoming.has(existing)) {
+      fs.unlinkSync(path.join(destDir, existing));
+    }
+  }
+
+  // 第三遍：写入新清单
+  for (const ent of fs.readdirSync(promptsSrc, { withFileTypes: true })) {
+    if (!ent.isFile() || !ent.name.startsWith("taiyi-") || !ent.name.endsWith(".md")) continue;
+    if (!allPrompts && !CANONICAL_PROMPTS.has(ent.name)) continue;
     const src = path.join(promptsSrc, ent.name);
     const body = renderTaiyiPrompt(ent.name, fs.readFileSync(src, "utf8"), promptsSrc);
     fs.writeFileSync(path.join(destDir, ent.name), wrapChatCommandBody(ent.name, body), "utf8");

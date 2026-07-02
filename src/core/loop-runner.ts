@@ -139,6 +139,8 @@ export function runContinueRepeat(
   return { ok: false, slug, stopReason: "max", attempts, timesRequested: times };
 }
 
+import { isLoopExhausted } from "./loop-state.js";
+
 export function runLoopUntilComplete(
   engine: WorkflowEngine,
   workspaceDir: string,
@@ -149,6 +151,21 @@ export function runLoopUntilComplete(
   const maxAttempts = times ?? defaultLoopMax();
   const maxRounds = Number(process.env.TAIYI_LOOP_MAX_ROUNDS ?? "50");
   const changeDir = engine.changeDir(slug);
+
+  // 检查是否已达跨 session 循环上限
+  if (isLoopExhausted(changeDir, slug, maxRounds)) {
+    return {
+      ok: false,
+      slug,
+      stopReason: "max",
+      attempts: [],
+      timesRequested: maxAttempts,
+      loopRound: maxRounds,
+      maxRounds,
+      guideText: `已跨 session 跑满 ${maxRounds} 轮。请人工介入或提高 TAIYI_LOOP_MAX_ROUNDS。`,
+    };
+  }
+
   const result = runContinueRepeat(engine, workspaceDir, taiyiRoot, slug, maxAttempts);
 
   if (result.stopReason === "completed") {

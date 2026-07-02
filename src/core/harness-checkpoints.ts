@@ -44,10 +44,15 @@ export function pendingIronTriangleHooks(
 ): string[] {
   const done = readHarnessCheckpoints(changeDir)[phase] ?? {};
   const pending: string[] = [];
+  const seen = new Set<string>();
   for (const h of hooks) {
     if (h.optional) continue;
     if (h.tool === "openspec" && !openspecDetected) continue;
     const key = hookKey(h);
+    // 去重：同一 hook key（如 superpowers/subagent-driven-development）
+    // 可能从多个源（workflow-manifest.yaml + token-compress-hooks.yaml）被重复添加
+    if (seen.has(key)) continue;
+    seen.add(key);
     if (!done[key]) pending.push(key);
   }
   return pending;

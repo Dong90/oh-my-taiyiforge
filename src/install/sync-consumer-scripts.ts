@@ -99,7 +99,11 @@ export function installConsumerPackageScripts(cwd: string): InstallResult {
         detail: "taiyi:* scripts / deliveryVerifyCmd 已存在",
       };
     }
-    fs.writeFileSync(pkgPath, JSON.stringify(pkg, null, 2) + "\n", "utf8");
+    // 原子写：tmp + rename，避免半截 JSON 损坏 package.json
+    const content = JSON.stringify(pkg, null, 2) + "\n";
+    const tmp = `${pkgPath}.tmp.${process.pid}`;
+    fs.writeFileSync(tmp, content, "utf8");
+    fs.renameSync(tmp, pkgPath);
     return {
       target: "project-wrapper",
       path: pkgPath,

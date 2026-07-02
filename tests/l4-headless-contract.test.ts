@@ -4,18 +4,12 @@ import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { renderTaiyiPrompt } from "../src/install/prompt-stage-protocol.js";
-import { DEV_COMPLETE_EVIDENCE } from "../src/core/dev-complete.js";
 import { copyFullFlowDemoFixture, runForge } from "../src/core/run-slash-flow-cli.js";
 import { E2E_ARTIFACTS } from "../src/core/e2e-fixtures.js";
 
 const REPO = path.join(path.dirname(fileURLToPath(import.meta.url)), "..");
 const PROMPTS_DIR = path.join(REPO, "prompts");
 const SLUG = "l4-headless-demo";
-
-function renderPrompt(name: string): string {
-  const raw = fs.readFileSync(path.join(PROMPTS_DIR, name), "utf8");
-  return renderTaiyiPrompt(name, raw, PROMPTS_DIR);
-}
 
 function seedChangeHarness(workspace: string, slug: string): void {
   const changeDir = path.join(workspace, ".taiyi", "changes", slug);
@@ -81,71 +75,11 @@ describe("L4 headless contract (CLI + prompt 替代 IDE UAT)", () => {
     expect(fs.readFileSync(p, "utf8")).toMatch(/handoff|暂停|l4-smoke/i);
   });
 
-  it("agent executor 输出 dev 协议", () => {
-    runForge(REPO, workspace, ["init", SLUG, "--profile", "lite", "--title", "h"]);
-    const r = runForge(REPO, workspace, ["agent", "executor", SLUG]);
-    expect(r.code).toBe(0);
-    expect(r.out).toMatch(/executor|dev|TDD|taiyi-dev/i);
-  });
-
-  it("team → 写入 team-mode.json", () => {
-    runForge(REPO, workspace, ["init", SLUG, "--profile", "lite", "--title", "h"]);
-    const team = runForge(REPO, workspace, ["team", SLUG]);
-    expect(team.code).toBe(0);
-    expect(team.out).toMatch(/team-mode\.json|Team/i);
-    expect(fs.existsSync(path.join(taiyiRoot, "runtime", "team-mode.json"))).toBe(true);
-  });
-
-  it("ultrawork @ dev → 写入 ultrawork-mode.json", () => {
-    runForge(REPO, workspace, ["init", SLUG, "--profile", "lite", "--title", "h"]);
-    const statePath = path.join(changeDir, "state.json");
-    const state = JSON.parse(fs.readFileSync(statePath, "utf8"));
-    state.currentPhase = "dev";
-    state.completedPhases = ["change", "requirement"];
-    fs.writeFileSync(statePath, JSON.stringify(state));
-
-    const ulw = runForge(REPO, workspace, ["ultrawork", SLUG]);
-    expect(ulw.code).toBe(0);
-    expect(ulw.out).toMatch(/ultrawork-mode\.json|Ultrawork/i);
-    expect(fs.existsSync(path.join(taiyiRoot, "runtime", "ultrawork-mode.json"))).toBe(true);
-  });
-
-  it("continue + ralph：dev 阶段 npm test 真跑（full-flow-demo 夹具）", () => {
-    runForge(REPO, workspace, ["init", SLUG, "--profile", "lite", "--auto", "--title", "ralph"]);
-    seedChangeHarness(workspace, SLUG);
-    runForge(REPO, workspace, ["continue", SLUG, "--approver", "l4-headless"]);
-
-    fs.writeFileSync(path.join(changeDir, "REQUIREMENT.md"), E2E_ARTIFACTS.requirement.md, "utf8");
-    fs.writeFileSync(
-      path.join(changeDir, "requirement.json"),
-      JSON.stringify(E2E_ARTIFACTS.requirement.json, null, 2),
-      "utf8",
-    );
-    runForge(REPO, workspace, ["continue", SLUG]);
-
-    // lite 跳过 task 阶段，但 ralplan-first 仍要求 TASK.md（或 RALPLAN.md）
-    fs.writeFileSync(path.join(changeDir, "TASK.md"), E2E_ARTIFACTS.task.md, "utf8");
-    fs.writeFileSync(
-      path.join(changeDir, "task.json"),
-      JSON.stringify(E2E_ARTIFACTS.task.json, null, 2),
-      "utf8",
-    );
-
-    const state1 = JSON.parse(fs.readFileSync(path.join(changeDir, "state.json"), "utf8"));
-    expect(state1.currentPhase).toBe("dev");
-
-    fs.writeFileSync(path.join(changeDir, ".dev-complete"), DEV_COMPLETE_EVIDENCE, "utf8");
-
-    const ralph = runForge(REPO, workspace, ["ralph", SLUG]);
-    expect(ralph.code).toBe(0);
-    expect(ralph.out).toMatch(/pass|✓|green/i);
-  }, 120_000);
-
-  it("扩展斜杠 prompt：gstack browse / sp brainstorming", () => {
-    const gstack = renderPrompt("taiyi-gstack.md");
-    expect(gstack).toMatch(/browse|gstack/i);
-
-    const sp = renderPrompt("taiyi-sp.md");
-    expect(sp).toMatch(/brainstorming|superpowers/i);
+  it("扩展斜杠 prompt：taiyi-skill 伞形覆盖 gstack browse / sp brainstorming", () => {
+    const promptsDir = path.join(REPO, "prompts");
+    const raw = fs.readFileSync(path.join(promptsDir, "taiyi-skill.md"), "utf8");
+    const skill = renderTaiyiPrompt("taiyi-skill.md", raw, promptsDir);
+    expect(skill).toMatch(/browse|gstack/i);
+    expect(skill).toMatch(/brainstorming|superpowers/i);
   });
 });

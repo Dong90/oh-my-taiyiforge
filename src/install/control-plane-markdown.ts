@@ -50,11 +50,11 @@ ${chatIntro}
 
 **主流程：** /taiyi:new · /taiyi:status · /taiyi:continue · /taiyi:apply · /taiyi:archive
 
-**常用辅助：** /taiyi:doctor · /taiyi:audit · /taiyi:verify · /taiyi:list · /taiyi:check · /taiyi:sync · /taiyi:pause · /taiyi:handoff · /taiyi:cancel · /taiyi:write · /taiyi:feature · /taiyi:bug · /taiyi:ralph · /taiyi:autopilot · /taiyi:team · /taiyi:ultrawork · /taiyi:agent · /taiyi:review-loop · /taiyi:review-check · /taiyi:token *
+**常用辅助：** /taiyi:verify · /taiyi:list · /taiyi:check · /taiyi:sync · /taiyi:pause · /taiyi:handoff · /taiyi:cancel · /taiyi:write · /taiyi:feature · /taiyi:bug · /taiyi:token *
 
 **引擎斜杠（原 engine-only）：** /taiyi:init · /taiyi:complete · … · /taiyi:ci platform · /taiyi:ci prompt
 
-**交付链（gstack）：** /taiyi:commit · /taiyi:ship · /taiyi:land · /taiyi:gstack review · /taiyi:gstack qa · /taiyi:release
+**交付链（gstack）：** /taiyi:commit · /taiyi:ship · /taiyi:land · /taiyi:gstack review · /taiyi:gstack qa
 
 九阶段写工件：聊天用 **/taiyi:write**；仍加载 \`taiyi-change\` … \`taiyi-integration\` Skill，见 docs/taiyi/workflow.md
 

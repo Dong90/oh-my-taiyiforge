@@ -50,7 +50,7 @@ export function formatPhaseProgressLine(guide: PhaseGuide): string {
   }
   const { index, total } = profilePhaseOrdinal(guide.skippedPhases, guide.currentPhase);
   const impl = guide.currentPhase === "dev" || guide.currentPhase === "test";
-  const verb = impl ? "apply 或 complete" : "complete 过关";
+  const verb = impl ? "apply 或 continue" : "continue 过关";
   return `当前: ${guide.currentPhase}（${index}/${total}）| Skill: ${guide.skill} | 推进: ${verb}`;
 }
 
@@ -132,7 +132,7 @@ export function formatStatusPlain(guide: PhaseGuide): string {
   lines.push(`系统建议: ${guide.nextAction}`);
   if (guide.nextSkill) lines.push(`过关后 Skill: ${guide.nextSkill}`);
   lines.push("");
-  lines.push("常用: status · complete · apply（dev/test）· review-loop（review 机器审查）");
+  lines.push("常用: status · write · continue · apply（dev/test）· review-loop（review 机器审查）");
   return lines.join("\n");
 }
 
@@ -204,7 +204,7 @@ export function formatGuidePlain(guide: PhaseGuide): string {
   }
   if (guide.autoHarness) {
     lines.push("");
-    lines.push(`编排: complete 过关（或 taiyi-forge.sh harness ${guide.slug}）`);
+    lines.push(`编排: harness-check → continue 过关（或 taiyi-forge.sh harness ${guide.slug}）`);
   }
   lines.push("");
   lines.push(`→ ${guide.nextAction}`);
