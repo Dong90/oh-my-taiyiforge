@@ -162,17 +162,26 @@ function normalizeCatalogSlash(s) {
     .trim();
 }
 
-/** @param {string} yaml @returns {string[]} slash values from canonical_v28.groups.*.commands */
-export function parseCanonicalV28Slashes(yaml) {
+/** 聊天顶栏 catalog 版本 — 与 commands.yaml canonical_commands.version 对齐 */
+export const CANONICAL_CATALOG_VERSION = 30;
+
+const canonicalBlockRe = () => new RegExp(`^  canonical_v${CANONICAL_CATALOG_VERSION}:`);
+const canonicalBlockPrefix = () => `  canonical_v${CANONICAL_CATALOG_VERSION}`;
+const recommendedKey = () => `recommended_v${CANONICAL_CATALOG_VERSION}`;
+
+/** @param {string} yaml @returns {string[]} slash values from canonical_v*.groups.*.commands */
+export function parseCanonicalSlashes(yaml) {
   const slashes = [];
   let inBlock = false;
+  const blockStart = canonicalBlockRe();
+  const blockPrefix = canonicalBlockPrefix();
   for (const line of yaml.split("\n")) {
-    if (line.match(/^  canonical_v28:/)) {
+    if (line.match(blockStart)) {
       inBlock = true;
       continue;
     }
     if (inBlock && line.match(/^  [a-z_0-9]+:/) && !line.startsWith("    ")) {
-      if (!line.startsWith("  canonical_v28")) break;
+      if (!line.startsWith(blockPrefix)) break;
     }
     if (!inBlock) continue;
     const m = line.match(/slash:\s+(.+?)\s*$/);
@@ -181,18 +190,23 @@ export function parseCanonicalV28Slashes(yaml) {
   return slashes;
 }
 
-/** @param {string} yaml @returns {string[]} legacy_map target slashes in canonical_v28 umbrellas */
-export function parseCanonicalV28LegacyMapTargets(yaml) {
+/** @deprecated use parseCanonicalSlashes */
+export const parseCanonicalV29Slashes = parseCanonicalSlashes;
+
+/** @param {string} yaml @returns {string[]} legacy_map target slashes in canonical umbrellas */
+export function parseCanonicalLegacyMapTargets(yaml) {
   const out = [];
   let inBlock = false;
   let inLegacyMap = false;
+  const blockStart = canonicalBlockRe();
+  const blockPrefix = canonicalBlockPrefix();
   for (const line of yaml.split("\n")) {
-    if (line.match(/^  canonical_v28:/)) {
+    if (line.match(blockStart)) {
       inBlock = true;
       continue;
     }
     if (inBlock && line.match(/^  [a-z_0-9]+:/) && !line.startsWith("    ")) {
-      if (!line.startsWith("  canonical_v28")) break;
+      if (!line.startsWith(blockPrefix)) break;
     }
     if (!inBlock) continue;
 
@@ -214,18 +228,23 @@ export function parseCanonicalV28LegacyMapTargets(yaml) {
   return [...new Set(out)];
 }
 
+/** @deprecated use parseCanonicalLegacyMapTargets */
+export const parseCanonicalV29LegacyMapTargets = parseCanonicalLegacyMapTargets;
+
 /** @param {string} yaml @returns {string[]} token engine_map keys → taiyi-token-<key> prompts */
-export function parseCanonicalV28TokenEngineKeys(yaml) {
+export function parseCanonicalTokenEngineKeys(yaml) {
   const keys = [];
   let inBlock = false;
   let inEngineMap = false;
+  const blockStart = canonicalBlockRe();
+  const blockPrefix = canonicalBlockPrefix();
   for (const line of yaml.split("\n")) {
-    if (line.match(/^  canonical_v28:/)) {
+    if (line.match(blockStart)) {
       inBlock = true;
       continue;
     }
     if (inBlock && line.match(/^  [a-z_0-9]+:/) && !line.startsWith("    ")) {
-      if (!line.startsWith("  canonical_v28")) break;
+      if (!line.startsWith(blockPrefix)) break;
     }
     if (!inBlock) continue;
 
@@ -247,35 +266,43 @@ export function parseCanonicalV28TokenEngineKeys(yaml) {
   return keys;
 }
 
+/** @deprecated use parseCanonicalTokenEngineKeys */
+export const parseCanonicalV29TokenEngineKeys = parseCanonicalTokenEngineKeys;
+
 /**
  * @param {string} yaml
- * @param {{ recommended_v28?: string[] }} sections from parseSlashCatalogLists
+ * @param {Record<string, string[]>} sections from parseSlashCatalogLists
  * @returns {{ ok: true } | { ok: false, errors: string[] }}
  */
-export function validateV28CatalogSync(yaml, sections) {
+export function validateCanonicalCatalogSync(yaml, sections) {
   const errors = [];
-  const canonical = parseCanonicalV28Slashes(yaml).map(normalizeCatalogSlash);
-  const recommended = (sections.recommended_v28 ?? []).map(normalizeCatalogSlash);
+  const canonical = parseCanonicalSlashes(yaml).map(normalizeCatalogSlash);
+  const recKey = recommendedKey();
+  const recommended = (sections[recKey] ?? []).map(normalizeCatalogSlash);
 
-  const expected = 29;
+  const expected = 21;
+  const blockLabel = `canonical_v${CANONICAL_CATALOG_VERSION}`;
   if (canonical.length !== expected) {
-    errors.push(`canonical_v28 应有 ${expected} 条 slash，实际 ${canonical.length}`);
+    errors.push(`${blockLabel} 应有 ${expected} 条 slash，实际 ${canonical.length}`);
   }
   if (recommended.length !== expected) {
-    errors.push(`slash_catalog.recommended_v28 应有 ${expected} 条，实际 ${recommended.length}`);
+    errors.push(`slash_catalog.${recKey} 应有 ${expected} 条，实际 ${recommended.length}`);
   }
   const a = [...canonical].sort();
   const b = [...recommended].sort();
   if (a.length === b.length) {
     for (let i = 0; i < a.length; i++) {
       if (a[i] !== b[i]) {
-        errors.push(`v28 漂移: canonical=${a[i]} vs recommended=${b[i]}`);
+        errors.push(`catalog 漂移: canonical=${a[i]} vs recommended=${b[i]}`);
         break;
       }
     }
   }
   return errors.length ? { ok: false, errors } : { ok: true };
 }
+
+/** @deprecated use validateCanonicalCatalogSync */
+export const validateV29CatalogSync = validateCanonicalCatalogSync;
 
 export function parseSlashCatalogLists(yaml) {
   const sections = {};
@@ -293,7 +320,8 @@ export function parseSlashCatalogLists(yaml) {
     }
     if (!inCatalog) continue;
 
-    if (line.match(/^    recommended_v28:\s*$/)) {
+    const recMatch = line.match(/^    recommended_v(\d+):\s*$/);
+    if (recMatch && Number(recMatch[1]) === CANONICAL_CATALOG_VERSION) {
       inRecommended = true;
       inLegacy = false;
       section = null;
@@ -329,13 +357,13 @@ export function parseSlashCatalogLists(yaml) {
       sections[section].push(item[1].trim());
     }
   }
-  sections.recommended_v28 = [
+  const recKey = recommendedKey();
+  sections[recKey] = [
     ...(sections.main_chain ?? []),
     ...(sections.session ?? []),
     ...(sections.triage ?? []),
     ...(sections.delivery ?? []),
-    ...(sections.routers ?? []),
-    ...(sections.phase_shortcuts ?? []),
+    ...(sections.project ?? []),
     ...(sections.umbrellas ?? []),
   ];
   return sections;
