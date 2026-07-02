@@ -50,10 +50,10 @@ describe("CLI exit codes & aliases", () => {
     expect(r.out).toMatch(/TaiyiForge|用法/);
   });
 
-  it("slash-only explore exits 2", () => {
+  it("deleted explore command exits 2 (unknown)", () => {
     const r = runTaiyiCli(workspace, ["explore"]);
     expect(r.code).toBe(2);
-    expect(r.out).toMatch(/仅聊天斜杠/);
+    expect(r.out).toMatch(/TaiyiForge/);
   });
 
   it("legacy ls alias maps to list", () => {
@@ -92,6 +92,27 @@ describe("CLI exit codes & aliases", () => {
     expect(r.code).toBe(1);
     expect(r.out).toMatch(/无效 profile|notreal/);
     expect(r.out).toMatch(/full, api, ui, lite/);
+    expect(fs.existsSync(path.join(workspace, ".taiyi/changes/bad-profile-slug"))).toBe(false);
+  });
+
+  it("phases exits 0", () => {
+    const r = runTaiyiCli(workspace, ["phases"]);
+    expect(r.code).toBe(0);
+    expect(r.out).toMatch(/change|requirement/);
+  });
+
+  it("check alias maps to harness (not unknown)", () => {
+    fs.mkdirSync(path.join(workspace, ".taiyi/changes"), { recursive: true });
+    const r = runTaiyiCli(workspace, ["check", "missing-slug"]);
+    expect(r.code).not.toBe(2);
+    expect(r.out).not.toMatch(/已移除/);
+  });
+
+  it("next is not legacy-redirected", () => {
+    fs.mkdirSync(path.join(workspace, ".taiyi/changes"), { recursive: true });
+    const r = runTaiyiCli(workspace, ["next", "missing-slug"]);
+    expect(r.code).not.toBe(2);
+    expect(r.out).not.toMatch(/已移除.*status/);
   });
 
   it("continue rejects invalid slug with hint", () => {
