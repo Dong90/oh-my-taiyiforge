@@ -38,7 +38,7 @@ describe("format-guide", () => {
     const line = formatPhaseProgressLine(baseGuide());
     expect(line).toContain("design（3/9）");
     expect(line).toContain("taiyi-design");
-    expect(line).toContain("complete 过关");
+    expect(line).toContain("continue 过关");
   });
 
   it("formatPhaseProgressLine uses apply for dev", () => {
