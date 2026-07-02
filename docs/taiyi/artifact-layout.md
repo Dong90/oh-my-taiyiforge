@@ -10,13 +10,21 @@
 │   └── <slug>/
 │       ├── state.json              # 引擎真源（阶段、completedPhases、profile）
 │       ├── CHANGE.md               # change 阶段
+│       ├── change.json
 │       ├── REQUIREMENT.md          # requirement
+│       ├── requirement.json
 │       ├── DESIGN.md               # design（lite profile 跳过）
+│       ├── design.json
 │       ├── UI-DESIGN.md            # ui-design
+│       ├── ui-design.json
 │       ├── TASK.md                 # task
+│       ├── task.json
 │       ├── TEST.md                 # test（证据：命令 + exit）
+│       ├── test.json
 │       ├── REVIEW.md               # review
-│       ├── CHANGELOG.md            # integration 切片
+│       ├── review.json
+│       ├── CHANGELOG.md            # integration 切片（变更目录）
+│       ├── integration.json
 │       ├── CONTEXT.md              # 可选情报（mark-aux）
 │       ├── CONTEXT-COMPACT.md      # token compress 产出
 │       ├── HANDOFF.md              # handoff 暂停
@@ -28,7 +36,11 @@
 
 ## 阶段 → 工件
 
-见 [`phases.yaml`](./phases.yaml) · Profile **lite** 跳过 design / ui-design / task / review。
+见 [`phases.yaml`](./phases.yaml)。每阶段（除 dev 用 `.dev-complete`）须 **`{phase}.json` + hbs 渲染的 md**，由 `status` / `continue` 校验。Profile **lite** 跳过 design / ui-design / task / review。
+
+**契约**：json = Zod 语义真源 · hbs = 版式 · md = 生成视图 · Skill = 流程。详见 [`artifact-contract.md`](./artifact-contract.md)。
+
+刷新 md：`scripts/taiyi-forge.sh render <slug> [phase]`。
 
 ## Agent 读法
 

@@ -2,7 +2,7 @@
 
 ## 引擎交付门
 
-`complete <slug> integration` 时，若工作区为 **git 仓库**（默认启用）：
+`continue <slug> integration`（或 `/taiyi:continue`）时，若工作区为 **git 仓库**（默认启用）：
 
 1. 相对 `origin/develop`（或 `origin/main`）须有 **已 commit 的新增 diff**
 2. 工作区须 **干净**（无 unstaged / staged / untracked）
@@ -53,5 +53,5 @@ Taiyi-Phase: dev
 ## 关闭交付门
 
 ```bash
-TAIYI_DELIVERY_GATE=0 npx taiyi complete <slug> integration --approver "你"
+TAIYI_DELIVERY_GATE=0 scripts/taiyi-forge.sh continue <slug> integration
 ```
