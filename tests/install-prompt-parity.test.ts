@@ -56,7 +56,7 @@ describe("install prompt parity (四端 ↔ prompts/taiyi-*.md)", () => {
   for (const platform of PLATFORM_DIRS) {
     it(`${platform} 写入全部 taiyi-*.md 且与 Cursor 同源`, () => {
       const prompts = listTaiyiPrompts();
-      expect(prompts.length).toBeGreaterThanOrEqual(27);
+      expect(prompts.length).toBeGreaterThanOrEqual(21);
 
       const installed = fs
         .readdirSync(dirs[platform])
@@ -84,7 +84,7 @@ describe("install prompt parity (四端 ↔ prompts/taiyi-*.md)", () => {
   });
 
   it("抽样 prompt 渲染后无未替换占位符", () => {
-    for (const name of ["taiyi-write.md", "taiyi-gstack.md", "taiyi-sp.md"]) {
+    for (const name of ["taiyi-write.md", "taiyi-skill.md", "taiyi-plan.md"]) {
       const raw = fs.readFileSync(path.join(PROMPTS_SRC, name), "utf8");
       const body = expectedChatCommandBody(name, raw, PROMPTS_SRC);
       expect(body, name).not.toMatch(/\{\{[A-Z_]+\}\}/);

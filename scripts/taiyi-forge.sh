@@ -82,19 +82,21 @@ TaiyiForge — 推荐 /taiyi:* 斜杠（Agent 代跑本脚本）
   /taiyi:continue           /taiyi:apply     /taiyi:archive
 
 常用:
-  /taiyi:doctor  /taiyi:audit  /taiyi:verify  /taiyi:list  /taiyi:check
+  /taiyi:verify  /taiyi:list  /taiyi:check
   /taiyi:sync  /taiyi:pause  /taiyi:cancel
-  /taiyi:review-loop  /taiyi:feature  /taiyi:bug  /taiyi:ui-test
-  /taiyi:ralph  /taiyi:autopilot  /taiyi:daemon  /taiyi:team  /taiyi:ultrawork  /taiyi:agent
+  /taiyi:feature  /taiyi:bug  /taiyi:ui-test
   /taiyi:run  /taiyi:browser-smoke  /taiyi:help
 
 维护 CLI（本脚本）:
   list [--all] [--archived]   # --archived 仅 archive/；与 --all 合用才含 changes+archive
+  flow mvp|micro|nano|…       # 场景（旧顶层 mvp/micro 已移除）
+  change…integration [slug]   # 九阶段写工件指引（同 write 分阶段）
+  plan [file] [--auto]        # 项目级拆解
   resume  prune [--aborted]  trim-ahead  smoke-reset
-  explore/flow/tdd/security/e2e/ui-test/release/ship/land/commit → 仅聊天斜杠
+  tdd/ship/land/commit → 仅聊天斜杠
 
 交付链 (gstack · 无 shell，须 IDE 斜杠):
-  /taiyi:commit  /taiyi:ship  /taiyi:land  /taiyi:release
+  /taiyi:commit  /taiyi:ship  /taiyi:land
 
 Legacy CLI: ls→list · check→harness · pause→handoff · n/go→next · done/ok→done
 
@@ -112,6 +114,9 @@ case "$cmd" in
     ;;
   continue)
     run_taiyi continue "$@"
+    ;;
+  render)
+    run_taiyi render "$@"
     ;;
   cancel)
     run_taiyi cancel "$@"
@@ -163,7 +168,16 @@ case "$cmd" in
     run_taiyi stop-mode --force "$@" 2>/dev/null || true
     echo "[taiyi-forge] smoke-reset: 已 force 停止全部运行时模式"
     ;;
-  audit|health|verify|doctor|init|next|harness|harness-check|complete|assess|mark-aux|status|guide|sync|sync-openspec|walkthrough|browser-smoke|ci|token|loop|review-check|review-loop|ralph|autopilot|team|ultrawork|agent|write|feature|bug|change|requirement|design|ui-design|task|dev|test|review|integration|phases|cancel|handoff|pause|commit-trailers|step|stop-mode|modes|remember|keyword|plan|auto-plan|ralplan|ultraqa|visual-verdict|deep-interview|ai-slop-cleaner|ecomode|daemon|trim-ahead|prune|smoke-reset|flow|service|mvp|micro|nano|design-system|devops|ci-scenario|chat|code-review)
+  flow)
+    run_taiyi flow "$@"
+    ;;
+  change|requirement|design|ui-design|task|dev|test|review|integration)
+    run_taiyi "$cmd" "$@"
+    ;;
+  doctor|audit|health|review-loop|review-check|ralph|autopilot|ultrawork|team|step|stop-mode|agent|browser-smoke)
+    run_taiyi "$cmd" "$@"
+    ;;
+  verify|init|next|harness|harness-check|complete|assess|mark-aux|guide|sync|sync-openspec|render|walkthrough|ci|token|loop|write|feature|bug|phases|commit-trailers|modes|remember|keyword|plan|ralplan|ultraqa|daemon|trim-ahead|prune|undo|external-context|ccg|sciomc|deepinit|visual-verdict|deep-interview|ai-slop-cleaner|ecomode)
     run_taiyi "$cmd" "$@"
     ;;
   help|--help|-h)
