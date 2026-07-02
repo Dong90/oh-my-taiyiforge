@@ -13,7 +13,8 @@ import { loadTokenBudgetConfig } from "../core/token/budget-config.js";
 import { WorkflowEngine } from "../core/workflow-engine.js";
 import type { ChangeState } from "../core/types.js";
 import type { EngineTruth } from "../core/engine-truth.js";
-import { taiyiStep, taiyiStopMode, taiyiModes, taiyiKeyword, taiyiRemember, taiyiWorkflowSkill, taiyiDoctor, taiyiAudit } from "../plugin/handlers.js";
+import { taiyiStep, taiyiStopMode, taiyiModes, taiyiKeyword, taiyiRemember, taiyiWorkflowSkill, taiyiDoctor, taiyiAudit, taiyiSyncProviders } from "../plugin/handlers.js";
+import type { InstallTarget } from "../install/types.js";
 import { buildDoctorJsonCompact, type DoctorJsonCompact } from "../core/doctor.js";
 import { buildAuditJsonCompact, type AuditJsonCompact } from "../core/workflow-audit.js";
 import { resolvePackageRoot } from "../core/package-root.js";
@@ -238,4 +239,14 @@ export function taiyiDoctorCompact(
 export function taiyiAuditCompact(workspaceDir: string, slug?: string): AuditJsonCompact {
   const r = taiyiAudit(workspaceDir, { slug, plain: false });
   return buildAuditJsonCompact(r.report);
+}
+
+/** MCP slim — provider sync */
+export function taiyiSyncProvidersCompact(
+  workspaceDir: string,
+  targets?: string[],
+): { ok: boolean; detail: string; error?: string } {
+  const r = taiyiSyncProviders(workspaceDir, targets as InstallTarget[] | undefined);
+  if (!r.ok) return { ok: false, detail: r.error ?? "sync failed", error: r.error };
+  return { ok: true, detail: r.detail };
 }

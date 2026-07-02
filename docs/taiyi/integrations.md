@@ -29,7 +29,7 @@
 | change / requirement | 可用 `openspec proposal` 起草；工件落在 `.taiyi/changes/<slug>/` |
 | integration | 合并后 **`taiyi_archive`** 或 `openspec archive <slug> -y`，规格进主库 |
 
-**约定**：`CHANGE.md` / `REQUIREMENT.md` 为仓库内真源；OpenSpec 为可选上游或归档目标。
+**约定**：`{phase}.json` 为语义真源，`{PHASE}.md` 为 hbs 生成视图；OpenSpec 为可选上游或归档目标。见 [`artifact-contract.md`](./artifact-contract.md)。
 
 ## Superpowers（纪律层）
 
