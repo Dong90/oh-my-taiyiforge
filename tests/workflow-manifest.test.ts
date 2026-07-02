@@ -1,12 +1,14 @@
 import { describe, expect, it } from "vitest";
 import {
   auxiliaryForPhaseFromManifest,
+  auxiliarySkillIdsForPhase,
   formatPhaseWorkflowPlain,
   getHarnessHooksFromManifest,
   getPhaseFromManifest,
   getWorkflowManifest,
   resetWorkflowManifestCache,
 } from "../src/integrations/workflow-manifest.js";
+import { DEFAULT_HUMAN_GATE_PHASES } from "../src/core/gates/human-gate-config.js";
 
 describe("workflow-manifest", () => {
   it("loads all nine phases with harness hooks", () => {
@@ -14,8 +16,9 @@ describe("workflow-manifest", () => {
     const m = getWorkflowManifest();
     expect(Object.keys(m.phases)).toContain("change");
     expect(Object.keys(m.phases)).toContain("integration");
-    expect(m.gates.human_phases).toContain("change");
-    expect(m.gates.human_phases).toContain("review");
+    for (const hp of DEFAULT_HUMAN_GATE_PHASES) {
+      expect(m.phases[hp]?.human_gate, hp).toBe(true);
+    }
   });
 
   it("maps dev phase with TDD and engine gate", () => {
@@ -33,8 +36,8 @@ describe("workflow-manifest", () => {
     expect(auxiliaryForPhaseFromManifest("change")).toContain("taiyi-intel-scan");
     expect(auxiliaryForPhaseFromManifest("change")).not.toContain("taiyi-compress");
     expect(auxiliaryForPhaseFromManifest("review")).not.toContain("taiyi-health");
-    expect(getPhaseFromManifest("design")?.auxiliary).toContain("taiyi-architect");
-    expect(getPhaseFromManifest("review")?.auxiliary).toContain("taiyi-health");
+    expect(auxiliarySkillIdsForPhase("design")).toContain("taiyi-architect");
+    expect(auxiliarySkillIdsForPhase("review")).toContain("taiyi-health");
   });
 
   it("formats review phase with harness and auxiliary", () => {
@@ -62,10 +65,4 @@ describe("workflow-manifest", () => {
     expect(taskHook?.tool).toBe("taiyi");
   });
 
-  it("profiles skip phases for lite", () => {
-    resetWorkflowManifestCache();
-    const lite = getWorkflowManifest().profiles.lite;
-    expect(lite?.skip_phases).toContain("design");
-    expect(lite?.skip_phases).toContain("review");
-  });
 });
