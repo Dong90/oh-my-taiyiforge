@@ -1,3 +1,4 @@
+import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -27,4 +28,17 @@ export function resolvePackageRoot(fromModuleUrl: string): string {
 
 export function resolveTemplatesDir(fromModuleUrl: string): string {
   return path.join(resolvePackageRoot(fromModuleUrl), "templates");
+}
+
+/** Handlebars phase templates — dev: src/templates; npm may ship under templates/*.hbs */
+export function resolveHbsTemplatesDir(fromModuleUrl: string): string {
+  const root = resolvePackageRoot(fromModuleUrl);
+  const candidates = [
+    path.join(root, "src", "templates"),
+    path.join(root, "templates"),
+  ];
+  for (const dir of candidates) {
+    if (fs.existsSync(path.join(dir, "change.hbs"))) return dir;
+  }
+  return candidates[0];
 }
