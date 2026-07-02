@@ -63,3 +63,10 @@ docs/taiyi/tdd-workflow.md
 docs/taiyi/token-budget.md
 docs/taiyi/token-compress.md
 _check_artifacts.mjs
+
+# Local-only architecture note
+ARCHITECTURE.md
+ARCHITECTURE.pdf
+ARCHITECTURE.tex
+ARCHITECTURE-with-images.md
+images/
