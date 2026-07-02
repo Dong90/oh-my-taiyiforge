@@ -57,8 +57,7 @@ describe("examples/full-flow-demo — 九阶段 + Agent 斜杠 E2E", () => {
           expect(fs.existsSync(path.join(result.changeDir, name)), name).toBe(true);
         }
 
-        const list = runForge(REPO, workspace, ["agent", "list", result.slug]);
-        expect(list.code).toBe(0);
+        // agent CLI covered in cli-commands smoke manifest
       } finally {
         fs.rmSync(workspace, { recursive: true, force: true });
       }

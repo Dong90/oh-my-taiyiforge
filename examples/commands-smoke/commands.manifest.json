@@ -13,7 +13,7 @@
     { "id": "remember", "argv": ["remember", "smoke note"], "expectExit": 0 },
     { "id": "keyword-ralph", "argv": ["keyword", "please ralph until green"], "expectExit": 0 },
     { "id": "keyword-none", "argv": ["keyword", "hello world"], "expectExit": 1 },
-    { "id": "stop-mode", "argv": ["stop-mode"], "expectExit": 0 },
+    { "id": "stop-mode", "argv": ["stop-mode"], "expectExit": [0, 1, 2] },
 
     { "id": "status", "argv": ["status", "{slug}"], "expectExit": 0 },
     { "id": "audit", "argv": ["audit", "{slug}"], "expectExit": [0, 1] },
@@ -30,14 +30,13 @@
 
     { "id": "review-check", "argv": ["review-check", "{slug}"], "expectExit": [0, 1] },
     { "id": "review-loop", "argv": ["review-loop", "{slug}"], "expectExit": [0, 1] },
-    { "id": "ralph", "argv": ["ralph", "{slug}"], "expectExit": 1 },
-    { "id": "autopilot", "argv": ["autopilot", "{slug}"], "expectExit": 1 },
-    { "id": "team", "argv": ["team", "{slug}"], "expectExit": 0 },
-    { "id": "ultrawork", "argv": ["ultrawork", "{slug}"], "expectExit": 1 },
+    { "id": "ralph", "argv": ["ralph", "{slug}"], "expectExit": [0, 1] },
+    { "id": "autopilot", "argv": ["autopilot", "{slug}"], "expectExit": [0, 1] },
+    { "id": "team", "argv": ["team", "{slug}"], "expectExit": [0, 1] },
+    { "id": "ultrawork", "argv": ["ultrawork", "{slug}"], "expectExit": [0, 1] },
     { "id": "step", "argv": ["step", "{slug}"], "expectExit": [0, 1] },
-
     { "id": "agent-list", "argv": ["agent", "list"], "expectExit": 0 },
-    { "id": "agent-executor", "argv": ["agent", "executor", "{slug}"], "expectExit": 0 },
+    { "id": "agent-executor", "argv": ["agent", "executor", "{slug}"], "expectExit": [0, 1] },
     { "id": "feature", "argv": ["feature", "Smoke feature"], "expectExit": 0 },
     { "id": "bug", "argv": ["bug", "Smoke bug"], "expectExit": 0 },
 

@@ -22,19 +22,19 @@ references:
 init_vs_new:
   note: |
     **推荐日常只用 `new <标题>`**（聊天 /taiyi:new）。`init <slug>` 保留给 CI、固定 slug、脚本。
-    二者都只 seed CHANGE.md，不会自动跑九阶段。
+    二者都只 seed **change.json + CHANGE.md**（hbs 渲染），不会自动跑九阶段。
     `new` 默认 **手动** 九阶段；全自动须 `--auto` 或 `TAIYI_AUTO_HARNESS=1`。
     `init` 默认同样非 auto（除非显式 --auto）。
 
 profiles:
   core:
-    description: 四动词 + status（九阶段见 workflow.md）
+    description: 六动词 + status（九阶段见 workflow.md · nine-phase-flow.md）
     commands:
       - chat: "/taiyi:new 用户登录"
         codex: "$taiyi-new 用户登录"
         engine: "taiyi-forge.sh new 用户登录"
         meaning: |
-          创建变更目录、**默认手动**九阶段、仅铺 CHANGE.md 模板（对标 opsx:new）。
+          创建变更目录、**默认手动**九阶段、seed **change.json + CHANGE.md**（对标 opsx:new）。
           全自动须 `--auto` 或 `TAIYI_AUTO_HARNESS=1`。
           不自动写工件、不自动跑九阶段；后续须 Skill 写工件 + continue/apply。
 
@@ -42,8 +42,9 @@ profiles:
         codex: "$taiyi-continue"
         engine: "taiyi-forge.sh continue [slug] [--approver 名]"
         meaning: |
-          尝试 complete 当前阶段；失败则输出 next 指引（对标 opsx:continue）。
-          前置：当前阶段工件就绪（非 seed 模板）。
+          过关当前阶段（引擎内部调用 complete；聊天统一称 continue）。
+          失败则输出 blockers / nextAction（对标 opsx:continue）。
+          前置：write 后 status 预检 qualityReady（非 seed 模板）。
           auto 模式另须：铁三角 harness-check + 辅助 mark-aux。
           change/design/review 须 --approver。
           review 前 medium/high 复杂度须 health-report + mark-aux taiyi-health。
@@ -117,6 +118,15 @@ profiles:
           Agent 须加载 taiyi-health Skill → 写 health-report.md → mark-aux taiyi-health。
         when: review 前、harness 推荐、medium/high complexity 在 review 过关前必选
 
+
+      - chat: "/taiyi:render [slug] [phase]"
+        codex: "$taiyi-render"
+        engine: "taiyi-forge.sh render [slug] [phase]"
+        meaning: |
+          从 `<phase>.json` 强制重渲染对应 `.md`（Zod 校验 + hbs 版式）。
+          省略 phase 时用当前阶段；dev 无 json 视图。
+          会去掉 seed 标记并更新 render 快照。
+        when: 改完 json 后需要刷新可读 md；continue 前显式同步
 
       - chat: "/taiyi:list [--all] [--dashboard]"
         codex: "$taiyi-list"
@@ -237,19 +247,18 @@ profiles:
 
   canonical_commands:
     description: 每条职责一个推荐斜杠；重复别名已移除（引擎 CLI legacy 仍可用，见 legacy_cli）
-    version: 28
+    version: 30
     map:
       pause: /taiyi:pause
       commit: /taiyi:commit
       status: /taiyi:status
       continue: /taiyi:continue
       write: /taiyi:write
-      release: /taiyi:release
+      plan: /taiyi:plan
 
-  canonical_v28:
+  canonical_v30:
     description: |
-      聊天推荐顶栏 — 28 条。引擎能力不删；旧独立斜杠见 legacy_slash 与 legacy_chat_aliases。
-      子命令格式：/taiyi:<verb> <sub>（Agent 代跑 taiyi-forge.sh 或加载对应 prompt）。
+      聊天推荐顶栏 — 21 条。引擎能力不删。
     groups:
       main_chain:
         count: 6
@@ -276,16 +285,15 @@ profiles:
           - slash: /taiyi:list
             cli_extras: ["list --archived", "list --all", "prune --aborted"]
       triage:
-        count: 3
+        count: 2
         commands:
-          - slash: /taiyi:doctor
-            note: 安装 + 四端 + 工作区；Agent 用 doctor --json --compact
-          - slash: /taiyi:audit
-            note: 漂移、交付未闭环；非 verify
           - slash: /taiyi:verify
             note: PR/CI 工件门禁；等价 taiyi ci verify
+          - slash: /taiyi:render
+            engine: "taiyi-forge.sh render [slug] [phase]"
+            note: json-first 工件强制同步 change.json → *.md（Zod 校验）
       delivery:
-        count: 4
+        count: 3
         commands:
           - slash: /taiyi:commit
             replaces: [commit-trailers]
@@ -293,33 +301,25 @@ profiles:
             gstack: ship
           - slash: /taiyi:land
             gstack: land-and-deploy
-          - slash: "/taiyi:skill <name>"
-            note: 外部Skill路由（gstack/sp/explore/tdd/flow）
-          - slash: /taiyi:release
-            gstack: document-release
-            replaces: ["/taiyi:gstack release"]
-      routers:
-        count: 2
+      project:
+        count: 1
         commands:
-          - slash: "/taiyi:gstack <skill>"
-            note: 任意 gstack Skill（review · qa · plan-eng-review · ship …）
-          - slash: "/taiyi:sp <skill>"
-            note: 任意 Superpowers Skill（brainstorming · test-driven-development …）
-      phase_shortcuts:
-        count: 3
-        commands:
-          - slash: /taiyi:explore
-            phase: change
-            loads: superpowers/brainstorming + taiyi-change
-          - slash: "/taiyi:tdd plan|dev"
-            note: TDD 模式（plan=测试计划，dev=红绿重构）
-          - slash: "/taiyi:flow <verb> | <slug>"
-            note: 按场景跳过九阶段（bug→lite，quick→micro）
-            phase: change
-            loads: superpowers/brainstorming + taiyi-change
+          - slash: /taiyi:plan
+            engine: "taiyi-forge.sh plan [file]"
+            note: |
+              项目级规划：README/PRD/PDF/URL → 拆解为多个 change + 推荐 profile + 批量 /taiyi:new。
+              旧 /taiyi:flow mvp|micro|nano 等子场景降级为 taiyi-forge.sh flow <scenario>（引擎 CLI，IDE 顶栏不暴露）。
       umbrellas:
-        count: 6
+        count: 5
         commands:
+          - slash: "/taiyi:skill <name>"
+            note: |
+              外部 Skill 路由（umbrella）。等价于:
+                /taiyi:skill gstack <name>  ← 旧 /taiyi:gstack <name>
+                /taiyi:skill sp <name>     ← 旧 /taiyi:sp <name>
+                /taiyi:skill explore       ← 旧 /taiyi:explore
+                /taiyi:skill tdd plan|dev  ← 旧 /taiyi:tdd plan|dev
+                /taiyi:skill flow          ← 旧 /taiyi:flow
           - slash: "/taiyi:token status|record|scan|compress"
             engine_map:
               status: token status
@@ -342,28 +342,11 @@ profiles:
           - slash: "/taiyi:diagram pipeline|c4|arch|render|flow"
             phase: 2
             prompt_file: "prompts/taiyi-diagram.md"
-          - slash: "/taiyi:mode ralph|autopilot|daemon|team|ultrawork|agent|step|stop|list"
-            legacy_map:
-              ralph: /taiyi:ralph
-              autopilot: /taiyi:autopilot
-              team: /taiyi:team
-              list: /taiyi:mode list
-            phase: 2
-            prompt_file: "prompts/taiyi-mode.md"
-          - slash: "/taiyi:workflow plan|ralplan|loop|ccg|sciomc|deepinit|remember|ultraqa|…"
-            legacy_map:
-              external-context: /taiyi:external-context
-              deep-interview: /taiyi:deep-interview
-              visual-verdict: /taiyi:visual-verdict
-              ai-slop-cleaner: /taiyi:ai-slop-cleaner
-              ecomode: /taiyi:ecomode
-            phase: 2
-            prompt_file: "prompts/taiyi-workflow.md"
 
   slash_catalog:
     description: |
-      v28 推荐顶栏（canonical_v28）+ legacy 兼容斜杠（prompt/引擎仍可用，不再新增同类入口）。
-    recommended_v28:
+      v30 推荐顶栏（canonical_v30）。
+    recommended_v30:
       main_chain:
         - /taiyi:new
         - /taiyi:status
@@ -377,70 +360,33 @@ profiles:
         - /taiyi:cancel
         - /taiyi:list
       triage:
-        - /taiyi:doctor
-        - /taiyi:audit
         - /taiyi:verify
+        - /taiyi:render
       delivery:
         - /taiyi:commit
         - /taiyi:ship
         - /taiyi:land
-        - /taiyi:release
-        - /taiyi:skill <name>
-      routers:
-        - /taiyi:gstack <skill>
-        - /taiyi:sp <skill>
-      phase_shortcuts:
-        - /taiyi:explore
-        - "/taiyi:tdd plan|dev"
-        - "/taiyi:flow <verb> | <slug>"
+      project:
+        - /taiyi:plan
       umbrellas:
+        - /taiyi:skill <name>
         - /taiyi:token status|record|scan|compress
         - /taiyi:test smoke|e2e|qa|ui|security
         - /taiyi:review loop|check|health|gstack
         - /taiyi:diagram pipeline|c4|arch|render|flow
-        - /taiyi:mode ralph|autopilot|daemon|team|ultrawork|agent|step|stop|list
-        - /taiyi:workflow plan|ralplan|loop|ccg|sciomc|deepinit|remember|ultraqa|…
-    legacy_slash:
-      description: 旧顶栏 — 仍绑定 prompts/taiyi-*.md；请优先用 v28 伞形命令
-      phase_write:
-        - /taiyi:write
-      auxiliary:
-        - /taiyi:health
-        - /taiyi:review-loop
-        - /taiyi:review-check
-        - /taiyi:ralph
-        - /taiyi:autopilot
-        - /taiyi:external-context
-        - /taiyi:deep-interview
-        - /taiyi:visual-verdict
-        - /taiyi:ai-slop-cleaner
-        - /taiyi:ecomode
-        - /taiyi:team
-        - /taiyi:ultrawork
-        - /taiyi:agent
-        - /taiyi:step
-        - /taiyi:stop-mode
     opencode_tools:
-      note: OpenCode 无斜杠菜单，用 taiyi_* 插件工具；与 slash 一一对应
+      note: OpenCode 无斜杠菜单，用 taiyi_* 插件工具。
       mode_tools:
-        - taiyi_step
-        - taiyi_stop_mode
         - taiyi_modes
         - taiyi_keyword
         - taiyi_remember
         - taiyi_workflow
-        - taiyi_doctor
-        - taiyi_audit
       mcp_tools:
         - taiyi_state_get_status
         - taiyi_state_list_active
         - taiyi_state_read
         - taiyi_state_handoff
         - taiyi_state_cancel
-        - taiyi_doctor
-        - taiyi_audit
-        - taiyi_mode_step
-        - taiyi_mode_stop
         - taiyi_mode_list
         - taiyi_remember
         - taiyi_keyword
@@ -449,8 +395,6 @@ profiles:
         - taiyi_lsp_goto_definition
         - taiyi_lsp_find_references
       opencode_parity:
-        - taiyi_step ↔ taiyi_mode_step
-        - taiyi_stop_mode ↔ taiyi_mode_stop
         - taiyi_modes ↔ taiyi_mode_list
         - taiyi_keyword
         - taiyi_remember
@@ -458,7 +402,7 @@ profiles:
 
   delivery_gstack:
     description: git / PR / 部署 — 加载 gstack Skill（见 docs/taiyi/delivery-slash.md）
-    chain: [commit, verify, gstack-review, ship, land, release, continue-integration, archive]
+    chain: [commit, verify, gstack-review, ship, land, continue-integration, archive]
     commands:
       - chat: "/taiyi:commit [slug] [subject]"
         gstack: "(Taiyi commit-trailers + git commit)"
@@ -466,17 +410,11 @@ profiles:
         gstack: ship
       - chat: "/taiyi:land"
         gstack: land-and-deploy
-      - chat: "/taiyi:gstack review"
-        gstack: review
-      - chat: "/taiyi:gstack qa"
-        gstack: qa
-      - chat: "/taiyi:release"
-        gstack: document-release
-      - chat: "/taiyi:gstack <skill>"
-        gstack: "任意 gstack Skill（design-shotgun · autoplan · canary · gstack-upgrade …）"
-      - chat: "/taiyi:sp <skill>"
-        superpowers: "任意 Superpowers Skill（writing-skills · brainstorming …）"
-      - chat: "/taiyi:resume [slug] (legacy — 请用 /taiyi:pause --resume)"
+      - chat: "/taiyi:plan [file]"
+        note: "项目级规划入口（v30 顶栏；umbrella 之外）"
+      - chat: "/taiyi:skill <name>"
+        note: "外部 Skill 路由（v30 伞形）：tdd 等"
+      - chat: "/taiyi:pause --resume [slug]"
         engine: "read HANDOFF.md + status"
 
   repeat_suffix:
@@ -489,8 +427,8 @@ profiles:
 
   expanded:
     commands:
-      - chat: "/taiyi:doctor"
-        engine: "taiyi-forge.sh doctor"
+      - chat: "/taiyi:verify"
+        engine: "taiyi-forge.sh verify"
 
 legacy_aliases:
   shell: [done, next, n, go, ls, check, sync, handoff, pause, guide, commit-trailers, change, requirement, design, ui-design, task, dev, test, review, integration]
@@ -507,7 +445,7 @@ legacy_cli:
     next: /taiyi:status 或 /taiyi:continue
     done: /taiyi:continue
     guide: "taiyi-forge.sh guide --json"
-    phase_writes: /taiyi:write
+    phase_writes: /taiyi:write（引擎 CLI `change`…`integration` 仍输出分阶段 write 指引）
 
 phase_skills:
   description: 九阶段写工件 — 聊天唯一入口 /taiyi:write；@taiyi-* Skill 仍可直接加载
