@@ -1,0 +1,35 @@
+{
+  "title": "ECC Hybrid 双 harness 走通",
+  "motivation": "workflow-manifest.yaml 已将 Superpowers + ECC 双线 harness 写入规范，但从未在真实 change 上跑通过。旧有 8 个 change 全部卡在 integration 阶段，无法验证双 harness 的实际行为能力。ECC 已全局安装但零运行记录。",
+  "scope": {
+    "includes": [
+      "创建新 change 并完整走通九阶段验证流程",
+      "在每个阶段触发对应 ECC harness 钩子并记录打卡证据",
+      "integration 阶段完成 delivery-gate（含 git trailer）"
+    ],
+    "excludes": [
+      "不修复旧有 8 个 change",
+      "不修改引擎代码或 workflow-manifest.yaml 配置",
+      "不涉及任何业务代码改动",
+      "不含前端 UI 改版"
+    ]
+  },
+  "success_criteria": [
+    { "id": "SC-01", "description": "change 阶段 complete 成功（human gate: --approver dongjun）", "is_checked": true },
+    { "id": "SC-02", "description": "requirement 阶段产出 REQUIREMENT.md 且无 seed 残留", "is_checked": false },
+    { "id": "SC-03", "description": "design 阶段产出 DESIGN.md（≥2 方案对比）", "is_checked": false },
+    { "id": "SC-04", "description": "task 阶段产出 TASK.md（可执行任务切片）", "is_checked": false },
+    { "id": "SC-05", "description": "dev 阶段 TDD 红绿循环完成，.dev-complete 有 exitCode 0", "is_checked": false },
+    { "id": "SC-06", "description": "test 阶段 TEST.md 包含测试覆盖摘要", "is_checked": false },
+    { "id": "SC-07", "description": "review 阶段 REVIEW.md 通过（human gate）", "is_checked": false },
+    { "id": "SC-08", "description": "integration 阶段 delivery-gate 完成，CHANGELOG.md 产出", "is_checked": false }
+  ],
+  "impact_map": [
+    { "module": "workflow-manifest.yaml", "impact": "验证现有配置可执行", "owner": "dongjun" }
+  ],
+  "evidence": {
+    "command": "test -f .taiyi/changes/ecc-hybrid-harness/CHANGE.md && echo 'CHANGE.md exists'",
+    "exitCode": 0,
+    "capturedAt": "2026-07-03T08:28:00.000Z"
+  }
+}
