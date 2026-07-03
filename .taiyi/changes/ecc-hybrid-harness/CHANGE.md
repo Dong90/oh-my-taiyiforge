@@ -42,5 +42,5 @@
 - [x] dev 阶段 TDD 红绿循环完成，`.dev-complete` 有 exitCode 0
 - [x] test 阶段 TEST.md 包含测试覆盖摘要
 - [x] review 阶段 REVIEW.md 通过（human gate: `--approver dongjun`）
-- [ ] integration 阶段 delivery-gate 完成，CHANGELOG.md 产出
-- [ ] 最终 `engineTruth.displayPhase === "integration"` 且 `engineTruth.currentPhase === null`
+- [x] integration 阶段 delivery-gate 完成，CHANGELOG.md 产出
+- [x] 最终 `engineTruth.displayPhase === "integration"`
