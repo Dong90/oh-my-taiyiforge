@@ -35,5 +35,12 @@
   "review": {
     "ecc/code-review": true,
     "ecc/security-scan": true
+  },
+  "integration": {
+    "ecc/delivery-gate": true,
+    "ecc/verification-loop": true,
+    "ecc/changelog-generator": true,
+    "ecc/strategic-compact": true,
+    "ecc/continuous-learning-v2": true
   }
 }
