@@ -112,20 +112,20 @@ describe("integration.hbs", () => {
     expect(out).not.toMatch(/\{\{[#/]?[\w]+\}\}/);
   });
 
-  it("renders with no breaking changes (shows _无_)", () => {
+  it("renders with no breaking changes", () => {
     const out = render({
       title: "无break",
       changelog_entries: [{ type: "Changed", description: "小改动" }],
     });
-    expect(out).toContain("_无_");
+    expect(out).toMatch(/\n无\n/);
     expect(out).not.toMatch(/\{\{[#/]?[a-zA-Z]+\}\}/);
   });
 
-  it("renders without release_version (shows _待定_)", () => {
+  it("renders without release_version", () => {
     const out = render({
       title: "未发布",
       changelog_entries: [],
     });
-    expect(out).toContain("_待定_");
+    expect(out).toContain("待定");
   });
 });

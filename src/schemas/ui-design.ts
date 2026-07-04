@@ -12,6 +12,12 @@ export const UiDesignSchema = z.object({
   scope: z.string().describe("UI 范围说明"),
   styling_contract: StylingContract.optional().describe("样式契约：CSS 方案 + 内联禁令 + 主题变量规则"),
   is_cli_only: z.boolean().optional().describe("是否仅 CLI"),
+  interaction_boundaries: z.array(
+    z.object({
+      boundary: z.string().describe("交互边界，如 Double-click"),
+      behavior: z.string().describe("行为描述"),
+    })
+  ).optional().describe("Step 4 交互边界数据，缺省时渲染空表格或 CLI-only 提示"),
   component_name: z.string().optional().describe("主组件名称（CLI-only 时填 N/A）"),
   states: z.array(
     z.object({

@@ -137,6 +137,6 @@ describe("change.hbs", () => {
       scope: { includes: [], excludes: [] },
       success_criteria: [],
     });
-    expect(out).toContain("- _无_");
+    expect(out).toContain("- 无\n");
   });
 });

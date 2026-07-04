@@ -93,6 +93,7 @@
     "@types/node": "^26.0.0",
     "@types/proper-lockfile": "^4.1.4",
     "@vitest/coverage-v8": "^4.1.9",
+    "commander": "^15.0.0",
     "tsx": "^4.19.0",
     "typescript": "^6.0.3",
     "vitest": "^4.1.9"

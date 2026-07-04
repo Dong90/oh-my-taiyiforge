@@ -113,4 +113,42 @@ describe("test.hbs", () => {
     const out = render(data);
     expect(out).not.toMatch(/\{\{[#/]?[\w]+\}\}/);
   });
+
+  it("renders regression table with test_results_summary", () => {
+    const out = render({
+      title: "测试",
+      test_plan: [{ id: "TC-01", description: "测试" }],
+      test_results_summary: "1494/1502 passed",
+    });
+    expect(out).toContain("1494/1502 passed");
+  });
+
+  it("renders regression test plan with test_results_summary", () => {
+    const out = render({
+      title: "测试",
+      test_plan: [{ id: "TC-01", description: "测试" }],
+      test_results_summary: "1500 cases",
+    });
+    expect(out).toContain("1500 cases");
+  });
+
+  it("renders regression fallback without test_results_summary", () => {
+    const out = render({
+      title: "测试",
+      test_plan: [{ id: "TC-01", description: "测试" }],
+    });
+    expect(out).toContain("待验证");
+    expect(out).toContain("待执行");
+  });
+
+  it("renders unit_framework and coverage target", () => {
+    const out = render({
+      title: "测试",
+      test_plan: [{ id: "TC-01", description: "测试" }],
+      unit_framework: "jest",
+      unit_coverage_target: "95%",
+    });
+    expect(out).toContain("jest");
+    expect(out).toContain("95%");
+  });
 });

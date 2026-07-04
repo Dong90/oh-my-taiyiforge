@@ -40,7 +40,7 @@ downstream: [requirement]
 - {{this}}
 {{/each}}
 {{else}}
-- _无_
+- 无
 {{/if}}
 
 <!-- Validate: In/Out互斥且穷尽？ -->
@@ -49,10 +49,10 @@ downstream: [requirement]
 > **[UI]** Goal: 前端项目预选视觉方向 | Inputs: 产品定位/品牌/竞品
 <!-- Action: 前端项目必填，纯后端 skip。此选择被 Phase 4 ui-design 继承并深化 -->
 
-- **调性**: {{#if visual_tone}}{{visual_tone}}{{else}}_待选定_{{/if}}
-- **理由**: {{#if visual_reason}}{{visual_reason}}{{else}}_结合业务说明_{{/if}}
-- **参考产品**: {{#if visual_references}}{{visual_references}}{{else}}_3 个参考产品_{{/if}}
-- **明确排除**: {{#if visual_excluded}}{{visual_excluded}}{{else}}_无 — CLI/workflow only; no visual surface_{{/if}}
+- **调性**: {{#if visual_tone}}{{visual_tone}}{{else}}待选定{{/if}}
+- **理由**: {{#if visual_reason}}{{visual_reason}}{{else}}结合业务说明{{/if}}
+- **参考产品**: {{#if visual_references}}{{visual_references}}{{else}}3 个参考产品{{/if}}
+- **明确排除**: {{#if visual_excluded}}{{visual_excluded}}{{else}}无 — CLI/workflow only; no visual surface{{/if}}
 
 <!-- Validate: 调性选择有理由支撑？参考产品有可比性？ -->
 
@@ -80,7 +80,7 @@ downstream: [requirement]
 {{else}}
 | 模块/服务/团队 | 影响 | 负责人 |
 |--------------|------|--------|
-| _本次变更仅影响测试套件_ | _无生产模块_ | _CI/CD_ |
+| 本次变更仅影响测试套件 | 无生产模块 | CI/CD |
 {{/if}}
 
 <!-- Validate: 遗漏=上线事故 -->
@@ -101,7 +101,7 @@ downstream: [requirement]
 
 ```
   CURRENT              THIS CHANGE              12-MONTH IDEAL
-  {{#if dream_state.current}}{{dream_state.current}}{{else}}_现状_{{/if}}     --->      {{#if dream_state.this_change}}{{dream_state.this_change}}{{else}}_本次增量_{{/if}}    --->        {{#if dream_state.ideal}}{{dream_state.ideal}}{{else}}_理想终态_{{/if}}
+  {{#if dream_state.current}}{{dream_state.current}}{{else}}现状{{/if}}     --->      {{#if dream_state.this_change}}{{dream_state.this_change}}{{else}}本次增量{{/if}}    --->        {{#if dream_state.ideal}}{{dream_state.ideal}}{{else}}理想终态{{/if}}
 ```
 
 <!-- Validate: 向理想靠近而非引入未来技术债？ -->
@@ -119,7 +119,7 @@ downstream: [requirement]
 {{else}}
 | 风险 | 概率 | 影响 | 缓解 |
 |------|------|------|------|
-| _本次为测试/文档变更，无新增风险_ | _N/A_ | _N/A_ | _N/A_ |
+| 本次为测试/文档变更，无新增风险 | N/A | N/A | N/A |
 {{/if}}
 
 <!-- Validate: 三类全覆盖？缓解可执行？ -->
@@ -137,7 +137,7 @@ downstream: [requirement]
 {{else}}
 | 技术决策 | Token? | 不选成熟方案的理由 |
 |---------|:--:|-------------------|
-| _本次无新技术引入_ | 否 | _沿用现有技术栈_ |
+| 本次无新技术引入 | 否 | 沿用现有技术栈 |
 {{/if}}
 
 **已花费: {{#if innovation_tokens}}{{innovation_tokens.length}}{{else}}0{{/if}}/3**
@@ -151,7 +151,7 @@ downstream: [requirement]
 **迁移**: {{#if migration_steps}}{{migration_steps}}{{else}}[步骤]{{/if}}
 **回滚触发**: {{#if rollback_trigger}}{{rollback_trigger}}{{else}}[量化条件]{{/if}}
 **回滚操作**: {{#if rollback_ops}}{{rollback_ops}}{{else}}[精确到命令]{{/if}}
-**回滚时间**: {{#if rollback_time}}≤{{rollback_time}}{{else}}≤_N_min{{/if}}
+**回滚时间**: {{#if rollback_time}}≤{{rollback_time}}{{else}}≤N min{{/if}}
 
 <!-- Validate: 回滚≤30min？步骤精确？ -->
 
@@ -168,7 +168,7 @@ downstream: [requirement]
 {{else}}
 | 角色 | 姓名 | 诉求 |
 |------|------|------|
-| _本次为测试变更，无额外干系人_ | _CI/CD_ | _自动化回归通过_ |
+| 本次为测试变更，无额外干系人 | CI/CD | 自动化回归通过 |
 {{/if}}
 
 ---

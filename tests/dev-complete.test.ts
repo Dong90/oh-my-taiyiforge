@@ -1,8 +1,12 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, beforeEach } from "vitest";
 import { isDevCompleteEvidence, DEV_COMPLETE_EVIDENCE } from "../src/core/dev-complete.js";
 import { validateArtifactContent } from "../src/core/artifact-validator.js";
 
 describe("dev-complete evidence", () => {
+  beforeEach(() => {
+    process.env.TAIYI_DEV_VERIFY_MODE = "trust-text";
+  });
+
   it("accepts standard evidence", () => {
     expect(isDevCompleteEvidence(DEV_COMPLETE_EVIDENCE)).toBe(true);
     const v = validateArtifactContent("dev", DEV_COMPLETE_EVIDENCE);

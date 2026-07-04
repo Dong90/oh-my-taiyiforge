@@ -39,7 +39,7 @@ downstream: [task, ui-design]
 {{#if techStack.excluded}}
 - **明确排除**: {{techStack.excluded}}
 {{/if}}
-- **约束**: {{#if techStack.constraints}}{{techStack.constraints}}{{else}}_在此列出技术/性能/兼容性/时间/团队约束_{{/if}}
+- **约束**: {{#if techStack.constraints}}{{techStack.constraints}}{{else}}在此列出技术/性能/兼容性/时间/团队约束{{/if}}
 
 <!-- Validate: 约束覆盖技术/性能/兼容性/时间/团队？ -->
 
@@ -52,7 +52,7 @@ downstream: [task, ui-design]
 {{#if current_state}}
 {{current_state}}
 {{else}}
-_待补充变更前的架构/行为快照（如：当前登录模块使用 Session 中间件，无 JWT 支持）_
+待补充变更前的架构/行为快照（如：当前登录模块使用 Session 中间件，无 JWT 支持）
 {{/if}}
 
 > ⚠️ **ADR 覆写规则**: 此 DESIGN.md 是当前变更的设计真源，**强制覆写**而非追加。每次设计变更请覆写/更新相关节段，不要保留过时的旧设计 —— 半年后的 Agent 从此文档拼出系统全貌，不看历史版本。变更记录由 CHANGELOG.md 和 git log 承担。
@@ -70,7 +70,7 @@ _待补充变更前的架构/行为快照（如：当前登录模块使用 Sessi
 | {{name}} | `{{version_range}}` | {{purpose}} | {{alternatives_considered}} | `{{npm_latest}}` | {{staleness_check}} |
 {{/each}}
 {{else}}
-| _待列新增/变更依赖_ | _^X.Y_ | _用途_ | _替代方案(可选)_ | _latest_ | _✅ 已检查_ |
+| 待列新增/变更依赖 | ^X.Y | 用途 | 替代方案(可选) | latest | ✅ 已检查 |
 {{/if}}
 
 > 💡 写模板时 `npm view <pkg> version` 检查最新版本；若有 major bump 警告需说明。
@@ -104,7 +104,7 @@ flowchart LR
 | {{name}} | {{operation}} | {{path}} | {{description}} |
 {{/each}}
 {{else}}
-| _待补充模块名_ | _新增/修改/删除_ | _路径_ | _变更说明_ |
+| 待补充模块名 | 新增/修改/删除 | 路径 | 变更说明 |
 {{/if}}
 
 {{#if existingArchitecture}}
@@ -208,7 +208,7 @@ flowchart LR
 {{else}}
 | 决策 | 半径 | 最坏情况 | 隔离 |
 |------|:--:|---------|------|
-| _本次为测试基建变更_ | _低_ | _E2E 测试假阳性_ | _CI 重试机制_ |
+| 本次为测试基建变更 | 低 | E2E 测试假阳性 | CI 重试机制 |
 {{/if}}
 
 <!-- Validate: 有没有一个变更能影响所有用户？半径可控？ -->
@@ -228,7 +228,7 @@ flowchart LR
 {{else}}
 | 决策 | Token? | 不选成熟方案的理由 |
 |-----|:--:|-------------------|
-| _本次无新技术_ | 否 | _全栈已有技术栈_ |
+| 本次无新技术 | 否 | 全栈已有技术栈 |
 {{/if}}
 
 **累计: {{#if design_innovation_tokens}}{{design_innovation_tokens.length}}{{else}}0{{/if}}/3**
@@ -248,7 +248,7 @@ flowchart LR
 {{else}}
 | 权衡点 | 选择 | 接受理由 |
 |--------|------|---------|
-| _测试框架选型_ | _Vitest_ | _与项目构建工具链一致_ |
+| 测试框架选型 | Vitest | 与项目构建工具链一致 |
 {{/if}}
 
 <!-- Validate: 每个权衡都说清了"接受代价的理由"？ -->
@@ -257,9 +257,9 @@ flowchart LR
 > **[MEDIUM+]** Goal: 确保能发布 | Inputs: Step5
 <!-- Action: 新artifact类型？CI/CD变更？回滚方式？ -->
 
-- **新artifact**: {{#if new_artifact}}{{new_artifact}}{{else}}_无_{{/if}}
-- **CI/CD变更**: {{#if ci_cd}}{{ci_cd}}{{else}}_在此列出 CI/CD 配置变更（如 workflow / deploy / npm publish）_{{/if}}
-- **回滚方式**: {{#if rollback_trigger}}{{rollback_trigger}}{{else}}_在此描述回滚触发条件与操作步骤_{{/if}}
+- **新artifact**: {{#if new_artifact}}{{new_artifact}}{{else}}无{{/if}}
+- **CI/CD变更**: {{#if ci_cd}}{{ci_cd}}{{else}}在此列出 CI/CD 配置变更（如 workflow / deploy / npm publish）{{/if}}
+- **回滚方式**: {{#if rollback_trigger}}{{rollback_trigger}}{{else}}在此描述回滚触发条件与操作步骤{{/if}}
 
 <!-- Validate: 新artifact的build/publish/update流程完整？ -->
 
@@ -276,7 +276,7 @@ flowchart LR
 {{else}}
 | 威胁 | 攻击向量 | 缓解 |
 |------|---------|------|
-| _本次变更无新增攻击面_ | _纯测试代码，无运行时暴露_ | _N/A_ |
+| 本次变更无新增攻击面 | 纯测试代码，无运行时暴露 | N/A |
 {{/if}}
 
 <!-- Validate: OWASP Top10全覆盖？敏感数据加密+日志脱敏？ -->

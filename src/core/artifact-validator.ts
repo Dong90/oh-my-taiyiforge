@@ -2,7 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 import type { PhaseId, QualityScores } from "./types.js";
 import { getPhase } from "./phase-registry.js";
-import { isDevCompleteEvidence } from "./dev-complete.js";
+import { isDevCompleteEvidence, verifyDevComplete } from "./dev-complete.js";
 import { isSeedTemplate } from "./seed-marker.js";
 import { hasPlaceholders, countPlaceholders } from "./placeholder-check.js";
 import { RequirementSchema } from "../schemas/requirement.js";
@@ -39,11 +39,7 @@ function readAndParseJson(jsonPath: string, schema: ZodSchema): JsonParseResult 
   }
 }
 
-/** DEV-only validation (last remaining non-Zod phase) */
-export function validateArtifactContent(
-  phaseId: PhaseId,
-  content: string,
-): { scores: QualityScores; hints: string[] } {
+function devTextOnly(content: string): { scores: QualityScores; hints: string[] } {
   const hints: string[] = [];
   const hasMarker = /complete|done|dev/i.test(content);
   const cmdOk = /command:\s*\S+/i.test(content);
@@ -63,6 +59,50 @@ export function validateArtifactContent(
   };
 }
 
+/** DEV-only validation (last remaining non-Zod phase).
+ *  Default behaviour: replay-cmd — 实际执行命令验证。
+ *  若 TAIYI_DEV_VERIFY_MODE=trust-text 则仅作文本检查。
+ */
+export function validateArtifactContent(
+  phaseId: PhaseId,
+  content: string,
+  workspaceDir?: string,
+): { scores: QualityScores; hints: string[] } {
+  if (phaseId === "dev") {
+    const envMode = process.env.TAIYI_DEV_VERIFY_MODE?.toLowerCase();
+
+    // Escape hatch: 仅文本检查
+    if (envMode === "trust-text") {
+      return devTextOnly(content);
+    }
+
+    const cwd = workspaceDir ?? process.cwd();
+    const result = verifyDevComplete(content, { mode: "replay-cmd", cwd });
+
+    if (result.passed) {
+      return {
+        scores: { completeness: true, consistency: true, verifiability: true, traceability: true, engineering_quality: true },
+        hints: [],
+      };
+    }
+
+    const hints: string[] = [];
+    if (result.reason) hints.push(result.reason);
+    return {
+      scores: {
+        completeness: true,
+        consistency: false,
+        verifiability: false,
+        traceability: true,
+        engineering_quality: false,
+      },
+      hints,
+    };
+  }
+
+  return devTextOnly(content);
+}
+
 export const ZOD_SCHEMAS: Record<Exclude<PhaseId, "dev">, ZodSchema> = {
   change: ChangeSchema,
   requirement: RequirementSchema,
@@ -75,6 +115,20 @@ export const ZOD_SCHEMAS: Record<Exclude<PhaseId, "dev">, ZodSchema> = {
 };
 
 export const ZOD_PHASES: PhaseId[] = Object.keys(ZOD_SCHEMAS) as PhaseId[];
+
+function deriveWorkspaceFromArtifactPath(artifactPath: string): string {
+  let dir = path.dirname(artifactPath);
+  for (let i = 0; i < 4; i++) {
+    const parent = path.dirname(dir);
+    const base = path.basename(parent);
+    if (base === "changes" || base === ".taiyi") {
+      return path.dirname(parent);
+    }
+    if (parent === dir) break;
+    dir = parent;
+  }
+  return process.cwd();
+}
 
 /**
  * Validate state.json using ChangeStateSchema.
@@ -99,7 +153,10 @@ export function validateArtifactFile(
   if (!fs.existsSync(artifactPath)) return null;
   const content = fs.readFileSync(artifactPath, "utf8");
 
-  if (phaseId === "dev") return validateArtifactContent(phaseId, content);
+  if (phaseId === "dev") {
+    const workspaceDir = deriveWorkspaceFromArtifactPath(artifactPath);
+    return validateArtifactContent(phaseId, content, workspaceDir);
+  }
 
   const zodSchema = ZOD_SCHEMAS[phaseId as Exclude<PhaseId, "dev">];
   if (!zodSchema) return null;

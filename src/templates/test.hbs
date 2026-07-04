@@ -41,10 +41,10 @@ downstream: [review]
 {{/each}}
 {{else}}
 | Round 1 · 功能 | 全部 AC | ✅ 必跑 | — |
-| Round 2 · 性能 | Lighthouse / k6 / bundle | 待定 | N/A — CLI change, no perf surface |
-| Round 3 · 安全 | 依赖审计 / SAST / OWASP | 待定 | N/A — no new attack surface |
-| Round 4 · 兼容 | 浏览器 / 视口 / 数据迁移 | 待定 | N/A — CLI only |
-| Round 5 · 可观测 | 日志 / 指标 / 告警 | 待定 | N/A — standard CLI stdout/stderr |
+| Round 2 · 性能 | Lighthouse / k6 / bundle | ⚠️ 待定 | 性能无退化风险可跳过 |
+| Round 3 · 安全 | 依赖审计 / SAST / OWASP | ⚠️ 待定 | 无新增攻击面可跳过 |
+| Round 4 · 兼容 | 浏览器 / 视口 / 数据迁移 | ⚠️ 待定 | 纯逻辑变更可跳过 |
+| Round 5 · 可观测 | 日志 / 指标 / 告警 | ⚠️ 待定 | 无新运维面可跳过 |
 {{/if}}
 
 <!-- Validate: 每轮状态明确？跳过有理由？ -->
@@ -119,7 +119,11 @@ GAPS: N (N need E2E, N eval)
 {{else}}
 | 回归项 | 原行为 | 新行为 | 测试 | Red-green | 状态 |
 |--------|--------|--------|------|-----------|------|
-| 全量测试 | N pass | N pass | npm test | ✅ | ✅ |
+{{#if test_results_summary}}
+| 全量测试 | — | — | npm test | ✅ | {{test_results_summary}} |
+{{else}}
+| 全量测试 | 待验证 | 待验证 | npm test | ⚠️ | — |
+{{/if}}
 {{/if}}
 
 <!-- Validate: 所有修改的已有代码路径都有覆盖？Red-green三步都跑过了？ -->
@@ -232,7 +236,11 @@ GAPS: N (N need E2E, N eval)
 {{else}}
 | 回归范围 | 用例数 | 执行方式 | 负责人 |
 |---------|--------|---------|--------|
-| 全量测试 | N cases | npm test | CI |
+{{#if test_results_summary}}
+| 全量测试 | {{test_results_summary}} | npm test | CI |
+{{else}}
+| 全量测试 | 待执行 | npm test | CI |
+{{/if}}
 {{/if}}
 
 <!-- Validate: 回归范围覆盖所有相关模块？ -->

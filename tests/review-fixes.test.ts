@@ -104,6 +104,7 @@ describe("review fixes F11-F26", () => {
   });
 
   it("dev artifact validator requires command and exitCode evidence", () => {
+    process.env.TAIYI_DEV_VERIFY_MODE = "trust-text";
     const weak = validateArtifactContent("dev", "ok");
     expect(weak.scores.completeness).toBe(false);
     const strong = validateArtifactContent(
@@ -111,6 +112,7 @@ describe("review fixes F11-F26", () => {
       "command: npm test\nexitCode: 0\ndev complete: shipped feature X\n",
     );
     expect(strong.scores.completeness).toBe(true);
+    delete process.env.TAIYI_DEV_VERIFY_MODE;
   });
 
   it("installResultsExitCode returns 1 when any step failed", () => {

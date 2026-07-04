@@ -64,6 +64,12 @@ export const TestSchema = z.object({
   coverage: z.string().optional().describe("覆盖率信息"),
   mocking_boundaries: z.array(MockingBoundary).optional().describe("Mock 边界契约：明确定义哪些层级可 mock 哪些不可"),
   evidence: EvidenceSchema.optional().describe("真验证记录,test_plan 有 passed 状态时推荐填"),
+  test_coverage: z.object({
+    unit: z.string().describe("单元测试覆盖率，如 '85%'"),
+    integration: z.string().describe("集成测试覆盖率，如 '60%'"),
+    e2e: z.string().describe("E2E 测试覆盖率，如 '30%'"),
+  }).optional().describe("测试覆盖率数据"),
+  test_results_summary: z.string().optional().describe("测试结果摘要，如 '1494/1502 passed'"),
 }).strict();
 
 export type TestSpec = z.infer<typeof TestSchema>;

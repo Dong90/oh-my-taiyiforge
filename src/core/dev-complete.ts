@@ -1,4 +1,6 @@
 /** Standard .dev-complete evidence — dev 过关须含可验证测试命令与 exitCode: 0 */
+import { execFileSync as _execFileSync } from "node:child_process";
+
 export const DEV_COMPLETE_EVIDENCE = `command: npm test
 exitCode: 0
 dev complete
@@ -77,10 +79,8 @@ export function verifyDevComplete(
 }
 
 function defaultExec(cmd: string, cwd: string): { code: number; stderr?: string } {
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
-  const { execFileSync } = require("node:child_process") as typeof import("node:child_process");
   try {
-    execFileSync(cmd, { cwd, shell: true, stdio: "pipe", encoding: "utf8", timeout: 60_000 });
+    _execFileSync(cmd, { cwd, shell: true, stdio: "pipe", encoding: "utf8", timeout: 60_000 });
     return { code: 0 };
   } catch (e) {
     const err = e as { status?: number; stderr?: string };

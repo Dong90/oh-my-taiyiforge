@@ -46,7 +46,7 @@ export function tryPromoteSeedArtifact(artifactPath: string, phaseId: ChangeStat
 
   const body = stripSeedMarker(content);
   if (phaseId === "dev") {
-    const v = validateArtifactContent(phaseId, body);
+    const v = validateArtifactContent(phaseId, body, process.cwd());
     if (!Object.values(v.scores).every(Boolean)) return false;
   }
 

@@ -9,7 +9,7 @@ downstream: []
 <!-- phase:integration skill:taiyi-integration gate:auto est:15min produces:INTEGRATION.md upstream:[review,dev,test] downstream:[] cplx:[ALL]1steps +[M+]4 +[H]2 -->
 # INTEGRATION: {{title}}
 
-> **Release**: {{#if release_version}}`{{release_version}}`{{else}}_待定_{{/if}} | **Date**: {{#if release_date}}{{release_date}}{{else}}_待定_{{/if}} | **Status**: {{#if status}}{{status}}{{else}}_deployed_{{/if}}
+> **Release**: {{#if release_version}}`{{release_version}}`{{else}}待定{{/if}} | **Date**: {{#if release_date}}{{release_date}}{{else}}待定{{/if}} | **Status**: {{#if status}}{{status}}{{else}}deployed{{/if}}
 
 ---
 
@@ -27,7 +27,7 @@ downstream: []
 - ⚠️ {{this}}
 {{/each}}
 {{else}}
-_无_
+无
 {{/if}}
 
 <!-- Validate: 每条让读者一眼看懂"对我有什么影响"？Breaking有迁移指引？ -->
@@ -95,7 +95,7 @@ _无_
 {{else}}
 | 告警 | 条件 | 严重度 | 渠道 |
 |------|------|--------|------|
-| _CI 失败告警_ | _vitest 非零退出_ | _high_ | _GitHub Actions_ |
+| CI 失败告警 | vitest 非零退出 | high | GitHub Actions |
 {{/if}}
 
 ### Runbook
@@ -118,8 +118,8 @@ _无_
 <!-- Action: 触发条件(量化)+操作步骤(精确到命令)+预计时间 -->
 
 **触发**: {{#if rollback_trigger}}{{rollback_trigger}}{{else}}N/A — 纯文档变更无回滚需求{{/if}}
-**操作**: 1. {{#if rollback_step1}}{{rollback_step1}}{{else}}_命令_{{/if}} 2. {{#if rollback_step2}}{{rollback_step2}}{{else}}_命令_{{/if}}
-**时间**: {{#if rollback_time}}≤{{rollback_time}}{{else}}≤_N_min{{/if}}
+**操作**: 1. {{#if rollback_step1}}{{rollback_step1}}{{else}}命令{{/if}} 2. {{#if rollback_step2}}{{rollback_step2}}{{else}}命令{{/if}}
+**时间**: {{#if rollback_time}}≤{{rollback_time}}{{else}}≤N min{{/if}}
 
 <!-- Validate: 触发量化？步骤精确？≤30min？ -->
 
@@ -143,7 +143,7 @@ _无_
 
 {{#if release_version}}
 ## Release
-- **Version**: `{{release_version}}` | **Date**: {{#if release_date}}{{release_date}}{{else}}_待定_{{/if}} | **Artifacts**: {{#if artifacts}}{{artifacts}}{{else}}_npm_{{/if}}
+- **Version**: `{{release_version}}` | **Date**: {{#if release_date}}{{release_date}}{{else}}待定{{/if}} | **Artifacts**: {{#if artifacts}}{{artifacts}}{{else}}npm{{/if}}
 {{/if}}
 
 ## Step 8: System State Update
