@@ -15,6 +15,11 @@
 [data flow / components]
 ```
 
+## Reuse Analysis
+| Component / Module | Already Exists? | Can Adapt? | Reason |
+|-------------------|-----------------|------------|--------|
+| | Yes / No / Similar | Yes / No | |
+
 ## Risks
 | Risk | Mitigation |
 |------|------------|
