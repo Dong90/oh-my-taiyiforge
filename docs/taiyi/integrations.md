@@ -1,86 +1,82 @@
-# TaiyiForge × 铁三角集成
+# TaiyiForge × 双线 harness 集成
 
-与《AI 驱动研发流程与工具选型指南》对齐：TaiyiForge 管**九阶段工件 + 双门禁**，下列工具管各自专长，**可并存**。
+与《AI 驱动研发流程与工具选型指南》对齐：TaiyiForge 管**九阶段工件 + 双门禁**；**双线 harness** = **Superpowers（纪律）+ ECC（深度）**，外加少量 **CLI** 证据轨。
 
-**什么能进主链、什么只能 harness、什么禁止** → [skill-fusion-principles.md](./skill-fusion-principles.md)
+**选型与去重** → [library-selection.md](./library-selection.md) · **什么能进主链** → [library-selection.md](./library-selection.md)（选型真源）
 
-**Superpowers 主轴流程**（九阶段 × 14 技能 + 可选外挂）：见 [superpowers-flow.md](./superpowers-flow.md)。  
-**TDD 专页**（Superpowers + 引擎 `.dev-complete`）：见 [tdd-workflow.md](./tdd-workflow.md)。
+**Superpowers 主轴**（九阶段 × 14 技能）：见 [full-oss-flow.md](./full-oss-flow.md)。
+**TDD 专页**（Superpowers + 引擎 `.dev-complete`）：见 [full-oss-flow.md §TDD](./full-oss-flow.md#tdd)。
 
-## 铁三角依赖（自动安装）
+## 双线 harness 依赖（自动安装）
 
 `postinstall` / `taiyi-forge-install --all` 在默认情况下还会尝试安装：
 
 | 依赖 | 方式 | 说明 |
 |------|------|------|
-| **OpenSpec** | `npm i -g @fission-ai/openspec` | 全局 CLI；项目内仍需 `openspec init` |
-| **gstack** | `git clone` + `./setup` | 需要 **bun**（缺失时会尝试 `npm i -g bun`） |
-| **Superpowers** | OpenCode 写 plugin；Codex clone+symlink；Cursor 尝试 `npx skills add` | Cursor/Claude 插件市场需手动时见 install 日志 |
-| **web-quality-skills** | `npx skills add addyosmani/web-quality-skills -g -y` | accessibility / web-design-guidelines 等 |
+| **Superpowers** | OpenCode 写 plugin；Codex clone+symlink；Cursor 尝试 `npx skills add` | 纪律层 — manifest harness 硬约束 |
+| **ECC** | `npx ecc-universal install` 或 `claude plugin install ecc@ecc` | 深度层 — manifest harness 硬约束 |
+| **OpenSpec** | `npm i -g @fission-ai/openspec` | 全局 CLI；`spec_archive` / 可选 `spec_sync` |
+| **web-quality-skills** | `npx skills add addyosmani/web-quality-skills -g -y` | 可选；主链已由 ECC UI/a11y 覆盖 |
 
 跳过：`npx taiyi-forge-install --all --skip-deps` 或 `TAIYI_FORGE_SKIP_DEPS=1`。CI 环境自动跳过。
 
-`npx taiyi doctor` 会列出 `deps-*` 检查项（不影响 Taiyi 核心 PASS/FAIL）。
+`npx taiyi doctor` 会列出 `deps-*` 检查项（含 `deps-ecc`）。
 
-## OpenSpec（规范层）
+## harness 清单结构
 
-| TaiyiForge 阶段 | OpenSpec 动作 |
-|-----------------|---------------|
-| change / requirement | 可用 `openspec proposal` 起草；工件落在 `.taiyi/changes/<slug>/` |
-| integration | 合并后 **`taiyi_archive`** 或 `openspec archive <slug> -y`，规格进主库 |
+```bash
+npx taiyi harness <slug>
+```
 
-**约定**：`{phase}.json` 为语义真源，`{PHASE}.md` 为 hbs 生成视图；OpenSpec 为可选上游或归档目标。见 [`artifact-contract.md`](./artifact-contract.md)。
+| § | 名称 | 内容 |
+|---|------|------|
+| 1 | **双线 harness** | Superpowers + ECC 必选钩子（`--auto` 须 `harness-check`） |
+| 2 | **辅助** | `taiyi-*` 辅助 Skill（须 `mark-aux`） |
+| 3 | **主 Skill** | 当前阶段 `taiyi-change` … `taiyi-integration` |
 
-## Superpowers（纪律层）
+## Superpowers（纪律线）
 
 | TaiyiForge 阶段 | Superpowers Skill |
 |-----------------|-------------------|
-| change | `brainstorming` — 先澄清再写 CHANGE |
-| task | `test-driven-development` — 切片测试计划（`/taiyi:tdd plan`） |
-| dev | `test-driven-development` — 红绿重构实现（`/taiyi:tdd dev`） |
-| test | `verification-before-completion` — 证据先于「完成」声明 |
+| change | `brainstorming` |
+| task / dev | `test-driven-development` |
+| test | `verification-before-completion` |
+| review | `requesting-code-review` |
+| integration | `finishing-a-development-branch` · `verification-before-completion` |
 
-在 OpenCode：`use skill tool to load superpowers/brainstorming`
+Token 压缩（optional）：`subagent-driven-development` · `dispatching-parallel-agents` — 见 [token-compress-hooks.yaml](./token-compress-hooks.yaml)。
 
-### Token 压缩（optional · 见 [token-compress.md](./token-compress.md)）
+## ECC（深度线）
 
-| 场景 | Superpowers Skill |
-|------|-------------------|
-| dev / 大实现 | `subagent-driven-development` — 主会话只协调 |
-| 多 slice 并行 | `dispatching-parallel-agents` — 各 agent 独立上下文 |
+| 阶段 | 典型 ECC harness |
+|------|------------------|
+| change | `continuous-learning` |
+| design | `architecture-audit` · `backend-patterns` · `coding-standards` |
+| ui-design | `web-design-guidelines` · `accessibility-audit` · `frontend-patterns` |
+| test | `test-coverage-analysis` · `eval-harness` |
+| review | `security-scan` |
+| integration | `changelog-generator` · `strategic-compact` · `continuous-learning-v2` |
 
-引擎侧：`/taiyi:token compress <slug>` → `CONTEXT-COMPACT.md`（零 LLM，优先于上表）。
+完整表见 `workflow-manifest.yaml` 与 [library-selection.md](./library-selection.md)。
 
-## gstack / OMO（闭环层）
+## OpenSpec（CLI 轨）
 
-| TaiyiForge 阶段 | gstack 命令 |
-|-----------------|-------------|
-| design | `plan-eng-review` — 架构与边界工程评审 |
-| ui-design | `plan-design-review` — UI 设计计划评审（**optional**，有界面时建议） |
-| test | `qa` — 站点/流程 QA（**optional**，`harness-check gstack/qa`） |
-| review | `review` — PR 合并前结构审查 |
-| integration | `document-release` — 文档与 CHANGELOG 同步 |
-
-**OMO**：`taiyi_complete` 的 `approver` 字段记录人工审批者；high 级 REVIEW 未解决不得 Approve。
-
-### Token 压缩（optional）
-
-| 场景 | gstack Skill |
-|------|----------------|
-| 长会话 / compaction 前 | `checkpoint` — 落盘进度，新会话续作 |
+| 阶段 | 动作 |
+|------|------|
+| requirement | 可选 `openspec change show` |
+| integration | **`taiyi archive <slug>`** 或 `openspec archive` |
 
 ## 推荐串联（单变更）
 
 ```text
 taiyi_init → taiyi_guide（每步）
   → taiyi-change … taiyi-integration
-  → （可选）taiyi_sync_openspec → taiyi_archive
-  → test：/taiyi:gstack qa（optional）
-  → review：/taiyi:gstack review · /taiyi:review-loop
+  → 每阶段：§1 双线 harness-check → §2 mark-aux → §3 写工件 → continue
+  → review：/taiyi:review-loop · /taiyi:security
   → /taiyi:commit → /taiyi:ship → /taiyi:land → /taiyi:release（optional）
 ```
 
-**交付斜杠专页**：[delivery-slash.md](./delivery-slash.md)
+**交付斜杠**：[delivery-slash.md](./delivery-slash.md)
 
 ## OpenCode 工具一览
 
@@ -88,13 +84,36 @@ taiyi_init → taiyi_guide（每步）
 |------|------|
 | `taiyi_init` | 建变更 + 铺模板 |
 | `taiyi_guide` | 当前该做什么 |
-| `taiyi_status` | 状态 + guide |
+| `taiyi_status` | 状态 + guide + 双线 harness 清单 |
 | `taiyi_complete` | 完成阶段（含质量校验） |
 | `taiyi_assess` | 复杂度与辅助 skill 建议 |
-| `taiyi_sync_openspec` | 将 `.taiyi/changes/<slug>/` 工件拷贝到 `openspec/changes/<slug>/`（含 TEST/REVIEW/CHANGELOG） |
-| `taiyi_archive` | 九阶段完成后调用 OpenSpec archive（需 `openspec/changes/<slug>/`） |
-| `taiyi_mark_aux` | 标记辅助 Skill（如 `taiyi-health`）已完成 |
+| `taiyi_sync_openspec` | 工件拷贝到 `openspec/changes/<slug>/` |
+| `taiyi_archive` | 九阶段完成后 OpenSpec archive |
+| `taiyi_mark_aux` | 标记辅助 Skill 已完成 |
 
-`init` 支持 `--profile api|lite`；`guide` 返回 `recommendedAuxiliary` 与 `complexity`。
+`init` 支持 `--profile api|lite`；`--auto` 启用双线 harness 打卡门禁。
 
-`taiyi_status` 的 `openspec` 字段会显示是否检测到 OpenSpec 及建议命令。
+## CapabilityId 完整列表
+
+引擎已知的所有能力注册在 `src/config/providers.ts:14-22`（`CapabilityId` 联合类型）。每个 capability 可在 `.taiyi/providers.yaml` 的 `assignments:` 段显式路由到 provider。
+
+| Capability | 用途 | 默认路由 |
+|---|---|---|
+| `spec_archive` | 归档变更到外部系统 | `openspec` |
+| `spec_sync` | 同步工件到 spec 目录 | `openspec` |
+| `browser_qa` | 浏览器交互测试 | playwright |
+| `eng_review` | 工程评审 | （manifest 不引用，需 `providers.yaml` 显式恢复） |
+| `design_review` | 设计评审 | （同上） |
+| `code_review` | 代码审查 | （同上） |
+| `doc_release` | 发布文档 | （同上） |
+| `version_release` | 版本 bump / changelog | changesets |
+| `sast_scan` | 静态安全扫描 | （同上） |
+| `vuln_scan` | 依赖/文件漏洞扫描 | （同上） |
+| `accessibility` | 无障碍审查 | （同上） |
+| `design_guidelines` | Web 界面设计规范审查 | （同上） |
+| `e2e_test` | E2E 测试 | playwright |
+| `process_skills` | 流程技能集（brainstorming/TDD 等） | superpowers |
+| `plugin_platform` | IDE 插件注册（OpenCode/Claude/Codex/Cursor） | engine 内部 — 不路由 provider |
+| `archive_hook` | 归档后自定义脚本 hook | engine 内部 — 不路由 provider |
+
+**向后兼容 NOTE**：`eng_review` / `design_review` / `code_review` / `browser_qa` / `doc_release` / `accessibility` / `design_guidelines` / `sast_scan` / `vuln_scan` 9 项 capability **保留**在 `CapabilityId` 类型里（避免历史 `.taiyi/providers.yaml` 引用断链），但默认 **不路由**（`workflow-manifest.yaml` 已不引用）——可通过 `.taiyi/providers.yaml` 的 `assignments:` 显式恢复。详见 [library-selection.md](./library-selection.md)。

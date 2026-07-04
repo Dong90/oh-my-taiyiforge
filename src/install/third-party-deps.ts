@@ -7,13 +7,12 @@ import { opencodeConfigCandidates } from "./paths.js";
 import type { InstallResult, InstallTarget } from "./types.js";
 import { ProviderRegistry } from "../config/providers.js";
 
-export const GSTACK_REPO = "https://github.com/garrytan/gstack.git";
 export const SUPERPOWERS_GIT_PLUGIN = "superpowers@git+https://github.com/obra/superpowers.git";
 export const SUPERPOWERS_REPO = "https://github.com/obra/superpowers.git";
 export const OPENSPEC_PKG = "@fission-ai/openspec@latest";
 export const WEB_QUALITY_SKILLS_REPO = "addyosmani/web-quality-skills";
 
-export type ThirdPartyDepId = "openspec" | "gstack" | "superpowers" | "web-quality-skills";
+export type ThirdPartyDepId = "openspec" | "superpowers" | "web-quality-skills" | "ecc";
 
 export type DepDetectResult = {
   id: ThirdPartyDepId;
@@ -36,7 +35,11 @@ export function commandExists(bin: string): boolean {
   return proc.status === 0;
 }
 
-function run(cmd: string, args: string[], opts: { cwd?: string; timeoutMs?: number } = {}): {
+function run(
+  cmd: string,
+  args: string[],
+  opts: { cwd?: string; timeoutMs?: number } = {},
+): {
   ok: boolean;
   stdout: string;
   stderr: string;
@@ -55,23 +58,6 @@ function run(cmd: string, args: string[], opts: { cwd?: string; timeoutMs?: numb
   };
 }
 
-export function gstackCandidatePaths(home = homeDir()): string[] {
-  return [
-    path.join(home, ".claude", "skills", "gstack"),
-    path.join(home, ".gstack", "repos", "gstack"),
-    path.join(home, ".cursor", "skills", "gstack"),
-    path.join(home, ".codex", "skills", "gstack"),
-    path.join(home, ".agents", "skills", "gstack"),
-  ];
-}
-
-export function findGstackDir(home = homeDir()): string | null {
-  for (const dir of gstackCandidatePaths(home)) {
-    if (fs.existsSync(path.join(dir, "setup"))) return dir;
-  }
-  return null;
-}
-
 export function detectOpenspec(): DepDetectResult {
   if (!commandExists("openspec")) {
     return { id: "openspec", installed: false, detail: "openspec CLI not in PATH" };
@@ -82,14 +68,6 @@ export function detectOpenspec(): DepDetectResult {
     installed: true,
     detail: ver.stdout || "openspec available",
   };
-}
-
-export function detectGstack(home = homeDir()): DepDetectResult {
-  const dir = findGstackDir(home);
-  if (!dir) {
-    return { id: "gstack", installed: false, detail: "gstack setup not found" };
-  }
-  return { id: "gstack", installed: true, detail: dir };
 }
 
 function superpowersCursorInstalled(home = homeDir()): boolean {
@@ -179,48 +157,47 @@ export function detectWebQualitySkills(home = homeDir()): DepDetectResult {
   };
 }
 
-export function detectThirdPartyDeps(
-  targets: InstallTarget[],
-  home = homeDir(),
-): DepDetectResult[] {
-  return [
-    detectOpenspec(),
-    detectGstack(home),
-    detectSuperpowers(targets, home),
-    detectWebQualitySkills(home),
-  ];
-}
+/** ECC skill markers — workflow-manifest 双线 harness hard-require 这些能力 */
+const ECC_SKILL_MARKERS = ["architecture-audit", "continuous-learning", "security-scan", "eval-harness"];
 
-function ensureBun(): { ok: boolean; detail: string } {
-  if (commandExists("bun")) return { ok: true, detail: "bun present" };
-  const viaNpm = run("npm", ["install", "-g", "bun", "--no-fund", "--no-audit"]);
-  if (viaNpm.ok && commandExists("bun")) {
-    return { ok: true, detail: "installed bun via npm" };
+export function detectEcc(home = homeDir()): DepDetectResult {
+  const roots = [
+    path.join(home, ".claude", "skills"),
+    path.join(home, ".cursor", "skills"),
+    path.join(home, ".codex", "skills"),
+    path.join(home, ".agents", "skills"),
+  ];
+  const found: string[] = [];
+  for (const root of roots) {
+    if (!fs.existsSync(root)) continue;
+    for (const name of ECC_SKILL_MARKERS) {
+      const eccDir = path.join(root, `ecc-${name}`);
+      const plain = path.join(root, name, "SKILL.md");
+      if (fs.existsSync(path.join(eccDir, "SKILL.md")) || fs.existsSync(plain)) {
+        found.push(`${name}@${root}`);
+      }
+    }
+    for (const entry of fs.readdirSync(root)) {
+      if (entry.startsWith("ecc-") && fs.existsSync(path.join(root, entry, "SKILL.md"))) {
+        found.push(`${entry}@${root}`);
+      }
+    }
+  }
+  if (found.length >= 2) {
+    return { id: "ecc", installed: true, detail: found.slice(0, 4).join("; ") };
   }
   return {
-    ok: false,
-    detail: "bun required for gstack (https://bun.sh). Install bun and re-run taiyi-forge-install",
+    id: "ecc",
+    installed: false,
+    detail:
+      found.length > 0
+        ? `partial: ${found.join(", ")} — 运行 npx ecc-universal install 或 claude plugin install ecc@ecc`
+        : "ECC not found — 九阶段 ECC 双线 harness 须 harness-check；安装: npx ecc-universal install 或 claude plugin install ecc@ecc",
   };
 }
 
-export function gstackSetupHostArgs(installDir: string, targets: InstallTarget[]): string[] {
-  if (!fs.existsSync(installDir)) return ["--host", "auto"];
-  const setup = fs.readFileSync(path.join(installDir, "setup"), "utf8");
-  const supportsCursor = /cursor/.test(setup) && /--host.*cursor|"cursor"/.test(setup);
-  const wantsCodex = targets.includes("codex");
-  const wantsCursor = targets.includes("cursor");
-  const wantsClaude = targets.includes("claude") || targets.includes("opencode");
-
-  if (wantsCursor && supportsCursor && !wantsCodex && !wantsClaude) {
-    return ["--host", "cursor"];
-  }
-  if (wantsCodex && !wantsClaude && !wantsCursor) {
-    return ["--host", "codex"];
-  }
-  if (wantsClaude && !wantsCodex && !wantsCursor) {
-    return ["--host", "claude"];
-  }
-  return ["--host", "auto"];
+export function detectThirdPartyDeps(targets: InstallTarget[], home = homeDir()): DepDetectResult[] {
+  return [detectOpenspec(), detectSuperpowers(targets, home), detectWebQualitySkills(home), detectEcc(home)];
 }
 
 function installOpenspecCli(): InstallResult {
@@ -259,73 +236,15 @@ function installOpenspecCli(): InstallResult {
   };
 }
 
-function installGstack(targets: InstallTarget[], home = homeDir()): InstallResult {
-  const existing = findGstackDir(home);
-  const installDir = existing ?? path.join(home, ".claude", "skills", "gstack");
-
-  if (!existing) {
-    if (!commandExists("git")) {
-      return {
-        target: "gstack",
-        path: installDir,
-        action: "failed",
-        detail: "git not found",
-      };
-    }
-    fs.mkdirSync(path.dirname(installDir), { recursive: true });
-    const clone = run("git", [
-      "clone",
-      "--single-branch",
-      "--depth",
-      "1",
-      GSTACK_REPO,
-      installDir,
-    ]);
-    if (!clone.ok) {
-      return {
-        target: "gstack",
-        path: installDir,
-        action: "failed",
-        detail: clone.stderr.slice(0, 240) || "git clone failed",
-      };
-    }
-  }
-
-  const bun = ensureBun();
-  if (!bun.ok) {
-    return { target: "gstack", path: installDir, action: "failed", detail: bun.detail };
-  }
-
-  const hostArgs = gstackSetupHostArgs(installDir, targets);
-  const setup = run("bash", ["./setup", ...hostArgs, "--no-team"], {
-    cwd: installDir,
-    timeoutMs: 900_000,
-  });
-  if (!setup.ok) {
-    return {
-      target: "gstack",
-      path: installDir,
-      action: "failed",
-      detail: setup.stderr.slice(0, 240) || setup.stdout.slice(0, 240) || "./setup failed",
-    };
-  }
-
-  return {
-    target: "gstack",
-    path: installDir,
-    action: existing ? "updated" : "created",
-    detail: `setup ${hostArgs.join(" ")}`,
-  };
-}
-
 function installSuperpowersForTargets(targets: InstallTarget[], home = homeDir()): InstallResult {
   const actions: string[] = [];
   let anyFailed = false;
   let anyChanged = false;
 
   if (targets.includes("opencode")) {
-    const cfg = opencodeConfigCandidates().find((p) => fs.existsSync(p))
-      ?? path.join(home, ".config", "opencode", "opencode.json");
+    const cfg =
+      opencodeConfigCandidates().find((p) => fs.existsSync(p)) ??
+      path.join(home, ".config", "opencode", "opencode.json");
     const r = addPluginEntryToConfigFile(cfg, SUPERPOWERS_GIT_PLUGIN, "superpowers");
     if (r.action === "failed") anyFailed = true;
     else if (r.action !== "skipped") anyChanged = true;
@@ -366,15 +285,7 @@ function installSuperpowersForTargets(targets: InstallTarget[], home = homeDir()
 
   if (targets.includes("cursor") && !superpowersCursorInstalled(home)) {
     if (commandExists("npx")) {
-      const skills = run("npx", [
-        "skills",
-        "add",
-        SUPERPOWERS_REPO,
-        "-g",
-        "-y",
-        "-a",
-        "cursor",
-      ]);
+      const skills = run("npx", ["skills", "add", SUPERPOWERS_REPO, "-g", "-y", "-a", "cursor"]);
       if (skills.ok && superpowersCursorInstalled(home)) {
         anyChanged = true;
         actions.push("cursor:npx-skills");
@@ -501,13 +412,6 @@ export function writeDetectedProviderConfig(
     lines.push("  spec_archive: openspec");
     lines.push("  spec_sync: openspec");
   }
-  if (installed.gstack) {
-    lines.push("  browser_qa: gstack");
-    lines.push("  eng_review: gstack");
-    lines.push("  design_review: gstack");
-    lines.push("  code_review: gstack");
-    lines.push("  doc_release: gstack");
-  }
   if (installed.superpowers) {
     lines.push("  process_skills: superpowers");
   }
@@ -561,7 +465,6 @@ export function installThirdPartyDeps(opts: InstallThirdPartyOptions): InstallRe
   const results: InstallResult[] = [];
 
   results.push(installOpenspecCli());
-  results.push(installGstack(opts.targets, home));
   results.push(installSuperpowersForTargets(opts.targets, home));
   results.push(installWebQualitySkills(opts.targets));
 
