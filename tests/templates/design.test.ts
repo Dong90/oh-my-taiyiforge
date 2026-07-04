@@ -51,8 +51,8 @@ describe("design.hbs", () => {
 
   it("renders decision section", () => {
     const out = render(data);
-    expect(out).toContain("- **Chosen**: B");
-    expect(out).toContain("- **Reason**: 安全审计需要主动失效能力");
+    expect(out).toContain("- **Chosen:** B");
+    expect(out).toContain("- **Reason:** 安全审计需要主动失效能力");
   });
 
   it("renders expanded tech stack card", () => {

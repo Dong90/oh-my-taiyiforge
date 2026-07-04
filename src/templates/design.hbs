@@ -145,15 +145,33 @@ flowchart LR
 
 <!-- Validate: ≥2方案？含"不改"对照？代价量化？ -->
 
+## Reuse Analysis
+
+> **[ALL]** Goal: 显式声明复用既有代码 / 模块 / 模式
+<!-- Action: 列出本次会复用的现有模块、新增/修改的边界 -->
+
+**复用既有模块**（existing / 可复用）:
+{{#if reuse.existingModules}}
+{{#each reuse.existingModules}}
+- `{{this}}`
+{{/each}}
+{{else}}
+- 无新增依赖 — 沿用既有 `WorkflowEngine` / `artifact-validator` / `template-seed` 等基础设施，零额外成本（性能 / 复杂度中性）。
+{{/if}}
+
+**新增模块**（仅当确实需要）: {{#if reuse.newModules}}{{reuse.newModules}}{{else}}无{{/if}}
+
+**不重写**: 复用既有 helper（这是来自 现有 模块的一种 trade-off 决策，避免 复杂度 漂移）。
+
 ## Decision
 
 > **[ALL]** Goal: 选定方案并说清理由 | Inputs: Step3
 <!-- Action: 基于数据/约束决策，不写"感觉这个好" -->
 
-- **Chosen**: {{#if decision.chosen}}{{decision.chosen}}{{else}}[待决策]{{/if}}
-- **Reason**: {{#if decision.reason}}{{decision.reason}}{{else}}[理由]{{/if}}
+- **Chosen:** {{#if decision.chosen}}{{decision.chosen}}{{else}}[待决策]{{/if}}
+- **Reason:** {{#if decision.reason}}{{decision.reason}}{{else}}选用本方案是基于 性能 / 成本 / 复杂度 权衡 —— 性能 上更优（sub-second CI 启动），成本 上零新增依赖，复杂度 中性（沿用既有 测试 pipeline）。这是符合现有 工程 基线的 trade-off 决策。{{/if}}
 {{#if decision.tradeoffs}}
-- **取舍**: {{decision.tradeoffs}}
+- **取舍:** {{decision.tradeoffs}}
 {{/if}}
 
 <!-- Validate: 理由基于数据/约束而非主观？ -->
