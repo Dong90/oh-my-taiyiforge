@@ -33,13 +33,6 @@ export const EvidenceSchema = z.object({
   capturedAt: z.string().refine((s) => !isNaN(Date.parse(s)), { message: "capturedAt 须为 ISO 时间" }).describe("捕获时间,ISO 8601"),
 });
 
-const FileBoundarySchema = z.object({
-  limitFiles: z.array(z.string()).optional().describe("LIMIT 文件模式列表（如 src/module-a/**, src/module-b/**）"),
-  fixFiles: z.array(z.string()).optional().describe("FIX 文件模式列表（变更涉及的主要文件）"),
-  outScope: z.array(z.string()).optional().describe("已确认不超 scope 的例外路径"),
-  exportedSymbols: z.array(z.string()).optional().describe("变更输出/影响的导出符号名称列表"),
-});
-
 export const ChangeSchema = z.object({
   title: z.string().describe("变更标题"),
   motivation: z.string().describe("为什么要做这个变更"),
@@ -47,7 +40,6 @@ export const ChangeSchema = z.object({
     includes: z.array(z.string()).describe("范围内要做的事"),
     excludes: z.array(z.string()).optional().describe("明确排除的事"),
   }),
-  fileBoundary: FileBoundarySchema.optional().describe("文件边界声明 — 用于代码一致性自动校验"),
   visual_tone: z.string().optional().describe("视觉基调"),
   visual_reason: z.string().optional().describe("视觉选择理由"),
   visual_references: z.string().optional().describe("视觉参考"),

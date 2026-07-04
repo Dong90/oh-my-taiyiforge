@@ -6,7 +6,6 @@ import { buildPhaseGuide } from "./phase-guide.js";
 import { buildHarnessPlan } from "./harness-runner.js";
 import { normalizeState } from "./normalize-state.js";
 import { deliveryGateEnabled, evaluateDeliveryGate } from "./gates/delivery-gate.js";
-import { countOpenCheckboxes } from "./gates/semantic-gate.js";
 import { getOpenspecStatus } from "../integrations/openspec.js";
 import { detectAheadArtifacts } from "./ahead-artifacts.js";
 import { resolveChangeDir } from "./taiyi-archive.js";
@@ -72,7 +71,8 @@ function changeCheckboxDrift(
   const changelogPath = path.join(changeDir, "CHANGELOG.md");
   if (!fs.existsSync(changePath)) return [];
 
-  const openBoxes = countOpenCheckboxes(changeDir);
+  const change = fs.readFileSync(changePath, "utf8");
+  const openBoxes = (change.match(/- \[ \]/g) ?? []).length;
   if (openBoxes === 0) return [];
 
   const out: AuditFinding[] = [];

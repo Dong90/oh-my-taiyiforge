@@ -2,15 +2,19 @@
 
 > 📦 较早的变更已归档至 [CHANGELOG-ARCHIVE.md](CHANGELOG-ARCHIVE.md)。
 
-<!-- taiyi:api-swagger --> 2026-07-04
-
-# CHANGELOG: API 规范化
+<!-- taiyi:registry-refactor --> 2026-06-30
+# CHANGELOG: registry-refactor
 
 ## Added
 
-- app/controllers/v1/ — 版本化路由 (API v1)
-- app/models/validation.py — 增强 Pydantic 验证
-- app/config/hotreload.py — 配置热加载
+- 5 个统一的 `Registry<T>` 抽象类，统一支持 builtin + YAML + node_modules(package.json) + programmatic 四类来源
+  - `src/core/profile-registry.ts` — ProfileRegistry（7 个 builtin profile，支持 extends + 循环检测、YAML、nm 扫描）
+  - `src/core/code-pattern-registry.ts` — CodePatternRegistry（13 个 builtin pattern，YAML、nm 扫描、code-gen 集成）
+  - `src/core/ssot-rule-registry.ts` — SSOTRuleRegistry（12 个 builtin rule，ID-reference 取代位置配对）
+  - `src/core/extractor-registry.ts` — ExtractorRegistry（8 个 builtin extractor，loader.ts 委托）
+  - `src/core/runner-policy-registry.ts` — RunnerPolicyRegistry（4 个 preset + 2 个 helper，含 `selectRunnerForPolicy`）
+- 公共导出：5 个 Registry 类 + `getDefault*` / `resetDefault*` 工厂，从 `src/index.ts` 全部 re-export
+- 12 个新测试文件覆盖 registry 行为（builtin 保护、优先级覆盖、YAML 加载、循环检测、ID 引用等）
 
 ## Changed
 
@@ -81,66 +85,13 @@ git revert 2c725ff
 
 <!-- taiyi:todo-api --> 2026-06-24
 # CHANGELOG: todo-api
-## Added
-
-- app/cache/redis_cache.py — Redis 缓存层 + @cached 装饰器
-- app/tasks/celery_app.py — Celery 配置
-- app/tasks/translation.py — 异步翻译任务
-
-## Changed
-
-- 无
-
-## Docs
-
-- [x] 缓存 + 异步队列代码就绪
-
-<!-- taiyi:prometheus-opentelemetry --> 2026-07-04
-
-# CHANGELOG: 可观测性
 
 ## Added
 
-- app/telemetry/metrics.py — Prometheus 指标中间件 + /metrics 端点
-- app/telemetry/tracing.py — OpenTelemetry 配置
-
-## Changed
-
-- 无
-
-## Docs
-
-- [x] 可观测性代码就绪
-
-<!-- taiyi:repository-pattern-sqlalchemy-orm-alembic --> 2026-07-04
-
-# CHANGELOG: 数据层
-
-## Added
-
-- app/db/ — SQLAlchemy async engine + session factory
-- app/repositories/ — BaseRepository CRUD 抽象 + UserRepository
-- app/models/db_models.py — User + TranslationRecord 数据模型
-- alembic/ — 迁移配置
-
-## Changed
-
-- 无
-
-## Docs
-
-- [x] 数据层代码就绪
-
-<!-- taiyi:api-adr --> 2026-07-04
-
-# CHANGELOG: 文档完善
-
-## Added
-
-- docs/adr/001-use-strategy-pattern.md — 策略模式决策记录
-- docs/adr/002-use-adapter-pattern.md — 适配器模式决策记录
-- docs/deploy.md — 部署文档（本地 + 生产）
-- docs/dev-guide.md — 开发指南（项目结构 + 添加翻译方向）
+- Express CRUD API（6 endpoints）：健康检查、待办增删改查
+- 内存 Map 存储（TodoStore），支持所有 CRUD 操作
+- 输入校验：空 title 返回 400
+- 9 个测试 case，覆盖全量 CRUD + 边界
 
 ## Changed
 
@@ -150,22 +101,12 @@ git revert 2c725ff
 
 - 无
 
-## Docs
-
-- [x] ADR 文档就绪
-- [x] 部署文档就绪
-- [x] 开发指南就绪
-
-<!-- taiyi:translation-assistant-tests --> 2026-07-04
-
-# CHANGELOG: 翻译助手测试覆盖增强
+<!-- taiyi:todo-e2e --> 2026-06-24
+# CHANGELOG: todo-e2e
 
 ## Added
 
-- tests/integration/ — 集成测试（翻译 API 完整调用链）
-- tests/e2e/ — E2E 测试目录
-- tests/performance/ — 性能测试目录
-- .coveragerc — pytest-cov 覆盖率配置（80% 门禁）
+- E2E smoke test（`e2e/smoke.test.js`）：自动启动后端、验证健康检查、CRUD 全流程
 
 ## Changed
 
@@ -175,33 +116,23 @@ git revert 2c725ff
 
 - 无
 
-## Docs
-
-- [x] 测试目录结构完备
-
-<!-- taiyi:docker-compose-ci-cd --> 2026-07-04
-
-# CHANGELOG: Docker 容器化 + Compose + CI/CD + 环境隔离
+<!-- taiyi:todo-ui --> 2026-06-24
+# CHANGELOG: todo-ui
 
 ## Added
 
-- `Dockerfile` — Python 3.11-slim 镜像，FastAPI + uvicorn，健康检查
-- `docker-compose.yml` — 一键启动 backend (8000) + frontend Nginx (8080)
-- `nginx.conf` — 前端反向代理，SSE 流式支持
-- `.github/workflows/translation-assistant-ci.yml` — lint + pytest + docker build
-- `.env.example` — 环境变量模板（TAIYI_ENV 区分 dev/staging/prod）
+-
 
 ## Changed
 
-- （无业务代码改动）
+-
 
 ## Fixed
 
-- （无）
+-
 
 ## Docs
 
-- [x] 部署文件完备
 - [ ] README / AGENTS.md synced
 - [ ] OpenSpec archived
 

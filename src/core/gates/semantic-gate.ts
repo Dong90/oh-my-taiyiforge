@@ -3,8 +3,6 @@ import path from "node:path";
 import { execSync } from "node:child_process";
 import { resolveTaiyiRoot } from "../paths.js";
 import { resolveChangeDir } from "../taiyi-archive.js";
-import { getCanonicalPhaseOrder } from "../phase-registry.js";
-import { evaluateCommitTrailers } from "./commit-trailer.js";
 
 // ---------------------------------------------------------------------------
 // Result types
@@ -96,7 +94,7 @@ function checkGateIntegrity(changeDir: string): SemanticCheckResult {
       return { code, label: "Gate integrity", passed: true, detail: "Not at integration phase — gate chain not required yet" };
     }
 
-    const expectedOrder = getCanonicalPhaseOrder();
+    const expectedOrder = ["change", "requirement", "design", "ui-design", "task", "dev", "test", "review", "integration"];
     const filtered = expectedOrder.filter((p) => !(raw.skippedPhases ?? []).includes(p));
     let lastIdx = -1;
     for (let i = 0; i < completed.length; i++) {
@@ -174,16 +172,6 @@ function checkExportVerify(changeDir: string, workspaceDir: string): SemanticChe
 }
 
 /**
- * Count open (unchecked) checkboxes in CHANGE.md.
- * Shared with workflow-audit.ts changeCheckboxDrift.
- */
-export function countOpenCheckboxes(changeDir: string): number {
-  const changeMd = path.join(changeDir, "CHANGE.md");
-  if (!exists(changeMd)) return 0;
-  return (fs.readFileSync(changeMd, "utf8").match(/- \[ \]/g) ?? []).length;
-}
-
-/**
  * Check 4 — ac-claims: all unchecked checkboxes in CHANGE.md are flagged
  * before integration gate passes. Seed templates are exempt.
  */
@@ -199,9 +187,9 @@ function checkAcClaims(changeDir: string): SemanticCheckResult {
     return { code, label: "AC claims completeness", passed: true, detail: "Seed template — AC check deferred" };
   }
 
-  const openBoxes = countOpenCheckboxes(changeDir);
-  if (openBoxes > 0) {
-    return { code, label: "AC claims completeness", passed: false, detail: `${openBoxes} unchecked Success Criteria remain in CHANGE.md` };
+  const openBoxes = content.match(/- \[ \]/g);
+  if (openBoxes && openBoxes.length > 0) {
+    return { code, label: "AC claims completeness", passed: false, detail: `${openBoxes.length} unchecked Success Criteria remain in CHANGE.md` };
   }
   return { code, label: "AC claims completeness", passed: true, detail: "All Success Criteria checked" };
 }
@@ -283,14 +271,6 @@ function checkCommitSemantics(workspaceDir: string, slug: string): SemanticCheck
   if (!exists(path.join(workspaceDir, ".git"))) {
     return { code, label: "Commit semantics", passed: true, detail: "Not a git workspace — skipped" };
   }
-
-  // Use canonical commit trailer check first (scope: base..HEAD)
-  const trailerResult = evaluateCommitTrailers(workspaceDir, slug);
-  if (trailerResult.passed && !trailerResult.skipped) {
-    return { code, label: "Commit semantics", passed: true, detail: "All commits have Taiyi-Change trailer" };
-  }
-
-  // Fallback: scan all refs for any commit mentioning this slug (lenient behavior)
   const logs = runGit(workspaceDir, `log --format="%H %s%n%b" --all`);
   if (!logs) {
     return { code, label: "Commit semantics", passed: true, detail: "No git history — skipped" };
@@ -346,9 +326,9 @@ export function semanticGateEnabled(env = process.env): boolean {
 export function runSemanticVerify(
   workspaceDir: string,
   slug: string,
-  _options?: { phase?: string; taiyiRoot?: string },
+  _options?: { phase?: string },
 ): SemanticGateResult {
-  const taiyiRoot = _options?.taiyiRoot ?? resolveTaiyiRoot(workspaceDir);
+  const taiyiRoot = resolveTaiyiRoot(workspaceDir);
   const changeDir = resolveChangeDir(taiyiRoot, slug) ?? path.join(taiyiRoot, "changes", slug);
 
   const checks: SemanticCheckResult[] = [

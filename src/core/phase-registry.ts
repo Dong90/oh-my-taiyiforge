@@ -52,11 +52,6 @@ export function getPhaseOrder(id: PhaseId): number {
   return getPhase(id).order;
 }
 
-/** Return the canonical order of built-in phase IDs (sorted by `.order`). */
-export function getCanonicalPhaseOrder(): string[] {
-  return PHASES.map((p) => p.id);
-}
-
 export function effectiveCompletedPhases(
   completedPhases: PhaseId[],
   skippedPhases: PhaseId[] = [],
