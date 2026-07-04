@@ -22,17 +22,21 @@ const PerfAuditItem = z.object({
 
 export const ReviewSchema = z.object({
   title: z.string().min(1).describe("评审标题"),
+  reviewer: z.string().optional().describe("评审人"),
   review_date: z.string().optional().describe("评审日期"),
   verdict: z.string().optional().describe("评审结论"),
-  code_quality: z.array(CodeQualityItem).optional().describe("代码质量评分"),
+  overall_score: z.string().optional().describe("⭐ 总评分数，如 4.1/10"),
+  code_quality: z.array(CodeQualityItem).optional().describe("代码质量五维评分"),
   test_coverage: z.array(TestCoverageItem).optional().describe("测试覆盖总结"),
   findings: z.array(
     z.object({
       id: z.string().optional(),
-      severity: z.string().describe("严重度"),
+      round: z.enum(["R1", "R2", "R3", "R4"]).optional().describe("评审轮次: R1=功能, R2=架构, R3=测试, R4=文档"),
+      severity: z.string().describe("严重度: Critical/High/Medium/Low"),
       description: z.string().min(1).describe("问题描述"),
       file: z.string().optional().describe("涉及文件"),
       line: z.string().optional().describe("行号"),
+      suggestion: z.string().optional().describe("修复建议"),
       action: z.string().optional().describe("建议操作"),
       approved_by: z.string().optional().describe("审批人 (例: <name> / 团队)"),
       resolved: z.union([z.boolean(), z.enum(["deferred"])]).optional()

@@ -12,6 +12,7 @@ export const UiDesignSchema = z.object({
   scope: z.string().describe("UI 范围说明"),
   styling_contract: StylingContract.optional().describe("样式契约：CSS 方案 + 内联禁令 + 主题变量规则"),
   is_cli_only: z.boolean().optional().describe("是否仅 CLI"),
+  component_name: z.string().optional().describe("主组件名称（CLI-only 时填 N/A）"),
   states: z.array(
     z.object({
       name: z.string().describe("状态名称，如 loading/empty/error"),

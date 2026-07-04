@@ -31,7 +31,9 @@ export function buildSeedJson(
     case "requirement":
       return {
         title,
-        features: [],
+        user_stories: [
+          { as_a: "待填写", i_want: "待填写", so_that: "待填写" },
+        ],
         acceptance_criteria: [
           { id: "AC-01", description: "待填写", is_checked: false },
         ],
@@ -44,6 +46,10 @@ export function buildSeedJson(
           { id: "B", name: "Option B", pros: [], cons: [] },
         ],
         decision: { chosen: "A", reason: "待填写" },
+        current_state: "",
+        data_model: "",
+        api_changes: "",
+        key_flow: "",
       };
     case "ui-design":
       return {
@@ -64,6 +70,7 @@ export function buildSeedJson(
       return {
         title,
         verdict: "commented",
+        overall_score: "",
       };
     case "integration":
       return {

@@ -1,0 +1,38 @@
+{
+  "title": "CLI --help command requirement",
+  "user_stories": [
+    { "as_a": "新用户", "i_want": "敲 help 看到所有可用命令", "so_that": "我能快速上手" },
+    { "as_a": "开发者", "i_want": "每个命令带一句话说明", "so_that": "我知道命令的用途" }
+  ],
+  "acceptance_criteria": [
+    { "id": "AC-01", "description": "Given 无参数, When 执行 help, Then 输出命令清单", "is_checked": false, "verify": "npm start help | grep -c command" },
+    { "id": "AC-02", "description": "Given 任何命令, When 执行 help, Then 显示该命令详细帮助", "is_checked": false, "verify": "npm start help build | grep Usage" }
+  ],
+  "scope_v1": ["help 主命令", "每个子命令一句话说明", "输出格式化"],
+  "scope_v2": ["help --search", "交互式教程"],
+  "scope_out": ["man page", "web 文档"],
+  "functional_requirements": [
+    { "module": "packages/cli/src/commands/help.ts", "items": [
+      { "id": "FR-01", "description": "列出所有已注册 commander 命令" },
+      { "id": "FR-02", "description": "格式化输出含命令名和描述" }
+    ]}
+  ],
+  "non_functional": {
+    "performance": [{ "id": "NFR-P01", "description": "help 命令响应 < 50ms" }],
+    "security": [{ "id": "NFR-S01", "description": "无新增攻击面" }],
+    "availability": [{ "id": "NFR-A01", "description": "CI 兼容" }]
+  },
+  "error_rescue_map": [
+    { "error": "命令名不存在", "trigger": "用户输入不存在的命令", "catch": "commander.js 内置", "user_sees": "command not found 错误信息", "recovery": "显示可用命令列表" }
+  ],
+  "shadow_paths": [
+    { "flow": "help 执行", "happy_input": "无参数", "happy_expected": "命令清单输出", "nil_input": "无命令注册", "nil_expected": "空列表", "empty_input": "空 stdin", "empty_expected": "正常输出", "upstream_input": "commander 未初始化", "upstream_expected": "报错退出" }
+  ],
+  "non_happy_path_cases": [
+    { "scenario": "stdout 被管道截断", "behavior": "输出到 stderr 的 error 仍然正常工作" },
+    { "scenario": "超宽终端", "behavior": "自动换行不截断" }
+  ],
+  "dependencies": [
+    { "dependency": "commander.js", "type": "已安装", "status": "active", "risk": "none" }
+  ]
+}

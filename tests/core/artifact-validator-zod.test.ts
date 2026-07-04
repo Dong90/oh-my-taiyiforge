@@ -17,8 +17,38 @@ describe("artifact-validator with Zod (mandatory)", () => {
 
   const requirementData = {
     title: "用户登录功能",
+    user_stories: [
+      { as_a: "用户", i_want: "使用邮箱密码登录", so_that: "能安全访问账户" },
+      { as_a: "用户", i_want: "使用手机验证码登录", so_that: "没有邮箱也能用" },
+    ],
     features: ["邮箱密码登录", "手机验证码登录"],
+    functional_requirements: [
+      { module: "登录模块", items: [{ id: "FR-01", description: "邮箱密码登录" }] },
+    ],
+    non_functional: {
+      performance: [{ id: "NFR-P01", description: "响应时间<500ms" }],
+      security: [{ id: "NFR-S01", description: "密码加密存储" }],
+      availability: [{ id: "NFR-A01", description: "99.9% uptime" }],
+    },
+    error_rescue_map: [
+      { error: "密码错误", trigger: "输入错误密码", catch: "后端验证", user_sees: "密码错误提示", recovery: "重新输入" },
+    ],
+    non_happy_path_cases: [
+      { scenario: "空输入", behavior: "显示必填提示" },
+    ],
+    dependencies: [
+      { dependency: "vitest", type: "测试框架", status: "已安装", risk: "无" },
+    ],
     scope_out: ["微信扫码登录", "SSO 集成"],
+    shadow_paths: [
+      {
+        flow: "登录流程",
+        happy_input: "正确邮箱密码", happy_expected: "登录成功跳转首页",
+        nil_input: "空输入", nil_expected: "显示必填提示",
+        empty_input: "空字符串", empty_expected: "显示格式错误提示",
+        upstream_input: "认证服务不可用", upstream_expected: "显示服务不可用提示",
+      },
+    ],
     acceptance_criteria: [
       { id: "AC-01", description: "用户输入邮箱和密码后点击登录", is_checked: false, verify: "npm run test:login" },
       { id: "AC-02", description: "错误密码显示红色提示", is_checked: false, verify: "npm run test:error" },

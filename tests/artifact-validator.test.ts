@@ -102,6 +102,7 @@ describe("evidence 强校验(change/requirement/test 阶段)", () => {
     fs.writeFileSync(path.join(dir, "REQUIREMENT.md"), "## User Stories\nUS-1\n## Acceptance Criteria\n- [x] AC-01 done\n");
     fs.writeFileSync(path.join(dir, "requirement.json"), JSON.stringify({
       title: "t",
+      user_stories: [{ as_a: "用户", i_want: "f", so_that: "g" }],
       features: ["f"],
       acceptance_criteria: [{ id: "AC-01", description: "d", is_checked: true }],
     }));

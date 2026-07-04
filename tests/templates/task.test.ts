@@ -98,7 +98,7 @@ describe("task.hbs", () => {
       title: "无文件",
       slices: [{ id: "S1", label: "纯配置", description: "" }],
     });
-    expect(out).toContain("_在此列出需要创建或修改的文件_");
+    expect(out).toContain("（无 — 请填写 write_files 字段）");
   });
 
   it("renders no unrendered Handlebars tokens", () => {

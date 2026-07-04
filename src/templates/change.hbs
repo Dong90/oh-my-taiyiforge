@@ -101,7 +101,7 @@ downstream: [requirement]
 
 ```
   CURRENT              THIS CHANGE              12-MONTH IDEAL
-  _现状_     --->      _本次增量_    --->        _理想终态_
+  {{#if dream_state.current}}{{dream_state.current}}{{else}}_现状_{{/if}}     --->      {{#if dream_state.this_change}}{{dream_state.this_change}}{{else}}_本次增量_{{/if}}    --->        {{#if dream_state.ideal}}{{dream_state.ideal}}{{else}}_理想终态_{{/if}}
 ```
 
 <!-- Validate: 向理想靠近而非引入未来技术债？ -->
@@ -140,7 +140,7 @@ downstream: [requirement]
 | _本次无新技术引入_ | 否 | _沿用现有技术栈_ |
 {{/if}}
 
-_已花费: {{#if innovation_tokens}}{{innovation_tokens.length}}{{else}}0{{/if}}/3_
+**已花费: {{#if innovation_tokens}}{{innovation_tokens.length}}{{else}}0{{/if}}/3**
 
 <!-- Validate: ≤3？每个"是"有充分理由？ -->
 

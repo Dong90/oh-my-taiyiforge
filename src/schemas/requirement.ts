@@ -44,10 +44,19 @@ const Dependency = z.object({
   risk: z.string(),
 });
 
+const UserStory = z.object({
+  as_a: z.string().describe("As a [角色]"),
+  i_want: z.string().describe("I want [功能]"),
+  so_that: z.string().describe("So that [价值]"),
+  priority: z.enum(["P0", "P1", "P2"]).optional().describe("优先级"),
+  sprint: z.string().optional().describe("归属版本"),
+});
+
 export const RequirementSchema = z.object({
   title: z.string().describe("用一句话概括核心需求"),
   one_liner: z.string().optional().describe("一句线描述"),
-  features: z.array(z.string()).describe("核心功能点列表"),
+  user_stories: z.array(UserStory).min(1).describe("用户故事 (As a / I want / So that)"),
+  features: z.array(z.string()).optional().describe("[deprecated] 由 user_stories 取代"),
   scope_v1: z.array(z.string()).optional().describe("v1 范围"),
   scope_v2: z.array(z.string()).optional().describe("v2 范围"),
   scope_out: z.array(z.string()).optional().describe("明确排除项"),

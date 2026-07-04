@@ -17,6 +17,10 @@ function render(data: unknown) {
 describe("requirement.hbs", () => {
   const data = {
     title: "用户登录",
+    user_stories: [
+      { as_a: "用户", i_want: "使用邮箱登录", so_that: "能安全访问账户", priority: "P0" },
+      { as_a: "用户", i_want: "使用手机号登录", so_that: "没有邮箱也能登录", priority: "P1" },
+    ],
     features: ["邮箱登录", "手机号登录"],
     acceptance_criteria: [
       { id: "AC-01", description: "用户能输入邮箱和密码登录", is_checked: false, verify: "npm test -- auth.test.ts" },
@@ -32,10 +36,10 @@ describe("requirement.hbs", () => {
     expect(out).toContain("# REQUIREMENT: 用户登录");
   });
 
-  it("renders features as unordered list", () => {
+  it("renders user stories in correct format", () => {
     const out = render(data);
-    expect(out).toContain("* 邮箱登录");
-    expect(out).toContain("* 手机号登录");
+    expect(out).toContain("- **As a** 用户, **I want** 使用邮箱登录, **so that** 能安全访问账户 (P0)");
+    expect(out).toContain("- **As a** 用户, **I want** 使用手机号登录, **so that** 没有邮箱也能登录 (P1)");
   });
 
   it("renders unchecked AC with [ ]", () => {

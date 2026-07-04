@@ -5,6 +5,10 @@ describe("RequirementSchema", () => {
   it("accepts valid complete data", () => {
     const data = {
       title: "用户登录",
+      user_stories: [
+        { as_a: "用户", i_want: "使用邮箱登录", so_that: "能访问个人数据" },
+        { as_a: "用户", i_want: "使用手机号登录", so_that: "没有邮箱也能登录" },
+      ],
       features: ["邮箱登录", "手机号登录"],
       acceptance_criteria: [
         { id: "AC-01", description: "用户能输入邮箱和密码登录", is_checked: false },
@@ -17,6 +21,9 @@ describe("RequirementSchema", () => {
   it("rejects empty acceptance_criteria array", () => {
     const data = {
       title: "用户登录",
+      user_stories: [
+        { as_a: "用户", i_want: "使用邮箱登录", so_that: "能访问系统" },
+      ],
       features: ["邮箱登录"],
       acceptance_criteria: [],
     };
@@ -25,6 +32,9 @@ describe("RequirementSchema", () => {
 
   it("rejects missing title", () => {
     const data = {
+      user_stories: [
+        { as_a: "用户", i_want: "使用邮箱登录", so_that: "能访问系统" },
+      ],
       features: ["邮箱登录"],
       acceptance_criteria: [{ id: "AC-01", description: "能登录", is_checked: false }],
     };
@@ -34,6 +44,9 @@ describe("RequirementSchema", () => {
   it("rejects acceptance_criteria with missing id", () => {
     const data = {
       title: "用户登录",
+      user_stories: [
+        { as_a: "用户", i_want: "使用邮箱登录", so_that: "能访问系统" },
+      ],
       features: ["邮箱登录"],
       acceptance_criteria: [{ description: "能登录", is_checked: false }],
     };
@@ -43,6 +56,9 @@ describe("RequirementSchema", () => {
   it("defaults is_checked to false when omitted", () => {
     const data = {
       title: "用户登录",
+      user_stories: [
+        { as_a: "用户", i_want: "使用邮箱登录", so_that: "能访问系统" },
+      ],
       features: ["邮箱登录"],
       acceptance_criteria: [{ id: "AC-01", description: "能登录" }],
     };

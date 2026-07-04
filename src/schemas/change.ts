@@ -25,6 +25,12 @@ const StakeholderEntry = z.object({
   needs: z.string(),
 });
 
+const DreamState = z.object({
+  current: z.string().describe("现状"),
+  this_change: z.string().describe("本次增量"),
+  ideal: z.string().describe("12月理想终态"),
+});
+
 /** 真验证记录:change/requirement/test 三阶段共享,success_criteria 标 is_checked=true 时必填 */
 export const EvidenceSchema = z.object({
   command: z.string().min(3).describe("真跑过的命令"),
@@ -76,6 +82,7 @@ export const ChangeSchema = z.object({
   risks: z.array(RiskEntry).optional().describe("风险清单"),
   innovation_tokens: z.array(InnovationToken).optional().describe("创新积分卡"),
   stakeholders: z.array(StakeholderEntry).optional().describe("干系人清单"),
+  dream_state: DreamState.optional().describe("Dream State 三阶段轨迹：现状→本次增量→12月理想"),
   evidence: EvidenceSchema.optional().describe("真验证记录,success_criteria 标 is_checked=true 时必填"),
 }).strict();
 

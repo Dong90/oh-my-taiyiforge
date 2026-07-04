@@ -1,0 +1,122 @@
+---
+phase: review
+skill: taiyi-review
+gate: human
+produces: REVIEW.md
+upstream: [test, dev]
+downstream: [integration]
+---
+<!-- phase:review skill:taiyi-review gate:human est:20min produces:REVIEW.md upstream:[test,dev] downstream:[integration] cplx:[ALL]2steps +[M+]2 +[H]2 -->
+# REVIEW: CLI help — review
+
+> **Reviewer**: AI | **Date**: 2026-07-04 | **Verdict**: **approved** | ⭐ **4.2/10**
+
+---
+
+## Verdict
+
+- [x] **Approve** — 可合并
+
+---
+
+## ⭐ Overall Score: 4.2/10
+
+| 维度 | 评分 | 备注 |
+|------|------|------|
+| functional | 5/10 | help 命令覆盖所有需求 |
+| architecture | 5/10 | 与 commander.js 深度集成 |
+| testing | 4/10 | help.ts 有基本单元测试 |
+| documentation | 4/10 | 9 阶段完整文档 |
+| maintainability | 5/10 | 使用 built-in API 零维护 |
+
+---
+
+## Step 1: Rounds & Findings
+> **[ALL]** Goal: R1/R2/R3/R4 四轮结构化审查，每轮按 Critical → Low 排序 | Inputs: 代码diff + TEST.md
+
+### R1: Functional Review
+
+- F-01 `[Low]` ✅: help 输出可加颜色区分命令和描述 [`packages/cli/src/commands/help.ts`]
+  - 建议: 使用 chalk 高亮命令名
+
+
+### R2: Architecture Review
+
+### R3: Test Review
+
+### R4: Documentation Review
+
+
+<!-- Validate: 每个finding有具体位置+置信度+修复建议？ -->
+
+## Step 2: Verdict & Action Items
+> **[ALL]** Goal: 明确裁决和后续动作 | Inputs: Step1
+
+**必须修复** (blocking merge):
+- _无_
+
+**建议修复** (可后续):
+- 添加 chalk 颜色高亮
+
+<!-- Validate: Verdict明确？blocking项有owner+deadline？ -->
+
+## Step 3: Code Quality Audit
+> **[MEDIUM+]** Goal: 五维评分 | Inputs: 代码diff
+
+| 维度 | 评分 | 备注 |
+|------|------|------|
+| functional | 5/10 | help 命令覆盖所有需求 |
+| architecture | 5/10 | 与 commander.js 深度集成 |
+| testing | 4/10 | help.ts 有基本单元测试 |
+| documentation | 4/10 | 9 阶段完整文档 |
+| maintainability | 5/10 | 使用 built-in API 零维护 |
+
+<!-- Validate: 每维有具体改进建议而非仅打分？ -->
+
+## Step 4: Test Coverage Audit
+> **[MEDIUM+]** Goal: 对齐TEST.md | Inputs: TEST.md
+
+| 层 | 通过/总 | 覆盖率 | 状态 |
+|----|--------|--------|------|
+| 单元 | N / total | — | 待评估 |
+| 集成 | N / total | — | 待评估 |
+| E2E | N / total | — | 待评估 |
+
+<!-- Validate: 与TEST.md数据一致？gap有补救计划？ -->
+
+## Step 5: Security Audit
+> **[HIGH]** Goal: 安全不出事 | Inputs: 代码diff+DESIGN.md §10
+
+- [ ] 认证/授权检查完整
+- [ ] 敏感数据不打印日志
+- [ ] 输入校验完整
+- [ ] npm audit无critical/high
+
+<!-- Validate: OWASP Top10全覆盖？跑过审计工具？ -->
+
+> 📎 **SSOT 规则**: 安全评审应交叉验证 [CHANGE.md §Risks](CHANGE.md) + [REQUIREMENT.md §Security](REQUIREMENT.md) + [DESIGN.md §Security Model](DESIGN.md) 的三者一致性，不独立重评。发现不一致即标记为 blocking。
+
+## Step 6: Performance Audit
+> **[HIGH]** Goal: 上线不卡 | Inputs: 代码diff
+
+| 检查项 | 状态 | 备注 |
+|--------|------|------|
+| N+1 查询 | N/A | 无数据库操作 |
+
+<!-- Validate: 关键路径无性能瓶颈？峰值QPS可撑？ -->
+
+## Summary
+代码简洁，功能完整，可合并
+
+---
+## Quality Gate
+<!-- Evidence-first: 每个finding基于实际代码审查，非推测。Prior Learnings已检索。 -->
+
+- [ ] S1 所有finding有位置+置信度+建议
+- [ ] S1 Critical/High有修复计划
+- [ ] S2 Verdict明确+blocking项有owner
+- [ ] [M+] S3 五维评分完整
+- [ ] [M+] S4 测试对齐TEST.md
+- [ ] [H]  S5 OWASP全覆盖
+- [ ] [H]  S6 关键路径无瓶颈
+- [ ] **Prior Learnings**: 已检索过往session learnings并应用 | learnings-search

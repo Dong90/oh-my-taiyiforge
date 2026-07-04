@@ -159,10 +159,7 @@ function seedPhaseArtifact(changeDir: string, phaseId: PhaseId, templatesDir?: s
   const { md, json } = E2E_ARTIFACTS[phaseId];
   const phase = getPhase(phaseId);
 
-  const rendered = templatesDir
-    ? renderE2ePhaseArtifact(phaseId, templatesDir)
-    : null;
-  fs.writeFileSync(path.join(changeDir, phase.artifact), rendered ?? md, "utf8");
+  fs.writeFileSync(path.join(changeDir, phase.artifact), md, "utf8");
   fs.writeFileSync(path.join(changeDir, `${phaseId}.json`), JSON.stringify(json, null, 2), "utf8");
 }
 

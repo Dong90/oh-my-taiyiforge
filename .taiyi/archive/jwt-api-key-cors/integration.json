@@ -1,0 +1,5 @@
+{"title":"安全机制","changelog_entries":[
+{"type":"feat","description":"JWT 认证中间件 + 登录端点"},
+{"type":"feat","description":"slowapi 请求限流"},
+{"type":"feat","description":"CORS 细粒度配置"}
+]}

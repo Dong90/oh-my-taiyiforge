@@ -1,0 +1,5 @@
+{
+  "integration": {
+    "ecc/github-actions-patterns": true
+  }
+}

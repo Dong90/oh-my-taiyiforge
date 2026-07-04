@@ -1,0 +1,7 @@
+{
+  "title": "CLI help — no UI",
+  "scope": "CLI only — 无视觉变更",
+  "is_cli_only": true,
+  "component_name": "N/A",
+  "styling_contract": { "scheme": "N/A", "no_inline_styles": true, "theme_var_only": true }
+}

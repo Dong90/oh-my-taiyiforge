@@ -97,7 +97,7 @@ describe("design.hbs", () => {
   it("renders innovation token accounting section", () => {
     const out = render(data);
     expect(out).toContain("## Step 7: Innovation Token Accounting");
-    expect(out).toContain("_累计:");
+    expect(out).toContain("**累计:");
   });
 
   it("renders trade-off analysis section", () => {

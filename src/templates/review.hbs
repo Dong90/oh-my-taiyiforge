@@ -9,7 +9,7 @@ downstream: [integration]
 <!-- phase:review skill:taiyi-review gate:human est:20min produces:REVIEW.md upstream:[test,dev] downstream:[integration] cplx:[ALL]2steps +[M+]2 +[H]2 -->
 # REVIEW: {{title}}
 
-> **Reviewer**: {{#if reviewer}}{{reviewer}}{{else}}_AI_{{/if}} | **Date**: {{#if review_date}}{{review_date}}{{else}}_待定_{{/if}} | **Verdict**: **{{verdict}}**
+> **Reviewer**: {{#if reviewer}}{{reviewer}}{{else}}_AI_{{/if}} | **Date**: {{#if review_date}}{{review_date}}{{else}}_待定_{{/if}} | **Verdict**: **{{#if verdict}}{{verdict}}{{else}}Pending{{/if}}**{{#if overall_score}} | ⭐ **{{overall_score}}/10**{{/if}}
 
 ---
 
@@ -24,29 +24,63 @@ downstream: [integration]
 
 ---
 
-## Step 1: Review Scope & Findings
-> **[ALL]** Goal: 每个问题有位置+置信度+建议 | Inputs: 代码diff + TEST.md
-<!-- Action: Prior Learnings: 检查本项目过往session的learnings，有匹配的标注"Prior learning applied"。[severity](confidence:N/10) file:line—desc。9-10=已验证,7-8=高置信,5-6=中(需人工)。critical=必修复 -->
+## ⭐ Overall Score{{#if overall_score}}: {{overall_score}}/10{{/if}}
 
-**评审范围**: 
-**关注重点**: 
-
-{{#if findings}}
-{{#each findings}}
-- **{{id}}** `[{{severity}}]` {{#if resolved}}✅{{else}}❌{{/if}}: {{description}}
+| 维度 | 评分 | 备注 |
+|------|------|------|
+{{#if code_quality}}
+{{#each code_quality}}
+| {{dimension}} | {{score}}/10 | {{note}} |
 {{/each}}
 {{else}}
-### Critical — 暂无
-### High — 暂无
-### Medium — 暂无
-### Low/Suggestion — 暂无
+| functional | _/10 | _ |
+| architecture | _/10 | _ |
+| testing | _/10 | _ |
+| documentation | _/10 | _ |
+| maintainability | _/10 | _ |
+{{/if}}
+
+---
+
+## Step 1: Rounds & Findings
+> **[ALL]** Goal: R1/R2/R3/R4 四轮结构化审查，每轮按 Critical → Low 排序 | Inputs: 代码diff + TEST.md
+
+### R1: Functional Review
+{{#if findings}}
+{{#each findings}}{{#if (eq round "R1")}}
+- {{id}} `[{{severity}}]` {{#if resolved}}✅{{else}}❌{{/if}}: {{description}}{{#if file}} [`{{file}}{{#if line}}:{{line}}{{/if}}`]{{/if}}
+  {{#if suggestion}}- 建议: {{suggestion}}{{/if}}
+{{/if}}{{/each}}
+{{#each findings}}{{#if (neq round "R1")}}{{#if (neq round "R2")}}{{#if (neq round "R3")}}{{#if (neq round "R4")}}
+- {{id}} `[{{severity}}]` {{#if resolved}}✅{{else}}❌{{/if}}: {{description}}{{#if file}} [`{{file}}{{#if line}}:{{line}}{{/if}}`]{{/if}}
+  {{#if suggestion}}- 建议: {{suggestion}}{{/if}}
+{{/if}}{{/if}}{{/if}}{{/if}}{{/each}}
+### R2: Architecture Review
+{{#each findings}}{{#if (eq round "R2")}}
+- {{id}} `[{{severity}}]` {{#if resolved}}✅{{else}}❌{{/if}}: {{description}}{{#if file}} [`{{file}}{{#if line}}:{{line}}{{/if}}`]{{/if}}
+  {{#if suggestion}}- 建议: {{suggestion}}{{/if}}
+{{/if}}{{/each}}
+### R3: Test Review
+{{#each findings}}{{#if (eq round "R3")}}
+- {{id}} `[{{severity}}]` {{#if resolved}}✅{{else}}❌{{/if}}: {{description}}{{#if file}} [`{{file}}{{#if line}}:{{line}}{{/if}}`]{{/if}}
+  {{#if suggestion}}- 建议: {{suggestion}}{{/if}}
+{{/if}}{{/each}}
+### R4: Documentation Review
+{{#each findings}}{{#if (eq round "R4")}}
+- {{id}} `[{{severity}}]` {{#if resolved}}✅{{else}}❌{{/if}}: {{description}}{{#if file}} [`{{file}}{{#if line}}:{{line}}{{/if}}`]{{/if}}
+  {{#if suggestion}}- 建议: {{suggestion}}{{/if}}
+{{/if}}{{/each}}
+{{else}}
+### R1: Functional — 暂无
+### R2: Architecture — 暂无
+### R3: Test — 暂无
+### R4: Documentation — 暂无
 {{/if}}
 
 <!-- Validate: 每个finding有具体位置+置信度+修复建议？ -->
 
 ## Step 2: Verdict & Action Items
 > **[ALL]** Goal: 明确裁决和后续动作 | Inputs: Step1
-<!-- Action: approved(过)/commented(建议但可过)/changes_requested(不过)。列出必须修复项 -->
 
 **必须修复** (blocking merge):
 {{#if blocking_items}}
@@ -70,7 +104,6 @@ downstream: [integration]
 
 ## Step 3: Code Quality Audit
 > **[MEDIUM+]** Goal: 五维评分 | Inputs: 代码diff
-<!-- Action: 可读性/可测试性/一致性/复杂度/文档 各0-10 -->
 
 | 维度 | 评分 | 备注 |
 |------|------|------|
@@ -79,18 +112,17 @@ downstream: [integration]
 | {{dimension}} | {{score}}/10 | {{note}} |
 {{/each}}
 {{else}}
-| 可读性 | _待评估（建议参考：7/10 基准值）_ | _待评估_ |
-| 可测试性 | _待评估（建议参考：7/10 基准值）_ | _待评估_ |
-| 一致性 | _待评估（建议参考：7/10 基准值）_ | _待评估_ |
-| 复杂度 | _待评估（建议参考：7/10 基准值）_ | _待评估_ |
-| 文档 | _待评估（建议参考：7/10 基准值）_ | _待评估_ |
+| functional | _/10 | _ |
+| architecture | _/10 | _ |
+| testing | _/10 | _ |
+| documentation | _/10 | _ |
+| maintainability | _/10 | _ |
 {{/if}}
 
 <!-- Validate: 每维有具体改进建议而非仅打分？ -->
 
 ## Step 4: Test Coverage Audit
 > **[MEDIUM+]** Goal: 对齐TEST.md | Inputs: TEST.md
-<!-- Action: 各层通过率+覆盖率+差距 -->
 
 | 层 | 通过/总 | 覆盖率 | 状态 |
 |----|--------|--------|------|
@@ -99,16 +131,15 @@ downstream: [integration]
 | {{layer}} | {{passed}}/{{total}} | {{coverage}} | {{status}} |
 {{/each}}
 {{else}}
-| 单元 | _通过/总_ | _覆盖率_ | _待评估（目标：≥90%）_ |
-| 集成 | _通过/总_ | _覆盖率_ | _待评估（目标：≥80%）_ |
-| E2E | _通过/总_ | _覆盖率_ | _待评估（目标：≥90%）_ |
+| 单元 | N / total | — | 待评估 |
+| 集成 | N / total | — | 待评估 |
+| E2E | N / total | — | 待评估 |
 {{/if}}
 
 <!-- Validate: 与TEST.md数据一致？gap有补救计划？ -->
 
 ## Step 5: Security Audit
 > **[HIGH]** Goal: 安全不出事 | Inputs: 代码diff+DESIGN.md §10
-<!-- Action: OWASP Top10+敏感数据+npm audit -->
 
 {{#if security_audit}}
 {{#each security_audit}}
@@ -127,7 +158,6 @@ downstream: [integration]
 
 ## Step 6: Performance Audit
 > **[HIGH]** Goal: 上线不卡 | Inputs: 代码diff
-<!-- Action: DB索引/N+1/阻塞IO/缓存/内存泄漏 -->
 
 {{#if performance_audit}}
 | 检查项 | 状态 | 备注 |
@@ -138,7 +168,7 @@ downstream: [integration]
 {{else}}
 | 检查项 | 状态 | 备注 |
 |--------|------|------|
-| _N+1 查询_ | _N/A_ | _无数据库操作_ |
+| N+1 查询 | N/A | 无数据库操作 |
 {{/if}}
 
 <!-- Validate: 关键路径无性能瓶颈？峰值QPS可撑？ -->

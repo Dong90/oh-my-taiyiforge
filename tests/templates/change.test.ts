@@ -93,7 +93,7 @@ describe("change.hbs", () => {
   it("renders innovation token check section", () => {
     const out = render(fullData);
     expect(out).toContain("## Step 9: Innovation Token Check");
-    expect(out).toContain("_已花费:");
+    expect(out).toContain("**已花费:");
   });
 
   it("renders migration & rollback section", () => {

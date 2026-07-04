@@ -1,0 +1,6 @@
+{"title":"API 规范化","changelog_entries":[
+{"type":"feat","description":"API v1 版本化路由 /api/v1/*"},
+{"type":"feat","description":"Swagger/ReDoc 文档完善"},
+{"type":"feat","description":"Pydantic 输入验证增强"},
+{"type":"feat","description":"配置热加载支持"}
+]}

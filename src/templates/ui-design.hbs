@@ -36,7 +36,7 @@ downstream: [task, dev]
 | 页面/组件 | 操作 | 路径 | 变更 |
 |----------|------|------|------|
 {{#if is_cli_only}}
-| _N/A — {{scope}}_ |
+| N/A — {{scope}} |
 {{else}}
 | _待列出页面/组件_ | _新增/修改/删除_ | _路径_ | _变更描述_ |
 {{/if}}
@@ -49,7 +49,7 @@ downstream: [task, dev]
 
 ```
 {{#if is_cli_only}}
-_N/A — {{scope}}_
+N/A — {{scope}}
 {{else}}
 _组件树待补充_
 ComponentRoot
@@ -69,15 +69,19 @@ ComponentRoot
 - **{{name}}**: {{description}}
 {{/each}}
 {{else}}
-### _组件名_
+### {{#if component_name}}{{component_name}}{{else}}N/A{{/if}}
+{{#if is_cli_only}}
+N/A — CLI-only change, no visual states
+{{else}}
 | 状态 | 触发 | 视觉 |
 |------|------|------|
-| Default | _默认状态_ | _视觉描述_ |
-| Loading | _加载中_ | _视觉描述_ |
-| Empty | _无数据_ | _视觉描述_ |
-| Error | _出错时_ | _视觉描述_ |
-| Success | _成功时_ | _视觉描述_ |
-| Edge | _边界情况_ | _视觉描述_ |
+| Default | — | — |
+| Loading | — | — |
+| Empty | — | — |
+| Error | — | — |
+| Success | — | — |
+| Edge | — | — |
+{{/if}}
 {{/if}}
 
 <!-- Validate: 6状态全覆盖？每个有视觉描述？ -->
@@ -123,7 +127,7 @@ ComponentRoot
 | 交互 | 触发 | 动效 | 时长 |
 |------|------|------|------|
 {{#if is_cli_only}}
-| _N/A — {{scope}}_ |
+| N/A — {{scope}} |
 {{else}}
 | _交互描述_ | _触发条件_ | _动效内容_ | _时长_ |
 {{/if}}
@@ -158,7 +162,7 @@ ComponentRoot
 | Token | 值 | 来源 |
 |-------|-----|------|
 {{#if is_cli_only}}
-| _N/A — {{scope}}_ |
+| N/A — {{scope}} |
 {{else}}
 | _Token名称_ | _值_ | _来源_ |
 {{/if}}

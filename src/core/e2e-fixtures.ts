@@ -62,6 +62,11 @@ const E2E_JSON_ARTIFACTS: Record<Exclude<PhaseId, "dev">, object> = {
   requirement: {
     title: "E2E Demo",
     one_liner: "九阶段 E2E 自动化回归：一键验证全流程工件生成、门控通过与 CI 集成",
+    user_stories: [
+      { as_a: "developer", i_want: "the E2E workflow to validate all nine phases", so_that: "I trust every release" },
+      { as_a: "CI maintainer", i_want: "automated gate verification", so_that: "human errors are caught early" },
+      { as_a: "contributor", i_want: "example artifacts I can inspect", so_that: "I understand the workflow without reading source code" },
+    ],
     features: [
       "As a developer, I want the E2E workflow to validate all nine phases so that I trust every release",
       "As a CI maintainer, I want automated gate verification so that human errors are caught early",
@@ -245,6 +250,7 @@ const E2E_JSON_ARTIFACTS: Record<Exclude<PhaseId, "dev">, object> = {
         dependencies: "",
         parallelizable: true,
         completeness_score: 9,
+        time_estimate: "2h",
         physical_verification: "git diff --name-only",
         checkpoints: [
           "All nine phases complete in state.json",
@@ -263,6 +269,7 @@ const E2E_JSON_ARTIFACTS: Record<Exclude<PhaseId, "dev">, object> = {
         dependencies: "S1",
         parallelizable: false,
         completeness_score: 8,
+        time_estimate: "1h",
         physical_verification: "git diff --name-only",
         checkpoints: [
           "Archive dir has 11 files",

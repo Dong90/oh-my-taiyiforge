@@ -1,0 +1,22 @@
+{
+  "title": "api-swagger",
+  "motivation": "完善 translation-assistant 的 API 设计规范：API 版本管理、Swagger/ReDoc 文档、配置热加载和输入验证增强。",
+  "scope": {
+    "includes": [
+      "API 路径版本化 /api/v1/...",
+      "Swagger UI / ReDoc 文档完善",
+      "pydantic-settings 配置热加载",
+      "Pydantic 输入验证增强"
+    ],
+    "excludes": [
+      "API 限流策略",
+      "API 认证"
+    ]
+  },
+  "success_criteria": [
+    { "id": "SC-01", "description": "Swagger UI 在 /docs 可访问", "is_checked": false },
+    { "id": "SC-02", "description": "/api/v1/translation/translate 路径可用", "is_checked": false },
+    { "id": "SC-03", "description": "配置修改后无需重启即可生效", "is_checked": false },
+    { "id": "SC-04", "description": "输入验证拒绝非法请求并返回结构化错误", "is_checked": false }
+  ]
+}

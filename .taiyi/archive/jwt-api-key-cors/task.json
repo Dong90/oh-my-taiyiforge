@@ -1,0 +1,1 @@
+{"title":"安全机制","slices":[{"id":"slice-1","name":"JWT 认证中间件","depends_on":[]},{"id":"slice-2","name":"登录端点","depends_on":["slice-1"]},{"id":"slice-3","name":"请求限流中间件","depends_on":[]},{"id":"slice-4","name":"API Key 管理接口","depends_on":["slice-1"]},{"id":"slice-5","name":"CORS 细粒度配置","depends_on":[]}]}

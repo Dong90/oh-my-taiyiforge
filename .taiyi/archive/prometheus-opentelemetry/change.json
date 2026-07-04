@@ -1,0 +1,22 @@
+{
+  "title": "prometheus-opentelemetry",
+  "motivation": "为 translation-assistant 添加生产级可观测性：Prometheus metrics、OpenTelemetry 分布式追踪、日志关联和异常监控。",
+  "scope": {
+    "includes": [
+      "Prometheus metrics 端点 + 指标收集",
+      "OpenTelemetry 分布式追踪",
+      "结构化日志关联 trace_id",
+      "异常监控计数器"
+    ],
+    "excludes": [
+      "Grafana Dashboard 配置",
+      "ELK/Loki 部署"
+    ]
+  },
+  "success_criteria": [
+    { "id": "SC-01", "description": "/metrics 端点输出 Prometheus 格式", "is_checked": false },
+    { "id": "SC-02", "description": "HTTP 请求自动生成 trace span", "is_checked": false },
+    { "id": "SC-03", "description": "异常自动计数并暴露为 metric", "is_checked": false },
+    { "id": "SC-04", "description": "日志包含 trace_id 关联", "is_checked": false }
+  ]
+}

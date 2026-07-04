@@ -1,53 +1,26 @@
 /** Detect unresolved template placeholders in rendered hbs output.
  *  Used by tryPromoteSeedArtifact and validateArtifactFile to block
  *  auto-promotion and mark quality scores when content is still skeletal.
+ *
+ *  Convention: HBS fallback placeholders use either:
+ *    _中文描述_  — underline-wrapped Chinese (e.g. _待定_, _现状_)
+ *    [中文描述] — bracket-wrapped Chinese (e.g. [量化], [性能指标])
+ *    [TODO]/[TBD]/[FILL] — English action keywords
+ *  All caught by 5 generic patterns below.
  */
 import type { PhaseId } from "./types.js";
 
 /** Patterns that indicate a section was rendered from hbs but never edited. */
 export const PLACEHOLDER_PATTERNS: RegExp[] = [
-  // Chinese template fillers (change.hbs / design.hbs etc.)
-  /_在此列出[^_]{0,30}_/,
-  /_本次为测试[^_]{0,20}_/,
-  /_待补充[^_]{0,20}_/,
-  /_待定_/,
-  /_待估_/,
-  /_待选定_/,
-  /_write_files 列表_/,
-  /_结合业务说明_/,
-  /_3 个参考产品_/,
-  /_N_min\b/,
-  // Decision / Reason placeholders
-  /\[待决策\]/,
-  /\[待定\]/,
-  /\[理由\]/,
-  /\[填写[^\]]{0,30}\]/,
-  /\[TODO[^\]]{0,30}\]/i,
-  /\[TODO:/,
-  /\bTODO\b/,
-  /-- TODO/,
-  /\[Minimal\s/,
-  // Template-specific prompt placeholders (change.hbs / design.hbs)
-  /\[有没有完全不同的方案更值得做/,
-  /\[变更目的和价值\]/,
-  /\[重新定义问题会怎样\]/,
-  /\[有无现成方案\]/,
-  /\[技术方案概述\]/,
-  /\[待补充验证命令\]/,
-  /\[涉及页面\/组件\]/,
-  /\[精确到命令\]/,
-  /\[理想结果\]/,
-  /\[量化条件\]/,
-  /\[填写理由\]/,
-  /\[X人天\]/,
-  /_待补充/,
-  /\[N\]\/10/,
-  /\[N天\/小时\]/,
-  /\[deployed\/pending\]/,
-  /0\.0\.0/,
-  // English variants (some hbs templates use these)
-  /\[TBD\]/,
-  /\[FILL[^\]]{0,30}\]/i,
+  // Underline placeholders — Chinese start (catches _待定_ / _现状_ / _在此列出..._ / _待补充..._)
+  /_[\u4e00-\u9fff][^_]+_/,
+  // Underline placeholders — numeric or abbreviation start (_N_min / _3 个..._ / _CI/CD_)
+  /_(?:\d+|N\/A|CI\/CD)[^_]*_/,
+  // Bracket placeholders — Chinese start (catches [量化] / [步骤] / [性能指标] / [模块名] etc.)
+  /\[[\u4e00-\u9fff][^\]]{0,50}\]/,
+  // Bracket placeholders — English action keywords ([TODO] / [TBD] / [FILL])
+  /\[(?:TODO|TBD|FILL)[^\]]{0,30}\]/i,
+  // HTML comment fill-me
   /<!--\s*FILL-ME:\s*-->/,
 ];
 
@@ -61,7 +34,15 @@ const MANDATORY_SECTION_HEADINGS: Record<string, RegExp[]> = {
   test: [/^#{1,3}\s*(test\s*plan|edge\s*cases|regression)/im],
 };
 
-const SHAVE_PATTERN = /_([^_]+)_/g;
+/** Strip all known placeholder forms from text for content-length analysis. */
+const PLACEHOLDER_STRIP_PATTERNS = [
+  /_[\u4e00-\u9fff][^_]+_/g,
+  /_(?:\d+|N\/A|CI\/CD)[^_]*_/g,
+  /\[[\u4e00-\u9fff][^\]]{1,50}\]/g,
+  /\[(?:TODO|TBD|FILL)[^\]]{0,30}\]/gi,
+  /<!--\s*FILL-ME:\s*-->/g,
+  /_([^_]+)_/g,               // legacy: strip any remaining underline text (already stripped above, safety net)
+];
 
 function strippedBodyOf(body: string): string {
   return body
@@ -83,7 +64,7 @@ export function countPlaceholders(content: string): string[] {
   for (const re of PLACEHOLDER_PATTERNS) {
     const match = re.exec(content);
     if (match) found.push(match[0]);
-    re.lastIndex = 0; // reset global regex
+    re.lastIndex = 0;
   }
   return found;
 }
@@ -91,6 +72,14 @@ export function countPlaceholders(content: string): string[] {
 /** Whether the markdown content still contains any known unresolved placeholder. */
 export function hasPlaceholders(content: string): boolean {
   return PLACEHOLDER_PATTERNS.some((re) => re.test(content));
+}
+
+function stripPlaceholders(text: string): string {
+  let out = text;
+  for (const re of PLACEHOLDER_STRIP_PATTERNS) {
+    out = out.replace(re, "");
+  }
+  return out;
 }
 
 /** For a given phase, estimate whether at least one mandatory section contains
@@ -106,18 +95,10 @@ export function hasSubstantiveContent(phaseId: PhaseId, content: string): boolea
   const raw = content.replace(/<!--[\s\S]*?-->/g, "");
   for (const re of required) {
     const m = re.exec(raw);
-    if (!m) continue; // section heading not found
+    if (!m) continue;
     const idx = m.index;
     const section = raw.slice(idx + m[0].length, idx + Math.min(raw.length, idx + 500));
-    // replace underline-style placeholders, leaving the rest
-    const cleaned = section
-      .replace(SHAVE_PATTERN, "")
-      .replace(/\[待[^\]]{0,10}\]/g, "")
-      .replace(/\[填写[^\]]{0,30}\]/g, "")
-      .replace(/\[TODO[^\]]{0,30}\]/gi, "")
-      .replace(/\[TBD\]/gi, "")
-      .replace(/\[FILL[^\]]{0,30}\]/gi, "")
-      .replace(/<!--\s*FILL-ME:\s*-->/g, "")
+    const cleaned = stripPlaceholders(section)
       .replace(/^[-*]\s+\[[ x]\]\s+/gm, "")
       .replace(/^[-*]\s+/gm, "")
       .replace(/`[^`]+`/g, "")

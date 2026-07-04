@@ -1,0 +1,29 @@
+{
+  "title": "Add CLI --help command v0.1.0",
+  "release_version": "0.1.0",
+  "release_date": "2026-07-04",
+  "status": "deployed",
+  "changelog_entries": [
+    {
+      "type": "feat",
+      "description": "添加 help 子命令，输出所有可用命令及描述"
+    },
+    {
+      "type": "feat",
+      "description": "help <name> 显示单命令详细帮助"
+    },
+    {
+      "type": "chore",
+      "description": "更新 9 阶段工件模板"
+    }
+  ],
+  "post_launch": {
+    "period": "3 天",
+    "metrics": "help 命令调用次数",
+    "exit_criteria": "无用户报 help 不可用"
+  },
+  "rollback_trigger": "help 命令输出错误",
+  "rollback_step1": "git revert HEAD",
+  "rollback_step2": "npm run build",
+  "rollback_time": "5min"
+}

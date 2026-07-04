@@ -1,0 +1,30 @@
+{
+  "slug": "add-cli-help-command",
+  "currentPhase": "integration",
+  "completedPhases": [
+    "change",
+    "requirement",
+    "design",
+    "ui-design",
+    "task",
+    "dev",
+    "test",
+    "review"
+  ],
+  "profile": "full",
+  "skippedPhases": [],
+  "strictDev": false,
+  "autoHarness": false,
+  "complexity": {
+    "level": "low",
+    "score": 7,
+    "recommendedSkills": [
+      "taiyi-intel-scan"
+    ]
+  },
+  "auxiliaryCompleted": [],
+  "workflowStatus": "active",
+  "createdAt": "2026-07-04T16:55:17.296Z",
+  "updatedAt": "2026-07-04T17:00:49.924Z",
+  "version": 9
+}

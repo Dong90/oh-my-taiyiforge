@@ -86,11 +86,11 @@ _待补充变更前的架构/行为快照（如：当前登录模块使用 Sessi
 {{#if modules}}
 flowchart LR
 {{#each modules}}
-  m_{{@key}}["{{name}}"]
+  M{{@key}}["{{name}}"]
 {{/each}}
-  m_0 -->|data| m_1
-  m_1 -->|reads| m_2
-  m_1 -->|generates| m_3
+  M0 -->|data| M1
+  M1 -->|reads| M2
+  M1 -->|generates| M3
 {{else}}
 flowchart LR
   Change[变更模块] --> Touched[影响模块]
@@ -182,16 +182,16 @@ flowchart LR
 
 ### 数据模型
 ```sql
--- 在此处填写数据模型 DDL（如有变更）
+{{#if data_model}}{{data_model}}{{else}}-- 无数据模型变更{{/if}}
 ```
 
 ### API 设计
 ```
-在此处描述 API 变更（如新增 / 修改端点）
+{{#if api_changes}}{{api_changes}}{{else}}无 API 变更{{/if}}
 ```
 
 ### 关键流程
-_在此处用 Mermaid 时序图描述关键流程（如有）_
+{{#if key_flow}}{{key_flow}}{{else}}无关键流程变更{{/if}}
 
 <!-- Validate: DDL有索引？API有rate limit？流程有错误路径？ -->
 
@@ -231,7 +231,7 @@ _在此处用 Mermaid 时序图描述关键流程（如有）_
 | _本次无新技术_ | 否 | _全栈已有技术栈_ |
 {{/if}}
 
-_累计: {{#if design_innovation_tokens}}{{design_innovation_tokens.length}}{{else}}0{{/if}}/3_
+**累计: {{#if design_innovation_tokens}}{{design_innovation_tokens.length}}{{else}}0{{/if}}/3**
 
 <!-- Validate: ≤3？每个"是"有充分理由？ -->
 
@@ -258,7 +258,7 @@ _累计: {{#if design_innovation_tokens}}{{design_innovation_tokens.length}}{{el
 <!-- Action: 新artifact类型？CI/CD变更？回滚方式？ -->
 
 - **新artifact**: {{#if new_artifact}}{{new_artifact}}{{else}}_无_{{/if}}
-- **CI/CD变更**: {{#if rollout_steps}}{{#each rollout_steps}}{{this}}{{#unless @last}}; {{/unless}}{{/each}}{{else}}_在此列出 CI/CD 配置变更（如 workflow / deploy / npm publish）_{{/if}}
+- **CI/CD变更**: {{#if ci_cd}}{{ci_cd}}{{else}}_在此列出 CI/CD 配置变更（如 workflow / deploy / npm publish）_{{/if}}
 - **回滚方式**: {{#if rollback_trigger}}{{rollback_trigger}}{{else}}_在此描述回滚触发条件与操作步骤_{{/if}}
 
 <!-- Validate: 新artifact的build/publish/update流程完整？ -->

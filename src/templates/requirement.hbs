@@ -31,9 +31,19 @@ downstream: [design, ui-design]
 > **[ALL]** Goal: 从用户视角说清需求 | Inputs: CHANGE.md §1, §2
 <!-- Action: As a [角色] I want [功能] so that [价值]. 覆盖所有角色 -->
 
-{{#each features}}
-* {{this}}
+{{#if user_stories}}
+{{#each user_stories}}
+- **As a** {{as_a}}, **I want** {{i_want}}, **so that** {{so_that}}{{#if priority}} ({{priority}}){{/if}}{{#if sprint}} [{{sprint}}]{{/if}}
 {{/each}}
+{{else}}
+{{#if features}}
+{{#each features}}
+- {{this}}
+{{/each}}
+{{else}}
+- **As a** _待补充角色_, **I want** _待补充功能_, **so that** _待补充价值_
+{{/if}}
+{{/if}}
 
 <!-- Validate: 所有用户角色都覆盖了？ -->
 

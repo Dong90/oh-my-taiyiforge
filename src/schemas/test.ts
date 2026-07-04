@@ -40,6 +40,14 @@ export const TestSchema = z.object({
   title: z.string().describe("测试计划标题"),
   unit_framework: z.string().optional().describe("单元测试框架"),
   unit_coverage_target: z.string().optional().describe("单元覆盖率目标"),
+  test_rounds: z.array(
+    z.object({
+      round: z.string().describe("轮次名（功能/性能/安全/兼容/可观测）"),
+      scope: z.string().describe("本轮覆盖范围"),
+      status: z.string().describe("状态（✅ 必跑 / ⚠️ 跳过 / ❌ 未跑）"),
+      skip_reason: z.string().optional().describe("跳过理由"),
+    })
+  ).optional().describe("5 Round 覆盖矩阵"),
   test_plan: z.array(
     z.object({
       id: z.string().describe("测试用例 ID"),

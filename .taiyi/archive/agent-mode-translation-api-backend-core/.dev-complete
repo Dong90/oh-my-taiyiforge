@@ -1,0 +1,3 @@
+command: python -m pytest services/translation_api/tests/ -v --tb=short
+exitCode: 0
+dev complete

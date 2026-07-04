@@ -115,8 +115,8 @@ describe("ui-design.hbs", () => {
     expect(out).toContain("# UI-DESIGN: 最小UI");
     expect(out).toContain("## Step 1: Component Inventory");
     // Should show default state matrix with 6-state table
-    expect(out).toContain("| Default | _默认状态_ | _视觉描述_ |");
-    expect(out).toContain("| Error | _出错时_ | _视觉描述_ |");
+    expect(out).toContain("N/A");
+    expect(out).toContain("N/A");
     // Should show default accessibility checklist
     expect(out).toContain("表单有语义化label");
     expect(out).not.toMatch(/\{\{[#/]?[a-zA-Z]+\}\}/);

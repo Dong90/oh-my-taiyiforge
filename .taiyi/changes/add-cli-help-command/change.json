@@ -1,0 +1,84 @@
+{
+  "title": "Add CLI --help command",
+  "motivation": "用户首次使用时不知道有哪些可用命令，需要 --help 输出命令清单和简要说明",
+  "scope": {
+    "includes": [
+      "CLI --help 子命令",
+      "帮助文本格式化"
+    ],
+    "excludes": [
+      "man page",
+      "交互式教程"
+    ]
+  },
+  "success_criteria": [
+    {
+      "id": "SC-01",
+      "description": "执行 help 输出所有可用命令",
+      "is_checked": true
+    },
+    {
+      "id": "SC-02",
+      "description": "帮助文本包含每个命令的一句话说明",
+      "is_checked": true
+    }
+  ],
+  "do_nothing_cost": "用户无法自行发现功能，需翻源码或 README",
+  "target_state": "新用户敲 help 即可了解全部命令",
+  "visual_tone": "N/A — CLI only",
+  "visual_reason": "纯 CLI 工具",
+  "visual_references": "参考 git help",
+  "visual_excluded": "任何前端/UI 元素",
+  "premise_redefine": "不用 help，改用 README 文档？→ 不如内置 help 即时可得",
+  "premise_cost": "约 30 LOC，零依赖",
+  "premise_existing": "commander.js 自带 help 生成",
+  "premise_scrap": "不做则用户靠猜, 体验差",
+  "migration_steps": "npm run build && npm link 即可生效",
+  "rollback_trigger": "help 输出覆盖标准错误流",
+  "rollback_ops": "git revert HEAD",
+  "rollback_time": "5min",
+  "impact_map": [
+    {
+      "module": "packages/cli/src/commands/help.ts",
+      "impact": "新增文件",
+      "owner": "shixiaocai"
+    },
+    {
+      "module": "packages/cli/src/index.ts",
+      "impact": "注册 help 命令",
+      "owner": "shixiaocai"
+    }
+  ],
+  "risks": [
+    {
+      "risk": "help 文本与代码不同步",
+      "probability": "low",
+      "impact": "用户困惑",
+      "mitigation": "CI lint 检查命令一致性"
+    }
+  ],
+  "innovation_tokens": [
+    {
+      "decision": "使用 commander.js built-in help",
+      "is_token": false,
+      "reason": "零 token, 成熟方案"
+    }
+  ],
+  "stakeholders": [
+    {
+      "role": "PM",
+      "name": "shixiaocai",
+      "needs": "新用户上手体验提升"
+    }
+  ],
+  "dream_state": {
+    "current": "无 help 命令，用户需查源码",
+    "this_change": "添加 --help 子命令输出命令清单",
+    "ideal": "help 输出包含示例和搜索功能"
+  },
+  "evidence": {
+    "command": "npm test",
+    "exitCode": 0,
+    "capturedAt": "2026-07-04T17:03:00.000Z"
+  }
+}

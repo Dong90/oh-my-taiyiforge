@@ -124,8 +124,9 @@ export function validateArtifactFile(
     scores.completeness = false;
     hints.push("仍为引擎模板占位");
   }
-  if (hasPlaceholders(content)) {
-    const count = countPlaceholders(content);
+  const cleanedContent = stripComments(content);
+  if (hasPlaceholders(cleanedContent)) {
+    const count = countPlaceholders(cleanedContent);
     scores.completeness = false;
     if (!hints.some((h) => h.includes("占位")) && !isSeedTemplate(content)) {
       const show = count.slice(0, 8);

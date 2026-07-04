@@ -1,0 +1,11 @@
+{
+  "title": "CLI help — test",
+  "test_plan": [
+    { "id": "T-01", "description": "无参数 help 输出所有命令", "status": "passed" },
+    { "id": "T-02", "description": "help <name> 输出单命令详情", "status": "passed" }
+  ],
+  "edge_cases": [
+    { "scenario": "help 不存在的命令名" },
+    { "scenario": "stdout 被管道截断" }
+  ]
+}

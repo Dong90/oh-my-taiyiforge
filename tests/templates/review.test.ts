@@ -9,6 +9,9 @@ const tplPath = path.join(
   "../../src/templates/review.hbs"
 );
 
+Handlebars.registerHelper("eq", function (a, b) { return a === b; });
+Handlebars.registerHelper("neq", function (a, b) { return a !== b; });
+
 function render(data: unknown) {
   const source = fs.readFileSync(tplPath, "utf-8");
   return Handlebars.compile(source)(data);
@@ -19,8 +22,8 @@ describe("review.hbs", () => {
     title: "登录优化 review",
     verdict: "approved",
     findings: [
-      { id: "F-01", severity: "critical", resolved: false, description: "密码明文日志问题" },
-      { id: "F-02", severity: "medium", resolved: true, description: "缺少 loading 状态" },
+      { id: "F-01", severity: "critical", resolved: false, description: "密码明文日志问题", round: "R1" },
+      { id: "F-02", severity: "medium", resolved: true, description: "缺少 loading 状态", round: "R1" },
     ],
   };
 
@@ -36,7 +39,7 @@ describe("review.hbs", () => {
 
   it("renders review scope section", () => {
     const out = render(fullData);
-    expect(out).toContain("## Step 1: Review Scope & Findings");
+    expect(out).toContain("## Step 1: Rounds & Findings");
   });
 
   it("renders findings with severity and resolution status", () => {
@@ -82,8 +85,8 @@ describe("review.hbs", () => {
   it("renders quality gate with all checkboxes", () => {
     const out = render(fullData);
     expect(out).toContain("## Quality Gate");
-    expect(out).toContain("S1 所有finding有位置");
-    expect(out).toContain("S6 关键路径无瓶颈");
+    expect(out).toContain("S1 所有finding有位置+置信度+建议");
+    expect(out).toContain("[H]  S6 关键路径无瓶颈");
   });
 
   it("renders no unrendered Handlebars tokens", () => {
@@ -94,9 +97,9 @@ describe("review.hbs", () => {
   it("renders with no findings (falls back to default placeholders)", () => {
     const out = render({ title: "无问题", verdict: "approved" });
     expect(out).toContain("# REVIEW: 无问题");
-    expect(out).toContain("Critical — 暂无");
-    expect(out).toContain("High — 暂无");
-    expect(out).toMatch(/Medium.*暂无/);
+    expect(out).toContain("### R1: Functional — 暂无");
+    expect(out).toContain("### R2: Architecture — 暂无");
+    expect(out).toMatch(/R3.*暂无/);
     expect(out).not.toMatch(/\{\{[#/]?[a-zA-Z]+\}\}/);
   });
 });

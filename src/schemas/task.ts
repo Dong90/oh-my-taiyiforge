@@ -42,7 +42,7 @@ export const TaskSchema = z.object({
       dependencies: z.union([z.string(), z.array(z.string())]).optional().describe("前置依赖"),
       parallelizable: z.boolean().optional().describe("是否可并行"),
       checkpoints: z.array(z.string()).optional().describe("检查点"),
-      time_estimate: z.string().optional().describe("预估时间"),
+      time_estimate: z.string().min(1).describe("预估时间（例: 30min / 2h / 1d）"),
       verification: z.string().optional().describe("验证方式"),
       physical_verification: z.string().optional().describe("物理锚点：`git diff --name-only` 确认 write_files 已被修改"),
     })

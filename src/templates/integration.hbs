@@ -43,7 +43,7 @@ _无_
 ```
 {{else}}
 ### 数据库
-_未提供 DDL 变更_
+无 DDL 变更
 {{/if}}
 
 ### 环境变量
@@ -57,7 +57,7 @@ _未提供 DDL 变更_
 | {{item}} | {{old_value}} | {{new_value}} |
 {{/each}}
 {{else}}
-| _无配置变更_ |
+| 无配置变更 |
 {{/if}}
 
 <!-- Validate: 迁移可一条命令完成？失败可回滚？ -->
@@ -117,7 +117,7 @@ _未提供 DDL 变更_
 > **[HIGH]** Goal: 出问题能快速回退 | Inputs: DESIGN.md §11
 <!-- Action: 触发条件(量化)+操作步骤(精确到命令)+预计时间 -->
 
-**触发**: {{#if rollback_trigger}}{{rollback_trigger}}{{else}}_量化条件_{{/if}}
+**触发**: {{#if rollback_trigger}}{{rollback_trigger}}{{else}}N/A — 纯文档变更无回滚需求{{/if}}
 **操作**: 1. {{#if rollback_step1}}{{rollback_step1}}{{else}}_命令_{{/if}} 2. {{#if rollback_step2}}{{rollback_step2}}{{else}}_命令_{{/if}}
 **时间**: {{#if rollback_time}}≤{{rollback_time}}{{else}}≤_N_min{{/if}}
 
@@ -136,7 +136,7 @@ _未提供 DDL 变更_
 {{else}}
 | 指标 | 基线 | 告警阈值 | 严重度 |
 |------|------|---------|--------|
-| _vitest pass rate_ | _100%_ | _<100%_ | _high_ |
+| vitest pass rate | 100% | <100% | high |
 {{/if}}
 
 <!-- Validate: 所有SC对应指标？基线+阈值有数据支撑？ -->

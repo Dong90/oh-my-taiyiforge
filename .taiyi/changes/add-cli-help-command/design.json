@@ -1,0 +1,39 @@
+{
+  "title": "CLI --help design",
+  "options": [
+    { "id": "A", "name": "commander.js built-in help", "pros": ["零依赖", "与现有 CLI 一致"], "cons": [], "cost": "低", "approach": "使用 commander.helpInformation() + command.configureHelp()" },
+    { "id": "B", "name": "手写 help 函数", "pros": ["完全自定义"], "cons": ["增加维护负担", "命令变更时需手动同步"], "cost": "中", "approach": "自建 help.ts 硬编码命令列表" }
+  ],
+  "decision": { "chosen": "A", "reason": "零维护成本, 与 commander.js 深度集成", "tradeoffs": "样式受 commander 限制，但满足需求" },
+  "current_state": "CLI 无 help 子命令，用户靠 README 了解命令",
+  "techStack": { "selected": "commander.js built-in help", "reason": "项目已用 commander, 零新增依赖", "deployment": "npm package", "constraints": "TypeScript strict" },
+  "existingArchitecture": { "touchedModules": ["packages/cli/src/index.ts"], "newModules": ["packages/cli/src/commands/help.ts"], "doNotTouch": ["packages/orchestrator"] },
+  "modules": [
+    { "name": "help.ts", "operation": "新增", "path": "packages/cli/src/commands/", "description": "help 命令" },
+    { "name": "index.ts", "operation": "修改", "path": "packages/cli/src/", "description": "注册 help 命令" }
+  ],
+  "ci_cd": "npm run build",
+  "data_model": "无数据模型变更",
+  "api_changes": "无 API 变更",
+  "key_flow": "无关键流程变更",
+  "dependency_sandbox": [
+    { "name": "commander", "version_range": "^13", "purpose": "CLI 框架", "npm_latest": "13.1.0", "staleness_check": "已检查" }
+  ],
+  "rollout_steps": ["npm run build", "npm link 本地测试"],
+  "blast_radius": [
+    { "decision": "使用 commander built-in help", "radius": "低", "worst_case": "help 输出格式不符预期", "isolation": "仅影响 help 命令本身" }
+  ],
+  "design_innovation_tokens": [
+    { "decision": "commander built-in help", "is_token": false, "reason": "成熟框架能力" }
+  ],
+  "tradeoffs": [
+    { "point": "built-in vs 手写", "choice": "built-in", "reason": "零维护成本" }
+  ],
+  "rollback_trigger": "help 命令输出不符合预期",
+  "security_threats": [
+    { "threat": "信息泄露", "vector": "help 输出暴露内部路径", "mitigation": "使用 commander 标准输出" }
+  ],
+  "evolutionSuggestions": [
+    { "type": "reusable-abstraction", "description": "help 格式化逻辑可提取为独立模块供其他 CLI 复用" }
+  ]
+}

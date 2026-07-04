@@ -9,7 +9,7 @@ downstream: [dev, test]
 <!-- phase:task skill:taiyi-task gate:auto est:15min produces:TASK.md upstream:[design,requirement] downstream:[dev,test] cplx:[ALL]2steps +[M+]2 +[H]1 -->
 # TASK: {{title}}
 
-> **总Slice**: {{#if total_slices}}{{total_slices}}{{else}}_待定_{{/if}} | **预估**: {{#if estimated_days}}{{estimated_days}}{{else}}_待估_{{/if}} | **并行**: {{#if max_parallel}}{{max_parallel}}{{else}}_待定_{{/if}}
+> **总Slice**: {{#if total_slices}}{{total_slices}}{{else}}—{{/if}} | **预估**: {{#if estimated_days}}{{estimated_days}}{{else}}—{{/if}} | **并行**: {{#if max_parallel}}{{max_parallel}}{{else}}—{{/if}}
 
 ---
 
@@ -49,7 +49,7 @@ flowchart LR
 - `{{this}}`
 {{/each}}
 {{else}}
-- _在此列出只读参考文件（不需要修改的源头代码）_
+- （无 — 请填写 read_files 字段）
 {{/if}}
 
 **write_files**（写边界 · 不越界）:
@@ -59,7 +59,7 @@ flowchart LR
 - `{{this}}`
 {{/each}}
 {{else}}
-- _在此列出需要创建或修改的文件_
+- （无 — 请填写 write_files 字段）
 {{/if}}
 
 {{#if test_command}}
@@ -80,7 +80,7 @@ flowchart LR
 - ⬜ {{this}}
 {{/each}}
 {{else}}
-⬜ _在此列出验收项（各至少一条通过条件）_
+⬜ （待补充验收项 — 请填写 checkpoints 字段）
 {{/if}}
 
 <!-- Validate: 可独立merge/deploy？文件范围精确？ -->
@@ -188,7 +188,7 @@ flowchart LR
 {{/each}}
 {{else}}
 ### Wave 1 (无依赖,并行)
-- Slice N: _描述_
+- Slice N: 描述
 {{/if}}
 {{/if}}
 
@@ -225,7 +225,7 @@ flowchart LR
 {{else}}
 | Slice | 回滚方式 | 时间 | 数据影响 |
 |-------|---------|------|---------|
-| _S1_ | _git revert_ | ≤_5_min | _无数据影响_ |
+| S1 | git revert | ≤5min | 无数据影响 |
 {{/if}}
 
 <!-- Validate: 每个Slice可独立回滚？数据一致性？ -->

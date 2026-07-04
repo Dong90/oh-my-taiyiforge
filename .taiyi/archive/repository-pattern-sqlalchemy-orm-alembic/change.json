@@ -1,0 +1,25 @@
+{
+  "title": "repository-pattern-sqlalchemy-orm-alembic",
+  "motivation": "为 translation-assistant 引入数据持久化层：SQLAlchemy ORM + Repository Pattern + Alembic 迁移管理。为后续用户认证、翻译历史等功能提供数据基础。",
+  "scope": {
+    "includes": [
+      "SQLAlchemy ORM 集成",
+      "Repository Pattern 抽象基类",
+      "Alembic 迁移配置",
+      "核心数据模型 User、TranslationRecord",
+      "数据库连接池配置",
+      "异步数据库会话管理"
+    ],
+    "excludes": [
+      "具体业务查询逻辑",
+      "Redis 缓存（归 redis-celery）",
+      "API 端点变更"
+    ]
+  },
+  "success_criteria": [
+    { "id": "SC-01", "description": "SQLAlchemy 模型可在 pytest 中创建/查询", "is_checked": false },
+    { "id": "SC-02", "description": "Alembic migration 可正常运行", "is_checked": false },
+    { "id": "SC-03", "description": "Repository 基类抽象可用", "is_checked": false },
+    { "id": "SC-04", "description": "数据库连接池配置生效", "is_checked": false }
+  ]
+}

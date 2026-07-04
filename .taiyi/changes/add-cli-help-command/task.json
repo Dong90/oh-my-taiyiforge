@@ -1,0 +1,46 @@
+{
+  "title": "CLI help — task",
+  "total_slices": 2,
+  "estimated_days": "0.5d",
+  "max_parallel": 1,
+  "slices": [
+    {
+      "id": "S1", "label": "help command", "description": "创建 help.ts 命令文件",
+      "files": ["packages/cli/src/commands/help.ts"],
+      "read_files": ["packages/cli/src/index.ts"],
+      "write_files": ["packages/cli/src/commands/help.ts"],
+      "test_command": "npx vitest run",
+      "dependencies": "",
+      "parallelizable": false,
+      "checkpoints": ["help 命令注册成功", "测试通过"],
+      "time_estimate": "30min",
+      "verification": "npm start help"
+    },
+    {
+      "id": "S2", "label": "register in index", "description": "在 index.ts 注册 help 命令",
+      "files": ["packages/cli/src/index.ts"],
+      "read_files": ["packages/cli/src/commands/help.ts"],
+      "write_files": ["packages/cli/src/index.ts"],
+      "test_command": "npx vitest run",
+      "dependencies": "S1",
+      "parallelizable": false,
+      "checkpoints": ["命令出现在输出中"],
+      "time_estimate": "15min",
+      "verification": "npm start help | grep help"
+    }
+  ],
+  "waves": [
+    { "name": "Wave 1", "slices": [{ "slice_id": "S1", "description": "help 命令" }] },
+    { "name": "Wave 2", "slices": [{ "slice_id": "S2", "description": "注册命令" }] }
+  ],
+  "slice_risks": [
+    { "slice": "S1", "risk": "commander version mismatch", "probability": "low", "mitigation": "检查 package.json 版本" },
+    { "slice": "S2", "risk": "命令名冲突", "probability": "low", "mitigation": "检查已有命令列表" }
+  ],
+  "slice_rollbacks": [
+    { "slice": "S1", "rollback": "git revert HEAD", "time": "5min", "data_impact": "无" },
+    { "slice": "S2", "rollback": "git revert HEAD", "time": "5min", "data_impact": "无" }
+  ],
+  "scores": { "coverage": 8, "completeness": 9, "clarity": 9 },
+  "completeness_score": 8
+}

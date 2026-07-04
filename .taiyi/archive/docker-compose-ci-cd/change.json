@@ -1,0 +1,21 @@
+{
+  "title": "docker-compose-ci-cd",
+  "motivation": "为 translation-assistant 项目添加 Docker 容器化、Docker Compose 本地开发环境和 GitHub Actions CI/CD 流水线。",
+  "scope": {
+    "includes": [
+      "Dockerfile（Python 3.8+ FastAPI）",
+      "docker-compose.yml（backend + frontend Nginx）",
+      ".github/workflows/ci.yml（lint + pytest）",
+      ".env 环境隔离（dev/staging/prod）"
+    ],
+    "excludes": [
+      "Kubernetes 编排",
+      "生产部署脚本"
+    ]
+  },
+  "success_criteria": [
+    { "id": "SC-01", "description": "docker-compose up 一键启动前后端", "is_checked": false },
+    { "id": "SC-02", "description": "GitHub Actions CI 通过（lint + pytest）", "is_checked": false },
+    { "id": "SC-03", "description": "环境变量区分 dev/staging/prod", "is_checked": false }
+  ]
+}

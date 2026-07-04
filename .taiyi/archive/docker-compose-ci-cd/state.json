@@ -1,0 +1,36 @@
+{
+  "slug": "docker-compose-ci-cd",
+  "currentPhase": "integration",
+  "completedPhases": [
+    "change",
+    "dev",
+    "integration"
+  ],
+  "profile": "micro",
+  "skippedPhases": [
+    "requirement",
+    "design",
+    "ui-design",
+    "task",
+    "test",
+    "review"
+  ],
+  "strictDev": false,
+  "autoHarness": true,
+  "complexity": {
+    "level": "low",
+    "score": 6,
+    "recommendedSkills": [
+      "taiyi-intel-scan",
+      "taiyi-restyle"
+    ]
+  },
+  "auxiliaryCompleted": [
+    "taiyi-intel-scan",
+    "taiyi-compress"
+  ],
+  "workflowStatus": "completed",
+  "createdAt": "2026-06-27T11:58:06.186Z",
+  "updatedAt": "2026-07-04T08:13:28.210Z",
+  "version": 8
+}
