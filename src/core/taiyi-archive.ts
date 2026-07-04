@@ -151,6 +151,22 @@ export function archiveTaiyiChange(
     return { ok: false, reason: `变更目录不存在: ${src}` };
   }
 
+  // 归档前审计：扫描 DESIGN.md 中未关闭的 Open Questions
+  const designPath = path.join(src, "DESIGN.md");
+  if (fs.existsSync(designPath)) {
+    const designContent = fs.readFileSync(designPath, "utf8");
+    const openSection = designContent.match(/##\s*Open[^\n]*\n([\s\S]*?)(?=\n##\s|$)/);
+    if (openSection) {
+      const openItems = openSection[1].split("\n").map(l => l.trim()).filter(l => /^- \[ \]/.test(l));
+      if (openItems.length > 0) {
+        console.warn(`[taiyi-archive] ⚠️ ${slug}: ${openItems.length} open question(s) in DESIGN.md — consider resolving before archiving:`);
+        for (const item of openItems) {
+          console.warn(`[taiyi-archive]   ${item}`);
+        }
+      }
+    }
+  }
+
   const archiveRoot = path.join(taiyiRoot, "archive");
   fs.mkdirSync(archiveRoot, { recursive: true });
 
