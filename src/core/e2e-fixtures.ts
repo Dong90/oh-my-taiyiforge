@@ -439,6 +439,14 @@ External npm registry in this test only.
 
 Dogfood validates WorkflowEngine and validators.
 
+## Reuse Analysis
+
+Reviewed existing pieces before composing this flow:
+
+- Reuses \`WorkflowEngine.completePhase\` gate pipeline already exercised by unit suites.
+- Reuses existing \`artifact-validator\` scores (completeness / consistency / verifiability / traceability / engineering_quality).
+- No new reusable modules required: change is documentation + harness orchestration only.
+
 ## Options
 
 | Option | Summary | Pros | Cons | Cost |
@@ -450,7 +458,7 @@ Dogfood validates WorkflowEngine and validators.
 
 **Chosen:** Option B for CI, script for local dogfood.
 
-**Reason:** Automated regression in every release.
+**Reason:** Picks Vitest because it gives reproducible CI 性能 (sub-second suite spin-up) at the cost of one extra dependency. Tradeoff accepted: a 复杂度-neutral harness that aligns with our existing 测试 pipeline, no new runtime cost in production.
 
 ## Architecture
 

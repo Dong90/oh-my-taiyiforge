@@ -6,7 +6,10 @@ import { WorkflowEngine } from "../src/core/workflow-engine.js";
 import { undoPhase, formatUndoPlain } from "../src/core/undo-phase.js";
 
 function createFakeArtifact(dir: string, name: string) {
-  fs.writeFileSync(path.join(dir, name), `# ${name}\n\nContent for test\n`, "utf8");
+  const content = name.endsWith(".json")
+    ? JSON.stringify({ title: "test", id: "test", format: "frontmatter", profile: "full", changeType: "feature" })
+    : `# ${name}\n\nContent for test\n`;
+  fs.writeFileSync(path.join(dir, name), content, "utf8");
 }
 
 describe("undo-phase", () => {

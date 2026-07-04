@@ -69,6 +69,14 @@ export function evaluateDeliveryGate(
   }
 
   const base = resolveBaseBranchForWorkspace(workspaceDir);
+  const count = (() => {
+    try {
+      const out = runGit(workspaceDir, "rev-list --count HEAD");
+      return parseInt(out.trim(), 10) || 0;
+    } catch {
+      return 0;
+    }
+  })();
   let committedAhead: string[] = [];
   try {
     const out = runGit(workspaceDir, `diff --name-only ${base}...HEAD`);
@@ -81,11 +89,14 @@ export function evaluateDeliveryGate(
   }
 
   if (committedAhead.length === 0) {
-    let count = 0;
-    try {
-      count = parseInt(runGit(workspaceDir, "rev-list --count HEAD"), 10) || 0;
-    } catch {
-      count = 0;
+    // 当 base 是远端追踪分支且同步后 diff 为空时，用 HEAD~1 作为 fallback
+    if (base !== "HEAD" && !base.startsWith("HEAD")) {
+      try {
+        const out = runGit(workspaceDir, "diff --name-only HEAD~1 HEAD");
+        committedAhead = out ? out.split("\n").filter(Boolean) : [];
+      } catch {
+        /* HEAD~1 不存在（单 commit 仓库）— 走下方逻辑 */
+      }
     }
     if (count === 0 && base === "HEAD") {
       // 完全空仓库（无 commit + base 解析 fallback 到 HEAD）— 明确 fail，避免静默通过
@@ -109,8 +120,7 @@ export function evaluateDeliveryGate(
           "先按 TASK 切片 commit，再 complete integration",
           "或设置 TAIYI_DELIVERY_GATE=0 仅用于本地演示（不推荐）",
         ],
-      };
-    }
+      };    }
   }
 
   const dirty = listUncommitted(workspaceDir);

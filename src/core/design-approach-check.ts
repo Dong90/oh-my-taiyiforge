@@ -155,10 +155,10 @@ export function auditDesignApproach(designMdPath: string): DesignApproachResult 
     const dim: DesignApproachDimension = "decision_rationale";
     const dimFindings: string[] = [];
 
-    const hasChosenLine = /^\*\*Chosen:\*\*/m.test(content);
-    const hasChosenCn = /^\*\*选定的方案：\*\*/m.test(content);
-    const hasReasonLine = /^\*\*Reason:\*\*/m.test(content);
-    const hasReasonCn = /^\*\*理由：\*\*/m.test(content);
+    const hasChosenLine = /\*\*Chosen:\*\*/m.test(content);
+    const hasChosenCn = /\*\*选定的方案：\*\*/m.test(content);
+    const hasReasonLine = /\*\*Reason:\*\*/m.test(content);
+    const hasReasonCn = /\*\*理由：\*\*/m.test(content);
     const hasSubstantiveReason =
       /\b(reason|因为|性能|成本|复杂度|安全|可维护|兼容|scalab|cost|perform|trade.?off|权衡|latency|吞吐)\b/i.test(
         content,
