@@ -56,7 +56,7 @@ describe("artifact-validator with Zod (mandatory)", () => {
     expect(result).not.toBeNull();
     expect(result!.scores.completeness).toBe(true);
     expect(result!.scores.consistency).toBe(true);
-    expect(result!.hints).toHaveLength(0);
+    expect(result!.hints.filter((h) => !h.startsWith("[建议]"))).toHaveLength(0);
   });
 
   it("corrupted JSON (empty acceptance_criteria) -> all false", () => {

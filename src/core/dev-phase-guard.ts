@@ -48,6 +48,12 @@ function isTaiyiArtifactPath(file: string): boolean {
   // 3. 探针/报告类
   if (n === "docs/taiyi/probe-triage.md") return true;
   if (n.startsWith("scripts/probes/")) return true;
+  // 4. 文档/插件/格式化 — 规划阶段常改但不是业务代码
+  if (n.startsWith("docs/")) return true;
+  if (n.startsWith(".opencode/") || n.startsWith(".cursor/") || n.startsWith(".claude/") || n.startsWith(".codex/")) return true;
+  if (n.startsWith(".opencode-plugin/")) return true;
+  if (/^\.(editorconfig|prettierrc|prettierrc\.|eslintrc|eslintignore|gitignore|gitattributes|husky)/.test(n)) return true;
+  if (n.endsWith(".lock") || n.endsWith("-lock.json")) return true;
   return false;
 }
 

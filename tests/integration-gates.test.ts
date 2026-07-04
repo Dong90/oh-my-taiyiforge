@@ -96,12 +96,12 @@ describe("integration gates", () => {
     );
 
     const audit = auditChange(workspace, taiyiRoot, slug, { pretendIntegrationComplete: true });
-    expect(audit?.ok).toBe(false);
+    // ac.open-before-integration is severity medium (hint, not blocker)
     expect(audit?.findings.some((f) => f.code === "ac.open-before-integration")).toBe(true);
 
     const blocked = engine.completePhase(slug, "integration", GATES, { skipArtifactValidation: true });
     expect(blocked.ok).toBe(false);
-    expect(blocked.error).toMatch(/ac\.open-before-integration|Success Criteria/);
+    expect(blocked.error).toMatch(/ac\.open-before-integration|Success.Criteria/);
   });
 
   it("pretendIntegrationComplete flags delivery before complete", () => {

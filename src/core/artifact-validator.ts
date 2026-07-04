@@ -4,6 +4,7 @@ import type { PhaseId, QualityScores } from "./types.js";
 import { getPhase } from "./phase-registry.js";
 import { isDevCompleteEvidence } from "./dev-complete.js";
 import { isSeedTemplate } from "./seed-marker.js";
+import { hasPlaceholders, countPlaceholders } from "./placeholder-check.js";
 import { RequirementSchema } from "../schemas/requirement.js";
 import { DesignSchema } from "../schemas/design.js";
 import { ChangeSchema } from "../schemas/change.js";
@@ -123,6 +124,13 @@ export function validateArtifactFile(
     scores.completeness = false;
     hints.push("仍为引擎模板占位");
   }
+  if (hasPlaceholders(content)) {
+    const count = countPlaceholders(content);
+    scores.completeness = false;
+    if (!hints.some((h) => h.includes("占位")) && !isSeedTemplate(content)) {
+      hints.push(`含 ${count.length} 个未填写占位符（${count.slice(0, 3).join(", ")}${count.length > 3 ? "…" : ""}）`);
+    }
+  }
   if (/\{\{title\}\}|\{\{slug\}\}/.test(content)) {
     scores.completeness = false;
     if (!hints.some((h) => h.includes("占位"))) hints.push("仍含占位符");
@@ -147,6 +155,27 @@ export function validateArtifactFile(
       hints.push(
         "[Evidence] acceptance_criteria/success_criteria 有 is_checked=true,必填 evidence{command, exitCode:0, capturedAt}",
       );
+    }
+  }
+
+  // Phase-specific content checks
+  if (phaseId === "requirement") {
+    // US 三段式缺失 hint（seed marker + placeholder 可兜底，此处仅提醒）
+    const hasUserStory = /as a(n?)\s+\S[\s\S]{1,80}i\s+(?:want|need|would like|must|should|cannot)\s+\S/i.test(content) ||
+      /\|\s*US[-_\d]+\s*\|[^|]+\|[^|]+\|[^|]+\|/i.test(content);
+    if (!hasUserStory) {
+      hints.push("[建议] REQUIREMENT.md 可补充 User Story 三段式 (As a / I want / So that)");
+    }
+    // Domain Language table hint (不阻塞 — 模板生成的 E2E fixture 跳过条件)
+    if (!/domain\s*language|术语表|domain\s*term/i.test(content)) {
+      hints.push("[建议] 可补充 Domain Language / 术语表（hbs 模板 ## Domain Language 章节）");
+    }
+  }
+
+  if (phaseId === "task") {
+    // T0.1-T0.7 pre-flight hint (不阻塞 — 模板生成的 fixture 跳过)
+    if (!/\bT0\.[1-7]\b/i.test(content) && !/pre[_ ]?flight/i.test(content)) {
+      hints.push("[建议] 可补充 T0.1-T0.7 pre-flight 检查（check_uncommitted / scan LESSONS 等）");
     }
   }
 

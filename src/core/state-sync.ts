@@ -9,6 +9,7 @@ import {
 } from "./artifact-validator.js";
 import { getPhase } from "./phase-registry.js";
 import { isSeedTemplate, TAIYI_SEED_MARKER } from "./seed-marker.js";
+import { hasPlaceholders, countPlaceholders, hasSubstantiveContent } from "./placeholder-check.js";
 
 export type StepBlocker = {
   code: string;
@@ -37,6 +38,11 @@ export function tryPromoteSeedArtifact(artifactPath: string, phaseId: ChangeStat
   if (!fs.existsSync(artifactPath)) return false;
   const content = fs.readFileSync(artifactPath, "utf8");
   if (!isSeedTemplate(content)) return false;
+
+  // 占位符还在 → 内容仍为骨架，不 auto-promote。seed marker 留着让质量门继续报错
+  if (hasPlaceholders(content)) return false;
+  // 非 dev 阶段：content 长度 < 200 且无 substantive 内容 → 也不 promote
+  if (phaseId !== "dev" && content.length < 200 && !hasSubstantiveContent(phaseId, content)) return false;
 
   const body = stripSeedMarker(content);
   if (phaseId === "dev") {
