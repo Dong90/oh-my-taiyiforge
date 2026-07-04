@@ -4,6 +4,7 @@ import type { PhaseId, QualityScores } from "./types.js";
 import { getPhase } from "./phase-registry.js";
 import { isDevCompleteEvidence } from "./dev-complete.js";
 import { isSeedTemplate } from "./seed-marker.js";
+import { hasPlaceholders, countPlaceholders } from "./placeholder-check.js";
 import { RequirementSchema } from "../schemas/requirement.js";
 import { DesignSchema } from "../schemas/design.js";
 import { ChangeSchema } from "../schemas/change.js";
@@ -122,6 +123,13 @@ export function validateArtifactFile(
   if (isSeedTemplate(content)) {
     scores.completeness = false;
     hints.push("仍为引擎模板占位");
+  }
+  if (hasPlaceholders(content)) {
+    const count = countPlaceholders(content);
+    scores.completeness = false;
+    if (!hints.some((h) => h.includes("占位")) && !isSeedTemplate(content)) {
+      hints.push(`含 ${count.length} 个未填写占位符（${count.slice(0, 3).join(", ")}${count.length > 3 ? "…" : ""}）`);
+    }
   }
   if (/\{\{title\}\}|\{\{slug\}\}/.test(content)) {
     scores.completeness = false;
