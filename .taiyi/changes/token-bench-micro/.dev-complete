@@ -1,3 +1,0 @@
-command: node scripts/token-bench.js
-exitCode: 0
-dev complete

@@ -1,4 +1,0 @@
-{"title":"缓存与异步队列","changelog_entries":[
-{"type":"feat","description":"Redis 缓存层 + @cached 装饰器"},
-{"type":"feat","description":"Celery 配置 + 异步翻译任务"}
-]}

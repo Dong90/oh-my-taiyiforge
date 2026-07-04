@@ -1,6 +1,0 @@
-{"title":"数据层","changelog_entries":[
-{"type":"feat","description":"SQLAlchemy async engine + session factory"},
-{"type":"feat","description":"BaseRepository CRUD 抽象 + UserRepository"},
-{"type":"feat","description":"User + TranslationRecord 数据模型"},
-{"type":"feat","description":"Alembic 迁移配置"}
-]}
