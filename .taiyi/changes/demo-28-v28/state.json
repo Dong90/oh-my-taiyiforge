@@ -19,9 +19,9 @@
     ]
   },
   "auxiliaryCompleted": [],
-  "workflowStatus": "active",
+  "workflowStatus": "aborted",
   "createdAt": "2026-07-03T14:26:12.938Z",
-  "updatedAt": "2026-07-03T14:26:12.938Z",
+  "updatedAt": "2026-07-04T09:44:14.170Z",
   "version": 1,
   "seeded": [
     "change.json",
