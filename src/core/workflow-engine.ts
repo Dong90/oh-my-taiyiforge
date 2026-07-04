@@ -38,7 +38,9 @@ import { enforceTokenBudgetBeforeComplete } from "./token-runner.js";
 import { expectedPhaseCount, isChangeAborted, isWorkflowCompleted } from "./change-status.js";
 import { normalizeState } from "./normalize-state.js";
 import { deliveryGateEnabled, evaluateDeliveryGate, evaluateProductionReadiness } from "./gates/delivery-gate.js";
+import { semanticGateEnabled, runSemanticVerify } from "./gates/semantic-gate.js";
 import { auditChange, crossChangeFindings } from "./workflow-audit.js";
+import { auditDesignApproach, formatDesignApproachAudit, type DesignApproachResult } from "./design-approach-check.js";
 import { auditTaskPlan, formatPlanAudit, type PlanAuditResult } from "./plan-audit.js";
 import { resolveArchTemplateForChange } from "./profile.js";
 import { evaluateArchitecture } from "./review-arch-check.js";
@@ -52,6 +54,11 @@ import { getLogger } from "./logger.js";
 import { ChangeLock } from "./change-lock.js";
 import { logActivity } from "./activity-log.js";
 import { appendPhaseToContext, generateGraphPhaseContext } from "./phase-context.js";
+import {
+  checkScopeBoundary,
+  checkArtifactQuality,
+  preFlightCheck,
+} from "./boundary-checker.js";
 
 export type InitChangeOptions = {
   title?: string;
@@ -380,8 +387,6 @@ export class WorkflowEngine {
     }
 
     if (process.env.TAIYI_SKIP_QUALITY_GATE !== "1") {
-      const isLowComplexity = workingState.complexity?.level === "low";
-      const isHumanGated = requiresHumanGate(phaseId);
       const quality = evaluateQualityGate(qualityScores);
       if (!quality.passed) {
         if (isLowComplexity && !isHumanGated && phaseId !== "integration") {
@@ -492,6 +497,29 @@ export class WorkflowEngine {
       return { ok: false, error: earlyCode.message };
     }
 
+    if (phaseId === "design" && !options?.skipArtifactValidation) {
+      const designMdPath = path.join(changeDir, "DESIGN.md");
+      if (!fs.existsSync(designMdPath)) {
+        return { ok: false, error: "DESIGN.md 不存在 — 无法进入 task 阶段" };
+      }
+      const designContent = fs.readFileSync(designMdPath, "utf8");
+      const isSeed = designContent.includes("<!-- taiyi:seed-template -->");
+      if (!isSeed) {
+        const audit: DesignApproachResult = auditDesignApproach(designMdPath);
+        if (!audit.passed) {
+          logActivity(this.taiyiRoot, {
+            event: "design:approach-warning",
+            slug,
+            findings: audit.findings.filter(f => !f.passed).map(f => `${f.dimension}: ${f.message}`),
+          });
+          return {
+            ok: false,
+            error: `DESIGN.md 设计质量审查未通过。请完善后重试。\n${formatDesignApproachAudit(audit)}`,
+          };
+        }
+      }
+    }
+
     if (phaseId === "task" && !options?.skipArtifactValidation) {
       const cacheKey = `${slug}::${phaseId}`;
       if (!this._auditedPhases.has(cacheKey)) {
@@ -538,6 +566,26 @@ export class WorkflowEngine {
           error: `架构检查未通过，请确保代码与架构约定一致:\n${failedLabels}`,
         };
       }
+
+      const scopeResult = checkScopeBoundary(changeDir, workspaceDir, slug);
+      if (!scopeResult.passed) {
+        this.log.warn(`[dev] 文件范围越界: ${scopeResult.findings.join("; ")}`);
+        logActivity(this.taiyiRoot, {
+          event: "dev:scope-boundary-violation",
+          slug,
+          violations: scopeResult.findings,
+        });
+        return {
+          ok: false,
+          error: `所修改文件超出了 CHANGE.md 声明的文件范围。\n` +
+            `请在 change 阶段调整 File Boundary 声明（CHANGE.md → change.json），或移除范围外的修改。\n` +
+            scopeResult.findings.join("\n"),
+          qualityHints: scopeResult.findings,
+        };
+      }
+      for (const finding of scopeResult.findings) {
+        this.log.info(`[boundary] ${finding}`);
+      }
     }
 
     if (phaseId === "integration" && process.env.TAIYI_SKIP_INTEGRATION_AUDIT !== "1") {
@@ -569,7 +617,7 @@ export class WorkflowEngine {
         });
       }
 
-      // 架构检查：根据 profile 检测项目代码结构质量
+      // 架构检查已在 dev phase 执行，此处仅保留 archTemplate 供后续检查使用
       const archTemplate = resolveArchTemplateForChange(workingState.profile, workspaceDir);
       const archResult = evaluateArchitecture(workspaceDir, archTemplate);
       const strictIntegration = process.env.TAIYI_STRICT_INTEGRATION === "1"
@@ -621,6 +669,21 @@ export class WorkflowEngine {
       }
     }
 
+    if (phaseId === "integration" && semanticGateEnabled(process.env)) {
+      const semanticResult = runSemanticVerify(workspaceDir, slug, { phase: phaseId, taiyiRoot: this.taiyiRoot });
+      if (!semanticResult.passed) {
+        const failedChecks = semanticResult.checks
+          .filter((c) => !c.passed)
+          .map((c) => `  [${c.code}] ${c.label}: ${c.detail ?? "failed"}`);
+        logActivity(this.taiyiRoot, { event: "semantic-gate:failed", slug, phase: phaseId });
+        return {
+          ok: false,
+          error: `Semantic integrity gate failed:\n${failedChecks.join("\n")}`,
+        };
+      }
+      this.log.info(`[integration] Semantic gate passed: ${semanticResult.summary}`);
+    }
+
     const autoCheck = enforceAutoHarnessBeforeComplete(
       workspaceDir,
       this.workspaceRoot,
@@ -636,7 +699,11 @@ export class WorkflowEngine {
     }
 
     const qualityResult = this.evaluatePhaseQuality(slug, phaseId, changeDir, gates.quality, state, workingState, options);
-    if (!qualityResult.ok) return qualityResult;
+    if (!qualityResult.ok) {
+      logActivity(this.taiyiRoot, { event: "quality:failed", slug, phase: phaseId, error: qualityResult.error, hints: qualityResult.qualityHints });
+      return qualityResult;
+    }
+    logActivity(this.taiyiRoot, { event: "quality:passed", slug, phase: phaseId, qualityScores: qualityResult.qualityScores, hints: qualityResult.qualityHints });
 
     const needsHuman = requiresHumanGate(phaseId) || options?.forceHuman;
     if (needsHuman) {
