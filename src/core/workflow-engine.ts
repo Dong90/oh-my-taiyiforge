@@ -389,6 +389,9 @@ export class WorkflowEngine {
     if (process.env.TAIYI_SKIP_QUALITY_GATE !== "1") {
       const quality = evaluateQualityGate(qualityScores);
       if (!quality.passed) {
+        const isLowComplexity = workingState.complexity?.level === "low" || !workingState.complexity;
+        const HUMAN_GATED_PHASES = new Set(["change", "design", "review"]);
+        const isHumanGated = HUMAN_GATED_PHASES.has(phaseId);
         if (isLowComplexity && !isHumanGated && phaseId !== "integration") {
           // Low complexity: still require basic dimensions (completeness, consistency)
           const basicFailed = quality.failed.filter(

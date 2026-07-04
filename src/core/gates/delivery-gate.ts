@@ -90,7 +90,7 @@ export function evaluateDeliveryGate(
         /* HEAD~1 不存在（单 commit 仓库）— 走下方逻辑 */
       }
     }
-    if (count === 0 && base === "HEAD") {
+    if (committedAhead.length === 0 && base === "HEAD") {
       // 完全空仓库（无 commit + base 解析 fallback 到 HEAD）— 明确 fail，避免静默通过
       return {
         passed: false,
@@ -101,7 +101,7 @@ export function evaluateDeliveryGate(
         ],
       };
     }
-    if (count > 0 && base === "HEAD") {
+    if (committedAhead.length > 0 && base === "HEAD") {
       // 单 commit 仓库（base fallback 到 HEAD）— 旧 silent-pass 保留，避免破坏单 commit 起步场景
       // no-op
     } else {
