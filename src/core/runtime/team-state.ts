@@ -134,7 +134,7 @@ const STAGE_PROTOCOL: Record<TeamPipelineStage, string[]> = {
   verify: [
     "Team · verify — 验证泳道",
     "  并行: verifier · qa-tester · code-reviewer · security-reviewer",
-    "  1. /taiyi:e2e · /taiyi:gstack qa · @taiyi-test",
+    "  1. /taiyi:e2e · @taiyi-test",
     "  2. /taiyi:security · /taiyi:review-loop",
     "  3. 失败 → team-fix · 通过 → /taiyi:continue",
   ],

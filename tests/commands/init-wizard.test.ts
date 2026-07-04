@@ -25,7 +25,6 @@ describe("init wizard", () => {
     expect(answers.scenario).toBe("default");
     expect(answers.defaultProfile).toBe("api");
     expect(answers.deliveryGate).toBe(false);
-    expect(answers.commitTrailers).toBe(true);
 
     const configPath = path.join(tmpDir, ".taiyi", "config.json");
     expect(fs.existsSync(configPath)).toBe(true);
@@ -53,10 +52,30 @@ describe("init wizard", () => {
     expect(answers.deliveryGate).toBe(true);
   });
 
-  it("respects TAIYI_COMMIT_TRAILERS=0", async () => {
+  it("seeds delivery.yaml skeleton when missing", async () => {
+    await runInitWizard(tmpDir);
+    const deliveryPath = path.join(tmpDir, ".taiyi", "delivery.yaml");
+    expect(fs.existsSync(deliveryPath)).toBe(true);
+    const content = fs.readFileSync(deliveryPath, "utf8");
+    expect(content).toMatch(/configuration\.md/);
+    expect(content).toMatch(/commit:/);
+  });
+
+  it("does not overwrite existing delivery.yaml", async () => {
+    fs.mkdirSync(path.join(tmpDir, ".taiyi"), { recursive: true });
+    fs.writeFileSync(path.join(tmpDir, ".taiyi", "delivery.yaml"), "commit:\n  subjectTemplate: custom\n");
+    await runInitWizard(tmpDir);
+    expect(fs.readFileSync(path.join(tmpDir, ".taiyi", "delivery.yaml"), "utf8")).toContain("custom");
+  });
+
+  it("does not write commitTrailers to config (env-only switch)", async () => {
     process.env.TAIYI_COMMIT_TRAILERS = "0";
     const answers = await runInitWizard(tmpDir);
-    expect(answers.commitTrailers).toBe(false);
+    expect(answers).not.toHaveProperty("commitTrailers");
+    const config = JSON.parse(
+      fs.readFileSync(path.join(tmpDir, ".taiyi", "config.json"), "utf8"),
+    );
+    expect(config.commitTrailers).toBeUndefined();
   });
 
   it("handles invalid scenario gracefully", async () => {
@@ -76,13 +95,11 @@ describe("init wizard", () => {
     process.env.TAIYI_SCENARIO = "devops";
     process.env.TAIYI_DEFAULT_PROFILE = "full";
     process.env.TAIYI_DELIVERY_GATE = "0";
-    process.env.TAIYI_COMMIT_TRAILERS = "0";
     const answers = await runInitWizard(tmpDir);
     expect(answers).toEqual({
       scenario: "devops",
       defaultProfile: "full",
       deliveryGate: false,
-      commitTrailers: false,
     });
   });
 });

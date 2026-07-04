@@ -1,5 +1,5 @@
 version: 1
-description: Token 压缩策略 — 引擎（无 LLM）+ Superpowers / gstack（聊天 Skill，与铁三角同级）
+description: Token 压缩策略 — 引擎（无 LLM）+ Superpowers / ECC / Taiyi handoff
 
 # 引擎策略（shell，首选、零 LLM Token）
 engine:
@@ -21,18 +21,18 @@ third_party:
     optional: true
     when: 多独立 slice 并行，各 agent 不继承主会话历史
     harness_check: superpowers/dispatching-parallel-agents
-  - id: gstack-checkpoint
-    tool: gstack
-    skill: checkpoint
+  - id: ecc-strategic-compact
+    tool: ecc
+    skill: strategic-compact
     optional: true
-    when: 长会话 / IDE compaction 前落盘 git+决策；新会话读 checkpoint 续作
-    harness_check: gstack/checkpoint
+    when: 长会话 / compaction 前战略压缩（或 /taiyi:handoff 写 HANDOFF.md）
+    harness_check: ecc/strategic-compact
 
 # 阶段推荐（status 超阈值或 token compress 时提示）
 phase_recommend:
   change:
     - engine
-    - gstack-checkpoint
+    - ecc-strategic-compact
   requirement:
     - engine
   design:

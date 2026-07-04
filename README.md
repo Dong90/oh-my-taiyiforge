@@ -172,7 +172,7 @@ agent/
 /taiyi:plan PRD.pdf --profile=full   # 半自动：拆模块后等人确认
 ```
 
-[完整示例 →](examples/translation-assistant/agent/) · [plan 命令参考 →](docs/taiyi/canonical-commands.md#taiyiplan)
+[完整示例 →](examples/translation-assistant/agent/) · [plan 命令参考 →](docs/taiyi/canonical-commands.md#v30-项目1)
 
 ### 不止流水线
 
@@ -181,7 +181,7 @@ agent/
 - **token 压缩**：长会话自动产出 `CONTEXT-COMPACT.md`，跨天无缝续上
 - **ChangeGraph**：自动追踪变更间依赖，改一处知全局
 - **不搞一刀切**：大功能 `full`，小修复 `lite`，typo 改 `nano`
-- **5 个插件式 Registry**（v0.22+）：Profile / CodePattern / SSOTRule / Extractor / RunnerPolicy 统一为 `Registry<T>` 抽象，支持 builtin + YAML + `node_modules` 三种扩展源，老 API 保持兼容。详见 [CHANGELOG](CHANGELOG.md#taiyiregistry-refactor--2026-06-30)。
+- **5 个插件式 Registry**（v0.22+）：Profile / CodePattern / SSOTRule / Extractor / RunnerPolicy 统一为 `Registry<T>` 抽象，支持 builtin + YAML + `node_modules` 三种扩展源，老 API 保持兼容。详见 [CHANGELOG](CHANGELOG.md)。
 
 ---
 

@@ -352,45 +352,40 @@ export function formatPhaseWorkflowPlain(phase: PhaseId): string | null {
   if (!map) return null;
 
   const lines: string[] = [];
-  if (map.superpowers.length) {
-    lines.push(`Superpowers（建议）: ${map.superpowers.join(", ")}`);
-  }
-  if (map.superpowers_optional.length) {
-    lines.push(`Superpowers（可选）: ${map.superpowers_optional.join(", ")}`);
-  }
-  if (map.external_optional.length) {
-    lines.push(`外部 Skill/CLI（可选）: ${map.external_optional.join(", ")}`);
-  }
+  lines.push(`Taiyi Skill: ${map.taiyi_skill} → ${map.artifact}`);
+
   if (map.capabilities) {
     if (map.capabilities.required.length) {
-      lines.push(`能力（必选）: ${map.capabilities.required.map((c) => `cap/${c}`).join(", ")}`);
+      lines.push(`引擎能力（必选）: ${map.capabilities.required.map((c) => `cap/${c}`).join(", ")}`);
     }
     if (map.capabilities.optional.length) {
-      lines.push(`能力（可选）: ${map.capabilities.optional.map((c) => `cap/${c}`).join(", ")}`);
+      lines.push(`引擎能力（可选）: ${map.capabilities.optional.map((c) => `cap/${c}`).join(", ")}`);
     }
   }
+
+  const agentHooks = map.harness.filter((h) => h.skill && h.tool !== "openspec");
+  const specialCli = map.harness.filter((h) => h.command && !h.skill);
+  if (agentHooks.length) {
+    lines.push(
+      `Agent harness: ${agentHooks.map((h) => `${h.tool}/${h.skill}${h.optional ? "?" : ""}`).join(", ")}`,
+    );
+  }
+  if (specialCli.length) {
+    lines.push(
+      `特例 CLI: ${specialCli.map((h) => h.command?.split(/\s+/).slice(0, 3).join(" ")).join(", ")}`,
+    );
+  }
+
   const auxIds = auxiliarySkillIdsForPhase(phase);
   if (auxIds.length) {
     lines.push(`辅助 Skill: ${auxIds.join(", ")}`);
   }
-  const requiredHooks = map.harness.filter((h) => !h.optional);
-  const optionalHooks = map.harness.filter((h) => h.optional);
-  if (requiredHooks.length) {
-    lines.push(
-      `harness 必选: ${requiredHooks.map((h) => (h.skill ? `${h.tool}/${h.skill}` : h.command ? `${h.tool}:${h.command.split(/\s+/).slice(0, 2).join(" ")}` : h.tool)).join(", ")}`,
-    );
-  }
-  if (optionalHooks.length) {
-    lines.push(
-      `harness 可选: ${optionalHooks.map((h) => (h.skill ? `${h.tool}/${h.skill}` : h.tool)).join(", ")}`,
-    );
-  }
   if (map.slash.length) {
-    lines.push(`斜杠命令: ${map.slash.join(" · ")}`);
+    lines.push(`斜杠: ${map.slash.join(" · ")}`);
   }
   if (map.human_gate) lines.push(`人工门: 须 --approver`);
   if (map.engine_gate) lines.push(`引擎门禁: ${map.engine_gate}`);
-  lines.push(`Taiyi Skill: ${map.taiyi_skill} → ${map.artifact}`);
+  lines.push(`capability 解析见 docs/taiyi/invoke-routing.md`);
   return lines.join("\n");
 }
 

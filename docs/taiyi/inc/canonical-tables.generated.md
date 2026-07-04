@@ -45,10 +45,10 @@
 
 | 域 | 斜杠 |
 |----|------|
-| 外部 Skill 路由 | `/taiyi:skill <name>`（吸收 gstack · sp · explore · tdd · flow） |
+| 外部 Skill 路由 | `/taiyi:skill <name>`（吸收 sp · explore · tdd · flow） |
 | Token | `/taiyi:token status|record|scan|compress` |
 | 测试 | `/taiyi:test smoke|e2e|qa|ui|security` |
-| Review | `/taiyi:review loop|check|health|gstack` |
+| Review | `/taiyi:review loop|check|health` |
 | 架构图 | `/taiyi:diagram pipeline|c4|arch|render|flow` |
 
 ## 场景（legacy → plan）
@@ -57,3 +57,4 @@
 |--------|----------|
 
 列表/清理：`list --archived` · `list --all` · `prune --aborted`（CLI，无独立顶栏）。
+

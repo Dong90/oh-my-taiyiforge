@@ -4,6 +4,7 @@
   },
   "integration": {
     "superpowers/finishing-a-development-branch": true,
-    "superpowers/verification-before-completion": true
+    "superpowers/verification-before-completion": true,
+    "ecc/github-actions-patterns": true
   }
 }

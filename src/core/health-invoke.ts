@@ -43,7 +43,7 @@ export function formatAgentHealthProtocol(
     `  2. 写入 \`${reportPath}\` — 含 Verdict: PASS | PASS_WITH_WARN | FAIL`,
     `  3. ${scriptHint}`,
     "  4. 完成后: `scripts/taiyi-forge.sh mark-aux <slug> taiyi-health`（high complexity 必选）",
-    "  5. 再进入 taiyi-review / gstack review",
+    "  5. 再进入 taiyi-review",
     "",
     `引擎探测: ${healthForge(slug)}（本命令仅输出协议；实际检查由 Agent + Skill 执行）`,
   ].join("\n");

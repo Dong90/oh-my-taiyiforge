@@ -21,17 +21,17 @@ User invoked TaiyiForge. Map `$ARGUMENTS` or the user's `/taiyi:*` to `scripts/t
 | `/taiyi:verify` | `verify` (= `ci verify`) |
 | `/taiyi:render` | `render [slug] [phase]` — json → md 强制同步 |
 | `/taiyi:commit` | `commit-trailers` + git |
-| `/taiyi:ship` | gstack `ship` |
-| `/taiyi:land` | gstack `land-and-deploy` |
-| `/taiyi:skill <name>` | 外部 Skill 路由（gstack · sp · explore · tdd · flow） |
+| `/taiyi:ship` | `ship`（git push + PR） |
+| `/taiyi:land` | `land`（merge + deploy） |
+| `/taiyi:skill <name>` | 外部 Skill 路由（sp · explore · tdd · flow） |
 | `/taiyi:token status\|record\|scan\|compress` | `token …` |
 | `/taiyi:test smoke\|e2e\|qa\|ui\|security` | umbrellas: `test` |
-| `/taiyi:review loop\|check\|health\|gstack` | umbrellas: `review` |
+| `/taiyi:review loop\|check\|health` | umbrellas: `review` |
 | `/taiyi:diagram pipeline\|c4\|arch\|render\|flow` | umbrellas: `diagram` |
 
 ## Legacy 兼容（已从顶栏移除 · 仍可用）
 
-`/taiyi:doctor` · `/taiyi:audit` · `/taiyi:release` · `/taiyi:explore` · `/taiyi:flow` · `/taiyi:gstack <skill>` · `/taiyi:sp <skill>` · `/taiyi:mode …` · `/taiyi:workflow …` · `/taiyi:ralph` · `/taiyi:autopilot` · `/taiyi:team` · `/taiyi:ultrawork` · `/taiyi:agent` · `/taiyi:review-loop` · `/taiyi:review-check` · `/taiyi:health` · `/taiyi:step` · `/taiyi:stop-mode` · `/taiyi:external-context` · `/taiyi:resume` · `/taiyi:browser-smoke` · `/taiyi:e2e` · `/taiyi:ui-test` · `/taiyi:security` · `/taiyi:init` · `/taiyi:complete` · `/taiyi:check` (= harness) · `/taiyi:harness-check` · `/taiyi:mark-aux` · `/taiyi:assess` · `/taiyi:phases` · `/taiyi:sync` · `/taiyi:run` (= walkthrough) · `/taiyi:help` · `/taiyi:state` (= `status --json`)
+`/taiyi:doctor` · `/taiyi:audit` · `/taiyi:release` · `/taiyi:explore` · `/taiyi:flow` · `/taiyi:sp <skill>` · `/taiyi:mode …` · `/taiyi:workflow …` · `/taiyi:ralph` · `/taiyi:autopilot` · `/taiyi:team` · `/taiyi:ultrawork` · `/taiyi:agent` · `/taiyi:review-loop` · `/taiyi:review-check` · `/taiyi:health` · `/taiyi:step` · `/taiyi:stop-mode` · `/taiyi:external-context` · `/taiyi:resume` · `/taiyi:browser-smoke` · `/taiyi:e2e` · `/taiyi:ui-test` · `/taiyi:security` · `/taiyi:init` · `/taiyi:complete` · `/taiyi:check` (= harness) · `/taiyi:harness-check` · `/taiyi:mark-aux` · `/taiyi:assess` · `/taiyi:phases` · `/taiyi:sync` · `/taiyi:run` (= walkthrough) · `/taiyi:help` · `/taiyi:state` (= `status --json`)
 
 ## 引擎 CLI（脚本/CI 仍直接调用）
 

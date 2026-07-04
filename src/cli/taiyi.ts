@@ -9,7 +9,6 @@ import { buildPhaseGuide } from "../core/phase-guide.js";
 import { isChangeAborted, isWorkflowCompleted, expectedPhaseCount } from "../core/change-status.js";
 import { resolveActiveSlug, slugifyTitle } from "../core/active-slug.js";
 import { resolveAutoHarness } from "../core/resolve-auto-harness.js";
-import { getNextPhase } from "../core/phase-registry.js";
 import { formatChangeNotFound, parseProfileFlag } from "../core/cli-hints.js";
 import { resolveDefaultProfile } from "../core/project-config.js";
 import { runInitWizard } from "../commands/init-wizard.js";
@@ -24,6 +23,7 @@ import {
   taiyiAssess, taiyiModes,
   taiyiRemember, taiyiKeyword,
   taiyiCommitTrailers, taiyiSyncOpenspec,
+  taiyiDeliveryPlan,
   taiyiFeature, taiyiBug, taiyiPrune,
   taiyiTrimAhead,
   taiyiComplete, taiyiPhases, taiyiUndo, taiyiRender,
@@ -241,10 +241,15 @@ function printCompleteSuccess(slug: string, phaseId: PhaseId): void {
   const state = engine.getState(slug);
   if (jsonMode) { console.log(JSON.stringify(state, null, 2)); return; }
   if (state && isWorkflowCompleted(state)) { console.log("✓ " + phaseId + " 已完成，可归档"); return; }
-  const nextPhase = state ? getNextPhase(state.currentPhase as PhaseId, state.skippedPhases) : null;
-  const done = state ? state.completedPhases.length + 1 : 0;
+  const done = state ? state.completedPhases.length : 0;
   const total = state ? expectedPhaseCount(state) : 9;
-  console.log(`✓ ${phaseId} 过关 (${done}/${total}) → ${nextPhase ?? "全部完成"}${nextPhase ? `：写 ${nextPhase.toUpperCase()}.md` : "，可归档"}`);
+  const nextPhase = state ? state.currentPhase as string : null;
+  const nextArtifact = nextPhase === "dev" ? ".dev-complete" : nextPhase ? `${nextPhase.toUpperCase()}.md` : "CHANGELOG.md";
+  if (nextPhase === null || (state && isWorkflowCompleted(state))) {
+    console.log(`✓ ${phaseId} 过关 (${done}/${total}) → 全部完成，可归档`);
+  } else {
+    console.log(`✓ ${phaseId} 过关 (${done}/${total}) → ${nextPhase}：写 ${nextArtifact}`);
+  }
 }
 
 function parseOptionalSlug(vArgs: string[]): string | undefined {
@@ -707,7 +712,22 @@ const handlers: Record<string, CliHandler> = {
     const r = taiyiCommitTrailers(workspaceDir, slug, subject || undefined);
     if (jsonMode) console.log(JSON.stringify(r, null, 2));
     else if ("text" in r && r.text) console.log(r.text);
+    else if (r.ok && "suggestion" in r) {
+      console.log(r.suggestion);
+      if (r.check && !r.check.passed && r.check.reason) {
+        console.log(`\n# check: ${r.check.reason}`);
+      }
+    }
     if (!r.ok) process.exitCode = 1; return;
+  },
+  "delivery-plan": (a) => {
+    const { positional } = parseRepeatCount(stripFlags(a));
+    const slug = positional[0];
+    const r = taiyiDeliveryPlan(workspaceDir, slug);
+    if (jsonMode) console.log(JSON.stringify(r, null, 2));
+    else if (r.ok) console.log(r.text);
+    else log.error(r.error);
+    if (!r.ok) process.exitCode = 1;
   },
   "sync-openspec": (a) => {
     const { positional } = parseRepeatCount(stripFlags(a));

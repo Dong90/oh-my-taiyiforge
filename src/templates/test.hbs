@@ -13,7 +13,8 @@ downstream: [review]
 
 ---
 
-## Step 1: Test Strategy
+## Test Plan
+
 > **[ALL]** Goal: 三层覆盖有目标 | Inputs: TASK.md + 实现代码
 <!-- Action: 单元/集成/E2E分层+覆盖率目标+重点 -->
 
@@ -101,7 +102,7 @@ GAPS: N (N need E2E, N eval)
 
 ## Step 4: Regression Rule
 > **[ALL]** Goal: 回归必有测试 | Inputs: Step3
-<!-- Action: gstack IRON RULE + Superpowers red-green: 1)写测试→跑(过) 2)回退修复→跑(必须挂) 3)恢复修复→跑(过)。三步全绿才算验证完成 -->
+<!-- Action: IRON RULE + ECC red-green: 1)写测试→跑(过) 2)回退修复→跑(必须挂) 3)恢复修复→跑(过)。三步全绿才算验证完成 -->
 
 {{#if regression_items}}
 | 回归项 | 原行为 | 新行为 | 测试 | Red-green | 状态 |
@@ -242,7 +243,7 @@ GAPS: N (N need E2E, N eval)
 
 ---
 ## Quality Gate
-<!-- Evidence-first: 所有测试用例必须实际跑过，不是"应该能过"。Superpowers: 没有新鲜输出=没有验证 -->
+<!-- Evidence-first: 所有测试用例必须实际跑过，不是"应该能过"。ECC: 没有新鲜输出=没有验证 -->
 
 - [ ] S1 三层全覆盖
 - [ ] S2 TC用Given/When/Then

@@ -250,7 +250,7 @@ export function formatAgentLoopProtocol(slug: string, round?: number, maxRounds?
     "Agent 循环协议（直到功能完成）:",
     `  1. ${loopSlash(slug)} — 引擎能自动过的阶段连续 continue`,
     "  2. 若阻塞 → 加载当前阶段 Skill 写工件或 /taiyi:apply 实现",
-    "  3. 铁三角 / harness-check 完成后回到步骤 1",
+    "  3. 双线 harness / harness-check 完成后回到步骤 1",
     `  4. 会话循环上限 ${max} 轮（当前约 ${r}/${max}）`,
     "  5. 九阶段完成 → /taiyi:archive",
     "",

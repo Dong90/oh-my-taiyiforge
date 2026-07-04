@@ -16,7 +16,7 @@ C4Context
   System_Ext(codex, "Codex", "Skills + prompts")
   System_Ext(cursor, "Cursor", "Skills + commands + MCP 模板")
   System_Ext(git, "Git 仓库", "业务代码 + .taiyi/changes/")
-  System_Ext(oss, "可选开源外挂", "Superpowers · gstack · OpenSpec")
+  System_Ext(oss, "可选开源外挂", "Superpowers · OpenSpec")
 
   Rel(dev, taiyiforge, "加载 Skill / 斜杠命令", "聊天")
   Rel(dev, git, "提交代码与工件")

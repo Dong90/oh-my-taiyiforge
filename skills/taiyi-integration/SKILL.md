@@ -171,7 +171,7 @@ npx taiyi remember --note "lesson: 翻译 API 流式响应用 SSE 而非 WebSock
 ## 与下游衔接
 
 本阶段是最后一个 TaiyiForge 阶段。输出可以导向：
-- **CLI 发布**：`npx taiyi commit <slug>` + `npx taiyi gstack`
+- **CLI 发布**：`npx taiyi commit <slug>` + `npx taiyi ship <slug>`
 - **PR 创建**：`npx taiyi ship <slug>`
 - **下一个 change**：`npx taiyi new "..."`（当前 change archive 后）
 

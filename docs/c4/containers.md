@@ -1,7 +1,7 @@
 # Container view — oh-my-taiyiforge
 
 > C4 Level 2 · **流水线 Mermaid 真源** · 更新：2026-06-08  
-> 下游同步：[`../diagrams/architecture.md`](../diagrams/architecture.md)
+> 下游同步：[`../c4/README.md`](../c4/README.md)（C4 L1-L2 总览）
 
 ```mermaid
 flowchart TB
@@ -59,7 +59,7 @@ flowchart TB
 
 ## Component（L3）
 
-引擎内部组件图见 [`../diagrams/architecture.md`](../diagrams/architecture.md) §1（不在此重复维护）。
+引擎内部组件图见 [`../c4/README.md`](../c4/README.md)（C4 总览 — L1/L2/L3 在本目录）。
 
 ---
 

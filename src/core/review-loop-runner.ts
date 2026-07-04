@@ -89,7 +89,7 @@ export function runReviewMachineCheck(
     const text = [
       phaseNote,
       phaseNote ? "" : undefined,
-      "① 须先执行新一轮 code review（taiyi-review / gstack review）→ 更新 REVIEW.md",
+      "① 须先执行新一轮 code review（taiyi-review）→ 更新 REVIEW.md",
       "② 再运行: scripts/taiyi-forge.sh review-check " + slug,
       "",
       formatAgentReviewLoopProtocol(
@@ -136,7 +136,7 @@ export function runReviewMachineCheck(
       canStop: false,
       verdict: "missing",
       openHighFindings: [],
-      hints: ["REVIEW.md 不存在 — 立即加载 taiyi-review / gstack review 并写入"],
+      hints: ["REVIEW.md 不存在 — 立即加载 taiyi-review 并写入"],
     };
     const loopState = options?.bumpRound !== false
       ? bumpReviewLoopRound(changeDir, slug, emptyLoop.verdict)

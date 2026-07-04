@@ -18,7 +18,7 @@
 | 问题 | 说明 | 引擎状态 |
 |------|------|----------|
 | **daemon dry-run 空转** | blocked 变更跑满 `max-rounds` 无早停 | **v0.22.1+**：多路径早停 + 轮末兜底（`stopReason=blocked`，`roundCount ≪ maxRounds`）；探测须带 `--dry-run --force` 且 slug 在 `changes/` |
-| ~~ship 仅斜杠~~ | exit 2 + gstack 提示 | **BY DESIGN** — 勿标 P1；见「体验 P2」 |
+| ~~ship 仅斜杠~~ | exit 2 + chat-slash-only 提示 | **BY DESIGN** — 勿标 P1；见「体验 P2」 |
 
 ---
 
@@ -34,7 +34,7 @@
 | **sync-openspec 拒已归档 slug** | 防误写 active | **BY DESIGN** — `commands.yaml` + 本表；`--force` 可覆盖 |
 | **null byte slug** | Node spawn 层拒绝 | **已补** — `validateSlug` 提前拒绝 NUL |
 | **smoke-reset cli=2 / wrapper=0** | wrapper 专用 | **BY DESIGN** — 仅 `scripts/taiyi-forge.sh smoke-reset` |
-| **ship/land/commit 仅斜杠** | exit 2 + gstack | **BY DESIGN** — 加载 gstack Skill，无 shell 子命令 |
+| **ship/land/commit 仅斜杠** | exit 2 + chat-slash-only 提示 | **BY DESIGN** — 加载 chat Skill，无 shell 子命令 |
 | **归档 slug handoff exit 1** | `ten-r1-lite` 等仅 archive | **已修** — `resolveChangeDir` + dated 目录；**无** `.taiyi` 记录时 exit 1 正确 |
 
 ---
@@ -70,7 +70,7 @@
 # BY DESIGN — 不应 FAIL
 npx taiyi smoke-reset                         # exit 2
 ./scripts/taiyi-forge.sh smoke-reset            # exit 0
-npx taiyi ship                                  # exit 2 + gstack 提示
+npx taiyi ship                                  # exit 2 + chat-slash-only 提示
 
 # 幂等 — exit 0 + 文案
 taiyi-forge archive <已完成-slug>               # 「已归档」「幂等」

@@ -68,6 +68,7 @@ describe("mcp server stdio smoke", () => {
     expect(names).toContain("taiyi_state_handoff");
     expect(names).toContain("taiyi_doctor");
     expect(names).toContain("taiyi_audit");
+    expect(names).toContain("taiyi_delivery_plan");
     expect(names).toContain("taiyi_mode_list");
     expect(names).toContain("taiyi_lsp_goto_definition");
     expect(names.length).toBeGreaterThanOrEqual(14);
@@ -127,5 +128,19 @@ describe("mcp server stdio smoke", () => {
     expect(typeof body.changes).toBe("number");
     expect(Array.isArray(body.findings)).toBe(true);
     expect(body.findings.every((f: { severity?: string }) => f.severity === "high")).toBe(true);
+  });
+
+  it("CallTool taiyi_delivery_plan 返回 chain steps", async () => {
+    const result = await client.callTool({
+      name: "taiyi_delivery_plan",
+      arguments: { slug: "mcp-demo" },
+    });
+    expect(result.isError).toBeFalsy();
+    const body = parseToolText(result);
+    expect(body.ok).toBe(true);
+    expect(body.slug).toBe("mcp-demo");
+    expect(Array.isArray(body.chain)).toBe(true);
+    expect(Array.isArray(body.steps)).toBe(true);
+    expect((body.steps as Array<{ id: string }>).length).toBeGreaterThan(0);
   });
 });

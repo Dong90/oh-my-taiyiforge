@@ -12,6 +12,7 @@
 | **工件目录** | [`docs/taiyi/artifact-layout.md`](docs/taiyi/artifact-layout.md) · [`docs/taiyi/artifact-contract.md`](docs/taiyi/artifact-contract.md)（json + hbs + md） |
 | **九阶段流程** | [`docs/taiyi/nine-phase-flow.md`](docs/taiyi/nine-phase-flow.md) |
 | **架构** | [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) |
+| **配置文件总览** | [`docs/taiyi/configuration.md`](docs/taiyi/configuration.md) |
 | **Skill 融合原则** | [`docs/taiyi/skill-fusion-principles.md`](docs/taiyi/skill-fusion-principles.md) |
 | **贡献** | [`CONTRIBUTING.md`](CONTRIBUTING.md) |
 

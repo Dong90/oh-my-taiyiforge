@@ -1,6 +1,6 @@
 ---
 name: taiyi-compress
-description: TaiyiForge 辅助 — Token 压缩编排：/taiyi:token compress + Superpowers subagent + gstack checkpoint。OpenCode / Claude / Codex / Cursor 通用。
+description: TaiyiForge 辅助 — Token 压缩编排：/taiyi:token compress + Superpowers subagent + ECC strategic-compact / handoff。OpenCode / Claude / Codex / Cursor 通用。
 ---
 
 # taiyi-compress
@@ -16,9 +16,9 @@ description: TaiyiForge 辅助 — Token 压缩编排：/taiyi:token compress + 
 | `/taiyi:status` 出现 Token ⚠ 或压缩建议 | 读本 Skill |
 | 工件 scan > `compressThreshold`（默认 120k） | 先 `/taiyi:token compress` |
 | dev / 多 slice 并行 | Superpowers subagent / parallel |
-| 长会话 / 换窗口 / compaction 前 | gstack checkpoint |
+| 长会话 / 换窗口 / compaction 前 | `/taiyi:handoff` 或 ECC `strategic-compact` |
 
-## 策略（与 Superpowers 铁三角同级）
+## 策略（与 Superpowers 双线 harness 同级）
 
 ### 1. 引擎（首选 · 零 LLM Token）
 
@@ -43,14 +43,15 @@ scripts/taiyi-forge.sh token compress <slug>
 scripts/taiyi-forge.sh harness-check <slug> superpowers/subagent-driven-development
 ```
 
-### 3. gstack（聊天 Skill · optional）
+### 3. ECC / handoff（聊天 Skill · optional）
 
-| Skill | 用途 |
-|-------|------|
-| `checkpoint` | 落盘 git 状态 + 决策；新会话读 checkpoint 续作，对抗 IDE compaction |
+| 方式 | 用途 |
+|------|------|
+| `ecc/strategic-compact` | 战略级会话压缩 |
+| `/taiyi:handoff` | 写 HANDOFF.md，新会话续作 |
 
 ```bash
-scripts/taiyi-forge.sh harness-check <slug> gstack/checkpoint
+scripts/taiyi-forge.sh harness-check <slug> ecc/strategic-compact
 ```
 
 ## 推荐顺序
@@ -58,7 +59,7 @@ scripts/taiyi-forge.sh harness-check <slug> gstack/checkpoint
 1. `/taiyi:token scan <slug>` — 了解工件体量  
 2. `/taiyi:token compress <slug>` — 引擎摘要  
 3. 若仍超预算 / 进入 dev：加载 **subagent-driven-development**  
-4. 会话结束前：**gstack checkpoint**  
+4. 会话结束前：**/taiyi:handoff** 或 **ecc/strategic-compact**  
 5. `/taiyi:token record <slug> <n> --phase <phase> --label "compress-flow"`
 
 ## 配置

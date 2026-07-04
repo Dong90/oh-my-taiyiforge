@@ -45,7 +45,7 @@ profiles:
           过关当前阶段（引擎内部调用 complete；聊天统一称 continue）。
           失败则输出 blockers / nextAction（对标 opsx:continue）。
           前置：write 后 status 预检 qualityReady（非 seed 模板）。
-          auto 模式另须：铁三角 harness-check + 辅助 mark-aux。
+          auto 模式另须：双线 harness harness-check + 辅助 mark-aux。
           change/design/review 须 --approver。
           review 前 medium/high 复杂度须 health-report + mark-aux taiyi-health。
           单变更可省略 slug。
@@ -83,7 +83,7 @@ profiles:
         codex: "$taiyi-pause"
         engine: "taiyi-forge.sh pause [slug] [note]"
         meaning: |
-          写 HANDOFF.md 快照（对标 OMC notepad / gstack checkpoint）。
+          写 HANDOFF.md 快照（对标 OMC notepad / ECC checkpoint）。
           不 complete 任何阶段；恢复用 /taiyi:pause --resume。
         when: 暂停工作、换会话、上下文将满
 
@@ -147,7 +147,7 @@ profiles:
         codex: "$taiyi-token-record"
         engine: "taiyi-forge.sh token record <slug> <n> [--phase] [--kind] [--label]"
         meaning: Agent 上报本轮 Token → `.token-usage.json`
-        when: 每轮对话结束或铁三角 Skill 调用后
+        when: 每轮对话结束或双线 harness Skill 调用后
 
       - chat: "/taiyi:token scan <slug>"
         codex: "$taiyi-token-scan"
@@ -298,9 +298,8 @@ profiles:
           - slash: /taiyi:commit
             replaces: [commit-trailers]
           - slash: /taiyi:ship
-            gstack: ship
           - slash: /taiyi:land
-            gstack: land-and-deploy
+            ecc: land-and-deploy
       project:
         count: 1
         commands:
@@ -315,8 +314,7 @@ profiles:
           - slash: "/taiyi:skill <name>"
             note: |
               外部 Skill 路由（umbrella）。等价于:
-                /taiyi:skill gstack <name>  ← 旧 /taiyi:gstack <name>
-                /taiyi:skill sp <name>     ← 旧 /taiyi:sp <name>
+                 /taiyi:skill sp <name>     ← 旧 /taiyi:sp <name>
                 /taiyi:skill explore       ← 旧 /taiyi:explore
                 /taiyi:skill tdd plan|dev  ← 旧 /taiyi:tdd plan|dev
                 /taiyi:skill flow          ← 旧 /taiyi:flow
@@ -331,12 +329,11 @@ profiles:
           - slash: "/taiyi:test smoke|e2e|qa|ui|security"
             phase: 2
             prompt_file: "prompts/taiyi-test.md"
-          - slash: "/taiyi:review loop|check|health|gstack"
+          - slash: "/taiyi:review loop|check|health"
             legacy_map:
               loop: /taiyi:review-loop
               check: /taiyi:review-check
               health: /taiyi:health
-              gstack: /taiyi:gstack review
             phase: 2
             prompt_file: "prompts/taiyi-review.md"
           - slash: "/taiyi:diagram pipeline|c4|arch|render|flow"
@@ -372,7 +369,7 @@ profiles:
         - /taiyi:skill <name>
         - /taiyi:token status|record|scan|compress
         - /taiyi:test smoke|e2e|qa|ui|security
-        - /taiyi:review loop|check|health|gstack
+        - /taiyi:review loop|check|health
         - /taiyi:diagram pipeline|c4|arch|render|flow
     opencode_tools:
       note: OpenCode 无斜杠菜单，用 taiyi_* 插件工具。
@@ -400,16 +397,18 @@ profiles:
         - taiyi_remember
         - taiyi_workflow
 
-  delivery_gstack:
-    description: git / PR / 部署 — 加载 gstack Skill（见 docs/taiyi/delivery-slash.md）
-    chain: [commit, verify, gstack-review, ship, land, continue-integration, archive]
+  delivery_chain:
+    description: git / PR / 部署 — delivery.yaml + git/gh（见 docs/taiyi/delivery-slash.md）
+    chain: [commit, verify, ship, land, continue-integration, archive]
     commands:
       - chat: "/taiyi:commit [slug] [subject]"
-        gstack: "(Taiyi commit-trailers + git commit)"
+        engine: "commit-trailers + git commit"
       - chat: "/taiyi:ship"
-        gstack: ship
+        engine: "delivery-plan → push + gh pr create"
       - chat: "/taiyi:land"
-        gstack: land-and-deploy
+        engine: "delivery-plan → merge + deploy"
+      - cli: "taiyi delivery-plan [slug]"
+        note: "预览交付链命令清单"
       - chat: "/taiyi:plan [file]"
         note: "项目级规划入口（v30 顶栏；umbrella 之外）"
       - chat: "/taiyi:skill <name>"

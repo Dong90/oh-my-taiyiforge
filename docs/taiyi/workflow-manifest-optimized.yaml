@@ -120,17 +120,13 @@ phases:
     artifact: DESIGN.md
     superpowers: []
     superpowers_optional: [writing-plans]
-    external_optional: [gstack/plan-eng-review, ecc/coding-standards, ecc/backend-patterns, ecc/frontend-patterns, ecc/architecture-audit, ecc/system-design-review]
+    external_optional: [ecc/coding-standards, ecc/backend-patterns, ecc/frontend-patterns, ecc/architecture-audit, ecc/system-design-review]
     capabilities:
       required: []
-      optional: [eng_review]
+      optional: []
     slash: ["/taiyi:continue"]
     human_gate: true
     harness:
-      - tool: gstack
-        skill: plan-eng-review
-        optional: false
-        when: "【快速】架构决策树（成本/选项/风险）"
       - tool: ecc
         skill: architecture-audit
         optional: false
@@ -149,17 +145,13 @@ phases:
     artifact: UI-DESIGN.md
     superpowers: []
     superpowers_optional: []
-    external_optional: [gstack/plan-design-review, web-quality/accessibility, web-quality/web-design-guidelines, ecc/frontend-patterns, ecc/web-design-guidelines, ecc/accessibility-audit]
+    external_optional: [web-quality/accessibility, web-quality/web-design-guidelines, ecc/frontend-patterns, ecc/web-design-guidelines, ecc/accessibility-audit]
     capabilities:
       required: []
-      optional: [design_review, accessibility, design_guidelines]
+      optional: [accessibility, design_guidelines]
     slash: ["/taiyi:continue"]
     human_gate: false
     harness:
-      - tool: gstack
-        skill: plan-design-review
-        optional: true
-        when: "【快速】UI 设计评审"
       - tool: ecc
         skill: web-design-guidelines
         optional: true
@@ -242,10 +234,10 @@ phases:
     artifact: TEST.md
     superpowers: [verification-before-completion]
     superpowers_optional: [systematic-debugging]
-    external_optional: [gstack/qa, web-quality/accessibility, playwright, ecc/eval-harness, ecc/verification-loop, ecc/test-coverage-analysis]
+    external_optional: [web-quality/accessibility, playwright, ecc/eval-harness, ecc/verification-loop, ecc/test-coverage-analysis]
     capabilities:
       required: []
-      optional: [browser_qa, accessibility, e2e_test]
+      optional: [accessibility, e2e_test]
     slash: ["/taiyi:apply", "/taiyi:continue"]
     human_gate: false
     harness:
@@ -256,10 +248,6 @@ phases:
         skill: systematic-debugging
         optional: true
         when: 测试失败时科学调试
-      - tool: gstack
-        skill: qa
-        optional: true
-        when: 有 web 面时站点 QA
       - tool: playwright
         command: npx playwright test
         optional: true
@@ -282,11 +270,11 @@ phases:
     artifact: REVIEW.md
     superpowers: [requesting-code-review]
     superpowers_optional: [receiving-code-review]
-    external_optional: [gstack/review, semgrep, trivy, ecc/security-review, ecc/eval-harness, ecc/security-scan, ecc/code-quality-baseline]
+    external_optional: [semgrep, trivy, ecc/security-review, ecc/eval-harness, ecc/security-scan, ecc/code-quality-baseline]
     capabilities:
       required: []
       optional: [code_review, sast_scan, vuln_scan]
-    slash: ["/taiyi:review-loop", "/taiyi:health", "/taiyi:gstack review", "/taiyi:commit", "/taiyi:ship", "/taiyi:continue"]
+    slash: ["/taiyi:review-loop", "/taiyi:health", "/taiyi:commit", "/taiyi:ship", "/taiyi:continue"]
     human_gate: true
     harness:
       - tool: superpowers
@@ -296,10 +284,6 @@ phases:
         skill: receiving-code-review
         optional: true
         when: 处理 CR 反馈
-      - tool: gstack
-        skill: review
-        optional: true
-        when: "【快速】PR 代码结构审查"
       - tool: ecc
         skill: security-scan
         optional: false
@@ -322,7 +306,7 @@ phases:
     artifact: CHANGELOG.md
     superpowers: [finishing-a-development-branch, verification-before-completion]
     superpowers_optional: []
-    external_optional: [gstack/document-release, openspec/archive, changesets, ecc/strategic-compact, ecc/continuous-learning-v2, ecc/changelog-generator]
+    external_optional: [openspec/archive, changesets, ecc/strategic-compact, ecc/continuous-learning-v2, ecc/changelog-generator]
     capabilities:
       required: [spec_archive]
       optional: [doc_release, version_release]
@@ -336,10 +320,6 @@ phases:
       - tool: superpowers
         skill: verification-before-completion
         when: 再次确认证据先于「已交付」【硬约束 🔒】
-      - tool: gstack
-        skill: document-release
-        optional: true
-        when: 同步 README/CHANGELOG
       - tool: openspec
         command: taiyi archive <slug>
         optional: true

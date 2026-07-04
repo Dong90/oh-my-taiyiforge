@@ -14,7 +14,7 @@ npm install && npm run build && npm test
 cd examples/minimal-project
 npm install
 npm run chat-demo          # 聊天动词：new / status / check / continue
-npm run walkthrough-e2e    # 九阶段 shell E2E + 铁三角
+npm run walkthrough-e2e    # 九阶段 shell E2E + 双线 harness
 npm run taiyi:doctor       # 工作区 + 安装自检
 ```
 
@@ -24,7 +24,7 @@ npm run taiyi:doctor       # 工作区 + 安装自检
 
 ```bash
 npm install oh-my-taiyiforge
-npx taiyi-forge-install --all    # 含 OpenSpec / gstack / Superpowers / web-quality-skills（可用 --skip-deps 跳过）
+npx taiyi-forge-install --all    # 含 OpenSpec / Superpowers / web-quality-skills（可用 --skip-deps 跳过）
 npx taiyi doctor --strict-workspace   # 确认四端 skills + 工作区流程
 # 消费方项目还会得到 npm run taiyi:doctor / taiyi:verify
 ```
@@ -90,9 +90,9 @@ EOF
 
 ## 聊天命令（OpenSpec 风格）
 
-**完整开源流程（推荐）**：`/taiyi:full-flow` → [full-oss-flow.md](./taiyi/full-oss-flow.md)  
-**Superpowers 主轴摘要**：`/taiyi:flow` → [superpowers-flow.md](./taiyi/superpowers-flow.md)  
-**四端入口决策树**：[`invoke.yaml`](./taiyi/invoke.yaml) · [`omc-reference.md`](./taiyi/omc-reference.md)
+**完整开源流程（推荐）**：`/taiyi:full-flow` → [full-oss-flow.md](./taiyi/full-oss-flow.md)
+**Superpowers 主轴摘要**：`/taiyi:flow` → [taiyi/integrations.md](./taiyi/integrations.md)
+**四端入口决策树**：[`invoke.yaml`](./taiyi/invoke.yaml)
 
 | 命令 | 用途 |
 |------|------|
@@ -122,10 +122,10 @@ Codex 用 `$taiyi-new` 等；完整列表见 [`docs/taiyi/commands.yaml`](./taiy
 
 ```bash
 npx taiyi init my-feature --auto --title "My Feature"
-npx taiyi harness my-feature    # 铁三角 → 辅助 → 主流程 有序清单
+npx taiyi harness my-feature    # 双线 harness → 辅助 → 主流程 有序清单
 ```
 
-在 Cursor 加载 **`taiyi-orchestrator`** Skill，让 Agent 按清单自动执行 Superpowers / gstack / taiyi 辅助，每步**必选**铁三角后：
+在 Cursor 加载 **`taiyi-orchestrator`** Skill，让 Agent 按清单自动执行 Superpowers / ECC / taiyi 辅助，每步**必选**双线 harness 打卡后：
 
 ```bash
 npx taiyi-forge-install --all   # 或 npm link 后安装四端 17 skills
@@ -138,16 +138,15 @@ scripts/taiyi-forge.sh harness-check my-feature superpowers/brainstorming
 export TAIYI_AUTO_HARNESS=1
 ```
 
-### optional 铁三角（不打卡也可 complete）
+### optional 双线 harness（不打卡也可 complete）
 
 | 阶段 | 钩子 | 说明 |
 |------|------|------|
 | requirement | OpenSpec | 未装 CLI 自动跳过 |
-| ui-design | gstack `plan-design-review` | 纯 API 可跳过 |
-| test | gstack `qa` | 有 Web 时建议跑；CLI-only 可跳过 |
-| integration | OpenSpec archive | 可选归档 |
+| test | Playwright `e2e_test` | CLI-only 可跳过 |
+| integration | OpenSpec archive · Changesets | 可选 |
 
-harness 清单里标 **(可选)** 的项不会阻塞 `--auto` 过关。详见 [workflow §可选层](./taiyi/workflow.md) 与 [GAP-CLOSURE](./GAP-CLOSURE.md)。
+harness 清单里标 **(可选)** 的项不会阻塞 `--auto` 过关。详见 [workflow §可选层](./taiyi/workflow.md) 与 [CHANGELOG-ARCHIVE.md](../CHANGELOG-ARCHIVE.md)。
 
 ## Profile（按变更类型）
 
@@ -170,7 +169,7 @@ npx taiyi assess my-first          # 自动读 CHANGE 推断复杂度
 npx taiyi mark-aux my-first taiyi-intel-scan   # 标记辅助 Skill 已完成
 ```
 
-`CONTEXT.md` 可从 [`templates/CONTEXT.md`](../templates/CONTEXT.md) 起步，由 **taiyi-intel-scan** 填写。设计阶段可用 **`/taiyi:diagram-pipeline`**（C4 真源 → 工程图 → PNG 一条链）或分步 **`/taiyi:diagram-c4`** → **`/taiyi:diagram-arch`** → **`/taiyi:diagram-render`**；流程图用 **`/taiyi:diagram-flow`**。详见 [`docs/diagrams/pipeline.md`](diagrams/pipeline.md)。上下文过大时用 **`/taiyi:token compress <slug>`** 生成 `CONTEXT-COMPACT.md`；**handoff** 时若超阈值会在 HANDOFF.md 提示。
+`CONTEXT.md` 可从 [`templates/CONTEXT.md`](../templates/CONTEXT.md) 起步，由 **taiyi-intel-scan** 填写。设计阶段可用 **`/taiyi:diagram-pipeline`**（C4 真源 → 工程图 → PNG 一条链）或分步 **`/taiyi:diagram-c4`** → **`/taiyi:diagram-arch`** → **`/taiyi:diagram-render`**；流程图用 **`/taiyi:diagram-flow`**。详见 [`docs/taiyi/nine-phase-flow.md`](./taiyi/nine-phase-flow.md)。上下文过大时用 **`/taiyi:token compress <slug>`** 生成 `CONTEXT-COMPACT.md`；**handoff** 时若超阈值会在 HANDOFF.md 提示。
 
 ## Token 预算（可选）
 
@@ -181,7 +180,7 @@ npx taiyi mark-aux my-first taiyi-intel-scan   # 标记辅助 Skill 已完成
 
 Agent 代跑 `scripts/taiyi-forge.sh token …`。`export TAIYI_TOKEN_ENFORCE=1` 超预算禁止 complete。
 
-详见 [token-budget.md](./taiyi/token-budget.md)。
+详见 [token-budget.yaml](./taiyi/token-budget.yaml)。
 
 ## OpenCode 对话内
 
@@ -215,9 +214,9 @@ npm install && npm run build && npm test && npm run dogfood
 
 ## 下一步阅读
 
-- [Token 预算与压缩](./taiyi/token-budget.md)
+- [Token 预算与压缩](./taiyi/token-budget.yaml)
 - [架构](./ARCHITECTURE.md)
-- [架构审计补齐对照](./GAP-CLOSURE.md)
-- [OpenCode 安装](./opencode-setup.md)
-- [铁三角集成](./taiyi/integrations.md)
-- [minimal-project 逐步清单](../examples/minimal-project/WALKTHROUGH.md)
+- [架构审计补齐对照](../CHANGELOG-ARCHIVE.md)
+- [OpenCode 安装](#安装)
+- [双线 harness 集成](./taiyi/integrations.md)
+- [full-flow-demo 演示](../examples/full-flow-demo/README.md)

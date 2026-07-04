@@ -18,14 +18,11 @@ function rendered(name: string): string {
   return renderTaiyiPrompt(name, readPrompt(name), promptsDir);
 }
 
-/** v30 斜杠扩展 — 单一 /taiyi:skill 伞形吸收原 gstack/sp/explore/tdd/flow */
+/** v30 斜杠扩展 — 单一 /taiyi:skill 伞形吸收原 sp/explore/tdd/flow */
 describe("slash extensions", () => {
-  it("taiyi-skill routes umbrella for gstack + sp + explore + tdd + flow", () => {
+  it("taiyi-skill routes umbrella for sp + explore + tdd + flow", () => {
     const body = rendered("taiyi-skill.md");
     expect(body).toContain("/taiyi:skill");
-    for (const skill of ["design-shotgun", "autoplan", "canary", "gstack-upgrade"]) {
-      expect(body, skill).toContain(skill);
-    }
     expect(body).toContain("brainstorming");
     expect(body).toContain("writing-skills");
     expect(body).not.toContain(SUPERPOWERS_INVOKE_PLACEHOLDER);

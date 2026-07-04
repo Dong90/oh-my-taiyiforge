@@ -83,7 +83,7 @@ echo "exitCode: 0" >> .taiyi/changes/<slug>/.dev-complete
 ```
 /taiyi:test smoke               # Playwright 冒烟
 /taiyi:test e2e                 # 项目 E2E
-/taiyi:test qa                  # gstack QA 走查
+/taiyi:test qa                  # QA 走查
 /taiyi:write                    # 写 TEST.md 粘贴证据
 /taiyi:continue
 ```
@@ -96,18 +96,16 @@ echo "exitCode: 0" >> .taiyi/changes/<slug>/.dev-complete
 /taiyi:test security            # 安全扫描（semgrep + trivy）
 /taiyi:continue --approver "你的名字"
 
-# ---- 以下走 gstack 交付链 ----
+# ---- 以下走交付链 ----
 /taiyi:commit                   # 带 Taiyi-Change trailer 提交
 /taiyi:verify                   # PR 工件门禁（无 LLM）
-/taiyi:skill gstack review      # PR diff 审查（原 /taiyi:gstack review）
+/taiyi:review loop              # PR diff 审查
 /taiyi:ship                     # 推送 + 创建 PR
 /taiyi:land                     # 合并 + 部署 + canary
 
 /taiyi:continue integration     # 引擎过 integration
 /taiyi:archive                  # 归档
 ```
-
-> `/taiyi:release` 已从顶栏移除（合并入 `land` 或伞形 `/taiyi:skill gstack document-release`）。
 
 ---
 
@@ -174,7 +172,7 @@ write → /taiyi:skill flow restyle → continue    # ui-design（restyle 辅助
 write → /taiyi:skill tdd plan → continue   # task
 /taiyi:skill tdd dev → continue        # dev
 /taiyi:test ui → /taiyi:test smoke → write → continue  # test
-/taiyi:skill gstack design-review → /taiyi:review loop → continue --approver
+/taiyi:review loop → continue --approver
 /taiyi:commit → ship → land → continue integration → archive
 ```
 
@@ -190,12 +188,11 @@ continue integration → archive
 
 ## 伞形命令（v30 顶栏 · 5 条）
 
-> 已砍掉 `/taiyi:mode` `/taiyi:workflow` `/taiyi:explore` `/taiyi:flow` `/taiyi:tdd` `/taiyi:gstack` `/taiyi:sp` 7 个独立伞形；功能合并入 `/taiyi:skill <name>` 单一伞形 + 引擎 CLI。
+> 已砍掉 `/taiyi:mode` `/taiyi:workflow` `/taiyi:explore` `/taiyi:flow` `/taiyi:tdd` `/taiyi:sp` 6 个独立伞形；功能合并入 `/taiyi:skill <name>` 单一伞形 + 引擎 CLI。
 
 ### `/taiyi:skill <name>` — 外部 Skill 路由
 
 ```
-/taiyi:skill gstack <name>        # gstack 任意 Skill：review · qa · design-shotgun · autoplan · canary · design-review
 /taiyi:skill sp <name>            # Superpowers 任意 Skill：brainstorming · test-driven-development · writing-plans · verification
 /taiyi:skill explore              # 头脑风暴（同 brainstorming）
 /taiyi:skill tdd plan|dev         # TDD 红绿重构（plan=测试计划，dev=红→绿→重构）
@@ -207,7 +204,7 @@ continue integration → archive
 ```
 /taiyi:test smoke      # Playwright 浏览器冒烟
 /taiyi:test e2e        # 项目级 E2E 测试
-/taiyi:test qa         # gstack QA 全栈走查
+/taiyi:test qa         # QA 全栈走查
 /taiyi:test ui         # UI 专项测试
 /taiyi:test security   # 安全扫描（semgrep + trivy）
 ```
@@ -217,7 +214,6 @@ continue integration → archive
 /taiyi:review loop     # 机器审查循环（写 REVIEW.md → review-check → 修复 → 重审）
 /taiyi:review check    # 单次审查是否通过
 /taiyi:review health   # health-report.md 确认
-/taiyi:review gstack   # gstack review PR diff
 ```
 
 ### `/taiyi:diagram` — 架构图链
@@ -274,23 +270,36 @@ scripts/taiyi-forge.sh ralph|autopilot|... # = /taiyi:skill flow <verb>
 | `TAIYI_SKIP_ROOT_CHANGELOG=1` | 不同步根 CHANGELOG | 关 |
 | `TAIYI_DELIVERY_VERIFY_CMD` | 交付门额外验证命令 | 无 |
 
-## 项目配置 `.taiyi/config.json`
+## 项目配置
+
+**开关** → `.taiyi/config.json`（scenario、profile、`deliveryGate`）
+
+**交付格式 / ship / land** → `.taiyi/delivery.yaml`（默认真源 `docs/taiyi/delivery.yaml`）
+
+完整说明见 [`docs/taiyi/configuration.md`](docs/taiyi/configuration.md)。
+
+### `.taiyi/config.json`（开关 only）
 
 ```json
 {
   "scenario": "service",
   "defaultProfile": "api",
-  "deliveryGate": true,
-  "deliveryVerifyCmd": "npm run ci:verify",
-  "commitTrailers": true
+  "deliveryGate": true
 }
 ```
 
-- `scenario`: 场景类型，见 profile 映射表
-- `defaultProfile`: 默认 profile，`--profile` 可覆盖
 - `deliveryGate`: 是否开启交付门（commit + 干净工作区）
-- `deliveryVerifyCmd`: 交付前额外验证命令
-- `commitTrailers`: 是否检查 commit 中的 `Taiyi-Change` trailer
+- `deliveryVerifyCmd`: **deprecated** — 请写 `delivery.yaml` → `verify.command`（config 仍可覆盖 yaml）
+
+### 环境变量（覆盖）
+
+| 变量 | 说明 |
+|------|------|
+| `TAIYI_DELIVERY_GATE` | `0` 关闭交付门 |
+| `TAIYI_DELIVERY_VERIFY_CMD` | 交付前验证命令 |
+| `TAIYI_COMMIT_TRAILERS` | `0` 关闭 trailer 校验 |
+
+预览交付链：`taiyi delivery-plan [slug]`
 
 ---
 

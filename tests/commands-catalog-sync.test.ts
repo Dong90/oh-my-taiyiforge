@@ -7,6 +7,8 @@ import {
   parseCanonicalLegacyMapTargets,
   parseCanonicalTokenEngineKeys,
   parseSlashCatalogLists,
+  parseDeliveryChain,
+  formatDeliveryChainText,
   validateCanonicalCatalogSync,
 } from "../scripts/lib/parse-commands-yaml.mjs";
 
@@ -21,8 +23,7 @@ const PROMPT_ALLOWLIST = new Set([
   "taiyi-skill.md",
   "taiyi.md",
   "taiyi-forge.md",
-  "taiyi-gstack-review.md",
-  "taiyi-gstack-qa.md",
+
   "taiyi-ci-platform.md",
   "taiyi-ci-prompt.md",
   "taiyi-commit.md",
@@ -53,7 +54,7 @@ const PROMPT_ALLOWLIST = new Set([
   "taiyi-resume.md",
   "taiyi-flow.md",
   "taiyi-explore.md",
-  "taiyi-gstack.md",
+
   "taiyi-sp.md",
   "taiyi-mode.md",
   "taiyi-workflow.md",
@@ -126,8 +127,7 @@ function slashToPromptBasenames(slash: string): string[] {
 
   if (head === "ci" && tail.startsWith("platform")) return ["taiyi-ci-platform"];
   if (head === "ci" && tail.startsWith("prompt")) return ["taiyi-ci-prompt"];
-  if (head === "gstack" && tail === "review") return ["taiyi-gstack-review"];
-  if (head === "gstack" && tail === "qa") return ["taiyi-gstack-qa"];
+
 
   return [`taiyi-${head}`];
 }
@@ -202,5 +202,22 @@ describe("commands.yaml ↔ prompts 对账", () => {
   it("prompt 数量与 Cursor commands 安装源一致", () => {
     const taiyiPrompts = prompts.filter((f) => f.startsWith("taiyi-"));
     expect(taiyiPrompts.length).toBeGreaterThanOrEqual(20);
+  });
+
+  it("delivery_chain.chain 不含 gstack-review/release，生成链为 git/gh", () => {
+    const chain = parseDeliveryChain(yaml);
+    expect(chain).toEqual([
+      "commit",
+      "verify",
+      "ship",
+      "land",
+      "continue-integration",
+      "archive",
+    ]);
+    const text = formatDeliveryChainText(chain);
+    expect(text).not.toMatch(/gstack|release/i);
+    expect(text).toContain("/taiyi:commit");
+    expect(text).toContain("/taiyi:ship");
+    expect(text).toContain("/taiyi:land");
   });
 });

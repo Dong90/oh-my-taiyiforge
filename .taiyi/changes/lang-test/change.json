@@ -1,0 +1,15 @@
+{
+  "title": "lang-test",
+  "motivation": "",
+  "scope": {
+    "includes": [],
+    "excludes": []
+  },
+  "success_criteria": [
+    {
+      "id": "SC-01",
+      "description": "待填写",
+      "is_checked": false
+    }
+  ]
+}

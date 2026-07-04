@@ -92,8 +92,8 @@ Source of truth: [canonical-commands.md](docs/taiyi/canonical-commands.md) →
 | 1–6 | Main chain | `new` · `status` · `write` · `continue` · `apply` · `archive` | Daily shortest path |
 | 7–10 | Session | `pause` · `resume` · `cancel` · `list` | Cross-session |
 | 11–13 | Diagnose | `doctor` · `audit` · `verify` | Self-check + delivery gate |
-| 14–17 | Delivery | `commit` · `ship` · `land` · `release` | gstack delivery chain |
-| 18–19 | Routing | `gstack <skill>` · `sp <skill>` | External harness routing |
+| 14–17 | Delivery | `commit` · `ship` · `land` | delivery chain |
+| 18–19 | Routing | `sp <skill>` | External harness routing |
 | 20–22 | Stage shortcuts | `explore` · `tdd plan\|dev` · `flow` | Skip the nine-stage |
 | 23–28 | **Umbrellas (6)** | `token …` · `test …` · `review …` · `diagram …` · `mode …` · `workflow …` | Domain multi-subcommand |
 
@@ -109,7 +109,7 @@ Source of truth: [canonical-commands.md](docs/taiyi/canonical-commands.md) →
 |----------|--------------|------:|
 | `/taiyi:token` | `status` · `record` · `scan` · `compress` | 4 |
 | `/taiyi:test` | `smoke` · `e2e` · `qa` · `ui` · `security` | 5 |
-| `/taiyi:review` | `loop` · `check` · `health` · `gstack` | 4 |
+| `/taiyi:review` | `loop` · `check` · `health` | 4 |
 | `/taiyi:diagram` | `pipeline` · `c4` · `arch` · `render` · `flow` | 5 |
 | `/taiyi:mode` | `ralph` · `autopilot` · `daemon` · `team` · `ultrawork` · `agent` · `step` · `stop` · `list` · `keyword` · `preflight` | 11 |
 | `/taiyi:workflow` | `plan` · `ralplan` · `loop` · `check` · `run` · `sync` · `ccg` · `sciomc` · `deepinit` · `remember` · `ultraqa` | 11 |
@@ -231,7 +231,7 @@ node scripts/taiyi-forge.sh install --all
 cd examples/commands-smoke
 npm install
 npm run chat-demo          # Chat verbs: new / status / check / continue
-npm run walkthrough-e2e    # Nine-stage shell E2E + iron-triangle
+npm run walkthrough-e2e    # Nine-stage shell E2E + dual-line harness
 # /taiyi:doctor           # Workspace + install self-check (chat slash)
 ```
 
@@ -298,7 +298,7 @@ scripts/taiyi-forge.sh audit --json --compact
 | [docs/taiyi/canonical-commands.md](docs/taiyi/canonical-commands.md) | v28 slash command table | Looking up a command |
 | [docs/taiyi/control-plane.md](docs/taiyi/control-plane.md) | Agent discipline + token discipline | Onboarding an Agent |
 | [docs/taiyi/full-oss-flow.md](docs/taiyi/full-oss-flow.md) | Superpowers + all-plugins demo | Want a full end-to-end |
-| [docs/taiyi/integrations.md](docs/taiyi/integrations.md) | Iron triangle + plugin integrations | Installing optional pieces |
+| [docs/taiyi/integrations.md](docs/taiyi/integrations.md) | Dual-line harness + plugin integrations | Installing optional pieces |
 | [AGENTS.md](AGENTS.md) | Agent's read-state entry point | Configuring Agents |
 | [CONTRIBUTING.md](CONTRIBUTING.md) | Contribution guide | Before opening a PR |
 | [CHANGELOG.md](CHANGELOG.md) | Release notes | Checking for updates |

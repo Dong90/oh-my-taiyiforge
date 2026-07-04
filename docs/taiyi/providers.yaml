@@ -16,18 +16,17 @@
 
 version: 1
 
-# ---------------------------------------------------------------------------
-# 能力 → Provider 指派
-# 用户在这里覆盖引擎默认。不写的项自动用 defaults。
-# ---------------------------------------------------------------------------
+# 能力 → Provider 指派（去重后默认见 docs/taiyi/library-selection.md）
+# 已从九阶段 manifest 移除：eng_review · design_review · code_review · browser_qa ·
+# accessibility · design_guidelines · sast_scan · vuln_scan（由 ECC harness 或 Playwright 替代）
 assignments:
   spec_archive: openspec          # 可选: openspec / taiyi-builtin / custom-script
   spec_sync: openspec              # 可选: openspec / taiyi-builtin
-  browser_qa: gstack               # 可选: gstack / playwright / manual / none
-  eng_review: gstack               # 可选: gstack / manual
-  design_review: gstack            # 可选: gstack / manual
-  code_review: gstack              # 可选: gstack / manual
-  doc_release: gstack              # 可选: gstack / manual
+  browser_qa: playwright           # 可选: playwright / manual / none
+  eng_review: taiyi-builtin        # 可选: taiyi-builtin / manual
+  design_review: taiyi-builtin     # 可选: taiyi-builtin / manual
+  code_review: taiyi-builtin       # 可选: taiyi-builtin / manual
+  doc_release: none                # 可选: manual / none
   version_release: changesets      # 可选: changesets / manual
   sast_scan: semgrep               # 可选: semgrep / manual
   vuln_scan: trivy                 # 可选: trivy / manual
@@ -58,11 +57,7 @@ providers:
     detect: "which openspec"
     provides: [spec_archive, spec_sync]
 
-  # -- GStack（skill 集）--
-  gstack:
-    type: skill_bundle
-    bundle: gstack
-    provides: [browser_qa, eng_review, design_review, code_review, doc_release]
+  # -- GStack（已移除）--
 
   # -- Superpowers（skill 集）--
   superpowers:

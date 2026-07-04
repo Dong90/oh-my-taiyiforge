@@ -63,7 +63,7 @@ downstream: [requirement]
 - **换个角度**: {{#if premise_redefine}}{{premise_redefine}}{{else}}[重新定义问题会怎样？]{{/if}}
 - **不做代价**: {{#if premise_cost}}{{premise_cost}}{{else}}[量化]{{/if}}
 - **已有复用**: {{#if premise_existing}}{{premise_existing}}{{else}}[有无现成方案？]{{/if}}
-- **Scrap it?**: {{#if premise_scrap}}{{premise_scrap}}{{else}}[有没有完全不同的方案更值得做？gstack PD#9: 有更好的方法就说]{{/if}}
+- **Scrap it?**: {{#if premise_scrap}}{{premise_scrap}}{{else}}[有没有完全不同的方案更值得做？PD#9: 有更好的方法就说]{{/if}}
 
 <!-- Validate: 挑战≥2个假设 + 至少考虑了一个替代路径 -->
 
@@ -173,7 +173,7 @@ _已花费: {{#if innovation_tokens}}{{innovation_tokens.length}}{{else}}0{{/if}
 
 ---
 ## Quality Gate
-<!-- Evidence-first: 每项通过需要可验证证据，不是"感觉对了"。Superpowers verification-before-completion -->
+<!-- Evidence-first: 每项通过需要可验证证据，不是"感觉对了"。ECC verification-loop 取代 Superpowers verification-before-completion -->
 
 ⬜ S1 有量化数据
 ⬜ S2 边界清晰
@@ -186,4 +186,4 @@ _已花费: {{#if innovation_tokens}}{{innovation_tokens.length}}{{else}}0{{/if}
 ⬜ [M+] S9 Token≤3
 ⬜ [H]  S10 回滚方案可执行
 ⬜ [M+] S11 干系人无遗漏
-⬜ **TODOS.md**: 延期项已记录 | gstack PD#7: 没写=不存在
+⬜ **TODOS.md**: 延期项已记录 | PD#7: 没写=不存在

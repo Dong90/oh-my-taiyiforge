@@ -13,6 +13,7 @@ import {
   taiyiDetectKeyword,
   taiyiProjectRemember,
   taiyiRunWorkflow,
+  taiyiDeliveryPlanCompact,
 } from "../src/mcp/state-tools.js";
 import { taiyiLspGotoDefinition } from "../src/mcp/lsp-tools.js";
 
@@ -100,5 +101,15 @@ describe("mcp state-tools", () => {
     const r = taiyiLspGotoDefinition(workspace, "demoFn");
     expect(r.ok).toBe(true);
     expect(r.matches.some((m) => m.includes("sample.ts"))).toBe(true);
+  });
+
+  it("delivery_plan returns chain steps for active slug", () => {
+    const r = taiyiDeliveryPlanCompact(workspace, "demo-change");
+    expect(r.ok).toBe(true);
+    expect(r.slug).toBe("demo-change");
+    expect(r.chain.length).toBeGreaterThan(0);
+    expect(r.steps.length).toBeGreaterThan(0);
+    expect(r.steps.some((s) => s.id === "commit" || s.command?.includes("commit"))).toBe(true);
+    expect(String(r.text ?? "")).toMatch(/commit|ship/i);
   });
 });

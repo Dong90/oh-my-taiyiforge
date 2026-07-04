@@ -196,7 +196,7 @@ export function formatGuidePlain(guide: PhaseGuide): string {
   }
   if (guide.harness?.hooks?.length) {
     lines.push("");
-    lines.push(guide.autoHarness ? "铁三角（auto 须必选打卡，可选见标注）:" : "铁三角推荐:");
+    lines.push(guide.autoHarness ? "双线 harness（auto 须必选打卡，可选见标注）:" : "双线 harness 推荐:");
     for (const h of guide.harness.hooks) {
       const opt = h.optional ? " (可选)" : "";
       lines.push(`  - ${h.tool}: ${h.skill ?? h.command ?? ""} (${h.when})${opt}`);

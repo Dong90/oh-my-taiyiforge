@@ -1,26 +1,32 @@
 <!-- TAIYI-FORGE:CHAT-COMMAND:taiyi-ship.md -->
 ---
-description: "TaiyiForge /taiyi:ship — gstack ship: test, review diff, push, open PR"
+description: "TaiyiForge /taiyi:ship — git push + gh PR（delivery.yaml 驱动）"
 argument-hint: "[optional PR title hint]"
 ---
-User invoked **$taiyi-ship** (= `/taiyi:ship`). **创建 PR 工作流** — 加载 **gstack `ship`** Skill，无 TaiyiForge 引擎子命令。
+User invoked **$taiyi-ship** (= `/taiyi:ship`). **创建 PR** — 按 `.taiyi/delivery.yaml` + `taiyi delivery-plan` 代跑。
 
-## 前置
+## 1. 读计划（必须）
 
 ```bash
-scripts/taiyi-forge.sh status
+scripts/taiyi-forge.sh status [slug]
 scripts/taiyi-forge.sh verify
+scripts/taiyi-forge.sh delivery-plan [slug] --json
 ```
 
-实现代码应已 commit；review 阶段建议已 `/taiyi:review-loop` 通过。
+解析 `plan.steps` 中 `ship-*` 步骤；`kind: confirm` 须用户确认后再执行。
 
-## 执行
+## 2. 执行 ship 步骤（Agent 代跑）
 
-1. 加载 **gstack `ship`**（见下方 gstack 加载协议）。
-2. 按 ship Skill 完整流程：合并 base · 跑测试 · review diff · 必要时 bump VERSION/CHANGELOG · **push · 创建 PR**。
-3. 不要跳过 ship Skill 直接 `gh pr create`（除非 ship 不可用且用户明确要求）。
+典型顺序（以 plan 为准）：
 
-PR 创建后：用户或 Agent 可用 `/taiyi:land` 合并与部署。
+1. `ship` 段 `preCommands`（如 `npm test`）
+2. `git push -u origin HEAD`（若 `ship.push: true`）
+3. `gh pr create ...`（若 `ship.provider: gh` 且本机有 `gh`）
+4. 无 `gh` 或 `provider: manual` → 提示用户手动开 PR
+
+配置真源：`docs/taiyi/delivery.yaml` · 项目覆盖：`.taiyi/delivery.yaml` · 说明：`docs/taiyi/configuration.md`
+
+PR 创建后：用户或 Agent 用 `/taiyi:land` 合并与部署。
 
 ## Agent 协议（必须遵守）
 
@@ -34,19 +40,12 @@ PR 创建后：用户或 Agent 可用 `/taiyi:land` 合并与部署。
 
 ## Token 纪律（必须遵守 · 省上下文）
 
-1. **清 slug**：只保留 1 个 active。integration 完成后 **`/taiyi:archive`**；废弃用 **`/taiyi:cancel <slug> --remove-dir`**；探针/演示 slug 归档或取消，勿堆在对话上下文里。
-2. **archive 闭环**：九阶段/integration 完成后立刻 archive，再开 `/taiyi:new`；勿在 completed 变更上继续聊。
-3. **token compress**：长阶段后或进入 dev 前跑 **`/taiyi:token compress <slug>`**，后续优先读 `CONTEXT-COMPACT.md`，勿全量读 CHANGE…CHANGELOG 进聊天。
-4. **E2E 别在对话里跑**：`playwright test`、`npm test`、全量 walkthrough、probe 套件 → **CI / 后台终端**执行；聊天里只把命令+exit+摘要写入 **TEST.md**，禁止把整段测试日志灌进对话。
+1. **清 slug**：只保留 1 个 active。integration 完成后 **`/taiyi:archive`**；废弃用 **`/taiyi:cancel <slug> --remove-dir`**。
+2. **archive 闭环**：九阶段/integration 完成后立刻 archive，再开 `/taiyi:new`。
+3. **token compress**：长阶段后 **`/taiyi:token compress <slug>`**，优先读 `CONTEXT-COMPACT.md`。
+4. **E2E 别在对话里跑**：全量测试 → CI/后台；聊天只写 TEST.md 摘要。
 
-## gstack Skill 加载（四端）
+## 安全
 
-1. **先** `/taiyi:status [slug]` — 确认变更 slug 与阶段（delivery 命令常发生在 review/integration 前后）。
-2. **加载 gstack Skill**（按端）：
-   - **Cursor**：`@gstack-<name>` 或 `@ship` / `@land-and-deploy`（若已安装 gstack bundle）
-   - **Claude Code**：加载 `gstack` 包内对应 Skill（如 `ship`、`land-and-deploy`、`review`）
-   - **Codex**：`$gstack-<name>` 或读 `~/.codex/skills/gstack/` 下 SKILL.md
-3. **禁止**跳过 gstack Skill 直接 force-push / merge main；destructive git 须 gstack `careful` 或用户明确确认。
-4. integration 交付门仍由 `/taiyi:continue` 校验（commit + trailer + 可选 `npm test`）；ship/land **不替代** TaiyiForge 过关。
-
-未安装 gstack：`npx taiyi-forge-install --all`（或 `--skip-deps` 后手动 clone gstack）。
+- **禁止** `git push --force` 到 `main`/`master`（除非用户明确要求并确认）。
+- integration 交付门仍由 `/taiyi:continue` 校验（commit + trailer + verify）；ship **不替代** TaiyiForge 过关。

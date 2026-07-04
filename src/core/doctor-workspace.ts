@@ -12,6 +12,10 @@ import { resolvePackageRoot } from "./package-root.js";
 import { isProjectWrapperStale } from "../install/sync-project-wrapper.js";
 import { listOrphanChangeDirs } from "./prune-changes.js";
 import { ProviderRegistry } from "../config/providers.js";
+import {
+  resolveWorkspaceConfig,
+  workspaceConfigDoctorChecks,
+} from "./workspace-config.js";
 
 /** 工作区流程检查 — 对标 omc-doctor 的 active mode / state 诊断 */
 export function runDoctorWorkspace(
@@ -167,6 +171,8 @@ export function runDoctorWorkspace(
       detail: ".taiyi/providers.yaml 缺失 — 运行 taiyi-forge-install --all 或 taiyi sync-providers",
     });
   }
+
+  checks.push(...workspaceConfigDoctorChecks(resolveWorkspaceConfig(workspaceDir)));
 
   return checks;
 }

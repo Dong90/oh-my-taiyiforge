@@ -1,102 +1,69 @@
+# Changelog Archive
 
-## Archived at 2026-06-24
+> 自动归档：CHANGELOG.md 超出 200 行时较早的条目移至此处。
 
-<!-- taiyi:engine-evidence-check --> 2026-06-17
-# CHANGELOG: engine-evidence-check — 5 修引擎 evidence/trailer/debounce
+## Archived at 2026-07-03
+
+<!-- taiyi:agent-mode-translation-api-backend-core --> 2026-06-27
+# CHANGELOG: agent-mode-translation-api-backend-core
 
 ## Added
 
-- feat(evidence): Artifact validator 强校验 change/requirement/test 三阶段 AC is_checked=true 必配 evidence{command,
-  exitCode:0, capturedAt}
-- feat(schema): ChangeSchema/RequirementSchema/TestSchema 加 evidence? 字段(共享 EvidenceSchema)
-- feat(debounce): status 命令 5s 防抖,TAIYI_STATUS_DEBOUNCE=0 关闭
+- `services/translation_api/`: Full backend translation API with Adapter + Strategy architecture
+- 6 translation direction strategies (dev↔product, dev↔ops, product↔ops)
+- OpenAI LLM adapter with streaming support
+- SSE streaming endpoint (`POST /api/translation/translate/stream`)
+- 3 health endpoints (GET /health, /ready, /live)
+- Middleware chain: request logging, error handling, response time
+- Pydantic v2 request/response schemas with role validation
+- 21 pytest tests covering config, strategies, services, middleware, controllers
 
 ## Changed
 
-- refactor(trailer): commitTrailersEnabled() 显式默认 true,删 project config bypass
-- docs(delivery): delivery-gate hint 加 trailer 模板 + /taiyi:commit <slug> 推荐
+- (none)
 
 ## Fixed
 
-- fix(evidence): 阻止 AC 全勾但实测走样的"假过门"(evidence 缺失 → qualityReady=false)
-- fix(trailer): 阻止 project config 的 commitTrailers: false 绕过 trailer 校验
+- (none)
 
-## Tests
+## Success Criteria Met
 
-- test: 新增 tests/artifact-validator.test.ts 6 条单测
-- test: 新增 tests/commit-trailer.test.ts 2 条单测
-- test: 升级 src/core/e2e-fixtures.ts 加 evidence 字段(change/requirement/test 3 个 fixture)
-- test: 调整 tests/project-config.test.ts 期望值(S2 行为变化)
+- [x] All 21 tests pass (config 3, strategies 5, services 6, middleware 1, controllers 6)
+- [x] POST /api/translation/translate returns 200 with translated text
+- [x] POST /api/translation/translate/stream returns SSE with content-type text/event-stream
+- [x] 6 translation directions routable via TranslationService factory
+- [x] 3 health endpoints return HTTP 200 with `{"status": "ok"}`
+- [x] Middleware chain operational (logging, error handling, X-Response-Time)
 
 ## Rollback
 
-```bash
-git revert 6a8d36a 62a7ac5 a5c9c20 4b0fbc3 0f83be8
-# 或
-git reset --hard 267734f  # 回到 5 修前
+```
+git revert HEAD --no-edit
 ```
 
-回滚影响:5 commit 是顺序依赖,revert 顺序需倒序(最新先 revert)。
-
-## Archived at 2026-06-24
-
-<!-- taiyi:fix-shell-whitelist-and-profile-help --> 2026-06-21
-# CHANGELOG: fix-shell-whitelist-and-profile-help
+<!-- taiyi:frontend-ui --> 2026-06-24
+# CHANGELOG: frontend-ui
 
 ## Added
 
-- feat(shell): 10 个 node CLI 支持的命令加到 shell 白名单(flow / service / mvp / micro / nano / design-system / devops /
-  ci-scenario / chat / code-review),用户 `taiyi-forge.sh flow mvp` 不再报 unknown command
-- docs(help): 3 处 profile help 从 `api|lite` 改为 7 profile 全列(full/lite|api|micro|nano|spike|ui)
+- examples/translation-assistant/index.html: Single-file frontend with responsive layout
+- Source text input with Enter-to-translate + Shift+Enter for newline
+- Role selection dropdown (product→dev, dev→product, ops→dev)
+- SSE streaming display via fetch reader (fallback to POST/JSON)
+- Loading bar animation + error banner
+- Mobile-responsive CSS (flexbox, media queries)
 
 ## Changed
 
-- dist/cli/taiyi.js 第 35 行 (init)
-- dist/cli/taiyi.js 第 56 行 (walkthrough)
-- dist/cli/taiyi.js 第 478 行 (new)
-- scripts/taiyi-forge.sh 第 166 行 (case 白名单)
+- (none)
 
 ## Fixed
 
-- 修复「白名单 + help 不全」两个 UX 问题,共 4 处小改动
-
-## Docs / Skills
-
-- [x] 不涉及对外协议 / 模板 / Skill 改动
-- [x] 不涉及 OpenSpec(项目未 init openspec)
-
-## Rollback
-
-```bash
-cd /Users/shixiaocai/Desktop/chuangye/oh-my-taiyiforge
-git checkout main -- scripts/taiyi-forge.sh dist/cli/taiyi.js
-# 或
-/taiyi:cancel fix-shell-whitelist-and-profile-help --remove-dir
-```
-
-回滚影响:仅 2 文件 4 行改动,无 schema 变更。
-
-<!-- taiyi:devops-setup --> 2026-06-24
-# CHANGELOG: devops-setup
-
-## Added
-
-- Dockerfile for backend Python service
-- docker-compose.yml with backend service
-- Makefile with dev/test/lint/clean targets
-- .env.example for environment config
-
-## Changed
-
--
-
-## Fixed
-
--
+- (none)
 
 ## Docs
 
-- [ ] README / AGENTS.md synced
+- [x] README / AGENTS.md synced
 - [ ] OpenSpec archived
 
 ## Rollback

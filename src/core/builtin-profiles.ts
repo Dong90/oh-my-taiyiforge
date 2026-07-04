@@ -21,9 +21,10 @@ export const BUILTIN_PROFILES: ProfileDefinition[] = [
   {
     id: "ui",
     skipPhases: [],
+    auxiliaryHints: ["taiyi-restyle"],
     arch: "auto",
     builtin: true,
-    description: "前端 UI 变更（含 UI 设计阶段）",
+    description: "前端 UI 变更（含 UI 设计阶段，默认加载 taiyi-restyle）",
     keywords: ["ui", "frontend", "前端", "界面"],
   },
   {
@@ -50,15 +51,7 @@ export const BUILTIN_PROFILES: ProfileDefinition[] = [
   },
   {
     id: "nano",
-    skipPhases: [
-      "change",
-      "requirement",
-      "design",
-      "ui-design",
-      "task",
-      "test",
-      "review",
-    ],
+    skipPhases: ["change", "requirement", "design", "ui-design", "task", "test", "review"],
     arch: "generic",
     builtin: true,
     description: "零文档：只走 dev + integration",

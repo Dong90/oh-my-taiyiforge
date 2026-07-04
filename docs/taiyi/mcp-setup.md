@@ -117,6 +117,7 @@ Monorepo / 本地开发：
 |-----|----------|------|
 | `taiyi_doctor` | `doctor --json --compact` | 安装 + 工作区；`strictWorkspace: true` 作 CI 门 |
 | `taiyi_audit` | `audit --json --compact` | 流程/交付；仅 high findings |
+| `taiyi_delivery_plan` | `delivery-plan --json` | 预览 delivery.yaml 交付链（commit → ship → land） |
 
 ### 模式（3）— 与 OpenCode `taiyi_step` / `taiyi_stop_mode` / `taiyi_modes` 对齐
 
@@ -188,5 +189,4 @@ npx @modelcontextprotocol/inspector node dist/mcp/server.js
 
 ## 相关
 
-- [omc-reference.md](./omc-reference.md) — 设计参考对照（非集成）
 - [control-plane.md](./control-plane.md)
