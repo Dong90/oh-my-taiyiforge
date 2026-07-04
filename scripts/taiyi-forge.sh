@@ -95,7 +95,7 @@ TaiyiForge — 推荐 /taiyi:* 斜杠（Agent 代跑本脚本）
   resume  prune [--aborted]  trim-ahead  smoke-reset
   tdd/ship/land/commit → 仅聊天斜杠
 
-交付链 (gstack · 无 shell，须 IDE 斜杠):
+交付链 (无 shell，须 IDE 斜杠):
   /taiyi:commit  /taiyi:ship  /taiyi:land
 
 Legacy CLI: ls→list · check→harness · pause→handoff · n/go→next · done/ok→done
@@ -147,7 +147,11 @@ case "$cmd" in
     run_taiyi resume "$@"
     ;;
   ship|land|commit)
-    run_taiyi "$cmd" "$@"
+    cat >&2 <<EOF
+[taiyi-forge] "$cmd" 仅聊天斜杠 — 用 /taiyi:$cmd 加载对应 Skill（引擎 CLI 无 shell 实现）
+见 docs/taiyi/delivery-slash.md
+EOF
+    exit 2
     ;;
   check)
     run_taiyi harness "$@"

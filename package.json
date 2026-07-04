@@ -66,7 +66,10 @@
     "probe:fullflow": "node scripts/probes/taiyi-fullflow-probe.mjs",
     "probe:postfix": "node scripts/probes/post-fix-regression.mjs",
     "generate:docs": "node scripts/generate-docs.mjs",
-    "check:docs": "node scripts/generate-docs.mjs --check"
+    "check:docs": "node scripts/generate-docs.mjs --check",
+    "check:links": "node scripts/check-md-links.mjs",
+    "check:state-schema": "node scripts/check-state-schema.mjs",
+    "check:docs-sync": "node scripts/check-docs-sync.mjs"
   },
   "engines": {
     "node": ">=20"
@@ -79,6 +82,7 @@
     "remark-gfm": "^4.0.1",
     "remark-parse": "^11.0.0",
     "unified": "^11.0.5",
+    "yaml": "^2.9.0",
     "zod": "^4.4.3",
     "zod-to-json-schema": "^3.25.2"
   },

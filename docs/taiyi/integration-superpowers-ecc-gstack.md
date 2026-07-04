@@ -1,8 +1,12 @@
-# TaiyiForge × Superpowers × ECC × GStack 最优融合方案
+# ⛔ DEPRECATED — GStack 已移除
 
-> **版本**：v1.0（生产就绪）
-> **目标**：工程纪律（Superpowers） + 快速闭环（GStack） + 深度能力（ECC）三层融合
-> **收益**：质量 ⬆️ 效率 ⬆️ 知识 ⬆️
+> **GStack 已从主链路移除**，相关能力由 ECC 双线 harness 承接。
+> 当前架构：Superpowers + ECC 双线 harness（见 `workflow-manifest.yaml`）。
+> 迁移说明：docs/taiyi/library-selection.md
+
+---
+
+# TaiyiForge × Superpowers × ECC — 融合方案（历史存档）
 
 ## 架构总览
 
@@ -44,7 +48,7 @@
 |---|---|---|---|
 | 纪律 | Superpowers | TDD / 派审循环 / 证据门禁 | ✅ 硬约束 |
 | 快速 | GStack | 架构决策 / QA / 结构审查 | ⚠️ 可部分替代 |
-| 能力 | ECC | 深度分析 / 安全 / 知识沉淀 | ⚠️ 可选补强 |
+| 能力 | ECC | 深度分析 / 安全 / 知识沉淀 | ✅ 九阶段 harness 硬约束（须 harness-check） |
 
 **关键理解**：
 
@@ -58,9 +62,9 @@ GStack 是快速工具
   → 加速决策反馈
   → 部分功能可被其他工具替代
 
-ECC 是深度补强
-  → 知识积累
-  → 能力库扩展
+ECC 是深度补强（默认 manifest 已强制 harness-check）
+  → 知识积累 + AgentShield + Eval/覆盖率
+  → 与 Superpowers 纪律、GStack 快评并列三层
 ```
 
 ## 九阶段完整配置
@@ -481,8 +485,8 @@ npx playwright test
 git clone https://github.com/Dong90/oh-my-taiyiforge.git
 cd oh-my-taiyiforge
 
-# 2. 一键安装最优融合方案
-bash scripts/install-optimal-fusion.sh
+# 2. 安装依赖（Superpowers / ECC / OpenSpec）
+npx taiyi-forge-install --all
 
 # 3. 验证
 npx taiyi doctor
