@@ -167,7 +167,7 @@ function generateScaffold(options: CodeGenOptions, results: CodeGenResult): void
   }
 
   // Frontend scaffold (app.js + style.css)
-  const frontendDir = options.frontendDir ?? path.join(options.outputDir, "..", "..", "frontend");
+  const frontendDir = options.frontendDir ?? path.join(path.dirname(options.outputDir), "frontend");
   const feVars = { app_name: options.extraVars?.app_name ?? "App", api_base_url: options.extraVars?.api_base_url ?? "http://localhost:8000" };
   const feFiles: [string, string][] = [
     ["frontend-index.hbs", "index.html"],
