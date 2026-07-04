@@ -250,7 +250,7 @@ export function buildPhaseGuide(
     nextAction = `${preHint}加载「${phase.skill}」编辑 ${phase.artifact} → status → continue${humanGate ? "（--approver）" : ""}`;
   } else if (!qualityReady) {
     if (state.autoHarness) {
-      nextAction = `全自动：harness 清单 → 铁三角打卡 → 完善 ${phase.artifact} → status → continue${humanGate ? "（--approver）" : ""}`;
+      nextAction = `全自动：harness 清单 → 双线 harness 打卡 → 完善 ${phase.artifact} → status → continue${humanGate ? "（--approver）" : ""}`;
     } else {
       nextAction = `完善 ${phase.artifact}（qualityHints）→ status → continue${humanGate ? "（--approver）" : ""}`;
     }

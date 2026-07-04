@@ -1,0 +1,30 @@
+{
+  "slug": "lang-test",
+  "currentPhase": "change",
+  "completedPhases": [],
+  "profile": "lite",
+  "skippedPhases": [
+    "design",
+    "ui-design",
+    "task",
+    "review"
+  ],
+  "strictDev": false,
+  "autoHarness": false,
+  "complexity": {
+    "level": "low",
+    "score": 7,
+    "recommendedSkills": [
+      "taiyi-intel-scan"
+    ]
+  },
+  "auxiliaryCompleted": [],
+  "workflowStatus": "active",
+  "createdAt": "2026-07-03T09:28:44.069Z",
+  "updatedAt": "2026-07-03T09:28:44.069Z",
+  "version": 1,
+  "seeded": [
+    "change.json",
+    "CHANGE.md"
+  ]
+}

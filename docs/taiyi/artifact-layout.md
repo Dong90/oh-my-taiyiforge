@@ -28,7 +28,7 @@
 │       ├── CONTEXT.md              # 可选情报（mark-aux）
 │       ├── CONTEXT-COMPACT.md      # token compress 产出
 │       ├── HANDOFF.md              # handoff 暂停
-│       └── .harness-checkpoints.json  # auto 模式铁三角打卡
+│       └── .harness-checkpoints.json  # auto 模式双线 harness 打卡
 ├── archive/
 │   └── YYYY-MM-DD-<slug>/          # archive 后移动（幂等 no-op）
 └── forge-root                      # 可选：消费方指向引擎包路径

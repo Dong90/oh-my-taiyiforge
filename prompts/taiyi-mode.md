@@ -26,7 +26,7 @@ User invoked **$taiyi-mode** (= `/taiyi:mode $ARGUMENTS`). **多 Agent / OMC umb
 3. OMC 关键词命中（ralph/autopilot/ultrawork 等）走 Cursor/Claude hook；Codex 走 `/taiyi:mode preflight` 或 `keyword`
 4. **退出**：收到 `stopomc` 后自动 `step` 出 loop
 
-完整子命令地图：[canonical-commands.md §/taiyi:mode 子命令地图](../docs/taiyi/canonical-commands.md) · [autonomous.md](../docs/taiyi/autonomous.md) · [omc-reference.md](../docs/taiyi/omc-reference.md)
+完整子命令地图：[canonical-commands.md §/taiyi:mode 子命令地图](../docs/taiyi/canonical-commands.md)
 
 ## Agent 协议（必须遵守）
 

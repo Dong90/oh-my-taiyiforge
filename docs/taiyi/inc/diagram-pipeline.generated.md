@@ -11,3 +11,4 @@
 | `/taiyi:diagram flow` | — |  | `/taiyi:diagram-flow` |
 
 详见 `docs/diagrams/pipeline.md` · `commands.yaml` → `auxiliary.commands`。
+

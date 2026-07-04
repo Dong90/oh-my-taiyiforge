@@ -25,6 +25,7 @@ import {
   taiyiDoctorCompact,
   taiyiAuditCompact,
   taiyiSyncProvidersCompact,
+  taiyiDeliveryPlanCompact,
 } from "./state-tools.js";
 import {
   taiyiLspDiagnostics,
@@ -200,6 +201,18 @@ server.setRequestHandler(ListToolsRequestSchema, async () => ({
         type: "object",
         properties: {
           slug: { type: "string", description: "Change slug; omit for all changes" },
+          workspace: { type: "string", description: "Project root" },
+        },
+      },
+    },
+    {
+      name: "taiyi_delivery_plan",
+      description:
+        "Preview git/gh delivery chain from delivery.yaml. Aligns with `taiyi delivery-plan --json`.",
+      inputSchema: {
+        type: "object",
+        properties: {
+          slug: { type: "string", description: "Change slug; omit for active/inferred slug" },
           workspace: { type: "string", description: "Project root" },
         },
       },
@@ -442,6 +455,14 @@ server.setRequestHandler(CallToolRequestSchema, async (req) => {
 
     if (req.params.name === "taiyi_audit") {
       const compact = taiyiAuditCompact(workspace, args.slug);
+      return {
+        content: [{ type: "text", text: JSON.stringify(compact, null, 2) }],
+        isError: !compact.ok,
+      };
+    }
+
+    if (req.params.name === "taiyi_delivery_plan") {
+      const compact = taiyiDeliveryPlanCompact(workspace, args.slug);
       return {
         content: [{ type: "text", text: JSON.stringify(compact, null, 2) }],
         isError: !compact.ok,

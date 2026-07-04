@@ -4,9 +4,9 @@ import path from "node:path";
 /** 源 prompt 中可写此占位符；安装时替换为 prompts/inc/stage-protocol.md */
 export const STAGE_PROTOCOL_PLACEHOLDER = "{{TAIYI_STAGE_PROTOCOL}}";
 export const SLASH_CATALOG_PLACEHOLDER = "{{SLASH_CATALOG}}";
-export const GSTACK_INVOKE_PLACEHOLDER = "{{GSTACK_INVOKE}}";
 export const SUPERPOWERS_INVOKE_PLACEHOLDER = "{{SUPERPOWERS_INVOKE}}";
 export const ECC_INVOKE_PLACEHOLDER = "{{ECC_INVOKE}}";
+export const THIRD_PARTY_INVOKE_PLACEHOLDER = "{{THIRD_PARTY_INVOKE}}";
 
 const INLINE_PROTOCOL_RE = /\n## Agent 协议（必须遵守）\n[\s\S]*$/;
 
@@ -22,14 +22,6 @@ export function loadStageProtocol(promptsDir: string): string {
   const file = path.join(promptsDir, "inc", "stage-protocol.md");
   if (!fs.existsSync(file)) {
     throw new Error(`missing stage protocol: ${file}`);
-  }
-  return fs.readFileSync(file, "utf8").trimEnd();
-}
-
-export function loadGstackInvoke(promptsDir: string): string {
-  const file = path.join(promptsDir, "inc", "gstack-invoke.md");
-  if (!fs.existsSync(file)) {
-    return "";
   }
   return fs.readFileSync(file, "utf8").trimEnd();
 }
@@ -50,7 +42,13 @@ export function loadEccInvoke(promptsDir: string): string {
   return fs.readFileSync(file, "utf8").trimEnd();
 }
 
-/** 将 stage-protocol / gstack-invoke 注入 taiyi prompt（Cursor commands / Codex prompts 共用） */
+export function loadThirdPartyInvoke(promptsDir: string): string {
+  const file = path.join(promptsDir, "inc", "third-party-invoke.md");
+  if (!fs.existsSync(file)) return "";
+  return fs.readFileSync(file, "utf8").trimEnd();
+}
+
+/** 将 stage-protocol / superpowers-invoke 注入 taiyi prompt（Cursor commands / Codex prompts 共用） */
 export function renderTaiyiPrompt(filename: string, body: string, promptsDir: string): string {
   const protocolPath = path.join(promptsDir, "inc", "stage-protocol.md");
   let out = body;
@@ -65,11 +63,6 @@ export function renderTaiyiPrompt(filename: string, body: string, promptsDir: st
     }
   }
 
-  const gstack = loadGstackInvoke(promptsDir);
-  if (gstack && out.includes(GSTACK_INVOKE_PLACEHOLDER)) {
-    out = out.replaceAll(GSTACK_INVOKE_PLACEHOLDER, gstack);
-  }
-
   const superpowers = loadSuperpowersInvoke(promptsDir);
   if (superpowers && out.includes(SUPERPOWERS_INVOKE_PLACEHOLDER)) {
     out = out.replaceAll(SUPERPOWERS_INVOKE_PLACEHOLDER, superpowers);
@@ -78,6 +71,11 @@ export function renderTaiyiPrompt(filename: string, body: string, promptsDir: st
   const ecc = loadEccInvoke(promptsDir);
   if (ecc && out.includes(ECC_INVOKE_PLACEHOLDER)) {
     out = out.replaceAll(ECC_INVOKE_PLACEHOLDER, ecc);
+  }
+
+  const thirdParty = loadThirdPartyInvoke(promptsDir);
+  if (thirdParty && out.includes(THIRD_PARTY_INVOKE_PLACEHOLDER)) {
+    out = out.replaceAll(THIRD_PARTY_INVOKE_PLACEHOLDER, thirdParty);
   }
 
   if (out.includes(SLASH_CATALOG_PLACEHOLDER)) {

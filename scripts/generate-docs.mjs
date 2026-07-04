@@ -48,7 +48,7 @@ const END_DELIVERY = "<!-- END GENERATED delivery-chain -->";
 const BROWSER_E2E_ROWS = [
   { label: "/taiyi:test smoke", needle: "/taiyi:browser-smoke", source: "aux", desc: "内置 Playwright 冒烟（伞形 `test smoke`）" },
   { label: "/taiyi:test e2e", needle: "/taiyi:e2e", source: "delivery", desc: "目标项目 `npx playwright test`（伞形 `test e2e`）" },
-  { label: "/taiyi:test qa", needle: "gstack qa", source: "delivery", desc: "gstack browse 走查（伞形 `test qa`）" },
+  { label: "/taiyi:test qa", needle: "browser qa", source: "delivery", desc: "browse 走查（伞形 `test qa`）" },
   { label: "/taiyi:test ui", needle: "/taiyi:ui-test", source: "aux", desc: "test 阶段 UI QA（伞形 `test ui`）" },
 ];
 
@@ -161,10 +161,10 @@ function renderCanonicalTables(yaml, coreCmds, auxCmds, scenarios) {
   ];
 
   const umbrellaRows = [
-    ["外部 Skill 路由", "`/taiyi:skill <name>`（吸收 gstack · sp · explore · tdd · flow）"],
+    ["外部 Skill 路由", "`/taiyi:skill <name>`（吸收 sp · explore · tdd · flow）"],
     ["Token", "`/taiyi:token status|record|scan|compress`"],
     ["测试", "`/taiyi:test smoke|e2e|qa|ui|security`"],
-    ["Review", "`/taiyi:review loop|check|health|gstack`"],
+    ["Review", "`/taiyi:review loop|check|health`"],
     ["架构图", "`/taiyi:diagram pipeline|c4|arch|render|flow`"],
   ];
 
@@ -277,7 +277,7 @@ function renderDeliveryChain(yamlText) {
   const lines = [
     "<!-- AUTO-GENERATED from docs/taiyi/commands.yaml — do not edit; run npm run generate:docs -->",
     "",
-    "## 交付链（gstack）",
+    "## 交付链（delivery.yaml + git/gh）",
     "",
     "```text",
     chainText,
@@ -329,7 +329,7 @@ function writeOrCheck(label, filePath, content, checkOnly) {
 
 const yaml = fs.readFileSync(yamlPath, "utf8");
 const sections = parseSlashCatalogLists(yaml);
-sections.delivery_gstack = parseChatSlashes(yaml, /^  delivery_gstack:/);
+sections.delivery_chain = parseChatSlashes(yaml, /^  delivery_chain:/);
 sections.engine_slash = parseChatSlashes(yaml, /^    engine_slash:/);
 
 const catalogSync = validateCanonicalCatalogSync(yaml, sections);

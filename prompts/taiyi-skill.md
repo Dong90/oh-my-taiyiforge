@@ -10,13 +10,12 @@ since: v0.30.0
 
 # /taiyi:skill — 外部 Skill 路由（v30 单一伞形）
 
-`/taiyi:skill <name>` 是**外部 Skill 的唯一伞形入口**，吸收原 `/taiyi:gstack` · `/taiyi:sp` · `/taiyi:explore` · `/taiyi:tdd` · `/taiyi:flow` 5 个独立入口。
+`/taiyi:skill <name>` 是**外部 Skill 的唯一伞形入口**，吸收原 `/taiyi:sp` · `/taiyi:explore` · `/taiyi:tdd` · `/taiyi:flow` 4 个独立入口。
 
 ## 路由表
 
 | 调用 | 加载 |
 |------|------|
-| `/taiyi:skill gstack <name>` | gstack Skill：`review` · `qa` · `design-shotgun` · `autoplan` · `canary` · `design-review` · `gstack-upgrade` · `browse` … |
 | `/taiyi:skill sp <name>` | Superpowers：`brainstorming` · `test-driven-development` · `writing-plans` · `writing-skills` · `verification-before-completion` … |
 | `/taiyi:skill explore` | 同 `sp brainstorming` |
 | `/taiyi:skill tdd plan\|dev` | TDD 红绿重构（plan=测试计划，dev=红→绿→重构） |
@@ -25,7 +24,6 @@ since: v0.30.0
 
 等价于（历史斜杠 → v30）:
 
-- `/taiyi:gstack <name>` → `/taiyi:skill gstack <name>`
 - `/taiyi:sp <name>` → `/taiyi:skill sp <name>`
 - `/taiyi:explore` → `/taiyi:skill explore`
 - `/taiyi:tdd plan|dev` → `/taiyi:skill tdd plan|dev`
@@ -33,8 +31,8 @@ since: v0.30.0
 
 **步骤：**
 
-1. 解析 `$ARGUMENTS` 第一个词：`gstack` / `sp` / `explore` / `tdd` / `flow` 或直连 skill 名
-2. 在宿主加载对应 **Skill**（`~/.cursor/skills` · `~/.claude/skills` · gstack · superpowers）
+1. 解析 `$ARGUMENTS` 第一个词：`sp` / `explore` / `tdd` / `flow` 或直连 skill 名
+2. 在宿主加载对应 **Skill**（`~/.cursor/skills` · `~/.claude/skills` · superpowers）
 3. 执行 Skill 正文；涉及引擎状态时先 `/taiyi:status --json --compact`
 4. 需要写工件时回到 `/taiyi:write` + `@taiyi-*` 九阶段 Skill
 

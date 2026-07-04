@@ -34,10 +34,10 @@
 | 命令 | 何时用 |
 |------|--------|
 | `/taiyi:doctor` | 安装/升级后自检（≈ `omc doctor`）+ **工作区流程** |
-| `/taiyi:pause` | 暂停前写 HANDOFF.md（≈ OMC notepad / gstack checkpoint） |
+| `/taiyi:pause` | 暂停前写 HANDOFF.md（≈ 会话续作 / ECC strategic-compact） |
 | `/taiyi:cancel` | 取消进行中变更（aborted） |
 | `/taiyi:list` | **多个变更并行**时列 slug（否则 continue 报错） |
-| `/taiyi:check` | `--auto` 时每阶段看 harness 铁三角清单 |
+| `/taiyi:check` | `--auto` 时每阶段看 harness 双线清单 |
 | `/taiyi:continue xN` | 循环 `continue` 直到完成或阻塞（人工门需 `--approver`） |
 | `/taiyi:verify` | PR/CI 工件门禁（`ci verify` 的斜杠入口） |
 | `/taiyi:audit` | 流程/交付排查（git 未入库、CHANGE 漂移等） |
@@ -50,17 +50,14 @@
 | `/taiyi:flow` | Superpowers 全技能 × 九阶段总览（onboarding 首选） |
 | `/taiyi:tdd plan\|dev` | task/dev：Superpowers TDD（计划切片测试 / 红绿重构） |
 
-### Git / PR / 部署（gstack · 见 [delivery-slash.md](./delivery-slash.md)）
+### Git / PR / 部署（见 [delivery-slash.md](./delivery-slash.md)）
 
 | 斜杠 | 何时用 |
 |------|--------|
 | `/taiyi:commit` | 实现完成后，带 Taiyi-Change trailer 的 git commit |
-| `/taiyi:ship` | 推分支、开 PR（gstack ship） |
-| `/taiyi:land` | 合并 PR、部署、canary（gstack land-and-deploy） |
-| `/taiyi:gstack review` | PR diff 结构审查（gstack review） |
-| `/taiyi:gstack qa` | 站点 QA（test 阶段 optional） |
+| `/taiyi:ship` | 推分支、开 PR |
+| `/taiyi:land` | 合并 PR、部署、canary |
 | `/taiyi:release` | 文档/CHANGELOG 发布同步（integration optional） |
-| `/taiyi:gstack <skill>` | 任意 gstack（design-shotgun · autoplan · canary · gstack-upgrade …） |
 | `/taiyi:sp <skill>` | 任意 Superpowers（writing-skills …） |
 | `/taiyi:security` | semgrep + trivy（review） |
 | `/taiyi:e2e` | Playwright E2E（test） |
@@ -78,11 +75,11 @@
 | 组件 | 行为 |
 |------|------|
 | **OpenSpec** | requirement / integration 钩子 `optional: true`；未装 CLI 自动跳过 |
-| **gstack/qa** | test 阶段 optional；CLI-only 可不打卡 |
-| **gstack/plan-design-review** | ui-design 阶段 optional；纯 API 可跳过 |
+| **ECC** | 双线 harness 核心 — 架构审查/安全扫描/代码审查/语言检测/框架检测 |
+| **web-quality** | ui-design 阶段 optional；纯 API 可跳过 |
 | **/taiyi:explore** | 文档 + `$taiyi-explore` prompt → Superpowers brainstorming |
 
-`/taiyi:status` 会显示 **意图分析**（模块/UI/测试层级推断）与铁三角清单（含「可选」标记）。
+`/taiyi:status` 会显示 **意图分析**（模块/UI/测试层级推断）与双线 harness 清单（含「可选」标记）。
 
 ## 九阶段完整路径
 
@@ -100,7 +97,7 @@
 ⑥ dev          → TDD 实现 + .dev-complete → apply → status → continue
 ⑦ test         → TEST.md + test.json → apply 或 status → continue
 ⑧ review       → REVIEW.md + review.json
-                 → /taiyi:health · /taiyi:gstack review · /taiyi:review-loop
+                 → /taiyi:health · ECC code-review · /taiyi:review-loop
                  → /taiyi:commit → /taiyi:ship → continue review --approver
 ⑨ integration  → CHANGELOG.md + integration.json
                  → /taiyi:land（可选）· /taiyi:release → status → continue
@@ -111,7 +108,7 @@
 
 每阶段默认循环：`status → write → status（预检）→ 用户确认 → continue`。
 
-`--auto` 时每阶段另有 harness 铁三角打卡 + **手动 mark-aux**（见 `taiyi-orchestrator`）。
+`--auto` 时每阶段另有 harness 双线打卡 + **手动 mark-aux**（见 `taiyi-orchestrator`）。
 
 ## init 与 new（推荐路径）
 

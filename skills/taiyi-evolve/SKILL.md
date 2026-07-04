@@ -130,9 +130,9 @@ taiyi-dev → taiyi-test → [taiyi-evolve] → taiyi-review → taiyi-integrati
 - [ ] 补丁可独立应用，不依赖聊天上下文
 - [ ] 与 `TEST.md` 覆盖范围一致（测了的边界 = 文档写的边界）
 
-## 与铁三角
+## 与双线 harness
 
-- **gstack `document-release`**：integration 时把 architecture-sync 摘要并入 README/ARCHITECTURE 更新清单
+- integration 时把 architecture-sync 摘要并入 README/ARCHITECTURE 更新清单
 - **OpenSpec**：`sync-openspec` 前跑 evolve，避免规格与实现分叉
 
 ## 禁止

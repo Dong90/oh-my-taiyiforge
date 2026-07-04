@@ -132,7 +132,8 @@ flowchart LR
 
 <!-- Validate: 禁动清单是否从 CONTEXT 复用？新增模块有没有侵入禁动区？ -->
 
-## Step 3: Options Analysis
+## Options
+
 > **[ALL]** Goal: ≥2方案含对照 | Inputs: Step1+2
 <!-- Action: 每个方案: 思路/优点/缺点/代价。A=不改/最小改动 -->
 
@@ -144,7 +145,8 @@ flowchart LR
 
 <!-- Validate: ≥2方案？含"不改"对照？代价量化？ -->
 
-## Step 4: Decision
+## Decision
+
 > **[ALL]** Goal: 选定方案并说清理由 | Inputs: Step3
 <!-- Action: 基于数据/约束决策，不写"感觉这个好" -->
 
@@ -355,7 +357,7 @@ _累计: {{#if design_innovation_tokens}}{{design_innovation_tokens.length}}{{el
 
 ---
 ## Quality Gate
-<!-- Evidence-first: 每项通过需要可验证证据，不是"感觉对了"。Superpowers verification-before-completion -->
+<!-- Evidence-first: 每项通过需要可验证证据，不是"感觉对了"。ECC verification-loop 取代 Superpowers verification-before-completion -->
 
 - [ ] S1 约束完整
 - [ ] S2 架构图+模块清单清晰
@@ -368,5 +370,5 @@ _累计: {{#if design_innovation_tokens}}{{design_innovation_tokens.length}}{{el
 - [ ] [M+] S9 部署流程完整
 - [ ] [H]  S10 STRIDE已建模
 - [ ] [M+] S11 灰度+回滚明确
-- [ ] **2-week smell**: 合格工程师2周内能交付一个小feature？gstack cognitive#11
-- [ ] **Refactor-first**: 重构和功能改动分开了吗？gstack cognitive#13: 先让改动变简单，再做简单改动
+- [ ] **2-week smell**: 合格工程师2周内能交付一个小feature？cognitive#11
+- [ ] **Refactor-first**: 重构和功能改动分开了吗？cognitive#13: 先让改动变简单，再做简单改动

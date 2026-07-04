@@ -2,7 +2,7 @@
 
 ## 核心原则
 
-1. **模型决策在聊天里**：阶段 Skill、Superpowers、gstack 在对话中加载。
+1. **模型决策在聊天里**：阶段 Skill、Superpowers、ECC 在对话中加载。
 2. **引擎过关由 Agent 代跑 shell**：`scripts/taiyi-forge.sh`，用户不必手打 `npx taiyi`。
 3. **OpenCode 例外**：用 `taiyi_*` 插件工具，与 shell 等价。
 4. **证据回流**：`.taiyi/changes/<slug>/` 工件 + `state.json` + `.harness-checkpoints.json`。

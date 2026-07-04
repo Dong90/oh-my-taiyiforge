@@ -2,71 +2,32 @@
 
 > 📦 较早的变更已归档至 [CHANGELOG-ARCHIVE.md](CHANGELOG-ARCHIVE.md)。
 
-<!-- taiyi:agent-mode-translation-api-backend-core --> 2026-06-27
-# CHANGELOG: agent-mode-translation-api-backend-core
+## Unreleased
 
-## Added
+### Changed
+- 退出 GStack 主路径：交付链由 native `git + gh` 驱动，配置层新增 `docs/taiyi/delivery.yaml`（默认）+ `.taiyi/delivery.yaml`（项目覆盖）；harness 改用 Superpowers + ECC 双线（架构 / 代码审查 / QA / 发版 / 漏洞扫描 / 站点 QA / 会话 checkpoint / TDD 文档 全部由 ECC 覆盖，详见 `docs/taiyi/library-selection.md`）。旧 `scripts/install-optimal-fusion.sh` 已删除；`/taiyi:ship` `/taiyi:land` `/taiyi:commit` 退化为 chat-only 斜杠（CLI 报 exit 2 + chat-slash-only 提示）。
+- `scripts/taiyi-forge.sh ship|land|commit` 不再转发到 node CLI，直接打印 chat-slash 提示。
+- `src/core/harness-runner.ts` archive 命令匹配由 `command.includes("archive")` 改为 `tool === "taiyi" && command.startsWith("taiyi archive")`，避免误触发。
+- `src/core/gates/delivery-gate.ts` 新仓库 base 检测由静默通过改为显式 fail + hints，提示先 `git push` 或 `git init`。
 
-- `services/translation_api/`: Full backend translation API with Adapter + Strategy architecture
-- 6 translation direction strategies (dev↔product, dev↔ops, product↔ops)
-- OpenAI LLM adapter with streaming support
-- SSE streaming endpoint (`POST /api/translation/translate/stream`)
-- 3 health endpoints (GET /health, /ready, /live)
-- Middleware chain: request logging, error handling, response time
-- Pydantic v2 request/response schemas with role validation
-- 21 pytest tests covering config, strategies, services, middleware, controllers
+### Added
+- `src/core/delivery-config.ts` `parseDeliveryYaml` 改用 `yaml@2.9.0` 标准库（替原 180 行手写正则 parser）+ 强类型守卫 + fail-soft。
+- `src/core/delivery-plan.ts` `planDeliveryChain` 暴露 `DeliveryPlan.steps[]`，作为 `/taiyi:ship` `/taiyi:land` 的预览真源。
+- `scripts/check-md-links.mjs` 纳入 + `npm run check:links`：扫描 markdown 内部链接，URL 含 `=` `,` 或形如 `<word>:<text>` 的模板占位符跳过；当前 baseline 5 个历史 broken（CONTRIBUTING.md / skill-fusion-principles.md / configuration.md / delivery-slash.md / diagrams/pipeline.md）将在后续清理。
 
-## Changed
+### Notes (state.json 字段漂移 — 已知不修)
+- `seeded` 字段：`initChange()` 返回对象的临时字段（`src/core/workflow-engine.ts:116,176`），**不应持久化**。现状 `bench-delta-final` / `demo-28-v28` / `lang-test` 3 个 state.json 含此字段为历史 engine bug 残留，**无功能影响**（所有读路径不消费该字段），下次 `writeState` 会自然覆写。
+- `version` 字段：OCC 乐观锁字段（`src/core/workflow-engine.ts:218-239`），缺值时 `writeState` 用 `?? 0` 兜底，首次写入升到 1。现状 `bench-delta-final` / `token-bench-micro` 缺此字段，**无功能影响**。
+- 5 个 state.json 均为历史数据（OCC 引入前或 engine 早期），建议下次 archive 时由 `archiveTaiyiChange` 路径自然清理 —— **本轮不主动改文件**。
 
-- (none)
+### Removed
+- `skills/taiyi-decompose/SKILL.md`（0 引用、未进 manifest 任何阶段）—— `prompts/` 28 个文件 + `prompts/inc/` 5 个文件全部有上游引用，本轮 0 删除。
 
-## Fixed
-
-- (none)
-
-## Success Criteria Met
-
-- [x] All 21 tests pass (config 3, strategies 5, services 6, middleware 1, controllers 6)
-- [x] POST /api/translation/translate returns 200 with translated text
-- [x] POST /api/translation/translate/stream returns SSE with content-type text/event-stream
-- [x] 6 translation directions routable via TranslationService factory
-- [x] 3 health endpoints return HTTP 200 with `{"status": "ok"}`
-- [x] Middleware chain operational (logging, error handling, X-Response-Time)
-
-## Rollback
-
-```
-git revert HEAD --no-edit
-```
-
-<!-- taiyi:frontend-ui --> 2026-06-24
-# CHANGELOG: frontend-ui
-
-## Added
-
-- examples/translation-assistant/index.html: Single-file frontend with responsive layout
-- Source text input with Enter-to-translate + Shift+Enter for newline
-- Role selection dropdown (product→dev, dev→product, ops→dev)
-- SSE streaming display via fetch reader (fallback to POST/JSON)
-- Loading bar animation + error banner
-- Mobile-responsive CSS (flexbox, media queries)
-
-## Changed
-
-- (none)
-
-## Fixed
-
-- (none)
-
-## Docs
-
-- [x] README / AGENTS.md synced
-- [ ] OpenSpec archived
-
-## Rollback
-
--
+### Fixed (plan #5: docs ↔ src 一致性同步)
+- **handlers.ts ↔ docs 对齐**：`docs/taiyi/canonical-commands.md` 加 §「引擎 CLI 真源」段，列 35 个常用 CLI 子命令 ↔ 引擎函数映射（`src/plugin/handlers.ts` 真源）+ 14 个聊天斜杠 ↔ CLI 真源映射。`/taiyi:external-context` 实际由 `taiyiWorkflowSkill('external-context')` 路由（`src/core/runtime/workflow-skills.ts:135`），文档已正确。`taiyiPause` 走 cli/taiyi.ts:428 dispatch 路由到 `taiyiHandoff`，无需新 handler。
+- **环境变量文档化**：`docs/taiyi/configuration.md` §5.1 加 50+ `TAIYI_*` 环境变量表格（按模块分组：引擎 Loop / Hooks / Agent / Human Gate / Token / Daemon / Ralph+Quality / Workflow / MCP+LSP / Logger）。原 §5 仅列 5 个常用变量，现扩到完整对照实现真源。
+- **Capability 文档**：`docs/taiyi/integrations.md` §CapabilityId 完整列表加 14 个 capability 行 + 向后兼容 NOTE（9 个"已退场" capability 保留在 `CapabilityId` 类型里以兼容历史 `.taiyi/providers.yaml`）。
+- **profile `ui`**：`src/core/builtin-profiles.ts` `ui` profile 加 `auxiliaryHints: ["taiyi-restyle"]`，兑现 docs/USAGE.md §Profile 表中"restyle 默认加载"承诺。
 
 <!-- taiyi:todo-api --> 2026-06-24
 # CHANGELOG: todo-api
@@ -157,3 +118,50 @@ git revert HEAD --no-edit
 
 Revert the `.taiyi/changes/template-translation-api-core-backend/` directory and remove `dev_bundle/` from deployment
 path.
+
+## <!-- taiyi:ecc-hybrid-harness --> 2026-07-03
+phase: integration skill: taiyi-integration gate: auto produces: CHANGELOG.md upstream: [review, dev, test] downstream:
+[]
+
+---
+
+# CHANGELOG: ECC Hybrid 双 harness 走通
+
+> **Release**: v0.23-harness-verify | **Date**: 2026-07-03 | **Status**: verified
+
+---
+
+## Added
+
+- **chore**: 完成 Superpowers + ECC 双线 harness 九阶段端到端验证
+- 验证 workflow-manifest.yaml 的 harness 约束：所有 9 个阶段钩子可触发、可打卡
+- 验证 3 个 human gate（change/design/review）的 `--approver` 机制正常拦截
+- 验证 `harness-check` 命令在 `--auto` 模式下的双线打卡机制
+
+### Breaking Changes
+
+_无_
+
+### Migration
+
+无代码或配置变更。
+
+## Deployment Checklist
+
+- [x] vitest: 176 test files, 1404 tests passed
+- [x] tsc --noEmit: 0 errors
+- [x] npm audit: no critical/high
+- [x] 所有 9 个阶段工件已产出
+
+## Verdict
+
+流程验证通过。双 harness（Superpowers + ECC）在 `--auto` 模式下正常工作。每个阶段的 harness-check 打卡机制正确，human
+gate 正确拦截。
+
+---
+
+## Quality Gate
+
+- [x] S1 Changelog 清晰完整
+- [x] S1 No breaking changes
+- [x] S7 监控: vitest pass rate 100%

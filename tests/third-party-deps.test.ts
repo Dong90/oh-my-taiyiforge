@@ -3,11 +3,8 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import {
-  detectGstack,
   detectOpenspec,
   detectWebQualitySkills,
-  findGstackDir,
-  gstackSetupHostArgs,
   shouldInstallDeps,
   writeDetectedProviderConfig,
   detectThirdPartyDeps,
@@ -40,14 +37,6 @@ describe("third-party-deps", () => {
     expect(all.installDeps).toBe(true);
   });
 
-  it("findGstackDir detects setup script", () => {
-    const gstack = path.join(tmp, ".claude", "skills", "gstack");
-    fs.mkdirSync(gstack, { recursive: true });
-    fs.writeFileSync(path.join(gstack, "setup"), "#!/bin/bash\n");
-    expect(findGstackDir(tmp)).toBe(gstack);
-    expect(detectGstack(tmp).installed).toBe(true);
-  });
-
   it("detectWebQualitySkills finds markers under agents skills", () => {
     const root = path.join(tmp, ".agents", "skills");
     for (const name of ["accessibility", "web-design-guidelines", "core-web-vitals"]) {
@@ -56,13 +45,6 @@ describe("third-party-deps", () => {
     }
     const d = detectWebQualitySkills(tmp);
     expect(d.installed).toBe(true);
-  });
-
-  it("gstackSetupHostArgs picks codex-only host", () => {
-    const dir = path.join(tmp, "gstack");
-    fs.mkdirSync(dir);
-    fs.writeFileSync(path.join(dir, "setup"), '--host cursor\nHOST="claude"\n');
-    expect(gstackSetupHostArgs(dir, ["codex"])).toEqual(["--host", "codex"]);
   });
 
   it("detectOpenspec reflects PATH", () => {
@@ -89,23 +71,10 @@ describe("third-party-deps", () => {
     expect(fs.existsSync(path.join(deep, ".taiyi", "providers.yaml"))).toBe(true);
   });
 
-  it("writeDetectedProviderConfig includes gstack assignments when detected", () => {
-    const gstack = path.join(tmp, ".claude", "skills", "gstack");
-    fs.mkdirSync(gstack, { recursive: true });
-    fs.writeFileSync(path.join(gstack, "setup"), "#!/bin/bash\n");
-
-    const r = writeDetectedProviderConfig(tmp, ["opencode"], tmp);
-    const content = fs.readFileSync(r.path, "utf8");
-    expect(content).toContain("  browser_qa: gstack");
-    expect(content).toContain("  eng_review: gstack");
-    expect(content).toContain("  code_review: gstack");
-    expect(content).toContain("  doc_release: gstack");
-  });
-
   it("writeDetectedProviderConfig omits assignments for undetected providers", () => {
     const r = writeDetectedProviderConfig(tmp, ["opencode"], "/nonexistent");
     const content = fs.readFileSync(r.path, "utf8");
-    // When no gstack/openspec/etc is detected (bogus home), only assignments
+    // When no providers are detected (bogus home), only assignments
     // for tools that happen to be on PATH appear in the output
     expect(content).toContain("assignments:");
   });
@@ -129,13 +98,7 @@ describe("third-party-deps", () => {
     const r1 = syncProviders(tmp, ["opencode"], tmp);
     const before = Object.keys(r1.registry.listProviders()).length;
 
-    // add gstack and re-sync
-    const gstack = path.join(tmp, ".claude", "skills", "gstack");
-    fs.mkdirSync(gstack, { recursive: true });
-    fs.writeFileSync(path.join(gstack, "setup"), "#!/bin/bash\n");
-
     const r2 = syncProviders(tmp, ["opencode"], tmp);
-    // gstack should now be detected in addition to openspec
     expect(Object.keys(r2.registry.listProviders()).length).toBeGreaterThanOrEqual(before);
   });
 

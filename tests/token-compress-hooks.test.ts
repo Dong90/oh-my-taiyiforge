@@ -17,7 +17,7 @@ describe("token-compress-hooks", () => {
     expect(cfg.thirdParty.some((s) => s.tool === "superpowers" && s.skill === "subagent-driven-development")).toBe(
       true,
     );
-    expect(cfg.thirdParty.some((s) => s.tool === "gstack" && s.skill === "checkpoint")).toBe(true);
+    expect(cfg.thirdParty.some((s) => s.tool === "ecc" && s.skill === "strategic-compact")).toBe(true);
   });
 
   it("recommends subagent for dev phase", () => {
@@ -36,7 +36,7 @@ describe("token-compress-hooks", () => {
     const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "taiyi-harness-tok-"));
     const ctx = getHarnessContext(tmp, "feat", "change");
     expect(ctx.hooks.some((h) => h.command?.includes("token compress"))).toBe(true);
-    expect(ctx.hooks.some((h) => h.tool === "gstack" && h.skill === "checkpoint")).toBe(true);
+    expect(ctx.hooks.some((h) => h.tool === "ecc" && h.skill === "strategic-compact")).toBe(true);
     fs.rmSync(tmp, { recursive: true, force: true });
   });
 

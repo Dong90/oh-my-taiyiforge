@@ -75,11 +75,11 @@ describe("L4 headless contract (CLI + prompt 替代 IDE UAT)", () => {
     expect(fs.readFileSync(p, "utf8")).toMatch(/handoff|暂停|l4-smoke/i);
   });
 
-  it("扩展斜杠 prompt：taiyi-skill 伞形覆盖 gstack browse / sp brainstorming", () => {
+  it("扩展斜杠 prompt：taiyi-skill 伞形覆盖 sp brainstorming", () => {
     const promptsDir = path.join(REPO, "prompts");
     const raw = fs.readFileSync(path.join(promptsDir, "taiyi-skill.md"), "utf8");
     const skill = renderTaiyiPrompt("taiyi-skill.md", raw, promptsDir);
-    expect(skill).toMatch(/browse|gstack/i);
-    expect(skill).toMatch(/brainstorming|superpowers/i);
+    expect(skill).toContain("brainstorming");
+    expect(skill).toContain("Superpowers");
   });
 });

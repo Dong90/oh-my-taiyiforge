@@ -15,7 +15,7 @@ export function formatAgentRalphProtocol(
 ): string {
   return [
     "Ralph 协议（Taiyi 原生 · 验证不过就修，直到通过）:",
-    "  1. /taiyi:sp systematic-debugging + /taiyi:tdd dev",
+    "  1. /taiyi:skill ecc agent-introspection-debugging + /taiyi:tdd dev",
     "  2. /taiyi:agent debugger · /taiyi:agent executor",
     `  3. 运行验证: ${verifyCmd}（引擎已执行一次）`,
     "  4. 失败 → 最小修复 → 再次 /taiyi:ralph",

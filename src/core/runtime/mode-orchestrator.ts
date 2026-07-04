@@ -245,7 +245,7 @@ function runModeStepCore(
           ralph.text,
           "",
           mode === "ultraqa"
-            ? "UltraQA：验收仍须 /taiyi:gstack qa · AC 对照"
+            ? "UltraQA：验收仍须 AC 对照"
             : "Ralph 测试已通过；仍须 harness/人工门 → /taiyi:continue 或 step",
         ].join("\n"),
         verifyExitCode: 0,
@@ -261,7 +261,7 @@ function runModeStepCore(
         ralph.text,
         "",
         "══ 勿结束会话（对标 OMC ralph stop-hook）══",
-        "  1. /taiyi:sp systematic-debugging · /taiyi:agent debugger",
+        "  1. /taiyi:skill ecc agent-introspection-debugging · /taiyi:agent debugger",
         "  2. 最小修复 · /taiyi:tdd dev",
         "  3. scripts/taiyi-forge.sh step（或 ralph）直到 ✓",
       ].join("\n"),

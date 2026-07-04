@@ -46,6 +46,12 @@ import {
   evaluateCommitTrailers,
   suggestCommitMessage,
 } from "../core/gates/commit-trailer.js";
+import { resolveDeliveryConfig } from "../core/delivery-config.js";
+import {
+  formatDeliveryPlanPlain,
+  planDeliveryChain,
+  type DeliveryPlan,
+} from "../core/delivery-plan.js";
 import { scanArtifactTokens } from "../core/token/scan-artifacts.js";
 import { loadTokenBudgetConfig } from "../core/token/budget-config.js";
 import { resolvePackageRoot } from "../core/package-root.js";
@@ -679,9 +685,37 @@ export function taiyiCommitTrailers(
     resolved.slug,
     phase,
     subject?.trim() || "feat: deliver change slice",
+    workspaceDir,
   );
   const check = evaluateCommitTrailers(workspaceDir, resolved.slug, phase);
   return { ok: true, slug: resolved.slug, phase, suggestion, check };
+}
+
+export function taiyiDeliveryPlan(
+  workspaceDir: string,
+  slug?: string,
+  options?: { ghAvailable?: boolean },
+):
+  | { ok: true; slug: string; phase: string; plan: DeliveryPlan; text: string }
+  | { ok: false; error: string } {
+  const taiyiRoot = resolveTaiyiRoot(workspaceDir);
+  const resolved = resolveActiveSlug(taiyiRoot, slug);
+  if (!resolved.ok) return { ok: false, error: resolved.error };
+  const engine = createEngine(workspaceDir);
+  const stateResult = requireChangeState(engine, resolved.slug);
+  if (!stateResult.ok) return stateResult;
+  const phase = stateResult.state.currentPhase;
+  const config = resolveDeliveryConfig(workspaceDir);
+  const plan = planDeliveryChain(config, resolved.slug, phase, {
+    ghAvailable: options?.ghAvailable,
+  });
+  return {
+    ok: true,
+    slug: resolved.slug,
+    phase,
+    plan,
+    text: formatDeliveryPlanPlain(plan),
+  };
 }
 
 export function taiyiHandoff(
@@ -731,7 +765,7 @@ export function taiyiHandoff(
     };
   }
 
-  const tokenCfg = loadTokenBudgetConfig();
+  const tokenCfg = loadTokenBudgetConfig(process.env, workspaceDir);
   const artifactScan = scanArtifactTokens(changeDir);
   const compressHint =
     artifactScan.total > tokenCfg.compressThreshold
@@ -804,23 +838,12 @@ export function taiyiResume(
   return { ok: true, slug: resolved.slug, hasHandoff, handoffPath, text, statusText };
 }
 
-const GSTACK_SLASH_ONLY = [
-  "ship 仅聊天斜杠 — 加载 gstack `ship` Skill 或 prompts/taiyi-ship.md",
-  "land 仅聊天斜杠 — 加载 gstack `land-and-deploy` 或 prompts/taiyi-land.md",
-  "commit 仅聊天斜杠 — /taiyi:commit 或 taiyi commit-trailers",
-].join("\n");
-
 export function taiyiSlashOnlyHint(command: "ship" | "land" | "commit"): {
   ok: false;
   error: string;
   text: string;
 } {
-  const line =
-    command === "ship"
-      ? GSTACK_SLASH_ONLY.split("\n")[0]!
-      : command === "land"
-        ? GSTACK_SLASH_ONLY.split("\n")[1]!
-        : GSTACK_SLASH_ONLY.split("\n")[2]!;
+  const line = `${command} 仅聊天斜杠 — 用 /taiyi:${command} 加载对应 Skill（引擎 CLI 无 shell 实现）`;
   return {
     ok: false,
     error: line,

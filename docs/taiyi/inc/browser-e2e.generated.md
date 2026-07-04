@@ -8,5 +8,6 @@ Token 纪律：全量 `playwright test` / probe 在 **CI 或后台**跑；聊天
 |------|------|------|
 | `/taiyi:test smoke` | （聊天） | 内置 Playwright 冒烟（伞形 `test smoke`） |
 | `/taiyi:test e2e` | （聊天） | 目标项目 `npx playwright test`（伞形 `test e2e`） |
-| `/taiyi:test qa` | （聊天） | gstack browse 走查（伞形 `test qa`） |
+| `/taiyi:test qa` | （聊天） | browse 走查（伞形 `test qa`） |
 | `/taiyi:test ui` | （聊天） | test 阶段 UI QA（伞形 `test ui`） |
+

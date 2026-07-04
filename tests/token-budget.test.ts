@@ -46,6 +46,20 @@ describe("token budget config", () => {
     expect(cfg.enforce).toBe(true);
     expect(cfg.costPerMillionTokens).toBe(3);
   });
+
+  it("merges project .taiyi/token-budget.yaml over bundled default", () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), "taiyi-tok-yaml-"));
+    fs.mkdirSync(path.join(dir, ".taiyi"), { recursive: true });
+    fs.writeFileSync(
+      path.join(dir, ".taiyi", "token-budget.yaml"),
+      "globalBudget: 120000\nenforce: true\n",
+    );
+    const cfg = loadTokenBudgetConfig({}, dir);
+    expect(cfg.globalBudget).toBe(120_000);
+    expect(cfg.enforce).toBe(true);
+    expect(cfg.phaseLimits.change).toBeGreaterThan(0);
+    fs.rmSync(dir, { recursive: true, force: true });
+  });
 });
 
 describe("token usage store", () => {

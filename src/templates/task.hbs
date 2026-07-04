@@ -30,7 +30,8 @@ flowchart LR
 
 ---
 
-## Step 2: Slice Breakdown
+## Slices
+
 > **[ALL]** Goal: 每个Slice独立可交付 | Inputs: Step1+DESIGN.md §5
 <!-- Action: 每个Slice=独立PR，含文件清单/验证命令/验收点/依赖/并行性/Completeness -->
 
@@ -87,6 +88,14 @@ flowchart LR
 ---
 
 {{/each}}
+
+## Checklist per slice
+
+- [ ] 测试先行（RED）— 每个 Slice 先写失败测试
+- [ ] 最小实现（GREEN）— 让测试通过
+- [ ] 重构（REFACTOR）— 不改变行为
+- [ ] Done when includes npm test command
+- [ ] 更新追溯（REQUIREMENT AC ↦ 测试用例）
 
 {{#if module_manifest}}
 ## Step 2b: Code-Gen Slices (from DESIGN Step 13)
@@ -227,7 +236,7 @@ flowchart LR
 
 ---
 ## Quality Gate
-<!-- Evidence-first: 每个Slice可独立验证交付。gstack cognitive#13: 先重构再实现，不把结构+行为放同一个PR -->
+<!-- Evidence-first: 每个Slice可独立验证交付。cognitive#13: 先重构再实现，不把结构+行为放同一个PR -->
 
 - [ ] S1 依赖图无循环
 - [ ] S2 每个Slice可独立交付
@@ -238,4 +247,4 @@ flowchart LR
 - [ ] [H]  S5 每Slice有独立回滚
 - [ ] **PITFALLS.md**: 已扫描触达模块的 PITFALLS（`.pitfalls/scan.sh --module <path>` + 人工 grep 关键词），无已知踩坑或已声明规避方案
 - [ ] **项目上下文**: 已查 PHASE-CONTEXT.md 既有抽象索引，无重复实现
-- [ ] **Refactor-first**: 重构PR和功能PR分开了？(gstack: make change easy, then make easy change)
+- [ ] **Refactor-first**: 重构PR和功能PR分开了？(Rule: make change easy, then make easy change)

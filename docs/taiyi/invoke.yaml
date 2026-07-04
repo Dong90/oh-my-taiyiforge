@@ -22,10 +22,10 @@ invoke:
   phase_skills:
     note: "写工件用 taiyi-change … taiyi-integration；过关必须用 engine"
     orchestrator: "taiyi-orchestrator（--auto 编排清单）"
-  iron_triangle:
-    superpowers: "聊天内加载 brainstorming / TDD / verification-before-completion"
-    gstack: "聊天内 /review、/plan-eng-review 等（非 shell 子命令）"
-    openspec: "可选 shell；无 OpenSpec 时 harness 自动跳过"
+  dual_line_harness:
+    superpowers: "纪律层 — brainstorming / TDD / verification-before-completion / 派审 / 分支收尾"
+    ecc: "深度层 — architecture-audit / security-scan / changelog-generator 等（manifest harness）"
+    cli: "OpenSpec / Playwright / Changesets — shell 证据（capabilities 单轨）"
 
 # 四端入口决策树 — Agent 选路用（人类可读版见 omc-reference.md §入口决策）
 entry_decision:
@@ -46,7 +46,7 @@ entry_decision:
   pr_ci_gate:
     all: "/taiyi:verify（CI 脚本仍用 taiyi ci verify）"
   git_pr_deploy:
-    all: "/taiyi:commit → /taiyi:ship → /taiyi:land（gstack Skills；见 delivery-slash.md）"
+    all: "/taiyi:commit → /taiyi:ship → /taiyi:land（交付斜杠；见 delivery-slash.md）"
 
 commands:
   init: "scripts/taiyi-forge.sh init <slug> [--auto] [--profile api|lite]"

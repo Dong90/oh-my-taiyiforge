@@ -52,7 +52,8 @@
 | `/taiyi:skill <name>` |
 | `/taiyi:token status|record|scan|compress` |
 | `/taiyi:test smoke|e2e|qa|ui|security` |
-| `/taiyi:review loop|check|health|gstack` |
+| `/taiyi:review loop|check|health` |
 | `/taiyi:diagram pipeline|c4|arch|render|flow` |
 
 ### Legacy（兼容，勿新增同类入口）
+

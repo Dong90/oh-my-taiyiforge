@@ -120,4 +120,43 @@ EOF
     expect(r.reason).toMatch(/无 Taiyi-Change/);
     fs.rmSync(dir, { recursive: true, force: true });
   });
+
+  it("uses custom slug trailer from delivery.yaml", () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), "taiyi-custom-trailer-"));
+    fs.mkdirSync(path.join(dir, ".taiyi"), { recursive: true });
+    fs.writeFileSync(
+      path.join(dir, ".taiyi", "delivery.yaml"),
+      `commit:
+  requiredTrailers:
+    - key: Jira-Id
+      value: "{slug}"
+`,
+    );
+    initGitRepo(dir);
+    fs.writeFileSync(path.join(dir, "feat.txt"), "x\n");
+    execSync("git add feat.txt", { cwd: dir });
+    execSync(
+      `git commit -m "$(cat <<'EOF'
+feat: ok
+
+Jira-Id: ship-it
+EOF
+)"`,
+      { cwd: dir, shell: "/bin/bash" },
+    );
+    expect(evaluateCommitTrailers(dir, "ship-it").passed).toBe(true);
+    fs.rmSync(dir, { recursive: true, force: true });
+  });
+
+  it("suggestCommitMessage uses delivery.yaml subject template", () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), "taiyi-subject-tpl-"));
+    fs.mkdirSync(path.join(dir, ".taiyi"), { recursive: true });
+    fs.writeFileSync(
+      path.join(dir, ".taiyi", "delivery.yaml"),
+      "commit:\n  subjectTemplate: \"[{slug}] {summary}\"\n",
+    );
+    const msg = suggestCommitMessage("abc", "dev", "feat: hello", dir);
+    expect(msg).toContain("[abc] hello");
+    fs.rmSync(dir, { recursive: true, force: true });
+  });
 });

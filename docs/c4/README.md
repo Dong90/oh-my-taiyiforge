@@ -10,7 +10,7 @@
 **Out of scope**：
 
 - 用户业务项目代码（仅通过 `.taiyi/changes/<slug>/` 工件契约交互）
-- 第三方运行时（Superpowers、gstack、OpenSpec）的内部实现
+- 第三方运行时（Superpowers、OpenSpec）的内部实现
 - 云部署拓扑（本仓库无 Terraform/K8s 描述）
 
 **文档范围**：System Context + Container；Component 级见 [`containers.md`](containers.md) 内 `src/core/` 分解。
@@ -42,7 +42,7 @@
 | 开发者在本地 git 仓库中运行引擎 | `delivery-gate.ts` 检查 commit / 工作区 |
 | 四端（OpenCode / Claude / Codex / Cursor）为对等聊天客户端 | `docs/taiyi/agents.yaml`、`src/install/sync-*` |
 | Agent 负责写 Markdown 工件，引擎负责状态与门禁 | `AGENTS.md` 双轨约定 |
-| OpenSpec / gstack / Superpowers 为可选外挂，未安装则跳过 | `workflow-manifest.yaml` harness `optional: true` |
+| OpenSpec / Superpowers 为可选外挂，未安装则跳过 | `workflow-manifest.yaml` harness `optional: true` |
 | 无集中式远程 API；状态存本地 `.taiyi/` | 未见 HTTP server 除 MCP stdio |
 
 ---
@@ -55,7 +55,7 @@
 
 ## 5. Container view
 
-见 [`containers.md`](containers.md)（flowchart 分层 — **流水线真源**）。L3 组件见 [`../diagrams/architecture.md`](../diagrams/architecture.md) §1。
+见 [`containers.md`](containers.md)（flowchart 分层 — **流水线真源**）。L3 组件见 [`README.md`](README.md)（C4 L1-L2 已在本目录）。
 
 ---
 
@@ -74,7 +74,7 @@
 | 步骤 | 状态 | 产出 |
 |------|------|------|
 | `/taiyi:diagram-c4 --repo` | ✅ | 本目录 |
-| `/taiyi:diagram-arch --repo` | ✅ | [`../diagrams/architecture.md`](../diagrams/architecture.md) |
-| `/taiyi:diagram-render --repo` | ✅ | [`png/*.svg`](png/)（见 [`../diagrams/pipeline.md`](../diagrams/pipeline.md) 导出说明） |
+| `/taiyi:diagram-arch --repo` | ✅ | [`README.md`](README.md)（C4 L1-L2 视图） |
+| `/taiyi:diagram-render --repo` | ✅ | [`png/*.svg`](png/)（见 [`containers.md`](containers.md) 导出说明） |
 
 大版本变更后重跑：`/taiyi:diagram-pipeline --repo`

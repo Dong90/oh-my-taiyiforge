@@ -1,0 +1,166 @@
+{
+  "title": "E2E Demo",
+  "techStack": {
+    "selected": "Node.js + TypeScript + Vitest",
+    "reason": "Consistent with project stack; no new runtime dependencies",
+    "frontend": "N/A (CLI-only change)",
+    "backend": "Node.js + Commander",
+    "database": "N/A (file-based state)",
+    "deployment": "npm registry / GitHub Actions",
+    "keyDeps": "handlebars, zod, vitest, commander",
+    "excluded": "Docker, Kubernetes (无容器化需求)",
+    "constraints": "Node 18+; macOS/Linux CI; 仅新增测试依赖无生产依赖变更"
+  },
+  "current_state": "当前项目已有 WorkflowEngine + phase-registry + template-engine 核心模块，但缺少 E2E 全流程覆盖。单元测试覆盖各模块内部逻辑，但无跨九阶段的集成验证。",
+  "existingArchitecture": {
+    "touchedModules": [
+      "src/core/workflow-engine.ts",
+      "src/core/phase-registry.ts",
+      "src/core/run-slash-flow-cli.ts"
+    ],
+    "newModules": [
+      "src/core/e2e-fixtures.ts"
+    ],
+    "doNotTouch": [
+      "src/core/types.ts"
+    ]
+  },
+  "modules": [
+    {
+      "name": "E2E Fixtures",
+      "operation": "新增",
+      "path": "src/core/e2e-fixtures.ts",
+      "description": "E2E 测试夹具数据"
+    },
+    {
+      "name": "Workflow Engine",
+      "operation": "修改",
+      "path": "src/core/workflow-engine.ts",
+      "description": "E2E 流程编排"
+    },
+    {
+      "name": "Phase Registry",
+      "operation": "读取",
+      "path": "src/core/phase-registry.ts",
+      "description": "阶段定义与依赖"
+    },
+    {
+      "name": "Verify Logic",
+      "operation": "修改",
+      "path": "src/core/run-slash-flow-cli.ts",
+      "description": "验收报告生成 (writeVerifyReport)"
+    }
+  ],
+  "dependency_sandbox": [
+    {
+      "name": "vitest",
+      "version_range": "^2.0",
+      "purpose": "测试框架（含 E2E 夹具）",
+      "alternatives_considered": "jest（配置更重）",
+      "npm_latest": "2.1.0",
+      "staleness_check": "✅"
+    },
+    {
+      "name": "handlebars",
+      "version_range": "^4.7",
+      "purpose": "模板引擎（渲染夹具到工件）",
+      "alternatives_considered": "ejs, pug（团队不熟悉）",
+      "npm_latest": "4.7.8",
+      "staleness_check": "✅"
+    },
+    {
+      "name": "zod",
+      "version_range": "^3.23",
+      "purpose": "数据校验",
+      "alternatives_considered": "yup（功能相近，生态略弱）",
+      "npm_latest": "3.24.0",
+      "staleness_check": "✅"
+    }
+  ],
+  "options": [
+    {
+      "id": "A",
+      "name": "Inline script",
+      "approach": "Bash 脚本直调 taiyi-forge.sh，手动验证",
+      "pros": [
+        "Fast",
+        "Simple"
+      ],
+      "cons": [
+        "Manual",
+        "No CI"
+      ],
+      "cost": "Low"
+    },
+    {
+      "id": "B",
+      "name": "Vitest only",
+      "approach": "Vitest 全量测试含 E2E 夹具，CI 自动回归",
+      "pros": [
+        "CI",
+        "Automated"
+      ],
+      "cons": [
+        "No CLI"
+      ],
+      "cost": "Low"
+    }
+  ],
+  "decision": {
+    "chosen": "B",
+    "reason": "Automated regression in every release."
+  },
+  "blast_radius": [
+    {
+      "decision": "Vitest-based E2E",
+      "radius": "低",
+      "worst_case": "E2E 假阳性误拦CI",
+      "isolation": "独立测试文件，不影响业务代码"
+    }
+  ],
+  "design_innovation_tokens": [
+    {
+      "decision": "无新技术",
+      "is_token": false,
+      "reason": "全栈已有技术栈"
+    }
+  ],
+  "tradeoffs": [
+    {
+      "point": "测试框架选型",
+      "choice": "Vitest",
+      "reason": "与项目构建工具链一致，零额外依赖"
+    },
+    {
+      "point": "夹具硬编码 vs 模板渲染",
+      "choice": "模板渲染",
+      "reason": "与真实执行路径一致，避免双轨漂移"
+    }
+  ],
+  "new_artifact": "verify-report.json（验收报告）",
+  "rollback_trigger": "E2E 测试持续失败 (>2 次重试) 或 verify-report 出现 error",
+  "rollout_steps": [
+    "合并 PR 到 main 分支",
+    "CI 自动运行全量测试（含 E2E）",
+    "npm publish（含语义化版本号）",
+    "运行 npm run check:docs 确保命令表与文档同步"
+  ],
+  "security_threats": [
+    {
+      "threat": "Spoofing",
+      "vector": "伪造 CLI 参数",
+      "mitigation": "Commander 参数校验"
+    },
+    {
+      "threat": "Tampering",
+      "vector": "篡改 state.json",
+      "mitigation": "SHA256 hash 快照校验"
+    }
+  ],
+  "evolutionSuggestions": [
+    {
+      "type": "reusable-abstraction",
+      "description": "Extract E2E fixture pattern to shared test-utils"
+    }
+  ]
+}

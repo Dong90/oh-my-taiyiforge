@@ -9,7 +9,8 @@
     "task",
     "dev",
     "test",
-    "review"
+    "review",
+    "integration"
   ],
   "profile": "full",
   "skippedPhases": [],
@@ -33,8 +34,8 @@
     "taiyi-evolve",
     "taiyi-health"
   ],
-  "workflowStatus": "active",
+  "workflowStatus": "completed",
   "createdAt": "2026-07-03T08:24:48.413Z",
-  "updatedAt": "2026-07-03T08:45:01.084Z",
-  "version": 19
+  "updatedAt": "2026-07-03T09:03:02.082Z",
+  "version": 22
 }

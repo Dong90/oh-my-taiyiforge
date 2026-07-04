@@ -1,0 +1,20 @@
+{"ts":"2026-07-03T08:31:40.205Z","event":"phase:complete","slug":"ecc-hybrid-harness","phase":"change"}
+{"ts":"2026-07-03T08:32:47.140Z","event":"phase:complete","slug":"ecc-hybrid-harness","phase":"requirement"}
+{"ts":"2026-07-03T08:38:27.331Z","event":"phase:complete","slug":"ecc-hybrid-harness","phase":"design"}
+{"ts":"2026-07-03T08:39:56.202Z","event":"phase:complete","slug":"ecc-hybrid-harness","phase":"ui-design"}
+{"ts":"2026-07-03T08:41:03.897Z","event":"plan-audit:blocked","slug":"ecc-hybrid-harness","findings":["缺少范围边界说明（Non-goals / Out of scope）","缺少风险/阻塞项说明"]}
+{"ts":"2026-07-03T08:41:30.750Z","event":"phase:complete","slug":"ecc-hybrid-harness","phase":"task"}
+{"ts":"2026-07-03T08:43:05.653Z","event":"phase:complete","slug":"ecc-hybrid-harness","phase":"dev"}
+{"ts":"2026-07-03T08:43:58.707Z","event":"phase:complete","slug":"ecc-hybrid-harness","phase":"test"}
+{"ts":"2026-07-03T08:45:01.098Z","event":"phase:complete","slug":"ecc-hybrid-harness","phase":"review"}
+{"ts":"2026-07-03T08:45:41.301Z","event":"audit:blocked","slug":"ecc-hybrid-harness","findings":2}
+{"ts":"2026-07-03T08:47:01.330Z","event":"audit:blocked","slug":"ecc-hybrid-harness","findings":2}
+{"ts":"2026-07-03T08:47:30.466Z","event":"audit:blocked","slug":"ecc-hybrid-harness","findings":1}
+{"ts":"2026-07-03T08:47:53.377Z","event":"integration:cross-change-warning","slug":"ecc-hybrid-harness","code":"cross-change.pending-changes","message":"ecc-hybrid-harness 集成完成但还有 8 个变更正在开发中: api-adr(integration), api-swagger(integration), docker-compose-ci-cd(integration), jwt-api-key-cors(integration), prometheus-opentelemetry(integration), redis-celery(integration), repository-pattern-sqlalchemy-orm-alembic(integration), translation-assistant-tests(integration)。请确认兼容性后整体验证。"}
+{"ts":"2026-07-03T08:47:54.529Z","event":"phase:complete","slug":"ecc-hybrid-harness","phase":"integration"}
+{"ts":"2026-07-03T09:02:45.061Z","event":"aux:completed","slug":"ecc-hybrid-harness","skill":"taiyi-architect"}
+{"ts":"2026-07-03T09:03:02.084Z","event":"aux:completed","slug":"ecc-hybrid-harness","skill":"taiyi-health"}
+{"ts":"2026-07-03T09:28:44.073Z","event":"change:created","slug":"lang-test","profile":"lite"}
+{"ts":"2026-07-03T14:26:12.942Z","event":"change:created","slug":"demo-28-v28","profile":"lite"}
+{"ts":"2026-07-03T14:28:46.818Z","event":"change:created","slug":"dogfood-demo","profile":"full"}
+{"ts":"2026-07-03T14:29:07.004Z","event":"change:created","slug":"walkthrough-demo","profile":"api"}

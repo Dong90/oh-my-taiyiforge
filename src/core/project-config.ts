@@ -4,7 +4,7 @@ import { execSync } from "node:child_process";
 import type { ChangeProfile } from "./types.js";
 import type { PhaseDefinition } from "./types.js";
 
-/** 消费方 `.taiyi/config.json` — 项目级默认与场景偏好 */
+/** 消费方 `.taiyi/config.json` — 项目级开关与场景偏好（交付细节见 `.taiyi/delivery.yaml`） */
 export type ProjectScenarioId =
   | "service"
   | "design-system"
@@ -22,9 +22,9 @@ export type TaiyiProjectConfig = {
   defaultProfile?: ChangeProfile;
   /** false 时关闭 integration 交付门（env 仍可覆盖） */
   deliveryGate?: boolean;
-  /** 低于 env、高于 package.json 的交付验证命令 */
+  /** @deprecated 优先 `.taiyi/delivery.yaml` verify.command；仍可读且覆盖 yaml */
   deliveryVerifyCmd?: string;
-  /** false 时关闭 commit trailer 检查 */
+  /** @deprecated 不可用 config 关闭 trailer；仅 env TAIYI_COMMIT_TRAILERS=0 */
   commitTrailers?: boolean;
   /** 推荐场景（影响 playbook 文案与 `flow` 默认路径） */
   scenario?: ProjectScenarioId;

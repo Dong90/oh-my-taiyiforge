@@ -1,5 +1,14 @@
 ## Agent 协议（必须遵守）
 
+### Agent vs 引擎（第三方调用）
+
+| 谁 | 做什么 | 怎么调 |
+|----|--------|--------|
+| **Agent** | 加载 Skill、写工件、TDD/CR/QA 对话 | `/taiyi:write` · `/taiyi:skill …` · `@taiyi-*` |
+| **引擎** | 校验、advance、spawn CLI、归档 | `taiyi-forge.sh status/continue/harness`；`cap/*` → `providers.yaml` |
+
+引擎**不会**替 Agent 跑 Superpowers/ECC 的 LLM。`harness` 只列清单；`--auto` 须 `harness-check` 打卡。详见 `docs/taiyi/invoke-routing.md` 与 `prompts/inc/third-party-invoke.md`。
+
 ### 真源
 
 以 **`engineTruth`** 为准（`scripts/taiyi-forge.sh status [slug] --json --compact`）。解析 `currentPhase`、`skill`、`artifact`、`qualityReady`、`nextAction`、`blockers`、`profile`、`skippedPhases`。**勿凭聊天记忆**声称阶段已完成或未跑 `continue` 就推进。
@@ -12,7 +21,7 @@
 |----|-----------------|--------------|
 | **九阶段工件** | `new` `status` `write` `continue` `apply` | 见「工件循环」 |
 | **归档** | `archive` | 仅 workflow 完成后 `taiyi-forge.sh archive`；然后清上下文 |
-| **交付链** | `commit` `ship` `land` `release` | 加载 **gstack** Skill；**不走** write→continue |
+| **交付链** | `commit` `ship` `land` `release` | 走引擎 CLI；**不走** write→continue |
 | **会话** | `pause` `cancel` `list` | `pause`/`cancel`/`list`；恢复用 `pause --resume` |
 | **项目规划** | `plan` | `@taiyi-plan`；拆解后批量 `new`；尚无单 slug 循环 |
 | **CI 门禁** | `verify` | `taiyi-forge.sh verify`（工件+ harness，无 LLM） |
@@ -52,15 +61,15 @@ status → write（@taiyi-* Skill 写当前阶段工件）→ status（预检）
 |------|----------------|--------------|
 | `token` | `compress`→`@taiyi-compress`；其余子命令走引擎 | `token status\|record\|scan\|compress` |
 | `test` | `smoke`/`e2e`/`qa`/`ui`/`security` 见 `taiyi-test` prompt | `browser-smoke` 等 |
-| `review` | `loop`/`check`→`@taiyi-review`；`health`→`@taiyi-health`；`gstack`→gstack `review` | `review-loop` `review-check` `health` |
+| `review` | `loop`/`check`→`@taiyi-review`；`health`→`@taiyi-health` | `review-loop` `review-check` `health` |
 | `diagram` | `pipeline/c4/arch/render/flow`→对应 `@taiyi-diagram-*` | `mark-aux` 打卡 |
-| `skill` | `gstack`/`sp`/`explore`/`tdd`/`flow` 外部 Skill | 无统一引擎子命令 |
+| `skill` | `sp`/`explore`/`tdd`/`flow` 外部 Skill | 无统一引擎子命令 |
 
 伞形 **不**替代九阶段 `write`；若在某一阶段内调用，仍须 respect 当前 `currentPhase`。
 
 ### 辅助 Skill（可选 · 常于 write 后或 status 推荐）
 
-`@taiyi-intel-scan` `@taiyi-compress` `@taiyi-architect` `@taiyi-diagram-*` `@taiyi-health` 等 — 按 status 铁三角/harness 推荐加载；完成后 `mark-aux <slug> <skill-id>`（引擎）。
+`@taiyi-intel-scan` `@taiyi-compress` `@taiyi-architect` `@taiyi-diagram-*` `@taiyi-health` 等 — 按 status 双线 harness 推荐加载；完成后 `mark-aux <slug> <skill-id>`（引擎）。
 
 ### 运行时模式（引擎 · 用户显式触发）
 

@@ -31,7 +31,7 @@ EXACT SLASH ONLY: ONLY respond to exact slash commands (/taiyi:continue, /taiyi:
 | `/taiyi:apply` | `apply`（dev/test） |
 | `/taiyi:archive` | `archive` |
 
-**其余斜杠**（doctor、audit、ralph、token、gstack 交付链等）→ [`docs/taiyi/canonical-commands.md`](../../docs/taiyi/canonical-commands.md) · [`docs/taiyi/commands.yaml`](../../docs/taiyi/commands.yaml)
+**其余斜杠**（doctor、audit、ralph、token 等）→ [`docs/taiyi/canonical-commands.md`](../../docs/taiyi/canonical-commands.md) · [`docs/taiyi/commands.yaml`](../../docs/taiyi/commands.yaml)
 
 ## 执行协议（破坏性操作）
 

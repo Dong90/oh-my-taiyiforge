@@ -96,8 +96,8 @@ export function formatSpawnPlanPlain(plan: SpawnPlan): string {
   }
   lines.push("");
   lines.push("主会话协议:");
-  lines.push("  1. /taiyi:sp dispatching-parallel-agents — 每 worker 一 Task subagent");
-  lines.push("  2. /taiyi:sp subagent-driven-development — 主会话只协调与合并");
+  lines.push("  1. 每 worker 一 Task subagent（ECC autonomous-loops 风格）");
+  lines.push("  2. 主会话只协调与合并");
   lines.push("  3. 每 worker 完成 → /taiyi:ralph 或 /taiyi:review-check");
   lines.push("  4. 全部绿 → /taiyi:continue");
   return lines.join("\n");
@@ -124,7 +124,7 @@ export function formatUltraworkTaskProtocol(plan: SpawnPlan, options?: { autoDis
       taskPromptParts.push("Architecture conventions:", plan.archGuide);
     }
     taskPromptParts.push(
-      "TDD: /taiyi:sp test-driven-development",
+      "TDD: /taiyi:skill ecc tdd-workflow",
       "Done: ralph green + brief summary for merge",
     );
     const taskPrompt = taskPromptParts.join("\n");
@@ -134,7 +134,7 @@ ${taskPrompt}
     lines.push("");
   }
   lines.push("合并后: scripts/taiyi-forge.sh ralph · /taiyi:continue");
-  lines.push("Skill: @taiyi-ultrawork · /taiyi:sp dispatching-parallel-agents");
+  lines.push("Skill: @taiyi-ultrawork · ECC autonomous-loops 替代 Superpowers dispatching-parallel-agents");
   if (auto) {
     lines.push("验收: 全部 worker 返回后再声明 ultrawork 步进完成");
   }

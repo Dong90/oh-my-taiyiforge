@@ -56,10 +56,10 @@
 
 | 域 | 斜杠 |
 |----|------|
-| 外部 Skill 路由 | `/taiyi:skill <name>`（吸收 gstack · sp · explore · tdd · flow） |
+| 外部 Skill 路由 | `/taiyi:skill <name>`（吸收 sp · explore · tdd · flow） |
 | Token | `/taiyi:token status|record|scan|compress` |
 | 测试 | `/taiyi:test smoke|e2e|qa|ui|security` |
-| Review | `/taiyi:review loop|check|health|gstack` |
+| Review | `/taiyi:review loop|check|health` |
 | 架构图 | `/taiyi:diagram pipeline|c4|arch|render|flow` |
 
 ## 场景（legacy → plan）
@@ -93,12 +93,11 @@
 
 <!-- AUTO-GENERATED from docs/taiyi/commands.yaml — do not edit; run npm run generate:docs -->
 
-## 交付链（gstack）
+## 交付链（delivery.yaml + git/gh）
 
 ```text
-/taiyi:commit → /taiyi:verify → /taiyi:gstack review（可选）
-→ /taiyi:ship → /taiyi:land → /taiyi:continue integration
-→ /taiyi:archive
+/taiyi:commit → /taiyi:verify → /taiyi:ship
+→ /taiyi:land → /taiyi:continue integration → /taiyi:archive
 ```
 
 详见 [delivery-slash.md](./delivery-slash.md)。
@@ -117,9 +116,87 @@ Token 纪律：全量 `playwright test` / probe 在 **CI 或后台**跑；聊天
 |------|------|------|
 | `/taiyi:test smoke` | （聊天） | 内置 Playwright 冒烟（伞形 `test smoke`） |
 | `/taiyi:test e2e` | （聊天） | 目标项目 `npx playwright test`（伞形 `test e2e`） |
-| `/taiyi:test qa` | （聊天） | gstack browse 走查（伞形 `test qa`） |
+| `/taiyi:test qa` | （聊天） | browse 走查（伞形 `test qa`） |
 | `/taiyi:test ui` | （聊天） | test 阶段 UI QA（伞形 `test ui`） |
 
 <!-- END GENERATED browser-e2e -->
 
-详见 [autonomous.md](./autonomous.md) · [omc-reference.md](./omc-reference.md)。
+## 引擎 CLI 真源
+
+聊天斜杠仅是 58 个 `taiyi*` 引擎函数的子集。完整 CLI 命令真源：`src/plugin/handlers.ts` 与 `src/cli/taiyi.ts` 的 `handlers` dispatch 表。
+
+### 常用 CLI 子命令 ↔ 引擎函数映射
+
+| CLI 子命令 | 引擎函数（src/plugin/handlers.ts） | 用途 |
+|---|---|---|
+| `new` | `taiyiNew` | 新建变更 |
+| `status [slug]` | `taiyiStatus` | 引擎真源 |
+| `continue [slug]` | `taiyiContinue` | 推进阶段 |
+| `apply [slug]` | `taiyiApply` | 列出 harness 清单 |
+| `archive [slug]` | `taiyiArchive` | 归档变更 |
+| `cancel [slug]` | `taiyiCancel` | 取消变更 |
+| `pause [slug]` | `taiyiHandoff` | 写 HANDOFF.md |
+| `resume [slug]` | `taiyiResume` | 续作 |
+| `list` | `taiyiList` | 列变更 |
+| `doctor` | `taiyiDoctor` | 安装 + workspace 检查 |
+| `audit` | `taiyiAudit` | workflow 审计 |
+| `health` | `taiyiHealth` | medium/high 复杂度体检 |
+| `token` | `taiyiToken` | token 预算管理 |
+| `verify` | `taiyiCiVerify` | CI 验证 |
+| `feature` / `bug` | `taiyiFeature` / `taiyiBug` | 场景 playbook |
+| `flow` | `taiyiFlow` | 场景入口 |
+| `plan [file]` | `taiyiProjectPlan` | 项目级规划 |
+| `walkthrough` | `taiyiWalkthrough` | 九阶段走查 |
+| `prune` | `taiyiPrune` | 清孤儿 change dir |
+| `trim-ahead` | `taiyiTrimAhead` | 删超前工件 |
+| `undo` | `taiyiUndo` | 回退阶段 |
+| `complete` | `taiyiComplete` | 阶段 complete |
+| `write` | `taiyiWrite` / `taiyiPhaseWrite` | 写工件 |
+| `harness [slug]` | `taiyiHarness` | 双线 harness 清单 |
+| `harness-check` | `taiyiHarnessCheck` | 打卡 |
+| `review-check` / `review-loop` | `taiyiReviewCheck` / `taiyiReviewLoop` | 审查 |
+| `ralph` / `autopilot` / `ultrawork` / `team` / `step` | `taiyiRalph` / `taiyiAutopilot` / `taiyiUltrawork` / `taiyiTeam` / `taiyiStep` | 模式循环 |
+| `stop-mode` | `taiyiStopMode` | 强制停止 |
+| `agent <role>` | `taiyiAgent` | 专 Agent 角色 |
+| `modes` | `taiyiModes` | 列活跃模式 |
+| `keyword` | `taiyiKeyword` | OMC 兼容关键词检测 |
+| `milestone` | `taiyiMilestone` | 里程碑查询 |
+| `render [phase]` | `taiyiRender` | json → md 渲染 |
+| `commit-trailers` | `taiyiCommitTrailers` | trailer 建议 |
+| `delivery-plan` | `taiyiDeliveryPlan` | 交付链预览 |
+| `sync-openspec` / `sync-providers` | `taiyiSyncOpenspec` / `taiyiSyncProviders` | provider / openspec 同步 |
+| `assess` | `taiyiAssess` | 复杂度评估 |
+| `init` | `taiyiInit` | init（新变更） |
+| `complete <slug> [phase]` | `taiyiComplete` | 阶段 complete |
+| `loop [slug]` | `taiyiLoop` | loop 模式循环 |
+| `step [slug]` | `taiyiStep` | 单步推进 |
+| `harness-run-shell <slug>` | `taiyiHarnessRunShell` | 跑 post-complete shell hooks |
+| `mark-aux <slug> <skill>` | `taiyiMarkAux` | 标记辅助 skill 完成 |
+| `phases` | `taiyiPhases` | 列九阶段定义 |
+| `next` | `taiyiNext` | 下一步 guide |
+| `guide [slug]` | `taiyiGuide` | 当前该做什么 |
+| `remember [note]` | `taiyiRemember` | 项目记忆读写 |
+| `ci verify | platform | prompt` | `taiyiCiVerify / taiyiCiPlatform / taiyiCiPrompt` | CI 平台三件套 |
+| `workflow <skill> [slug]` | `taiyiWorkflowSkill` | workflow skill dispatch |
+| `chat-slash-only-hint` | `taiyiChatSlashOnlyHint / taiyiSlashOnlyHint` | chat-only 提示 |
+
+### 聊天斜杠 ↔ 引擎 CLI 真源
+
+| 聊天斜杠 | 引擎 CLI | 引擎函数 |
+|---|---|---|
+| `/taiyi:new <title>` | `taiyi new` | `taiyiNew` |
+| `/taiyi:status` | `taiyi status` | `taiyiStatus` |
+| `/taiyi:continue` | `taiyi continue` | `taiyiContinue` |
+| `/taiyi:apply` | `taiyi apply` | `taiyiApply` |
+| `/taiyi:archive` | `taiyi archive` | `taiyiArchive` |
+| `/taiyi:cancel` | `taiyi cancel` | `taiyiCancel` |
+| `/taiyi:pause` | `taiyi pause` | `taiyiHandoff` |
+| `/taiyi:resume` | `taiyi resume` | `taiyiResume` |
+| `/taiyi:list` | `taiyi list` | `taiyiList` |
+| `/taiyi:doctor` | `taiyi doctor` | `taiyiDoctor` |
+| `/taiyi:audit` | `taiyi audit` | `taiyiAudit` |
+| `/taiyi:health` | `taiyi health` | `taiyiHealth` |
+| `/taiyi:token` | `taiyi token` | `taiyiToken` |
+| `/taiyi:verify` | `taiyi verify` | `taiyiCiVerify` |
+
+详见 [canonical-commands.md §v30-项目1](#v30-项目1)。

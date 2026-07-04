@@ -15,12 +15,13 @@ describe("harness-hooks", () => {
     fs.rmSync(tmp, { recursive: true, force: true });
   });
 
-  it("returns review-phase superpowers and gstack hooks", () => {
+  it("returns review-phase ecc code-review and ecc security-scan (no gstack)", () => {
     const ctx = getHarnessContext(tmp, "feat", "review");
     expect(
-      ctx.hooks.some((h) => h.tool === "superpowers" && h.skill === "requesting-code-review"),
+      ctx.hooks.some((h) => h.tool === "ecc" && h.skill === "code-review"),
     ).toBe(true);
-    expect(ctx.hooks.some((h) => h.tool === "gstack" && h.skill === "review")).toBe(true);
+    expect(ctx.hooks.some((h) => h.tool === "ecc" && h.skill === "security-scan")).toBe(true);
+    expect(ctx.hooks.some((h) => h.tool === "gstack" && h.skill === "review")).toBe(false);
   });
 
   it("returns change-phase superpowers brainstorming hook", () => {
@@ -28,37 +29,57 @@ describe("harness-hooks", () => {
     expect(ctx.hooks.some((h) => h.tool === "superpowers" && h.skill === "brainstorming")).toBe(true);
   });
 
-  it("returns integration-phase finishing-a-development-branch hook", () => {
+  it("returns integration-phase ecc delivery-gate and verification-loop hooks", () => {
     const ctx = getHarnessContext(tmp, "feat", "integration");
     expect(
-      ctx.hooks.some((h) => h.tool === "superpowers" && h.skill === "finishing-a-development-branch"),
+      ctx.hooks.some((h) => h.tool === "ecc" && h.skill === "delivery-gate"),
     ).toBe(true);
     expect(
-      ctx.hooks.some((h) => h.tool === "superpowers" && h.skill === "verification-before-completion"),
+      ctx.hooks.some((h) => h.tool === "ecc" && h.skill === "verification-loop"),
     ).toBe(true);
   });
 
-  it("returns test-phase gstack qa hook", () => {
+  it("returns test-phase playwright and ecc coverage hooks (no gstack qa cap)", () => {
     const ctx = getHarnessContext(tmp, "feat", "test");
-    expect(ctx.hooks.some((h) => h.tool === "gstack" && h.skill === "qa")).toBe(true);
-    expect(ctx.hooks.some((h) => h.tool === "superpowers" && h.skill === "verification-before-completion")).toBe(
+    expect(ctx.hooks.some((h) => h.tool === "playwright")).toBe(true);
+    expect(ctx.hooks.some((h) => h.tool === "ecc" && h.skill === "test-coverage-analysis")).toBe(
       true,
     );
-    expect(ctx.hooks.find((h) => h.skill === "qa")?.optional).toBe(true);
+    expect(ctx.hooks.some((h) => h.tool === "ecc" && h.skill === "verification-loop")).toBe(
+      true,
+    );
+    expect(ctx.hooks.some((h) => h.tool === "gstack" && h.skill === "qa")).toBe(false);
   });
 
-  it("returns task-phase superpowers TDD hook", () => {
+  it("returns task-phase ecc tdd-workflow hook", () => {
     const ctx = getHarnessContext(tmp, "feat", "task");
     expect(
-      ctx.hooks.some((h) => h.tool === "superpowers" && h.skill === "test-driven-development"),
+      ctx.hooks.some((h) => h.tool === "ecc" && h.skill === "tdd-workflow"),
     ).toBe(true);
   });
 
-  it("returns ui-design optional plan-design-review hook", () => {
+  it("returns design-phase mandatory ecc architecture hooks", () => {
+    const ctx = getHarnessContext(tmp, "feat", "design");
+    const audit = ctx.hooks.find((h) => h.tool === "ecc" && h.skill === "architecture-audit");
+    expect(audit).toBeDefined();
+    expect(audit?.optional).not.toBe(true);
+  });
+
+  it("returns review-phase mandatory ecc security-scan hook", () => {
+    const ctx = getHarnessContext(tmp, "feat", "review");
+    const scan = ctx.hooks.find((h) => h.tool === "ecc" && h.skill === "security-scan");
+    expect(scan).toBeDefined();
+    expect(scan?.optional).not.toBe(true);
+  });
+
+  it("returns ui-design ecc hooks only (no gstack/web-quality cap)", () => {
     const ctx = getHarnessContext(tmp, "feat", "ui-design");
-    const hook = ctx.hooks.find((h) => h.tool === "gstack" && h.skill === "plan-design-review");
-    expect(hook).toBeDefined();
-    expect(hook?.optional).toBe(true);
+    expect(ctx.hooks.some((h) => h.tool === "ecc" && h.skill === "web-design-guidelines")).toBe(
+      true,
+    );
+    expect(ctx.hooks.some((h) => h.tool === "gstack" && h.skill === "plan-design-review")).toBe(
+      false,
+    );
   });
 
   it("notes missing openspec change on integration", () => {
@@ -68,18 +89,15 @@ describe("harness-hooks", () => {
     expect(ctx.notes.some((n) => n.includes("openspec/changes"))).toBe(true);
   });
 
-  it("returns test-phase playwright and review-phase semgrep hooks", () => {
+  it("returns test-phase playwright hook", () => {
     const testCtx = getHarnessContext(tmp, "feat", "test");
     expect(testCtx.hooks.some((h) => h.tool === "playwright")).toBe(true);
-    const reviewCtx = getHarnessContext(tmp, "feat", "review");
-    expect(reviewCtx.hooks.some((h) => h.tool === "semgrep")).toBe(true);
-    expect(reviewCtx.hooks.some((h) => h.tool === "trivy")).toBe(true);
   });
 
-  it("returns ui-design web-design-guidelines hook", () => {
+  it("returns ui-design ecc web-design-guidelines hook", () => {
     const ctx = getHarnessContext(tmp, "feat", "ui-design");
     expect(
-      ctx.hooks.some((h) => h.tool === "web-quality" && h.skill === "web-design-guidelines"),
+      ctx.hooks.some((h) => h.tool === "ecc" && h.skill === "web-design-guidelines"),
     ).toBe(true);
   });
 
@@ -97,14 +115,10 @@ describe("harness-hooks", () => {
     expect(hook?.command).toContain("npx playwright test");
   });
 
-  it("review phase includes semgrep and trivy provider hooks", () => {
+  it("review phase has no semgrep/trivy capability hooks after dedup", () => {
     const ctx = getHarnessContext(tmp, "feat", "review");
-    const semgrep = ctx.hooks.find((h) => h.tool === "semgrep");
-    expect(semgrep).toBeDefined();
-    expect(semgrep?.command).toContain("semgrep scan");
-    const trivy = ctx.hooks.find((h) => h.tool === "trivy");
-    expect(trivy).toBeDefined();
-    expect(trivy?.command).toContain("trivy fs");
+    expect(ctx.hooks.some((h) => h.tool === "semgrep")).toBe(false);
+    expect(ctx.hooks.some((h) => h.tool === "trivy")).toBe(false);
   });
 
   it("providers.yaml adds builtin provider notes for integration phase", () => {
@@ -122,10 +136,9 @@ describe("harness-hooks", () => {
 
     const ctx = getHarnessContext(tmp, "feat", "integration");
     expect(ctx.notes.some((n) => n.includes("taiyi-builtin") && n.includes("spec_archive"))).toBe(true);
-    expect(ctx.notes.some((n) => n.includes("taiyi-builtin") && n.includes("spec_sync"))).toBe(true);
   });
 
-  it("providers.yaml adds CLI hook for custom provider on review phase", () => {
+  it("providers.yaml adds CLI hook for custom provider on test phase", () => {
     const taiyiDir = path.join(tmp, ".taiyi");
     fs.mkdirSync(taiyiDir, { recursive: true });
     fs.writeFileSync(
@@ -133,20 +146,19 @@ describe("harness-hooks", () => {
       [
         "version: 1",
         "providers:",
-        "  custom-scanner:",
+        "  custom-e2e:",
         "    type: cli",
-        "    cli: custom-scan --dir $WORKSPACE",
-        "    detect: which custom-scan",
-        "    provides: [sast_scan, vuln_scan]",
+        "    cli: custom-e2e --dir $WORKSPACE",
+        "    detect: which custom-e2e",
+        "    provides: [e2e_test]",
         "assignments:",
-        "  sast_scan: custom-scanner",
-        "  vuln_scan: custom-scanner",
+        "  e2e_test: custom-e2e",
       ].join("\n") + "\n",
     );
 
-    const ctx = getHarnessContext(tmp, "feat", "review");
-    const hook = ctx.hooks.find((h) => h.tool === "custom-scanner");
+    const ctx = getHarnessContext(tmp, "feat", "test");
+    const hook = ctx.hooks.find((h) => h.tool === "custom-e2e");
     expect(hook).toBeDefined();
-    expect(hook?.command).toBe("custom-scan --dir " + tmp);
+    expect(hook?.command).toBe("custom-e2e --dir " + tmp);
   });
 });

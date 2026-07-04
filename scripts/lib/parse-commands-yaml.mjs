@@ -1,4 +1,4 @@
-/** @typedef {{ chat: string; meaning?: string; when?: string; engine?: string; gstack?: string }} YamlCommand */
+/** @typedef {{ chat: string; meaning?: string; when?: string; engine?: string }} YamlCommand */
 
 /**
  * @param {string} yaml
@@ -67,12 +67,6 @@ function parseCommandsBlock(yaml, sectionRe) {
       continue;
     }
 
-    const gstack = line.match(/^        gstack:\s*(.+)$/);
-    if (gstack) {
-      current.gstack = gstack[1].trim();
-      continue;
-    }
-
     if (line.match(/^        meaning:\s*\|\s*$/)) {
       inMeaning = true;
       continue;
@@ -107,38 +101,53 @@ export function parseProfileCommands(yaml, profile) {
 
 /** @param {string} yaml @returns {YamlCommand[]} */
 export function parseDeliveryCommands(yaml) {
-  return parseCommandsBlock(yaml, /^  delivery_gstack:\s*$/);
+  const fromChain = parseCommandsBlock(yaml, /^  delivery_chain:\s*$/);
+  if (fromChain.length) return fromChain;
+  return [];
 }
 
 const DELIVERY_CHAIN_SLASH = {
   commit: "/taiyi:commit",
   verify: "/taiyi:verify",
-  "gstack-review": "/taiyi:gstack review",
   ship: "/taiyi:ship",
   land: "/taiyi:land",
-  release: "/taiyi:release",
   "continue-integration": "/taiyi:continue integration",
   archive: "/taiyi:archive",
 };
 
-/** @param {string} yaml @returns {string[]} chain keys from delivery_gstack.chain */
+function parseDeliverySectionBlock(yaml) {
+  const lines = yaml.split("\n");
+  let inBlock = false;
+  const blockLines = [];
+  for (const line of lines) {
+    if (/^  delivery_chain:\s*$/.test(line)) {
+      inBlock = true;
+      blockLines.length = 0;
+      blockLines.push(line);
+      continue;
+    }
+    if (inBlock) {
+      if (/^  [a-z0-9_]+:\s*$/.test(line)) break;
+      blockLines.push(line);
+    }
+  }
+  return blockLines.join("\n");
+}
+
+/** @param {string} yaml @returns {string[]} chain keys from delivery_chain.chain */
 export function parseDeliveryChain(yaml) {
-  const m = yaml.match(/^    chain:\s*\[([^\]]+)\]/m);
+  const block = parseDeliverySectionBlock(yaml);
+  const m = block.match(/^\s+chain:\s*\[([^\]]+)\]/m);
   if (!m) return [];
   return m[1].split(",").map((s) => s.trim().replace(/['"]/g, ""));
 }
 
 /** @param {string[]} chain */
 export function formatDeliveryChainText(chain) {
-  const parts = chain.map((key) => {
-    let slash = DELIVERY_CHAIN_SLASH[key] ?? `/taiyi:${key}`;
-    if (key === "gstack-review" || key === "release") slash += "（可选）";
-    return slash;
-  });
-  if (parts.length <= 3) return parts.join(" → ");
+  const parts = chain.map((key) => DELIVERY_CHAIN_SLASH[key] ?? `/taiyi:${key}`);
+  if (parts.length <= 4) return parts.join(" → ");
   const lines = [parts.slice(0, 3).join(" → ")];
-  if (parts.length > 3) lines.push(`→ ${parts.slice(3, 6).join(" → ")}`);
-  if (parts.length > 6) lines.push(`→ ${parts.slice(6).join(" → ")}`);
+  if (parts.length > 3) lines.push(`→ ${parts.slice(3).join(" → ")}`);
   return lines.join("\n");
 }
 
@@ -415,7 +424,6 @@ export function findByChatNeedle(commands, needle) {
 export function formatEngineCell(cmd) {
   if (!cmd) return "（聊天）";
   if (cmd.engine?.includes("browser-smoke")) return "`browser-smoke`";
-  if (cmd.gstack) return "（聊天）";
   if (cmd.engine?.includes("playwright")) return "（聊天）";
   if (cmd.engine?.includes("提示")) return "（聊天）";
   const shell = cmd.engine?.match(/taiyi-forge\.sh (\S+)/);

@@ -13,10 +13,10 @@
 
 | 标准 | 作用 | 必选？ |
 |------|------|--------|
-| Harness Engineering | 不达标不进、无产出不出 | 是（`--auto` 铁三角 + complete） |
+| Harness Engineering | 不达标不进、无产出不出 | 是（`--auto` 双线 harness + complete） |
 | OpenSpec | 规格驱动，先文档后实现 | **可选层**（未装自动跳过） |
-| GStack | 架构决策 Options + Reason + Cost | 分阶段铁三角（部分 optional） |
-| Superpowers | 有界 Skill、可验证输出 | change/dev/test 铁三角 |
+| ECC | 多维深度分析（架构/安全/编码/语言/框架自动化） | 双线 harness 硬约束（Superpowers + ECC） |
+| Superpowers | 有界 Skill、可验证输出 | 双线 harness（change/dev/review） |
 | OMO | AI 执行，关键节点人审批 | 是（human-gate） |
 | Spec-Kit | 模板与检查清单可执行 | 是（templates + quality-gate） |
 
@@ -25,7 +25,7 @@
 ## 架构总览
 
 > 可编辑真源：[taiyiforge-architecture.svg](./taiyiforge-architecture.svg)（v0.22 · Flow-X 布局）· 重生成：`python3 scripts/generate-architecture-svg.py`  
-> **C4 真源**：[c4/README.md](./c4/README.md) · [c4/containers.md](./c4/containers.md) · **工程补充**：[diagrams/architecture.md](./diagrams/architecture.md) · **流程图**：[diagrams/flows.md](./diagrams/flows.md) · **C4 预览 SVG**：[c4/png/](./c4/png/) · 流水线：[diagrams/pipeline.md](./diagrams/pipeline.md) · `/taiyi:diagram-pipeline --repo`
+> **C4 真源**：[c4/README.md](./c4/README.md) · [c4/containers.md](./c4/containers.md) · **工程补充**：[c4/README.md](./c4/README.md)（即 C4 真源） · **流程图**：[taiyi/full-oss-flow.md](./taiyi/full-oss-flow.md) · **C4 预览 SVG**：[c4/png/](./c4/png/) · 流水线：[taiyi/nine-phase-flow.md](./taiyi/nine-phase-flow.md) · `/taiyi:diagram-pipeline --repo`
 
 ## 核心引擎能力（对齐架构图）
 
@@ -33,7 +33,7 @@
 |------|------|
 | 统一入口 | `taiyi` CLI · `taiyi-forge.sh` · 消费方 `scripts/taiyi-forge.sh`（install 写入）· OpenCode `taiyi_*` · `/taiyi:*` |
 | **意图分析** | `inferComplexitySignals` + `assessComplexity`；`/taiyi:status` 输出「意图分析: …」 |
-| **Token 预算** | `.token-usage.json` · 阶段上限 · 引擎 + **Superpowers/gstack 压缩** · 见 [token-budget.md](./taiyi/token-budget.md) · [token-compress.md](./taiyi/token-compress.md) |
+| **Token 预算** | `.token-usage.json` · 阶段上限 · 引擎 + **Superpowers 压缩** · 见 [token-budget.yaml](./taiyi/token-budget.yaml) · [token-compress-hooks.yaml](./taiyi/token-compress-hooks.yaml) |
 | 前置校验 | artifact 检测 · auto harness blockers · token enforce（可选） |
 | 路由决策 | profile full/api/lite · auxiliary-hints · phase-registry |
 | 复杂度评估 | `assess` · `state.complexity` |
@@ -69,7 +69,7 @@
 2. **Quality Gate（五维）** — `gates/quality-gate.ts`
 3. **Delivery Gate（0.22）** — `gates/delivery-gate.ts`（git 仓库 integration 前：有新 commit 且工作区干净；配合 integration 前 audit）
 
-铁三角 optional 钩子（ui-design plan-design-review、gstack/qa、OpenSpec）在 `--auto` 下**不阻塞** complete。
+双线 harness optional 钩子（ui-design web-design-guidelines、browser QA、OpenSpec）在 `--auto` 下**不阻塞** complete。
 
 ## 知识沉淀（架构图 footer）
 

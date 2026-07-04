@@ -36,7 +36,7 @@ export type RunInstallOptions = {
   registerPlugin?: boolean;
   /** npm install this package into ~/.config/opencode (local path or registry name) */
   opencodeNpmSpec?: string;
-  /** Install gstack / OpenSpec / Superpowers / web-quality-skills (default true; CI skips) */
+  /** Install OpenSpec / Superpowers / web-quality-skills / ECC (default true; CI skips) */
   installDeps?: boolean;
   cwd?: string;
   silent?: boolean;
@@ -183,9 +183,9 @@ function formatInstallSummary(targets: InstallTarget[], dirs: ReturnType<typeof 
   }
   const footer = targets.includes("opencode")
     ? "\n重启 OpenCode 后使用 taiyi_new / taiyi_init / taiyi_status 等工具。"
-    : "\n聊天：taiyi-* Skill + 铁三角；引擎：Agent 代跑 taiyi-forge / scripts/taiyi-forge.sh（见 docs/taiyi/invoke.yaml）。";
+    : "\n聊天：taiyi-* Skill + 双线 harness；引擎：Agent 代跑 taiyi-forge / scripts/taiyi-forge.sh（见 docs/taiyi/invoke.yaml）。";
   const depsNote =
-    "\n铁三角依赖：默认自动安装 OpenSpec CLI、gstack、Superpowers（OpenCode/Codex/Cursor）、web-quality-skills；跳过：--skip-deps 或 TAIYI_FORGE_SKIP_DEPS=1。";
+    "\n双线 harness 依赖：默认自动安装 OpenSpec CLI、Superpowers（OpenCode/Codex/Cursor）、web-quality-skills、ECC；跳过：--skip-deps 或 TAIYI_FORGE_SKIP_DEPS=1。";
   const scriptsNote =
     "\n消费方项目：package.json 已合并 npm run taiyi:doctor / taiyi:verify（跳过：TAIYI_FORGE_SKIP_PKG_SCRIPTS=1）。";
   return `\n[${PLUGIN_NAME}] 已安装：\n${lines.join("\n")}${footer}${depsNote}${scriptsNote}\n`;
@@ -328,7 +328,7 @@ export async function runInstallCli(argv: string[]): Promise<number> {
   --claude                ~/.claude/skills/taiyi-* + commands/taiyi-* + CLAUDE.md 控制面
   --codex                 ~/.codex/skills/taiyi-* + prompts/taiyi-* + AGENTS.md + config.toml
   --cursor                ~/.cursor/skills/taiyi-* + commands/taiyi-*
-  --skip-deps             不自动安装 OpenSpec / gstack / Superpowers / web-quality-skills
+  --skip-deps             不自动安装 OpenSpec / Superpowers / web-quality-skills / ECC
   --manifest <name>       选择 manifest preset: default | optimized（激进：ECC 强约束）
 
 组合示例：
@@ -338,7 +338,7 @@ export async function runInstallCli(argv: string[]): Promise<number> {
 
 Env:
   TAIYI_FORGE_SKIP_POSTINSTALL=1      跳过 postinstall
-  TAIYI_FORGE_SKIP_DEPS=1             跳过铁三角依赖自动安装
+  TAIYI_FORGE_SKIP_DEPS=1             跳过双线 harness 依赖自动安装
   TAIYI_FORGE_INSTALL_DEPS=0          同 SKIP_DEPS
   TAIYI_FORGE_INSTALL=claude,cursor   postinstall 仅装指定端（逗号分隔）
   TAIYI_FORGE_SKIP_OPENCODE_CONFIG=1  不写入 opencode.json
