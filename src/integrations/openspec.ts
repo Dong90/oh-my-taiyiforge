@@ -90,7 +90,15 @@ export function runOpenspecArchive(
     return {
       ok: false,
       skipped: true,
-      reason: `No openspec/changes/${slug}/ directory`,
+      reason: `OpenSpec 已初始化但未发现 change 目录：openspec/changes/${slug}/
+
+可能原因：
+  1. 该 change 从未在 OpenSpec 创建 → 跑：openspec change create ${slug} --why "<reason>"
+  2. 已经 archive 到 openspec/changes/archive/ 目录（脚本会检测到并跳过）
+  3. TAIYI_OPENSPEC_SKIP=1 跳过 OpenSpec 归档（仅在本地开发期）
+
+查看变更存档: ls openspec/changes/archive/ | grep -i ${slug}
+跳过此次: TAIYI_OPENSPEC_SKIP=1`,
     };
   }
 

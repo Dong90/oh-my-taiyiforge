@@ -42,6 +42,19 @@ export function isChangeScopedDirtyPath(file: string, slug: string): boolean {
   return false;
 }
 
+/** 分类 dirty 文件：in-scope（阻塞） / other-change / gitignore-noise。 */
+export type DirtyBucket = "in-scope" | "other-change" | "gitignore-noise" | "untracked-other";
+export function classifyDirtyFile(file: string, slug: string): DirtyBucket {
+  const n = normalizeRel(file);
+  if (isChangeScopedDirtyPath(n, slug)) return "in-scope";
+  if (n.startsWith(".taiyi/changes/") || n.startsWith(".taiyi/archive/")) return "other-change";
+  if (n.startsWith("openspec/changes/")) return "other-change";
+  if (n.includes("/.taiyi/")) return "gitignore-noise";
+  if (/^\.(editorconfig|prettierrc|prettierrc\.|eslintrc|eslintignore|gitignore|gitattributes|husky)/.test(n)) return "gitignore-noise";
+  if (n.endsWith(".log")) return "gitignore-noise";
+  return "untracked-other";
+}
+
 function listUncommitted(workspaceDir: string): string[] {
   const parts: string[] = [];
   for (const cmd of ["diff --name-only", "diff --cached --name-only", "ls-files --others --exclude-standard"]) {
@@ -115,24 +128,41 @@ export function evaluateDeliveryGate(
     } else {
       return {
         passed: false,
-        reason: `integration 需在实现代码 commit 之后（相对 ${base} 无新 commit）`,
+        reason: `integration 关卡：相对 ${base} 还没有 commit。请先 commit 实现的代码再试。`,
         hints: [
-          "先按 TASK 切片 commit，再 complete integration",
-          "或设置 TAIYI_DELIVERY_GATE=0 仅用于本地演示（不推荐）",
+          `git add .  # 暂存`,
+          `git commit -m "feat: ${options?.slug ?? "<slug>"} slice\n\nTaiyi-Change: ${options?.slug ?? "<slug>"}\nTaiyi-Phase: integration"`,
+          `git push  # 让远端 ${base.split('/').pop()} 也收到这些 commit`,
+          `或一键:taiyi-forge.sh commit ${options?.slug ?? "<slug>"} 生成正确 trailer`,
+          "本地演示: TAIYI_DELIVERY_GATE=0（不推荐 CI）",
         ],
       };    }
   }
 
   const dirty = listUncommitted(workspaceDir);
   const blockingDirty = options?.slug ? dirty.filter((f) => isChangeScopedDirtyPath(f, options.slug!)) : dirty;
+  // 完整 dirty 分类（用于更好错误信息）
+  const buckets: Record<DirtyBucket, string[]> = {
+    "in-scope": [],
+    "other-change": [],
+    "gitignore-noise": [],
+    "untracked-other": [],
+  };
+  for (const f of dirty) buckets[classifyDirtyFile(f, options?.slug ?? "")].push(f);
+
   if (blockingDirty.length > 0) {
     const slugTag = options?.slug ? `[${options.slug}] ` : "";
     const slugHint = options?.slug ?? "<slug>";
+    const noiseHint = buckets["gitignore-noise"].length > 0
+      ? `\n  也含 ${buckets["gitignore-noise"].length} 个 gitignore 噪音文件（建议加进 .gitignore 而非每次提交）`
+      : "";
     return {
       passed: false,
       reason: `delivery.not-closed ${slugTag}${blockingDirty.length} 个未提交文件（本变更范围）`,
       hints: [
         `未提交: ${blockingDirty.slice(0, 8).join(", ")}${blockingDirty.length > 8 ? " …" : ""}`,
+        `其他工作目录变化: ${buckets["other-change"].length} 个（不影响本 change）`,
+        noiseHint,
         "必须含 trailer,示例:",
         "  git add .",
         `  git commit -m "feat: deliver ${slugHint} slice\n\nTaiyi-Change: ${slugHint}\nTaiyi-Phase: integration"`,

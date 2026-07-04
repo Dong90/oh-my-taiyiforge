@@ -34,7 +34,9 @@ export const ReviewSchema = z.object({
       file: z.string().optional().describe("涉及文件"),
       line: z.string().optional().describe("行号"),
       action: z.string().optional().describe("建议操作"),
-      resolved: z.boolean().optional(),
+      approved_by: z.string().optional().describe("审批人 (例: <name> / 团队)"),
+      resolved: z.union([z.boolean(), z.enum(["deferred"])]).optional()
+        .describe("已解决 / 延后 (true=已修，deferred=稍后再修但放过本阶段)"),
     })
   ).optional().describe("审查发现"),
   blocking_items: z.array(z.string()).optional().describe("阻塞项"),

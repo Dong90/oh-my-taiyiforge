@@ -72,7 +72,7 @@ function parseTrailers(body: string): Record<string, string[]> {
   for (const line of body.split("\n")) {
     const m = line.match(/^([A-Za-z][A-Za-z0-9-]*):\s*(.+)$/);
     if (m) {
-      const key = m[1]!;
+      const key = m[1]!.toLowerCase();
       const val = m[2]!.trim();
       if (out[key]) out[key]!.push(val);
       else out[key] = [val];
@@ -145,7 +145,8 @@ function evaluateTrailersForConfig(
   let missing = 0;
   for (const c of commits) {
     const trailers = parseTrailers(c.body);
-    const change = trailers[slugKey];
+    // parseTrailers lowercases keys for case-insensitive match; lookup canonical key
+    const change = trailers[slugKey.toLowerCase()];
     if (change?.includes(expectedSlug) || change?.includes(slug)) matched++;
     else if (!change) missing++;
   }
@@ -184,12 +185,15 @@ export function evaluateCommitTrailers(
     "feat: deliver change slice",
     workspaceDir,
   );
+  // 提示期望的标准大写形式（git trailer 实际为 case-insensitive，但人类用户易写错）
+  const canonicalKey = slugKey.charAt(0).toUpperCase() + slugKey.slice(1);
   return {
     passed: false,
-    reason: `相对 ${base} 的 ${commits.length} 个 commit 中无 ${slugKey}: ${slug} trailer`,
+    reason: `相对 ${base} 的 ${commits.length} 个 commit 中无 ${canonicalKey}: <slug> trailer（匹配 case-insensitive，期望 \`${canonicalKey}: ${slug}\`）`,
     missingCommits: missing || commits.length,
     hints: [
-      "在实现 commit message 末尾加 trailer（见 docs/taiyi/configuration.md）",
+      `在实现 commit message 末尾加 trailer（行尾格式 \`${canonicalKey}: <slug>\`）`,
+      "git trailer 匹配为大小写不敏感，但建议保持标准大写以提高可读性",
       "示例见下方 suggestion",
       "关闭检查: TAIYI_COMMIT_TRAILERS=0",
     ],
