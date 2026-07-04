@@ -128,7 +128,8 @@ export function validateArtifactFile(
     const count = countPlaceholders(content);
     scores.completeness = false;
     if (!hints.some((h) => h.includes("占位")) && !isSeedTemplate(content)) {
-      hints.push(`含 ${count.length} 个未填写占位符（${count.slice(0, 3).join(", ")}${count.length > 3 ? "…" : ""}）`);
+      const show = count.slice(0, 8);
+      hints.push(`含 ${count.length} 个未填写占位符（${show.join(", ")}${count.length > 8 ? ` …等 ${count.length - 8} 个` : ""}）`);
     }
   }
   if (/\{\{title\}\}|\{\{slug\}\}/.test(content)) {
@@ -192,50 +193,9 @@ export function validateArtifactFile(
   return { scores, hints };
 }
 
-/** 内容质量门控 — 检测残留占位符/空表/问题描述错误 */
+/** 内容质量门控 — 检测空表/问题描述错误（占位符检测已移入 placeholder-check.ts） */
 export function contentQualityGate(phaseId: PhaseId, content: string): string[] {
   const issues: string[] = [];
-
-  // 1. 占位符模式扫描
-  const PLACEHOLDER_PATTERNS: RegExp[] = [
-    /\[TODO:/, /\bTODO\b/, /-- TODO/, /\[Minimal\s/,
-    /\[deployed\/pending\]/, /0\.0\.0/,
-    /\[有没有完全不同的方案更值得做/,
-    /\[变更目的和价值\]/,
-    /\[重新定义问题会怎样\]/,
-    /\[有无现成方案\]/,
-    /\[技术方案概述\]/,
-    /\[待补充验证命令\]/,
-    /\[涉及页面\/组件\]/,
-    /\[精确到命令\]/,
-    /\[理想结果\]/,
-    /\[量化条件\]/,
-    /\[填写理由\]/,
-    /\[待决策\]/,
-    /\[X人天\]/,
-    /\[现状\]/,
-    /\[场景名\]/,
-    /\[最多N\]/,
-    /\[量化\]/,
-    /\[步骤\]/,
-    /\[命令\]/,
-    /\[描述\]/,
-    /\[理由\]/,
-    /\[待定\]/,
-    /\[N\]min\b/,
-    /\[日期\]/,
-    /\[无\/CLI\/npm\/Docker\/其他\]/,
-    /_待补充/, /_待定_/, /_待估_/, /_待选定_/,
-    /_在此列出/, /_write_files 列表_/,
-    /_结合业务说明_/, /_3 个参考产品_/,
-    /_N_min\b/, /\[N\]\/10/, /\[N天\/小时\]/,
-  ];
-  for (const regex of PLACEHOLDER_PATTERNS) {
-    if (regex.test(content)) {
-      issues.push(`[质量门控] 占位符残留: ${regex}`);
-      break;
-    }
-  }
 
   // 2. 空表检测: 表头下行即空或全空单元格
   const lines = content.split("\n");
