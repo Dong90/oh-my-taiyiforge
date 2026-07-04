@@ -7,6 +7,7 @@ import { getPhase } from "./phase-registry.js";
 import { artifactPathForPhase } from "./artifact-validator.js";
 import { DEV_COMPLETE_EVIDENCE } from "./dev-complete.js";
 import { TemplateEngine, type SeedVars } from "./template-engine.js";
+import { TAIYI_SEED_MARKER } from "./seed-marker.js";
 import type { PhaseId } from "./types.js";
 
 const PASSING_GATES = {
@@ -35,7 +36,8 @@ export function renderE2ePhaseArtifact(
 
   const vars: SeedVars = { slug: "e2e-demo", title: "E2E Demo" };
   const engine = new TemplateEngine();
-  return engine.render(raw, { ...vars, ...(artifact.json as Record<string, unknown>) });
+  const rendered = engine.render(raw, { ...vars, ...(artifact.json as Record<string, unknown>) });
+  return `${TAIYI_SEED_MARKER}\n${rendered}`;
 }
 
 export function writeE2eArtifacts(changeDir: string, templatesDir?: string): void {
