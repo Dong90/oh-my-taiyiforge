@@ -74,7 +74,7 @@ const TaiyiForgePlugin: Plugin = async () => {
           autoHarness: tool.schema
             .boolean()
             .optional()
-            .describe("Full auto orchestration: iron triangle + auxiliary required before complete"),
+            .describe("Full auto orchestration: dual-line harness + auxiliary required before complete"),
         },
         async execute(args, ctx) {
           const r = taiyiInit(ctx.directory, args.slug, {
@@ -102,7 +102,7 @@ const TaiyiForgePlugin: Plugin = async () => {
           auto: tool.schema
             .boolean()
             .optional()
-            .describe("Enable full auto orchestration (iron triangle + auxiliary before complete)"),
+            .describe("Enable full auto orchestration (dual-line harness + auxiliary before complete)"),
           noAuto: tool.schema.boolean().optional().describe("Force manual mode even if TAIYI_AUTO_HARNESS=1"),
           force: tool.schema.boolean().optional().describe("Re-init if slug already exists"),
         },
@@ -279,7 +279,7 @@ const TaiyiForgePlugin: Plugin = async () => {
       }),
       taiyi_harness: tool({
         description:
-          "Auto orchestration plan: iron triangle hooks, auxiliary skills, main phase (for --auto mode).",
+          "Auto orchestration plan: dual-line harness hooks, auxiliary skills, main phase (for --auto mode).",
         args: {
           slug: tool.schema.string(),
         },
@@ -289,7 +289,7 @@ const TaiyiForgePlugin: Plugin = async () => {
         },
       }),
       taiyi_harness_check: tool({
-        description: "Mark an iron-triangle hook as completed (checkpoint for auto mode).",
+        description: "Mark a dual-line harness hook as completed (checkpoint for auto mode).",
         args: {
           slug: tool.schema.string(),
           hookKey: tool.schema.string().describe("e.g. superpowers/brainstorming"),

@@ -28,15 +28,23 @@ export function bumpLoopRound(
   lastPhase: string,
 ): LoopStateFile {
   const prev = readLoopState(changeDir);
+  const nextRound = (prev?.slug === slug ? prev.round : 0) + 1;
   const next: LoopStateFile = {
     slug,
-    round: (prev?.slug === slug ? prev.round : 0) + 1,
+    round: nextRound,
     maxRounds,
     lastPhase,
     updatedAt: new Date().toISOString(),
   };
   fs.writeFileSync(path.join(changeDir, FILE), JSON.stringify(next, null, 2), "utf8");
   return next;
+}
+
+/** 读取 loop 状态，检查是否超过 maxRounds 上限 */
+export function isLoopExhausted(changeDir: string, slug: string, maxRounds: number): boolean {
+  const state = readLoopState(changeDir);
+  if (!state || state.slug !== slug) return false;
+  return state.round >= maxRounds;
 }
 
 export function clearLoopState(changeDir: string): void {

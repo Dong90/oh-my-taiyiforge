@@ -627,7 +627,7 @@ describe("E2E: full pipeline (discover → merge → dispatch → source)", () =
     const r1 = ProviderRegistry.forProject(tmpDir);
     // builtin 内置的能力
     expect(r1.getProviderForCapability("spec_archive")!.provider).toBe("openspec");
-    expect(r1.getProviderForCapability("code_review")!.provider).toBe("gstack");
+    expect(r1.getProviderForCapability("code_review")!.provider).toBe("taiyi-builtin");
     expect(r1.getProviderForCapability("sast_scan")!.provider).toBe("semgrep");
 
     // source 追踪正确
@@ -682,17 +682,17 @@ describe("E2E: full pipeline (discover → merge → dispatch → source)", () =
     // ── 第 4 步：用户改用 defaults 而不是 assignments ──
     fs.writeFileSync(
       path.join(tmpDir, ".taiyi", "providers.yaml"),
-      "version: 1\ndefaults:\n  code_review: gstack\n",
+      "version: 1\ndefaults:\n  code_review: playwright\n",
     );
 
     const r4 = ProviderRegistry.forProjectFresh(tmpDir);
 
     // defaults 会改变回退值（影响 ensureDefaults 的填充）
-    expect(r4.getProviderForCapability("code_review")!.provider).toBe("gstack");
+    expect(r4.getProviderForCapability("code_review")!.provider).toBe("playwright");
     const origin4 = r4.getCapabilityOrigin("code_review");
     expect(origin4.source).toBe("project");
     expect(origin4.sourceDetail).toBe(".taiyi/providers.yaml");
-    expect(origin4.provider).toBe("gstack");
-    expect(origin4.type).toBe("skill_bundle");
+    expect(origin4.provider).toBe("playwright");
+    expect(origin4.type).toBe("cli");
   });
 });

@@ -155,7 +155,7 @@ export function buildPhaseGuide(
       : null;
     let nextAction = guide.nextAction;
     if (stepBlockers.length > 0) {
-      nextAction = `先解决顺序冲突（删除超前工件或勿跳步），再 complete 过关`;
+      nextAction = `先解决顺序冲突（删除超前工件或勿跳步），再 continue 过关`;
     } else if (earlyCode) {
       nextAction = `dev 前勿改业务代码；撤销或暂存改动后再推进。`;
     }
@@ -240,25 +240,31 @@ export function buildPhaseGuide(
 
   if (needsHealth) {
     nextAction = `${state.complexity?.level} 复杂度：health → mark-aux，再 review-loop`;
-  } else if (state.currentPhase === "review") {
-    nextAction = `review-loop（会话内循环直到机器审查通过）→ complete（--approver）`;
-  } else if (state.autoHarness) {
-    nextAction = `全自动：harness 清单 → 铁三角打卡 → complete`;
+  } else if (state.currentPhase === "review" && !qualityReady) {
+    nextAction = `review-loop（会话内循环直到机器审查通过）→ continue（--approver）`;
   } else if (!artifactExists) {
     const preHint =
       pending.length > 0 && state.currentPhase === "change"
         ? `建议先处理辅助: ${pending.join(", ")}，再`
         : "";
-    nextAction = `${preHint}加载「${phase.skill}」编辑 ${phase.artifact} → complete${humanGate ? "（--approver）" : ""}`;
+    nextAction = `${preHint}加载「${phase.skill}」编辑 ${phase.artifact} → status → continue${humanGate ? "（--approver）" : ""}`;
   } else if (!qualityReady) {
-    nextAction = `完善 ${phase.artifact}（qualityHints）→ complete${humanGate ? "（--approver）" : ""}`;
-    if (state.currentPhase === "dev" || state.currentPhase === "test") {
-      nextAction = `实现 → apply 或 complete`;
+    if (state.autoHarness) {
+      nextAction = `全自动：harness 清单 → 双线 harness 打卡 → 完善 ${phase.artifact} → status → continue${humanGate ? "（--approver）" : ""}`;
+    } else {
+      nextAction = `完善 ${phase.artifact}（qualityHints）→ status → continue${humanGate ? "（--approver）" : ""}`;
     }
+    if (state.currentPhase === "dev" || state.currentPhase === "test") {
+      nextAction = `实现 → apply → status → continue`;
+    }
+  } else if (state.currentPhase === "review") {
+    nextAction = `review-loop 通过 → continue（--approver）${auxNote}`;
   } else if (humanGate) {
-    nextAction = `人工确认 → complete（--approver）${auxNote}`;
+    nextAction = `status 预检通过 → 人工确认 → continue（--approver）${auxNote}`;
+  } else if (state.autoHarness) {
+    nextAction = `工件就绪 → harness-check → continue${auxNote}`;
   } else {
-    nextAction = `工件就绪 → complete${auxNote}`;
+    nextAction = `工件就绪 → continue${auxNote}`;
   }
 
   return attachMeta({

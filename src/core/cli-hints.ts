@@ -64,7 +64,7 @@ export function formatMultipleActiveChanges(slugs: string[], maxShow = 5): strin
 
 export function formatUnknownHarnessHook(hookRef: string, available: string[]): string {
   if (available.length === 0) {
-    return `Unknown harness hook: ${hookRef}\n提示: taiyi harness <slug> 查看当前阶段铁三角清单`;
+    return `Unknown harness hook: ${hookRef}\n提示: taiyi harness <slug> 查看当前阶段双线 harness 清单`;
   }
   const show = available.slice(0, 8);
   const rest = available.length - show.length;

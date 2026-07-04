@@ -62,7 +62,7 @@ export function validateArtifactContent(
   };
 }
 
-const ZOD_SCHEMAS: Record<Exclude<PhaseId, "dev">, ZodSchema> = {
+export const ZOD_SCHEMAS: Record<Exclude<PhaseId, "dev">, ZodSchema> = {
   change: ChangeSchema,
   requirement: RequirementSchema,
   design: DesignSchema,

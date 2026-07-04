@@ -120,7 +120,7 @@ describe("fan-out-executor", () => {
       const out = generateCursorDispatch(plan);
       expect(out).toContain("Task(subagent_type=");
       expect(out).toContain("/taiyi:agent executor");
-      expect(out).toContain("/taiyi:sp test-driven-development");
+      expect(out).toContain("/taiyi:skill ecc tdd-workflow");
     });
   });
 

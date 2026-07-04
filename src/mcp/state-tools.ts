@@ -13,7 +13,8 @@ import { loadTokenBudgetConfig } from "../core/token/budget-config.js";
 import { WorkflowEngine } from "../core/workflow-engine.js";
 import type { ChangeState } from "../core/types.js";
 import type { EngineTruth } from "../core/engine-truth.js";
-import { taiyiStep, taiyiStopMode, taiyiModes, taiyiKeyword, taiyiRemember, taiyiWorkflowSkill, taiyiDoctor, taiyiAudit } from "../plugin/handlers.js";
+import { taiyiStep, taiyiStopMode, taiyiModes, taiyiKeyword, taiyiRemember, taiyiWorkflowSkill, taiyiDoctor, taiyiAudit, taiyiSyncProviders, taiyiDeliveryPlan } from "../plugin/handlers.js";
+import type { InstallTarget } from "../install/types.js";
 import { buildDoctorJsonCompact, type DoctorJsonCompact } from "../core/doctor.js";
 import { buildAuditJsonCompact, type AuditJsonCompact } from "../core/workflow-audit.js";
 import { resolvePackageRoot } from "../core/package-root.js";
@@ -84,7 +85,7 @@ export function taiyiStateHandoff(
   const guide = buildPhaseGuide(taiyiRoot, resolved.slug, state, workspaceDir);
   const statusLine = formatPhaseProgressLine(guide);
   const changeDir = path.join(taiyiRoot, "changes", resolved.slug);
-  const tokenCfg = loadTokenBudgetConfig();
+  const tokenCfg = loadTokenBudgetConfig(process.env, workspaceDir);
   const artifactScan = scanArtifactTokens(changeDir);
   const compressHint =
     artifactScan.total > tokenCfg.compressThreshold
@@ -238,4 +239,50 @@ export function taiyiDoctorCompact(
 export function taiyiAuditCompact(workspaceDir: string, slug?: string): AuditJsonCompact {
   const r = taiyiAudit(workspaceDir, { slug, plain: false });
   return buildAuditJsonCompact(r.report);
+}
+
+/** MCP slim — provider sync */
+export function taiyiSyncProvidersCompact(
+  workspaceDir: string,
+  targets?: string[],
+): { ok: boolean; detail: string; error?: string } {
+  const r = taiyiSyncProviders(workspaceDir, targets as InstallTarget[] | undefined);
+  if (!r.ok) return { ok: false, detail: r.error ?? "sync failed", error: r.error };
+  return { ok: true, detail: r.detail };
+}
+
+export type DeliveryPlanCompact = {
+  ok: boolean;
+  slug: string;
+  phase: string;
+  chain: string[];
+  steps: Array<{ id: string; kind: string; command?: string; description: string }>;
+  text?: string;
+  error?: string;
+};
+
+/** MCP slim — 对齐 `delivery-plan --json` */
+export function taiyiDeliveryPlanCompact(
+  workspaceDir: string,
+  slug?: string,
+): DeliveryPlanCompact {
+  const r = taiyiDeliveryPlan(workspaceDir, slug);
+  if (!r.ok) {
+    return {
+      ok: false,
+      slug: slug ?? "",
+      phase: "",
+      chain: [],
+      steps: [],
+      error: r.error,
+    };
+  }
+  return {
+    ok: true,
+    slug: r.slug,
+    phase: r.phase,
+    chain: r.plan.chain,
+    steps: r.plan.steps,
+    text: r.text,
+  };
 }

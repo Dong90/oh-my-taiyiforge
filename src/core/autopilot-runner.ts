@@ -52,7 +52,7 @@ export function runAutopilotGuide(
     "",
     "循环（每阶段）:",
     "  1. scripts/taiyi-forge.sh harness <slug>",
-    "  2. @taiyi-orchestrator — 铁三角 → 辅助 mark-aux → 主 Skill 写工件",
+    "  2. @taiyi-orchestrator — 双线 harness → 辅助 mark-aux → 主 Skill 写工件",
     "  3. dev/test: /taiyi:tdd dev · /taiyi:apply · /taiyi:ralph",
     "  4. review: /taiyi:review-loop · /taiyi:health",
     "  5. /taiyi:continue（change/design/review 须 --approver）",

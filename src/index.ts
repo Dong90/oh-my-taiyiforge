@@ -38,6 +38,26 @@ export {
 
 // Project config
 export { loadProjectConfig, projectConfigPath } from "./core/project-config.js";
+export {
+  resolveDeliveryConfig,
+  loadDeliveryYamlLayers,
+  projectDeliveryYamlPath,
+  bundledDeliveryYamlPath,
+  resolveDeliveryGateEnabled,
+  DEFAULT_DELIVERY_CONFIG,
+} from "./core/delivery-config.js";
+export {
+  renderCommitMessage,
+  renderCommitSubject,
+  renderTemplate as renderDeliveryTemplate,
+} from "./core/delivery-templates.js";
+export { planDeliveryChain, formatDeliveryPlanPlain } from "./core/delivery-plan.js";
+export {
+  resolveWorkspaceConfig,
+  listWorkspaceConfigPaths,
+  workspaceConfigDoctorChecks,
+} from "./core/workspace-config.js";
+export type { WorkspaceConfigSnapshot } from "./core/workspace-config.js";
 
 // Templates
 export { TemplateEngine, getTemplateEngine, renderTemplate } from "./core/template-engine.js";

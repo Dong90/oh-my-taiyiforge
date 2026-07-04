@@ -85,7 +85,7 @@ export function generateOpenCodeDispatch(plan: FanOutPlan): string {
     }
     promptParts.push(
       w.testCommand ? `Verify: ${w.testCommand}` : "",
-      "TDD first: write failing test, then minimal implementation.",
+      "ECC TDD: write failing test, then minimal implementation.",
       "When done: output SUMMARY + test results.",
     );
     const prompt = promptParts.filter(Boolean).join("\n");
@@ -116,7 +116,7 @@ export function generateClaudeDispatch(plan: FanOutPlan): string {
     }
     promptParts.push(
       w.testCommand ? `Verify: ${w.testCommand}` : "",
-      "Use TDD. Output SUMMARY + test results when done.",
+      "ECC TDD: output SUMMARY + test results when done.",
     );
     const prompt = promptParts.filter(Boolean).join(" ");
     lines.push(`## Worker ${w.id}: ${w.label}`);
@@ -152,7 +152,7 @@ export function generateCursorDispatch(plan: FanOutPlan): string {
     }
     promptParts.push(
       w.testCommand ? `Test: ${w.testCommand}` : "Test: npm test",
-      "TDD: /taiyi:sp test-driven-development",
+      "TDD: /taiyi:skill ecc tdd-workflow",
       "Done: summary + test results",
     );
     const prompt = promptParts.join("\n");

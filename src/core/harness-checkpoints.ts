@@ -36,7 +36,7 @@ export function markHarnessCheckpoint(
   fs.writeFileSync(checkpointPath(changeDir), JSON.stringify(all, null, 2) + "\n", "utf8");
 }
 
-export function pendingIronTriangleHooks(
+export function pendingDualLineHarnessHooks(
   changeDir: string,
   phase: PhaseId,
   hooks: HarnessHook[],
@@ -44,10 +44,15 @@ export function pendingIronTriangleHooks(
 ): string[] {
   const done = readHarnessCheckpoints(changeDir)[phase] ?? {};
   const pending: string[] = [];
+  const seen = new Set<string>();
   for (const h of hooks) {
     if (h.optional) continue;
     if (h.tool === "openspec" && !openspecDetected) continue;
     const key = hookKey(h);
+    // 去重：同一 hook key（如 ecc/tdd-workflow）可能从多个源被重复添加
+    // 多个源：workflow-manifest.yaml + token-compress-hooks.yaml
+    if (seen.has(key)) continue;
+    seen.add(key);
     if (!done[key]) pending.push(key);
   }
   return pending;

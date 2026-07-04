@@ -1,0 +1,41 @@
+{
+  "slug": "ecc-hybrid-harness",
+  "currentPhase": "integration",
+  "completedPhases": [
+    "change",
+    "requirement",
+    "design",
+    "ui-design",
+    "task",
+    "dev",
+    "test",
+    "review",
+    "integration"
+  ],
+  "profile": "full",
+  "skippedPhases": [],
+  "strictDev": false,
+  "autoHarness": true,
+  "complexity": {
+    "level": "medium",
+    "score": 10,
+    "recommendedSkills": [
+      "taiyi-intel-scan",
+      "taiyi-restyle",
+      "taiyi-architect",
+      "taiyi-health"
+    ]
+  },
+  "auxiliaryCompleted": [
+    "taiyi-intel-scan",
+    "taiyi-architect",
+    "taiyi-restyle",
+    "taiyi-compress",
+    "taiyi-evolve",
+    "taiyi-health"
+  ],
+  "workflowStatus": "completed",
+  "createdAt": "2026-07-03T08:24:48.413Z",
+  "updatedAt": "2026-07-03T09:03:02.082Z",
+  "version": 22
+}

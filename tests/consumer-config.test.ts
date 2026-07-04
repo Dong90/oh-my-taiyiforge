@@ -28,4 +28,14 @@ describe("consumer-config", () => {
     );
     expect(resolveDeliveryVerifyCmd(dir, {})).toBe("npm test");
   });
+
+  it("reads verify command from delivery.yaml when config.json absent", () => {
+    dir = fs.mkdtempSync(path.join(os.tmpdir(), "taiyi-yaml-verify-"));
+    fs.mkdirSync(path.join(dir, ".taiyi"), { recursive: true });
+    fs.writeFileSync(
+      path.join(dir, ".taiyi", "delivery.yaml"),
+      "verify:\n  command: npm run verify\n",
+    );
+    expect(resolveDeliveryVerifyCmd(dir, {})).toBe("npm run verify");
+  });
 });

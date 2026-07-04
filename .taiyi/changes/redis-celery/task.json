@@ -1,1 +1,0 @@
-{"title":"缓存与异步队列","slices":[{"id":"slice-1","name":"Redis 连接 + 缓存装饰器","depends_on":[]},{"id":"slice-2","name":"翻译结果缓存集成","depends_on":["slice-1"]},{"id":"slice-3","name":"Celery 配置 + worker","depends_on":[]},{"id":"slice-4","name":"异步翻译任务","depends_on":["slice-3"]}]}

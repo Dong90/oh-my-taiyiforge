@@ -68,18 +68,39 @@ function parseYamlBudget(file: string): Partial<TokenBudgetConfig> | null {
   return out;
 }
 
+export function projectTokenBudgetPath(workspaceDir: string): string {
+  return path.join(workspaceDir, ".taiyi", "token-budget.yaml");
+}
+
+function mergeTokenBudgetLayer(
+  base: TokenBudgetConfig,
+  layer: Partial<TokenBudgetConfig> | null,
+): TokenBudgetConfig {
+  if (!layer) return base;
+  return {
+    ...base,
+    ...layer,
+    phaseLimits: { ...base.phaseLimits, ...layer.phaseLimits },
+  };
+}
+
 export function loadTokenBudgetConfig(
   env: NodeJS.ProcessEnv = process.env,
-  configPath?: string,
+  workspaceDir?: string,
 ): TokenBudgetConfig {
   const pkgRoot = resolvePackageRoot(import.meta.url);
-  const yamlPath = configPath ?? path.join(pkgRoot, "docs", "taiyi", "token-budget.yaml");
-  const fromYaml = parseYamlBudget(yamlPath);
-  const cfg: TokenBudgetConfig = {
+  const bundledPath = path.join(pkgRoot, "docs", "taiyi", "token-budget.yaml");
+  const fromBundled = parseYamlBudget(bundledPath);
+  let cfg: TokenBudgetConfig = {
     ...DEFAULTS,
-    phaseLimits: { ...DEFAULT_PHASE_LIMITS, ...fromYaml?.phaseLimits },
-    ...fromYaml,
+    phaseLimits: { ...DEFAULT_PHASE_LIMITS, ...fromBundled?.phaseLimits },
+    ...fromBundled,
   };
+
+  if (workspaceDir) {
+    const projectPath = projectTokenBudgetPath(workspaceDir);
+    cfg = mergeTokenBudgetLayer(cfg, parseYamlBudget(projectPath));
+  }
 
   if (env.TAIYI_TOKEN_BUDGET?.trim()) {
     cfg.globalBudget = Number(env.TAIYI_TOKEN_BUDGET);

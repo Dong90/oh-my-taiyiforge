@@ -1,0 +1,14 @@
+version: 1
+
+# 安装时自动检测到的 Provider assignment（仅供查阅）
+# 如需覆盖某能力的 provider，修改下方 assignment 后保存即可生效
+# 未列出的能力使用内置默认
+
+assignments:
+  spec_archive: openspec
+  spec_sync: openspec
+  process_skills: superpowers
+  accessibility: web-quality
+  design_guidelines: web-quality
+
+# Provider 定义和默认分配见引擎内置 (src/config/providers.ts) 或插件的 package.json

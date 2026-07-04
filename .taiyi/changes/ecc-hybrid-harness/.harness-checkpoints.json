@@ -1,0 +1,46 @@
+{
+  "change": {
+    "superpowers/brainstorming": true,
+    "ecc/continuous-learning": true
+  },
+  "requirement": {
+    "ecc/iterative-retrieval": true
+  },
+  "design": {
+    "ecc/architecture-audit": true,
+    "ecc/backend-patterns": true,
+    "ecc/coding-standards": true
+  },
+  "ui-design": {
+    "ecc/web-design-guidelines": true,
+    "ecc/accessibility-audit": true,
+    "ecc/frontend-patterns": true
+  },
+  "task": {
+    "ecc/planner": true,
+    "ecc/tdd-workflow": true
+  },
+  "dev": {
+    "ecc/tdd-workflow": true,
+    "ecc/coding-standards": true,
+    "ecc/backend-patterns": true,
+    "ecc/golang-patterns": true,
+    "ecc/golang-testing": true
+  },
+  "test": {
+    "ecc/verification-loop": true,
+    "ecc/test-coverage-analysis": true,
+    "ecc/eval-harness": true
+  },
+  "review": {
+    "ecc/code-review": true,
+    "ecc/security-scan": true
+  },
+  "integration": {
+    "ecc/delivery-gate": true,
+    "ecc/verification-loop": true,
+    "ecc/changelog-generator": true,
+    "ecc/strategic-compact": true,
+    "ecc/continuous-learning-v2": true
+  }
+}

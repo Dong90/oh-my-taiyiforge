@@ -1,9 +1,0 @@
-{
-  "title": "文档完善",
-  "changelog_entries": [
-    {"type": "docs", "description": "ADR-001 策略模式决策记录"},
-    {"type": "docs", "description": "ADR-002 适配器模式决策记录"},
-    {"type": "docs", "description": "部署文档 deploy.md"},
-    {"type": "docs", "description": "开发指南 dev-guide.md"}
-  ]
-}

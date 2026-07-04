@@ -1,10 +1,9 @@
 import type { PhaseId } from "../types.js";
+import { AUXILIARY_ARTIFACTS } from "../auxiliary-artifacts.js";
 import { getWorkflowManifest } from "../../integrations/workflow-manifest.js";
 
 function knownAuxiliarySet(): Set<string> {
-  const ids = getWorkflowManifest().auxiliary_skills.map((a) => a.id);
-  ids.push("taiyi-compress");
-  return new Set(ids);
+  return new Set(Object.keys(AUXILIARY_ARTIFACTS));
 }
 
 /** Auxiliary taiyi-* skills that may be recorded via mark-aux. */

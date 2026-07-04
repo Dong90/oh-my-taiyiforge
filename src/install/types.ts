@@ -24,7 +24,6 @@ export type InstallResult = {
     | "claude-mcp"
     | "claude-md"
     | "openspec"
-    | "gstack"
     | "superpowers"
     | "web-quality-skills"
     | "project-wrapper";

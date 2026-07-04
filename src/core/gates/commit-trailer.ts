@@ -1,6 +1,12 @@
-import { execSync } from "node:child_process";
+import { execFileSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
+import {
+  resolveDeliveryConfig,
+  resolveSlugTrailerKey,
+  type DeliveryConfig,
+} from "../delivery-config.js";
+import { renderCommitMessage } from "../delivery-templates.js";
 
 export type CommitTrailerResult = {
   passed: boolean;
@@ -11,37 +17,50 @@ export type CommitTrailerResult = {
   skipped?: boolean;
 };
 
-const TRAILER_CHANGE = "Taiyi-Change";
-const TRAILER_PHASE = "Taiyi-Phase";
+export const TRAILER_CHANGE = "Taiyi-Change";
+export const TRAILER_PHASE = "Taiyi-Phase";
 
-function runGit(workspaceDir: string, args: string): string {
-  return execSync(`git ${args}`, {
+function runGit(workspaceDir: string, args: string[]): string {
+  return execFileSync("git", args, {
     cwd: workspaceDir,
     encoding: "utf8",
     stdio: ["ignore", "pipe", "pipe"],
     timeout: 10000,
+    shell: false,
   }).trim();
 }
 
-function resolveBaseBranch(workspaceDir: string): string {
+export function resolveBaseBranch(
+  workspaceDir: string,
+  baseBranches?: string[],
+): string {
   let current = "HEAD";
   try {
-    current = runGit(workspaceDir, "rev-parse --abbrev-ref HEAD");
+    current = runGit(workspaceDir, ["rev-parse", "--abbrev-ref", "HEAD"]);
   } catch {
     /* keep HEAD */
   }
 
-  for (const candidate of ["origin/develop", "origin/main", "origin/master", "develop", "main", "master"]) {
+  const candidates = baseBranches ?? [
+    "origin/develop",
+    "origin/main",
+    "origin/master",
+    "develop",
+    "main",
+    "master",
+  ];
+
+  for (const candidate of candidates) {
     if (candidate === current) continue;
     try {
-      runGit(workspaceDir, `rev-parse --verify ${candidate}`);
+      runGit(workspaceDir, ["rev-parse", "--verify", candidate]);
       return candidate;
     } catch {
       /* next */
     }
   }
   try {
-    runGit(workspaceDir, "rev-parse --verify HEAD~1");
+    runGit(workspaceDir, ["rev-parse", "--verify", "HEAD~1"]);
     return "HEAD~1";
   } catch {
     return "HEAD";
@@ -64,38 +83,75 @@ function parseTrailers(body: string): Record<string, string[]> {
 
 function listCommitBodies(workspaceDir: string, base: string): { hash: string; body: string }[] {
   try {
-    const hashes = runGit(workspaceDir, `log ${base}..HEAD --format=%H`);
+    const hashes = runGit(workspaceDir, ["log", `${base}..HEAD`, "--format=%H"]);
     if (!hashes) return [];
     return hashes.split("\n").filter(Boolean).map((hash) => ({
       hash,
-      body: runGit(workspaceDir, `log -1 --format=%B ${hash}`),
+      body: runGit(workspaceDir, ["log", "-1", "--format=%B", hash]),
     }));
   } catch {
     return [];
   }
 }
 
-export function commitTrailersEnabled(workspaceDir?: string, env = process.env): boolean {
-  // 只看 env:不允许 config disable(防止 project config 的 commitTrailers: false 绕过 trailer 校验)
+export function commitTrailersEnabled(_workspaceDir?: string, env = process.env): boolean {
   if (env.TAIYI_COMMIT_TRAILERS === "0" || env.TAIYI_COMMIT_TRAILERS === "false") {
     return false;
   }
   return true;
 }
 
-/** 建议的下一条 commit message（含 Taiyi  trailers） */
+function parseSubjectParts(subject: string): { type: string; summary: string } {
+  const m = subject.match(/^(\w+)(?:\([^)]*\))?:\s*(.+)$/);
+  if (m) return { type: m[1]!, summary: m[2]! };
+  return { type: "feat", summary: subject };
+}
+
+/** 建议的下一条 commit message（读 delivery.yaml 模板） */
 export function suggestCommitMessage(
   slug: string,
   phase: string,
-  subject = "implement slice",
+  subject = "feat: deliver change slice",
+  workspaceDir?: string,
 ): string {
-  return `${subject}
+  const { type, summary } = parseSubjectParts(subject);
+  const config = workspaceDir ? resolveDeliveryConfig(workspaceDir) : undefined;
+  if (config) {
+    return renderCommitMessage(config, { slug, phase, type, summary });
+  }
+  return `${type}: ${summary}
 
 Taiyi-Change: ${slug}
 Taiyi-Phase: ${phase}`;
 }
 
-/** integration 前：base...HEAD 须有带匹配 slug 的 Taiyi-Change trailer */
+function trailerValuesMatch(ruleValue: string, slug: string, phase: string): string {
+  return ruleValue.replace("{slug}", slug).replace("{phase}", phase);
+}
+
+function evaluateTrailersForConfig(
+  config: DeliveryConfig,
+  commits: { hash: string; body: string }[],
+  slug: string,
+  phase: string,
+): { matched: number; missing: number } {
+  const slugKey = resolveSlugTrailerKey(config);
+  const slugRule = config.commit.requiredTrailers.find((r) => r.key === slugKey);
+  const expectedSlug = slugRule
+    ? trailerValuesMatch(slugRule.value, slug, phase)
+    : slug;
+
+  let matched = 0;
+  let missing = 0;
+  for (const c of commits) {
+    const trailers = parseTrailers(c.body);
+    const change = trailers[slugKey];
+    if (change?.includes(expectedSlug) || change?.includes(slug)) matched++;
+    else if (!change) missing++;
+  }
+  return { matched, missing };
+}
+
 export function evaluateCommitTrailers(
   workspaceDir: string,
   slug: string,
@@ -108,37 +164,35 @@ export function evaluateCommitTrailers(
     return { passed: true, skipped: true };
   }
 
-  const base = resolveBaseBranch(workspaceDir);
+  const config = resolveDeliveryConfig(workspaceDir);
+  const slugKey = resolveSlugTrailerKey(config);
+  const base = resolveBaseBranch(workspaceDir, config.git.baseBranches);
   const commits = listCommitBodies(workspaceDir, base);
   if (commits.length === 0) {
     return { passed: true, skipped: true };
   }
 
-  let matched = 0;
-  let missing = 0;
-  for (const c of commits) {
-    const trailers = parseTrailers(c.body);
-    const change = trailers[TRAILER_CHANGE];
-    if (change?.includes(slug)) matched++;
-    else if (!change) missing++;
-  }
+  const { matched, missing } = evaluateTrailersForConfig(config, commits, slug, phase);
 
   if (matched > 0) {
     return { passed: true };
   }
 
-  const suggestion = suggestCommitMessage(slug, phase, "feat: deliver change slice");
+  const suggestion = suggestCommitMessage(
+    slug,
+    phase,
+    "feat: deliver change slice",
+    workspaceDir,
+  );
   return {
     passed: false,
-    reason: `相对 ${base} 的 ${commits.length} 个 commit 中无 Taiyi-Change: ${slug} trailer`,
+    reason: `相对 ${base} 的 ${commits.length} 个 commit 中无 ${slugKey}: ${slug} trailer`,
     missingCommits: missing || commits.length,
     hints: [
-      "在实现 commit message 末尾加 trailer（见 delivery-gate.md）",
+      "在实现 commit message 末尾加 trailer（见 docs/taiyi/configuration.md）",
       "示例见下方 suggestion",
       "关闭检查: TAIYI_COMMIT_TRAILERS=0",
     ],
     suggestion,
   };
 }
-
-export { TRAILER_CHANGE, TRAILER_PHASE };

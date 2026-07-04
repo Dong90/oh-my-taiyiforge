@@ -1,0 +1,30 @@
+{
+  "slug": "demo-28-v28",
+  "currentPhase": "change",
+  "completedPhases": [],
+  "profile": "lite",
+  "skippedPhases": [
+    "design",
+    "ui-design",
+    "task",
+    "review"
+  ],
+  "strictDev": false,
+  "autoHarness": false,
+  "complexity": {
+    "level": "low",
+    "score": 7,
+    "recommendedSkills": [
+      "taiyi-intel-scan"
+    ]
+  },
+  "auxiliaryCompleted": [],
+  "workflowStatus": "aborted",
+  "createdAt": "2026-07-03T14:26:12.938Z",
+  "updatedAt": "2026-07-04T09:44:14.170Z",
+  "version": 1,
+  "seeded": [
+    "change.json",
+    "CHANGE.md"
+  ]
+}

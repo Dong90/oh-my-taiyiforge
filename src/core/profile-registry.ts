@@ -7,25 +7,18 @@ import { getLogger } from "./logger.js";
 
 const log = getLogger();
 
-export const ArchTemplateIdSchema = z.enum([
-  "auto",
-  "express-3layer",
-  "fastapi-6layer",
-  "react-component",
-  "generic",
-]);
+export const ArchTemplateIdSchema = z.enum(["auto", "express-3layer", "fastapi-6layer", "react-component", "generic"]);
 
 export const ProfileDefinitionSchema = z
   .object({
-    id: z
-      .string()
-      .regex(/^[a-z][a-z0-9-]*$/, "id must be kebab-case (lowercase, digits, hyphens)"),
+    id: z.string().regex(/^[a-z][a-z0-9-]*$/, "id must be kebab-case (lowercase, digits, hyphens)"),
     extends: z.string().optional(),
     skipPhases: z.array(z.string()),
     arch: ArchTemplateIdSchema,
     description: z.string().optional(),
     builtin: z.boolean().optional(),
     keywords: z.array(z.string()).optional(),
+    auxiliaryHints: z.array(z.string()).optional(),
   })
   .strict();
 
@@ -41,9 +34,7 @@ export type ProfileError = {
   cause?: unknown;
 };
 
-export type Result<T, E = ProfileError> =
-  | { ok: true; value: T }
-  | { ok: false; error: E };
+export type Result<T, E = ProfileError> = { ok: true; value: T } | { ok: false; error: E };
 
 const SOURCE_PRIORITY: Record<ProfileSource, number> = {
   builtin: 0,
@@ -61,9 +52,7 @@ export class ProfileRegistry {
     for (const def of BUILTIN_PROFILES) {
       const r = this.registerRawBuiltin(def);
       if (!r.ok) {
-        throw new Error(
-          `Failed to register builtin profile ${def.id}: ${r.error.message}`,
-        );
+        throw new Error(`Failed to register builtin profile ${def.id}: ${r.error.message}`);
       }
     }
     this.builtinsLoaded = true;
@@ -71,9 +60,7 @@ export class ProfileRegistry {
 
   /** Register a builtin profile bypassing the builtin-protection guard
    *  (used by ensureBuiltins to bootstrap builtins). */
-  private registerRawBuiltin(
-    def: ProfileDefinition,
-  ): Result<void, ProfileError> {
+  private registerRawBuiltin(def: ProfileDefinition): Result<void, ProfileError> {
     const parsed = ProfileDefinitionSchema.safeParse(def);
     if (!parsed.success) {
       return {
@@ -197,7 +184,9 @@ export class ProfileRegistry {
         };
       }
       chain.push(entry.def);
-      currentId = entry.def.extends;
+      // 规范化：空字符串视为无 extends
+      const ext = entry.def.extends;
+      currentId = ext && ext.length > 0 ? ext : undefined;
     }
 
     // Apply from root (last in chain) → child (first in chain)
@@ -285,9 +274,7 @@ getDefaultRegistry().ensureBuiltins();
  *
  *  Uses the project's hand-rolled parseYamlListBlocks (no yaml npm dep).
  *  Supports the same flat list-of-objects format that phases.yaml / quality-gate.yaml use. */
-export function validateProfileYaml(
-  content: string,
-): Result<ProfileDefinition[], ProfileError> {
+export function validateProfileYaml(content: string): Result<ProfileDefinition[], ProfileError> {
   let raw: Record<string, string | number | string[]>[];
   try {
     raw = parseYamlListBlocks(content, "profiles");
@@ -338,9 +325,7 @@ export function validateProfileYaml(
 /** Read YAML file from disk, validate, and register all profiles into the default registry.
  *  Returns { ok: true, value: count } on success.
  *  Returns { ok: false, error: { code: IO | PARSE | VALIDATION | DUPLICATE } } on failure. */
-export function loadProfilesFromYaml(
-  yamlPath: string,
-): Result<number, ProfileError> {
+export function loadProfilesFromYaml(yamlPath: string): Result<number, ProfileError> {
   if (!fs.existsSync(yamlPath)) {
     return {
       ok: false,
@@ -365,9 +350,7 @@ export function loadProfilesFromYaml(
  *  Returns the count of successfully registered profiles.
  *  Per-profile failures (e.g. builtin collision) are silently skipped.
  */
-export function loadProfilesFromNodeModules(
-  rootDir: string,
-): Result<number, ProfileError> {
+export function loadProfilesFromNodeModules(rootDir: string): Result<number, ProfileError> {
   const nmDir = path.join(rootDir, "node_modules");
   if (!fs.existsSync(nmDir)) {
     return { ok: true, value: 0 };

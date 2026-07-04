@@ -11,6 +11,7 @@ import {
   taiyiHandoff,
   taiyiCancel,
   taiyiCommitTrailers,
+  taiyiDeliveryPlan,
 } from "../src/plugin/handlers.js";
 
 describe("plugin-handlers", () => {
@@ -137,6 +138,38 @@ Need feature A for users.
     if (r.ok) {
       expect(r.suggestion).toContain("Taiyi-Change: feat-c");
       expect(r.suggestion).toContain("Taiyi-Phase:");
+    }
+  });
+
+  it("delivery-plan returns gh/manual steps for active slug", () => {
+    const init = taiyiInit(workspace, "feat-dp", { title: "Delivery plan" });
+    expect(init.ok).toBe(true);
+    const r = taiyiDeliveryPlan(workspace, "feat-dp");
+    expect(r.ok).toBe(true);
+    if (r.ok) {
+      expect(r.slug).toBe("feat-dp");
+      expect(r.plan.chain).toContain("ship");
+      expect(r.text).toMatch(/Delivery plan — feat-dp/);
+      expect(
+        r.plan.steps.some((s) => s.id === "ship-push" || s.id === "ship-manual"),
+      ).toBe(true);
+    }
+  });
+
+  it("delivery-plan respects custom delivery.yaml verify step", () => {
+    fs.mkdirSync(path.join(workspace, ".taiyi"), { recursive: true });
+    fs.writeFileSync(
+      path.join(workspace, ".taiyi", "delivery.yaml"),
+      "verify:\n  command: npm run verify\n",
+    );
+    const init = taiyiInit(workspace, "feat-v", { title: "Verify step" });
+    expect(init.ok).toBe(true);
+    const r = taiyiDeliveryPlan(workspace, "feat-v");
+    expect(r.ok).toBe(true);
+    if (r.ok) {
+      expect(r.plan.steps.some((s) => s.id === "verify" && s.command === "npm run verify")).toBe(
+        true,
+      );
     }
   });
 });

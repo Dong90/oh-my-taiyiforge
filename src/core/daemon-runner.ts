@@ -414,7 +414,7 @@ export function runDaemonLoop(
       fs.readFileSync(promptFile, "utf8"),
       "",
       "══ Daemon 闭环协议 ══",
-      "1. 按 harness 清单完成当前阶段（铁三角 → 辅助 mark-aux → 主 Skill 写工件）",
+      "1. 按 harness 清单完成当前阶段（双线 harness → 辅助 mark-aux → 主 Skill 写工件）",
       "2. dev/test: TDD 实现 + scripts/taiyi-forge.sh ralph 直到绿",
       "3. review: review-loop + health-report",
       "4. 就绪后 scripts/taiyi-forge.sh step 或 continue（人工门须 --approver）",

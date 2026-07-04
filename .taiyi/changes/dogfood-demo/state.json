@@ -1,0 +1,23 @@
+{
+  "slug": "dogfood-demo",
+  "currentPhase": "change",
+  "completedPhases": [],
+  "profile": "full",
+  "skippedPhases": [],
+  "strictDev": false,
+  "autoHarness": false,
+  "complexity": {
+    "level": "medium",
+    "score": 8,
+    "recommendedSkills": [
+      "taiyi-intel-scan",
+      "taiyi-architect",
+      "taiyi-health"
+    ]
+  },
+  "auxiliaryCompleted": [],
+  "workflowStatus": "aborted",
+  "createdAt": "2026-07-03T14:28:46.813Z",
+  "updatedAt": "2026-07-04T09:44:14.235Z",
+  "version": 1
+}

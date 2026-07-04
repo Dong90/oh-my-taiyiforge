@@ -46,7 +46,7 @@ export type AssignmentSource = "builtin" | "plugin" | "project";
 
 export type ProviderType =
   | "cli"           // spawn 命令：openspec archive <slug>
-  | "skill"         // 加载单个 SKILL.md：gstack/qa
+  | "skill"         // 加载单个 SKILL.md：qa 等
   | "skill_bundle"  // 加载一组 skill：superpowers/*
   | "builtin"       // 引擎内置适配器：taiyi 自己的文件归档
   | "manual"        // 纯文字指引，用户手工操作
@@ -55,7 +55,7 @@ export type ProviderType =
 
 /** Provider 运行时配置 */
 export type ProviderConfig = {
-  /** 提供者名称，如 openspec / gstack / superpowers */
+  /** 提供者名称，如 openspec / superpowers */
   provider: string;
   /** 提供类型 */
   type: ProviderType;
@@ -525,6 +525,11 @@ function findExistingArchiveDir(taiyiRoot: string, slug: string): string | null 
 /*  配置加载                                                          */
 /* ------------------------------------------------------------------ */
 
+/** capability → 默认 Agent Skill（skill_bundle） */
+export const CAPABILITY_SKILL_HINTS: Partial<
+  Record<CapabilityId, { tool: string; skill: string }>
+> = {};
+
 const ALL_CAPABILITIES: CapabilityId[] = [
   "spec_archive",
   "spec_sync",
@@ -553,12 +558,6 @@ function defaultProviders(): Record<string, ProviderConfig> {
       cli: "openspec archive $SLUG -y",
       detect: "which openspec",
       provides: ["spec_archive"],
-    },
-    "gstack": {
-      provider: "gstack",
-      type: "skill_bundle",
-      bundle: "gstack",
-      provides: ["browser_qa", "eng_review", "design_review", "code_review", "doc_release"],
     },
     "superpowers": {
       provider: "superpowers",
@@ -615,7 +614,7 @@ function defaultProviders(): Record<string, ProviderConfig> {
 
 /** 内置 provider 名称 —— 插件不得覆盖 */
 const BUILTIN_PROVIDER_NAMES = new Set([
-  "openspec", "gstack", "superpowers", "web-quality",
+  "openspec", "superpowers", "web-quality",
   "playwright", "semgrep", "trivy", "changesets",
   "taiyi-builtin", "omc-plugin",
 ]);
@@ -642,7 +641,7 @@ type MergedConfig = {
  * becomes implicit default capability assignments.
  *
  * Naming rules:
- * - Builtin names (openspec, gstack, etc.) cannot be overridden.
+ * - Builtin names (openspec, etc.) cannot be overridden.
  * - Duplicate provider names in plugins: last wins (later overrides earlier).
  *   Users control priority via plugin install order or project providers.yaml.
  */
@@ -836,11 +835,11 @@ version: 1
 defaults:
   spec_archive: openspec
   spec_sync: taiyi-builtin
-  browser_qa: gstack
-  eng_review: gstack
-  design_review: gstack
-  code_review: gstack
-  doc_release: gstack
+  browser_qa: playwright
+  eng_review: taiyi-builtin
+  design_review: taiyi-builtin
+  code_review: taiyi-builtin
+  doc_release: taiyi-builtin
   version_release: changesets
   sast_scan: semgrep
   vuln_scan: trivy

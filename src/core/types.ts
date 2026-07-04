@@ -104,7 +104,7 @@ export type ChangeState = {
   profile: ChangeProfile;
   skippedPhases: PhaseId[];
   strictDev: boolean;
-  /** 全自动编排：铁三角 + 辅助 Skill 为 complete 前置条件 */
+  /** 全自动编排：双线 harness + 辅助 Skill 为 complete 前置条件 */
   autoHarness?: boolean;
   complexity?: ComplexityAssessment;
   auxiliaryCompleted: string[];

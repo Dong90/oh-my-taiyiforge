@@ -8,8 +8,8 @@ import { auxiliaryForPhase, pendingAuxiliary } from "./routing/auxiliary-hints.j
 import { getPhase } from "./phase-registry.js";
 import { auxiliaryArtifactSatisfied } from "./auxiliary-artifacts.js";
 import { getOpenspecStatus } from "../integrations/openspec.js";
-import { syncTaiyiToOpenspec } from "../integrations/openspec-sync.js";
-import { pendingIronTriangleHooks } from "./harness-checkpoints.js";
+import { ProviderRegistry } from "../config/providers.js";
+import { pendingDualLineHarnessHooks, markHarnessCheckpoint, hookKey } from "./harness-checkpoints.js";
 import { loadTokenBudgetConfig } from "./token/budget-config.js";
 import { scanArtifactTokens } from "./token/scan-artifacts.js";
 import { resolveChangeDir } from "./taiyi-archive.js";
@@ -36,7 +36,7 @@ export type HarnessPlan = {
   mainSkill: string;
   mainArtifact: string;
   auxiliary: HarnessStep[];
-  ironTriangle: HarnessStep[];
+  dualLineHarness: HarnessStep[];
   shellResults: HarnessStep[];
   blockers: string[];
 };
@@ -44,7 +44,7 @@ export type HarnessPlan = {
 function classifyHook(h: HarnessHook): HarnessStepKind {
   if (h.tool === "taiyi" && h.command) return "shell";
   if (h.tool === "taiyi" && h.skill?.startsWith("taiyi-")) return "agent";
-  if (h.tool === "superpowers" || h.tool === "gstack") return "agent";
+  if (h.tool === "superpowers") return "agent";
   if (h.command?.startsWith("openspec ") || h.command?.startsWith("npx taiyi")) return "shell";
   if (h.command?.startsWith("taiyi ")) return "shell";
   return "agent";
@@ -63,11 +63,7 @@ function tokenizeHarnessCommand(command: string): string[] {
   return command.trim().split(/\s+/).filter(Boolean);
 }
 
-function runShellCommand(
-  workspaceDir: string,
-  slug: string,
-  command: string,
-): { ok: boolean; detail: string } {
+function runShellCommand(workspaceDir: string, slug: string, command: string): { ok: boolean; detail: string } {
   const cmd = command.replace(/<slug>/g, slug);
   if (cmd.startsWith("openspec ") && !shellAvailable("openspec")) {
     return { ok: true, detail: "openspec 未安装，已跳过" };
@@ -91,11 +87,7 @@ function runShellCommand(
   return { ok: r.status === 0, detail: detail || `exit ${r.status ?? 1}` };
 }
 
-export function buildHarnessPlan(
-  workspaceDir: string,
-  taiyiRoot: string,
-  state: ChangeState,
-): HarnessPlan {
+export function buildHarnessPlan(workspaceDir: string, taiyiRoot: string, state: ChangeState): HarnessPlan {
   const log = getLogger();
   const phase = state.currentPhase;
   const changeDir = resolveChangeDir(taiyiRoot, state.slug) ?? path.join(taiyiRoot, "changes", state.slug);
@@ -104,10 +96,24 @@ export function buildHarnessPlan(
 
   const recommended = auxiliaryForPhase(phase, state.complexity);
   const auxSkillSet = new Set(recommended);
-  /** 与 §2 辅助重复的 taiyi-* 铁三角钩子不再出现在 §1 */
-  const phaseHooks = harness.hooks.filter(
-    (h) => !(h.tool === "taiyi" && h.skill && auxSkillSet.has(h.skill)),
-  );
+  /** 与 §2 辅助重复的 taiyi-* 双线 harness 钩子不再出现在 §1 */
+  const phaseHooks = harness.hooks.filter((h) => !(h.tool === "taiyi" && h.skill && auxSkillSet.has(h.skill)));
+  /** 去重：同一 hook key 可能从 manifest + token-compress-hooks 多源添加 */
+  const seenHook = new Set<string>();
+  const dedupedHooks = phaseHooks.filter((h) => {
+    const key = `${h.tool}:${h.skill ?? ""}:${h.command ?? ""}`;
+    if (seenHook.has(key)) return false;
+    seenHook.add(key);
+    return true;
+  });
+
+  for (const h of dedupedHooks) {
+    if (!h.skill) continue;
+    const isAutoDetect = /^\[[a-z][a-z0-9-]+\]/.test(h.when);
+    if (isAutoDetect && !h.optional) {
+      markHarnessCheckpoint(changeDir, phase, hookKey(h));
+    }
+  }
   const pending = pendingAuxiliary(recommended, state.auxiliaryCompleted);
   const blockers: string[] = [];
 
@@ -125,21 +131,19 @@ export function buildHarnessPlan(
     };
   });
 
-  const ironTriangle: HarnessStep[] = phaseHooks.map((h) => ({
+  const dualLineHarness: HarnessStep[] = dedupedHooks.map((h) => ({
     kind: classifyHook(h),
     tool: h.tool,
     skill: h.skill,
     command: h.command,
     when: h.when,
-    optional:
-      Boolean(h.optional) ||
-      (h.tool === "openspec" && !getOpenspecStatus(workspaceDir, state.slug).detected),
+    optional: Boolean(h.optional) || (h.tool === "openspec" && !getOpenspecStatus(workspaceDir, state.slug).detected),
     status: "pending" as const,
   }));
 
   const openspec = getOpenspecStatus(workspaceDir, state.slug);
 
-  const tokenCfg = loadTokenBudgetConfig();
+  const tokenCfg = loadTokenBudgetConfig(process.env, workspaceDir);
   const artifactScan = scanArtifactTokens(changeDir);
   if (artifactScan.total > tokenCfg.compressThreshold) {
     const compactOk = auxiliaryArtifactSatisfied(changeDir, "taiyi-compress");
@@ -165,20 +169,18 @@ export function buildHarnessPlan(
         blockers.push(`auto 模式：先完成 ${step.skill}（或生成对应工件）`);
       }
     }
-    const pendingHooks = pendingIronTriangleHooks(
-      changeDir,
-      phase,
-      phaseHooks,
-      openspec.detected,
-    );
+    const pendingHooks = pendingDualLineHarnessHooks(changeDir, phase, dedupedHooks, openspec.detected);
     for (const key of pendingHooks) {
-      blockers.push(
-        `auto 模式：铁三角未打卡 ${key}（执行后: ${forgeHarnessCheck(state.slug, key)}）`,
-      );
+      blockers.push(`auto 模式：双线 harness 未打卡 ${key}（执行后: ${forgeHarnessCheck(state.slug, key)}）`);
     }
   }
 
-  log.info("Built harness plan", { slug: state.slug, phase, ironTriangleCount: ironTriangle.length, auxiliaryCount: auxiliary.length });
+  log.info("Built harness plan", {
+    slug: state.slug,
+    phase,
+    dualLineHarnessCount: dualLineHarness.length,
+    auxiliaryCount: auxiliary.length,
+  });
 
   return {
     slug: state.slug,
@@ -187,7 +189,7 @@ export function buildHarnessPlan(
     mainSkill: phaseDef.skill,
     mainArtifact: phaseDef.artifact,
     auxiliary,
-    ironTriangle,
+    dualLineHarness,
     shellResults: [],
     blockers,
   };
@@ -230,11 +232,17 @@ export function runPostCompleteShellHooks(
 
   for (const h of harness.hooks) {
     if (classifyHook(h) !== "shell" || !h.command) continue;
-    if (h.command.includes("archive") && phaseId === "integration") {
+    if (h.tool === "taiyi" && h.command?.startsWith("taiyi archive") && phaseId === "integration") {
       const openspec = getOpenspecStatus(workspaceDir, slug);
       if (openspec.detected) {
         const changeDir = resolveChangeDir(taiyiRoot, slug) ?? path.join(taiyiRoot, "changes", slug);
-        const sync = syncTaiyiToOpenspec(workspaceDir, slug, changeDir, { createChangeDir: true });
+        const registry = ProviderRegistry.forProject(workspaceDir);
+        const sync = registry.runCapability("spec_sync", {
+          slug,
+          workspaceDir,
+          taiyiChangeDir: changeDir,
+          createChangeDir: true,
+        });
         results.push({
           kind: "shell",
           tool: "openspec",
@@ -264,17 +272,12 @@ export function formatHarnessPlanPlain(plan: HarnessPlan): string {
   const lines: string[] = [];
   lines.push(`# TaiyiForge Auto Harness · ${plan.slug} · ${plan.phase}`);
   lines.push(`模式: ${plan.autoHarness ? "全自动 (--auto)" : "推荐（手动）"}`);
-  lines.push(`\n## 1. 铁三角（Agent 自动顺序执行）`);
-  if (plan.ironTriangle.length === 0) lines.push("（本阶段无）");
-  for (const [i, s] of plan.ironTriangle.entries()) {
-    const label =
-      s.kind === "agent"
-        ? `${s.tool}/${s.skill ?? s.command}`
-        : (s.command ?? s.skill);
+  lines.push(`\n## 1. 双线 harness（Superpowers + ECC · Agent 顺序执行）`);
+  if (plan.dualLineHarness.length === 0) lines.push("（本阶段无）");
+  for (const [i, s] of plan.dualLineHarness.entries()) {
+    const label = s.kind === "agent" ? `${s.tool}/${s.skill ?? s.command}` : (s.command ?? s.skill);
     const key = s.skill ? `${s.tool}/${s.skill}` : `${s.tool}:${s.command?.split(/\s+/).slice(0, 2).join(" ")}`;
-    lines.push(
-      `${i + 1}. [${s.kind}] ${label} — ${s.when}${s.optional ? " (可选)" : ""}`,
-    );
+    lines.push(`${i + 1}. [${s.kind}] ${label} — ${s.when}${s.optional ? " (可选)" : ""}`);
     if (plan.autoHarness && s.kind === "agent" && !s.optional) {
       lines.push(`   完成后: ${forgeHarnessCheck(plan.slug, key)}`);
     } else if (plan.autoHarness && s.kind === "agent" && s.optional) {
@@ -289,7 +292,7 @@ export function formatHarnessPlanPlain(plan: HarnessPlan): string {
   lines.push(`\n## 3. 主流程`);
   lines.push(`- ${plan.mainSkill} → ${plan.mainArtifact}`);
   lines.push(`\n## 4. 过关（须先清空 §阻塞）`);
-  lines.push(`- [ ] §1 铁三角：每项 [agent] 已执行并 harness-check（shell 项可选则跳过）`);
+  lines.push(`- [ ] §1 双线 harness：每项 [agent] 已执行并 harness-check（shell 项可选则跳过）`);
   lines.push(`- [ ] §2 辅助：无 [pending]（或对应工件已生成）`);
   lines.push(`- [ ] §3 主工件 quality 就绪`);
   if (plan.blockers.length) {
