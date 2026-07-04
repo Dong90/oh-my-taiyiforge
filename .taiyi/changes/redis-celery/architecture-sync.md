@@ -1,1 +1,0 @@
-# Architecture Sync: redis-celery
