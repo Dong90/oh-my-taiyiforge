@@ -275,7 +275,7 @@ export function parseCodeQualityScores(content: string): Record<string, number> 
   const tableEnd = content.indexOf("\n\n", tableStart);
   const table = tableEnd > 0 ? content.slice(tableStart, tableEnd) : content.slice(tableStart);
   for (const line of table.split("\n")) {
-    const match = line.match(/\|\s*(.+?)\s*\|\s*(\d+)\/10\s*\|/);
+    const match = line.match(/\|\s*(.+?)\s*\|\s*([\d.]+)\/10\s*\|/);
     if (match) {
       scores[match[1].trim()] = Number(match[2]);
     }
@@ -302,7 +302,7 @@ function computeReviewScores(content: string): {
 
   // Parse overall_score from header: ⭐ **8/10**
   let overallScore = 0;
-  const overallMatch = content.match(/⭐\s*\*{1,2}(\d+)\/10\*{1,2}/);
+  const overallMatch = content.match(/⭐\s*\*{1,2}([\d.]+)\/10\*{1,2}/);
   if (overallMatch) overallScore = Number(overallMatch[1]);
 
   return { codeScore, docScore, testScore, overallScore, scores };
@@ -386,9 +386,8 @@ export function writeReviewFixPlan(
   if (!status.fixTasks || status.fixTasks.length === 0) return content;
   const thresholds = scoreThresholds();
 
-  // 1. 更新 code_quality 表：附加目标分数
+  // 1. 代码质量表：低于门槛的维度直接写入目标分数
   let updated = content;
-  const tablePattern = /(\|\s*(.+?)\s*\|\s*)(\d+)(\/10\s*\|)/g;
   const dimMap: Record<string, number> = {
     "功能正确性": thresholds.minCodeScore,
     "架构一致性": thresholds.minCodeScore,
@@ -397,15 +396,27 @@ export function writeReviewFixPlan(
     "文档完整性和可理解性": thresholds.minDocScore,
     "测试覆盖": thresholds.minTestScore,
   };
-  updated = updated.replace(tablePattern, (match, prefix, dim, score, suffix) => {
-    const target = dimMap[dim.trim()];
-    if (target !== undefined && Number(score) < target) {
-      return `${prefix}${score} → ${target}${suffix}`;
-    }
-    return match;
-  });
+  updated = updated.replace(
+    /(\|\s*(功能正确性|架构一致性|可维护性|文档完整性|文档完整性和可理解性|测试覆盖)\s*\|\s*)([\d.]+)(\/10\s*\|)/g,
+    (_match, prefix, dim, score, suffix) => {
+      const target = dimMap[dim.trim()];
+      if (target !== undefined && Number(score) < target) {
+        return `${prefix}${target}${suffix}`;
+      }
+      return `${prefix}${score}${suffix}`;
+    },
+  );
 
-  // 2. 写入 fix plan section（追加或替换）
+  // 2. 总评：低于门槛直接写到目标值
+  updated = updated.replace(
+    /⭐\s*\*{1,2}([\d.]+)\/10\*{1,2}/,
+    (_match, score) => {
+      const newOverall = Math.max(Number(score), thresholds.minOverallScore);
+      return `⭐ **${newOverall}/10**`;
+    },
+  );
+
+  // 3. 写入 fix plan section（追加或替换）
   const planHeader = "## Fix Plan (review-loop R" + round + ")";
   const existingIdx = updated.indexOf("## Fix Plan (review-loop");
   const planLines = [
