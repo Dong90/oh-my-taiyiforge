@@ -103,7 +103,7 @@ const SCORE_STRATEGIES: Record<string, string[]> = {
   overall: [
     "总评 = 代码/文档/测试的综合反映，单项提升自动拉动总评",
     "策略：优先修复最低分维度 → 逐一推进 → 全部 ≥ 8.5 → 总评自然达标",
-    "若三轮后仍不达标：将剩余问题记录到 TODOS.md，降低复杂度重跑或人工介入",
+    "若五轮后仍不达标：将剩余问题记录到 TODOS.md，降低复杂度重跑或人工介入",
     "⚠️ 总评达标后确认无新增 high finding 且 Verdict = Approve。",
   ],
 };

@@ -13,8 +13,8 @@ export type ReviewLoopStateFile = {
 };
 
 export function defaultReviewLoopMaxRounds(): number {
-  const n = Number(process.env.TAIYI_REVIEW_LOOP_MAX_ROUNDS ?? "3");
-  return Number.isFinite(n) && n > 0 ? Math.floor(n) : 3;
+  const n = Number(process.env.TAIYI_REVIEW_LOOP_MAX_ROUNDS ?? "5");
+  return Number.isFinite(n) && n > 0 ? Math.floor(n) : 5;
 }
 
 const FILE = ".review-loop-state.json";

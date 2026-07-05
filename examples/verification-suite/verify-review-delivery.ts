@@ -122,11 +122,11 @@ assert(twoFail.canStop === false, "canStop = false (3 dims fail)");
 const hasCascade = twoFail.hints.some(h => h.includes("多维度不达标"));
 assert(hasCascade, "cascading reminder shown for 3 dim failures");
 
-// ── Test 7: 3-round cap ──
-section("Test 7: defaultReviewLoopMaxRounds = 3");
+// ── Test 7: 5-round cap ──
+section("Test 7: defaultReviewLoopMaxRounds = 5");
 
 const maxRounds = defaultReviewLoopMaxRounds();
-assert(maxRounds === 3, `maxRounds = 3 (got ${maxRounds})`);
+assert(maxRounds === 5, `maxRounds = 5 (got ${maxRounds})`);
 
 // ── Test 8: Single dimension fail → no cascade ──
 section("Test 8: Single dimension failure → no cascading reminder");
