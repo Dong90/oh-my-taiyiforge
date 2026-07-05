@@ -19,6 +19,8 @@ downstream: [design, ui-design]
 {{#each scope_out}}
 > - {{this}}
 {{/each}}
+{{else}}
+> - _待补充（至少列 1 条「明确不做」以防范围蔓延）_
 {{/if}}
 >
 > 📌 *完整范围切分见下方 §Step 2 Scope Partitioning*
@@ -38,6 +40,8 @@ downstream: [design, ui-design]
 {{#each features}}
 - {{this}}
 {{/each}}
+{{else}}
+- **As a** _待补充角色_, **I want** _待补充功能_, **so that** _待补充价值_
 {{/if}}
 {{/if}}
 
@@ -75,6 +79,9 @@ downstream: [design, ui-design]
 - **{{id}}**: {{description}}{{#if ui}} (UI){{/if}}
 {{/each}}
 {{/each}}
+{{else}}
+### [模块名]
+- **FR-01**: [需求]
 {{/if}}
 
 <!-- Validate: 每个FR可独立测试？编号连续？ -->
@@ -85,7 +92,7 @@ downstream: [design, ui-design]
 
 {{#each acceptance_criteria}}
 - [{{#if is_checked}}x{{else}} {{/if}}] **{{id}}**: {{description}}
-  - **验证**: {{#if verify}}`{{verify}}`{{/if}}
+  - **验证**: {{#if verify}}`{{verify}}`{{else}}[待补充验证命令]{{/if}}
 {{/each}}
 
 <!-- Validate: 每个AC可独立验收？Given/When/Then完整？验证命令可执行？ -->
@@ -95,26 +102,33 @@ downstream: [design, ui-design]
 <!-- Action: NFR-XX编号，每个带数值 -->
 
 {{#if non_functional}}
-{{#if non_functional.performance}}
-  ### 性能
-  {{#each non_functional.performance}}
-  - **{{id}}**: {{description}}
-  {{/each}}
-{{/if}}
-  
-{{#if non_functional.security}}
-  ### 安全
-  {{#each non_functional.security}}
-  - **{{id}}**: {{description}}
-  {{/each}}
-{{/if}}
-  
-{{#if non_functional.availability}}
-  ### 可用性
-  {{#each non_functional.availability}}
-  - **{{id}}**: {{description}}
-  {{/each}}
-{{/if}}
+### 性能
+{{#each non_functional.performance}}
+- **{{id}}**: {{description}}
+{{else}}
+- **NFR-P01**: [性能指标]
+{{/each}}
+
+### 安全
+{{#each non_functional.security}}
+- **{{id}}**: {{description}}
+{{else}}
+- **NFR-S01**: [安全指标]
+{{/each}}
+
+### 可用性
+{{#each non_functional.availability}}
+- **{{id}}**: {{description}}
+{{else}}
+- **NFR-A01**: [可用性指标]
+{{/each}}
+{{else}}
+### 性能
+- **NFR-P01**: [性能指标]
+### 安全
+- **NFR-S01**: [安全指标]
+### 可用性
+- **NFR-A01**: [可用性指标]
 {{/if}}
 
 <!-- Validate: 每个指标有具体数字？ -->
@@ -131,15 +145,19 @@ downstream: [design, ui-design]
 {{#each error_rescue_map}}
 | {{error}} | {{trigger}} | {{catch}} | {{user_sees}} | {{recovery}} |
 {{/each}}
+{{else}}
+| 错误类型 | 触发 | 捕获 | 用户看到 | 恢复 |
+|---------|------|------|---------|------|
+| _CLI 参数错误_ | _无效参数_ | _commander_ | _错误提示+用法_ | _重新输入_ |
 {{/if}}
 
 <!-- Validate: 所有可能的错误都有名字？恢复路径可执行？ -->
 
-{{#if shadow_paths}}
 ## Step 7: Shadow Path Analysis
 > **[MEDIUM+]** Goal: 每条数据流覆盖四路径 | Inputs: Step5
 <!-- Action: Happy/Nil/Empty/UpstreamErr 逐条标注 -->
 
+{{#if shadow_paths}}
 {{#each shadow_paths}}
 ### {{flow}}
 | 路径 | 输入 | 预期 |
@@ -149,23 +167,35 @@ downstream: [design, ui-design]
 | Empty | {{empty_input}} | {{empty_expected}} |
 | UpstreamErr | {{upstream_input}} | {{upstream_expected}} |
 {{/each}}
-
-<!-- Validate: 核心流程都覆盖了四路径？ -->
+{{else}}
+### [流程名]
+| 路径 | 输入 | 预期 |
+|------|------|------|
+| Happy | | |
+| Nil | | |
+| Empty | | |
+| UpstreamErr | | |
 {{/if}}
 
-{{#if non_happy_path_cases}}
+<!-- Validate: 核心流程都覆盖了四路径？ -->
+
 ## Step 8: Non-Happy-Path Matrix
 > **[MEDIUM+]** Goal: 边界和异常不遗漏 | Inputs: Step5+6
 <!-- Action: 空值/超时/并发/权限/非法输入全覆盖 -->
 
+{{#if non_happy_path_cases}}
 | 场景 | 预期行为 |
 |------|---------|
 {{#each non_happy_path_cases}}
 | {{scenario}} | {{behavior}} |
 {{/each}}
+{{else}}
+| 场景 | 预期行为 |
+|------|---------|
+| _空输入_ | _显示用法提示_ |
+{{/if}}
 
 <!-- Validate: 典型边界(空/超/并发/权限)全覆盖？ -->
-{{/if}}
 
 ## Step 9: Dependencies
 > **[MEDIUM+]** Goal: 外部依赖不阻塞 | Inputs: CHANGE.md §4
@@ -177,6 +207,10 @@ downstream: [design, ui-design]
 {{#each dependencies}}
 | {{dependency}} | {{type}} | {{status}} | {{risk}} |
 {{/each}}
+{{else}}
+| 依赖 | 类型 | 状态 | 风险 |
+|------|------|------|------|
+| vitest | 测试框架 | 已安装 | 无 |
 {{/if}}
 
 <!-- Validate: 第三方SLA确认？跨团队排期对齐？ -->
@@ -206,17 +240,9 @@ downstream: [design, ui-design]
 - [ ] S3 每个FR可独立测试
 - [ ] S4 AC用Given/When/Then + 验证命令
 - [ ] S5 非功能需求有数值
-{{#if error_rescue_map}}
 - [ ] [M+] S6 Error/Rescue全覆盖 | PD#2
-{{/if}}
-{{#if shadow_paths}}
 - [ ] [M+] S7 核心流程四路径 | PD#3
-{{/if}}
-{{#if non_happy_path_cases}}
 - [ ] [M+] S8 典型边界全覆盖
-{{/if}}
-{{#if dependencies}}
 - [ ] [M+] S9 依赖关系已确认
-{{/if}}
 - [ ] [H]  S10 安全合规已覆盖
 - [ ] 无[NEEDS CLARIFICATION]残留

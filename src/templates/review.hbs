@@ -48,6 +48,12 @@ downstream: [integration]
 {{#each code_quality}}
 | {{dimension}} | {{score}}/10 | {{note}} |
 {{/each}}
+{{else}}
+| functional | _/10 | _ |
+| architecture | _/10 | _ |
+| testing | _/10 | _ |
+| documentation | _/10 | _ |
+| maintainability | _/10 | _ |
 {{/if}}
 
 ---
@@ -128,6 +134,12 @@ downstream: [integration]
 {{#each code_quality}}
 | {{dimension}} | {{score}}/10 | {{note}} |
 {{/each}}
+{{else}}
+| functional | _/10 | _ |
+| architecture | _/10 | _ |
+| testing | _/10 | _ |
+| documentation | _/10 | _ |
+| maintainability | _/10 | _ |
 {{/if}}
 
 <!-- Validate: 每维有具体改进建议而非仅打分？ -->
@@ -141,6 +153,10 @@ downstream: [integration]
 {{#each test_coverage}}
 | {{layer}} | {{passed}}/{{total}} | {{coverage}} | {{status}} |
 {{/each}}
+{{else}}
+| 单元 | N / total | — | 待评估 |
+| 集成 | N / total | — | 待评估 |
+| E2E | N / total | — | 待评估 |
 {{/if}}
 
 <!-- Validate: 与TEST.md数据一致？gap有补救计划？ -->
@@ -192,16 +208,8 @@ downstream: [integration]
 - [ ] S1 所有finding有位置+置信度+建议
 - [ ] S1 Critical/High有修复计划
 - [ ] S2 Verdict明确+blocking项有owner
-{{#if code_quality}}
 - [ ] [M+] S3 五维评分完整
-{{/if}}
-{{#if test_coverage}}
 - [ ] [M+] S4 测试对齐TEST.md
-{{/if}}
-{{#if security_audit}}
 - [ ] [H]  S5 OWASP全覆盖
-{{/if}}
-{{#if performance_audit}}
 - [ ] [H]  S6 关键路径无瓶颈
-{{/if}}
 - [ ] **Prior Learnings**: 已检索过往session learnings并应用 | learnings-search

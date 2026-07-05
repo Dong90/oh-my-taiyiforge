@@ -1,8 +1,5 @@
 import type { ComplexityAssessment, ComplexityLevel, ChangeProfile } from "../types.js";
 
-export const COMPLEXITY_MEDIUM_THRESHOLD = 8;
-export const COMPLEXITY_HIGH_THRESHOLD = 15;
-
 export type ComplexitySignals = {
   touchedModules: number;
   hasUi: boolean;
@@ -17,8 +14,8 @@ export function assessComplexity(
   score += signals.testLevels;
 
   let level: ComplexityLevel = "low";
-  if (score >= COMPLEXITY_HIGH_THRESHOLD) level = "high";
-  else if (score >= COMPLEXITY_MEDIUM_THRESHOLD) level = "medium";
+  if (score >= 15) level = "high";
+  else if (score >= 8) level = "medium";
 
   const recommendedSkills = ["taiyi-intel-scan"];
   if (signals.hasUi) recommendedSkills.push("taiyi-restyle");

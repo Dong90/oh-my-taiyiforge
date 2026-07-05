@@ -31,14 +31,6 @@ describe("change.hbs", () => {
       { module: "auth-service", impact: "新增 OAuth 超时配置", owner: "@alice" },
       { module: "user-service", impact: "无影响", owner: "@bob" },
     ],
-    dream_state: { current: "手动超时处理", this_change: "自动超时重试", ideal: "零延迟" },
-    stakeholders: [
-      { role: "PM", name: "Alice", needs: "确认需求" },
-    ],
-    innovation_tokens: [{ decision: "新增 library", is_token: true, reason: "无符合要求的既有方案" }],
-    risks: [
-      { risk: "并发锁冲突", probability: "中", impact: "服务降级", mitigation: "乐观锁" },
-    ],
   };
 
   it("renders title as H1 with prefix", () => {

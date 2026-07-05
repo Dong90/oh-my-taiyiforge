@@ -32,9 +32,6 @@ describe("task.hbs", () => {
     slice_risks: [
       { slice: "T01", risk: "迁移脚本失败", probability: "低", mitigation: "备份 + 回滚脚本" },
     ],
-    waves: [
-      { name: "1", slices: [{ slice_id: "T01", description: "数据库迁移" }] },
-    ],
   };
 
   it("renders title", () => {
@@ -93,19 +90,18 @@ describe("task.hbs", () => {
     expect(out).toContain("Refactor-first");
   });
 
-  it("renders with empty slices (does not crash)", () => {
+  it("renders with empty slices (shows placeholder)", () => {
     const out = render({ title: "空任务", slices: [] });
     expect(out).toContain("# TASK: 空任务");
     expect(out).not.toMatch(/\{\{[#/]?[a-zA-Z]+\}\}/);
   });
 
-  it("renders with minimal slice data (no crash when optional fields missing)", () => {
+  it("renders read_files placeholder when no files listed", () => {
     const out = render({
       title: "无文件",
       slices: [{ id: "S1", label: "纯配置", description: "" }],
     });
-    expect(out).toContain("# TASK: 无文件");
-    expect(out).toContain("Slice S1");
+    expect(out).toContain("（无 — 请填写 write_files 字段）");
   });
 
   it("renders no unrendered Handlebars tokens", () => {

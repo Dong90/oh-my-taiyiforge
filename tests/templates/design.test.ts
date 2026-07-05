@@ -162,6 +162,7 @@ describe("design.hbs", () => {
   it("renders with minimal data (no techStack, no existingArchitecture)", () => {
     const out = render({ title: "最小设计", options: [], decision: { chosen: "", reason: "" } });
     expect(out).toContain("# DESIGN: 最小设计");
+    expect(out).toContain("[待定]");
     expect(out).not.toMatch(/\{\{[#/]?[a-zA-Z]+\}\}/);
   });
 

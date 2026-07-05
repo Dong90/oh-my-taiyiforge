@@ -39,6 +39,8 @@ downstream: [review]
 {{#each test_rounds}}
 | {{round}} | {{scope}} | {{status}} | {{#if skip_reason}}{{skip_reason}}{{else}}—{{/if}} |
 {{/each}}
+{{else}}
+> ⚠️ 请在 test.json 提供 `test_rounds[]` (5 轮：功能/性能/安全/兼容/可观测) — 标题: round / scope / status / skip_reason
 {{/if}}
 
 <!-- Validate: 每轮状态明确？跳过有理由？ -->
@@ -153,6 +155,8 @@ GAPS: N (N need E2E, N eval)
 - **实际**: {{actual}}
 - **执行人 / 时间**: {{executor}}
 {{/each}}
+{{else}}
+> ⚠️ 未提供 UAT 脚本 — 集成阶段前请补充手动验证步骤
 {{/if}}
 
 <!-- Validate: 覆盖所有需手动验证的 AC？ -->
@@ -256,16 +260,8 @@ GAPS: N (N need E2E, N eval)
 - [ ] S2 覆盖成功+失败
 - [ ] [ALL] S4 回归规则+Red-green已应用
 - [ ] [M+] S3 Coverage图完整
-{{#if edge_cases}}
 - [ ] [M+] S5 边界全覆盖
-{{/if}}
-{{#if performance_tests}}
 - [ ] [M+] S6 性能有基线
-{{/if}}
-{{#if security_checks}}
 - [ ] [H]  S7 OWASP全覆盖
-{{/if}}
-{{#if regression_plan}}
 - [ ] [H]  S8 回归范围完整
-{{/if}}
 - [ ] CI可自动化

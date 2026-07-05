@@ -52,8 +52,6 @@ export type SeedVars = {
   code_style?: CodeStyleContract;
   /** 模块清单，用于 DESIGN→TASK→DEV 三阶段代码生成链 */
   module_manifest?: ModuleManifestEntry[];
-  /** 变更复杂度，控制 seed 数据和模板条件渲染 */
-  complexity?: { level: string; score: number };
 };
 
 export type TemplateEngineOptions = {

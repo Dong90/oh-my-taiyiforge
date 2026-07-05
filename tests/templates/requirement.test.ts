@@ -29,23 +29,6 @@ describe("requirement.hbs", () => {
     scope_v1: ["邮箱验证码登录", "OAuth 超时优化"],
     scope_v2: ["指纹登录", "人脸识别"],
     scope_out: ["社交账号绑定"],
-    non_functional: {
-      performance: [{ id: "NFR-P01", description: "页面加载 < 2s" }],
-      security: [{ id: "NFR-S01", description: "OWASP Top10 审计通过" }],
-      availability: [{ id: "NFR-A01", description: "99.9% 可用性" }],
-    },
-    error_rescue_map: [
-      { error: "网络超时", trigger: "API 调用超过 5s", catch: "axios interceptor", user_sees: "网络不稳定，请重试", recovery: "点击重试按钮" },
-    ],
-    shadow_paths: [
-      { flow: "登录流程", happy_input: "正确邮箱+密码", happy_expected: "跳转首页", nil_input: "无输入", nil_expected: "按钮禁用", empty_input: "空邮箱", empty_expected: "提示必填", upstream_input: "认证服务宕机", upstream_expected: "提示稍后重试" },
-    ],
-    non_happy_path_cases: [
-      { scenario: "快速双击", behavior: "仅发送一次请求" },
-    ],
-    dependencies: [
-      { dependency: "vitest", type: "测试框架", status: "active", risk: "none" },
-    ],
   };
 
   it("renders title as H1", () => {
@@ -121,7 +104,10 @@ describe("requirement.hbs", () => {
   it("renders shadow path analysis section", () => {
     const out = render(data);
     expect(out).toContain("## Step 7: Shadow Path Analysis");
-    expect(out).not.toMatch(/\[流程名\]/);
+    expect(out).toContain("Happy |");
+    expect(out).toContain("Nil |");
+    expect(out).toContain("Empty |");
+    expect(out).toContain("UpstreamErr |");
   });
 
   it("renders non-happy-path matrix section", () => {

@@ -23,9 +23,6 @@ describe("integration.hbs", () => {
       { type: "Fixed", description: "OAuth 超时 Bug" },
     ],
     breaking_changes: ["Session 存储格式变更，需重新登录"],
-    monitoring: [
-      { metric: "API P99", baseline: "200ms", threshold: ">500ms", severity: "high" },
-    ],
   };
 
   it("renders title as H1 with prefix", () => {

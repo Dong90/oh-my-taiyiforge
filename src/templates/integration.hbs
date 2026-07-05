@@ -117,9 +117,9 @@ downstream: []
 > **[HIGH]** Goal: 出问题能快速回退 | Inputs: DESIGN.md §11
 <!-- Action: 触发条件(量化)+操作步骤(精确到命令)+预计时间 -->
 
-**触发**: {{#if rollback_trigger}}{{rollback_trigger}}{{/if}}
-**操作**: 1. {{#if rollback_step1}}{{rollback_step1}}{{/if}} 2. {{#if rollback_step2}}{{rollback_step2}}{{/if}}
-**时间**: {{#if rollback_time}}≤{{rollback_time}}{{/if}}
+**触发**: {{#if rollback_trigger}}{{rollback_trigger}}{{else}}N/A — 纯文档变更无回滚需求{{/if}}
+**操作**: 1. {{#if rollback_step1}}{{rollback_step1}}{{else}}命令{{/if}} 2. {{#if rollback_step2}}{{rollback_step2}}{{else}}命令{{/if}}
+**时间**: {{#if rollback_time}}≤{{rollback_time}}{{else}}≤N min{{/if}}
 
 <!-- Validate: 触发量化？步骤精确？≤30min？ -->
 
@@ -168,15 +168,9 @@ downstream: []
 - ⬜ S1 Breaking有迁移指引
 - ⬜ [M+] S2 迁移可一键执行
 - ⬜ [M+] S3 部署清单无遗漏
-{{#if alerts}}
 - ⬜ [M+] S4 Dashboard+Alert+Runbook完整 | PD#5
-{{/if}}
-{{#if post_launch}}
 - ⬜ [M+] S5 观察期+退出标准明确
-{{/if}}
 - ⬜ [H]  S6 回滚≤30min
-{{#if monitoring}}
 - ⬜ [H]  S7 监控覆盖所有SC
-{{/if}}
 - ⬜ 上下游已通知
 - ⬜ Release已标注

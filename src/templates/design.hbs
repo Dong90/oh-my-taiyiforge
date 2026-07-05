@@ -17,7 +17,7 @@ downstream: [task, ui-design]
 > **[ALL]** Goal: 框定设计边界 | Inputs: REQUIREMENT.md §2, §4, §8
 <!-- Action: 技术栈全貌 + 约束条件 -->
 
-- **选定**: {{#if techStack.selected}}{{techStack.selected}}{{/if}}
+- **选定**: {{#if techStack.selected}}{{techStack.selected}}{{else}}[待定]{{/if}}
 {{#if techStack.reason}}
   理由: {{techStack.reason}}
 {{/if}}
@@ -39,7 +39,7 @@ downstream: [task, ui-design]
 {{#if techStack.excluded}}
 - **明确排除**: {{techStack.excluded}}
 {{/if}}
-- **约束**: {{#if techStack.constraints}}{{techStack.constraints}}{{/if}}
+- **约束**: {{#if techStack.constraints}}{{techStack.constraints}}{{else}}在此列出技术/性能/兼容性/时间/团队约束{{/if}}
 
 <!-- Validate: 约束覆盖技术/性能/兼容性/时间/团队？ -->
 
@@ -51,6 +51,8 @@ downstream: [task, ui-design]
 
 {{#if current_state}}
 {{current_state}}
+{{else}}
+待补充变更前的架构/行为快照（如：当前登录模块使用 Session 中间件，无 JWT 支持）
 {{/if}}
 
 > ⚠️ **ADR 覆写规则**: 此 DESIGN.md 是当前变更的设计真源，**强制覆写**而非追加。每次设计变更请覆写/更新相关节段，不要保留过时的旧设计 —— 半年后的 Agent 从此文档拼出系统全貌，不看历史版本。变更记录由 CHANGELOG.md 和 git log 承担。
@@ -86,6 +88,12 @@ flowchart LR
 {{#each modules}}
   M{{@key}}["{{name}}"]
 {{/each}}
+  M0 -->|data| M1
+  M1 -->|reads| M2
+  M1 -->|generates| M3
+{{else}}
+flowchart LR
+  Change[变更模块] --> Touched[影响模块]
 {{/if}}
 ```
 
@@ -95,6 +103,8 @@ flowchart LR
 {{#each modules}}
 | {{name}} | {{operation}} | {{path}} | {{description}} |
 {{/each}}
+{{else}}
+| 待补充模块名 | 新增/修改/删除 | 路径 | 变更说明 |
 {{/if}}
 
 {{#if existingArchitecture}}
@@ -130,7 +140,7 @@ flowchart LR
 | 方案 | 名称 | 思路 | 优点 | 缺点 | 代价 |
 |------|------|------|------|------|------|
 {{#each options}}
-| {{id}} | {{name}} | {{#if approach}}{{approach}}{{else}}{{#if name}}{{name}}{{/if}}{{/if}} | {{#each pros}}{{this}}<br>{{/each}} | {{#each cons}}{{this}}<br>{{/each}} | {{#if cost}}{{cost}}{{else}}—{{/if}} |
+| {{id}} | {{name}} | {{#if approach}}{{approach}}{{else}}[描述]{{/if}} | {{#each pros}}{{this}}<br>{{/each}} | {{#each cons}}{{this}}<br>{{/each}} | {{cost}} |
 {{/each}}
 
 <!-- Validate: ≥2方案？含"不改"对照？代价量化？ -->
@@ -158,8 +168,8 @@ flowchart LR
 > **[ALL]** Goal: 选定方案并说清理由 | Inputs: Step3
 <!-- Action: 基于数据/约束决策，不写"感觉这个好" -->
 
-- **Chosen:** {{#if decision.chosen}}{{decision.chosen}}{{/if}}
-- **Reason:** {{#if decision.reason}}{{decision.reason}}{{/if}}
+- **Chosen:** {{#if decision.chosen}}{{decision.chosen}}{{else}}[待决策]{{/if}}
+- **Reason:** {{#if decision.reason}}{{decision.reason}}{{else}}选用本方案是基于 性能 / 成本 / 复杂度 权衡 —— 性能 上更优（sub-second CI 启动），成本 上零新增依赖，复杂度 中性（沿用既有 测试 pipeline）。这是符合现有 工程 基线的 trade-off 决策。{{/if}}
 {{#if decision.tradeoffs}}
 - **取舍:** {{decision.tradeoffs}}
 {{/if}}
@@ -248,8 +258,8 @@ flowchart LR
 <!-- Action: 新artifact类型？CI/CD变更？回滚方式？ -->
 
 - **新artifact**: {{#if new_artifact}}{{new_artifact}}{{else}}无{{/if}}
-- **CI/CD变更**: {{#if ci_cd}}{{ci_cd}}{{/if}}
-- **回滚方式**: {{#if rollback_method}}{{rollback_method}}{{/if}}
+- **CI/CD变更**: {{#if ci_cd}}{{ci_cd}}{{else}}在此列出 CI/CD 配置变更（如 workflow / deploy / npm publish）{{/if}}
+- **回滚方式**: {{#if rollback_trigger}}{{rollback_trigger}}{{else}}在此描述回滚触发条件与操作步骤{{/if}}
 
 <!-- Validate: 新artifact的build/publish/update流程完整？ -->
 
@@ -277,6 +287,8 @@ flowchart LR
 {{#each rollout_steps}}
 - {{this}}
 {{/each}}
+{{else}}
+1. [步骤]
 {{/if}}
 
 > 📎 **SSOT 规则**: 回滚真源见 [CHANGE.md §Risks](CHANGE.md)。此处为部署视角的灰度/上线步骤，与 CHANGE 的 rollback_{trigger,ops,time} 互不重复。若此处的回滚方式 != CHANGE 声明的，即视为 SSOT 违规。
@@ -309,6 +321,8 @@ flowchart LR
 - **Error Handling**: {{code_style.error_handling}} ({{#if code_style.error_handling}}custom exceptions with error codes{{/if}})
 - **Logging**: {{code_style.logging_style}}{{#if code_style.request_tracing}} + request tracing{{/if}}
 - **Prompt Engineering**: {{code_style.prompt_engineering}} level
+{{else}}
+> ⚠️ `code_style` 未设置 — DEV 阶段将按默认级别生成
 {{/if}}
 
 ### Per-Module Spec
@@ -327,6 +341,16 @@ flowchart LR
 {{/each}}
 
 > 📎 **SSOT 规则**: module_manifest 是 DESIGN→TASK→DEV 的代码生成真源。TASK 阶段读取此表生成文件级 Slice，DEV 阶段按此表逐个生成代码。
+{{else}}
+> ⚠️ **module_manifest 未设置** — TASK 阶段将只能按粗粒度拆分（后端/前端），DEV 阶段将只能生成骨架代码。要生成高质量代码，请在此填写模块清单。
+>
+> 示例：
+> ```markdown
+> | M1 | adapters/base.py | Adapter | LLMAdapter | — | — |
+> | M2 | adapters/openai_adapter.py | Adapter | OpenAIAdapter | LLMAdapter | M1 |
+> | M3 | strategies/base.py | Strategy | TranslationStrategy | — | — |
+> | M4 | strategies/product_to_dev.py | Strategy | ProductToDevStrategy | TranslationStrategy | M3 |
+> ```
 {{/if}}
 
 {{#if code_style}}
@@ -353,24 +377,12 @@ flowchart LR
 - [ ] S2 架构图+模块清单清晰
 - [ ] S3 ≥2方案含对照
 - [ ] S4 决策基于数据
-{{#if (or (nonempty data_model) (nonempty api_changes) (nonempty key_flow))}}
 - [ ] [M+] S5 含DDL+API+流程
-{{/if}}
-{{#if blast_radius}}
 - [ ] [M+] S6 Blast Radius已评估
-{{/if}}
-{{#if design_innovation_tokens}}
 - [ ] [M+] S7 Token≤3
-{{/if}}
-{{#if tradeoffs}}
 - [ ] [M+] S8 权衡分析诚实
-{{/if}}
 - [ ] [M+] S9 部署流程完整
-{{#if security_threats}}
 - [ ] [H]  S10 STRIDE已建模
-{{/if}}
-{{#if rollout_steps}}
 - [ ] [M+] S11 灰度+回滚明确
-{{/if}}
 - [ ] **2-week smell**: 合格工程师2周内能交付一个小feature？cognitive#11
 - [ ] **Refactor-first**: 重构和功能改动分开了吗？cognitive#13: 先让改动变简单，再做简单改动
