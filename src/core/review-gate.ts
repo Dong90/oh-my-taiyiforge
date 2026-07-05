@@ -117,72 +117,33 @@ export function generateFixTasks(
 
   const tasks: FixTask[] = [];
 
-  switch (round) {
-    case 1: // 安全审查
-      tasks.push({
-        dimension: "code", round, priority: "P0",
-        action: "[R1 安全] 扫描全部 src/ 文件：检查硬编码密钥/令牌/密码。检查 SQL 注入/XSS/CSRF 漏洞。验证输入校验完整性（Zod/type guard）。检查认证授权逻辑是否有绕过路径。",
-        verifyCommand: "npm audit && grep -r 'sk-\\|api_key\\|secret\\|password\\|token' src/ --include='*.ts' || echo 'no secrets found'",
-        targetFiles: ["src/"],
-      });
-      tasks.push({
-        dimension: "code", round, priority: "P0",
-        action: "[R1 安全] 检查 npm audit 无 critical/high。检查依赖供应链安全（是否有已知漏洞）。确认无 eval/Function 动态代码执行。检查敏感数据是否打印到日志。",
-        verifyCommand: "npm audit --audit-level=high",
-      });
-      break;
+  // R1 安全审查（所有轮次都包含）
+  if (round >= 1) {
+    tasks.push({ dimension: "code", round, priority: "P0", action: "[R1 安全] 扫描全部 src/ 文件：检查硬编码密钥/令牌/密码。检查 SQL 注入/XSS/CSRF 漏洞。验证输入校验完整性（Zod/type guard）。检查认证授权逻辑是否有绕过路径。", verifyCommand: "npm audit && grep -r 'sk-\\|api_key\\|secret\\|password\\|token' src/ --include='*.ts' || echo 'no secrets found'", targetFiles: ["src/"] });
+    tasks.push({ dimension: "code", round, priority: "P0", action: "[R1 安全] 检查 npm audit 无 critical/high。检查依赖供应链安全（是否有已知漏洞）。确认无 eval/Function 动态代码执行。检查敏感数据是否打印到日志。", verifyCommand: "npm audit --audit-level=high" });
+  }
 
-    case 2: // 性能审查
-      tasks.push({
-        dimension: "code", round, priority: "P0",
-        action: "[R2 性能] 扫描全部 src/ 文件：检查数据库查询是否有 N+1 问题。检查热路径是否有不必要的对象分配（内联 style/create/闭包）。检查大列表是否正确虚拟化/分页。",
-        verifyCommand: "npm test -- --coverage",
-        targetFiles: ["src/"],
-      });
-      tasks.push({
-        dimension: "code", round, priority: "P1",
-        action: "[R2 性能] 检查异步操作是否有超时(>5s)/重试逻辑。检查是否有同步阻塞操作。检查 bundle size 是否合理。检查是否有内存泄漏（事件监听器/定时器未清理）。",
-        verifyCommand: "npx tsc --noEmit && npm test",
-      });
-      break;
+  // R2 性能审查
+  if (round >= 2) {
+    tasks.push({ dimension: "code", round, priority: "P0", action: "[R2 性能] 扫描全部 src/ 文件：检查数据库查询是否有 N+1 问题。检查热路径是否有不必要的对象分配（内联 style/create/闭包）。检查大列表是否正确虚拟化/分页。", verifyCommand: "npm test -- --coverage", targetFiles: ["src/"] });
+    tasks.push({ dimension: "code", round, priority: "P1", action: "[R2 性能] 检查异步操作是否有超时(>5s)/重试逻辑。检查是否有同步阻塞操作。检查 bundle size 是否合理。检查是否有内存泄漏（事件监听器/定时器未清理）。", verifyCommand: "npx tsc --noEmit && npm test" });
+  }
 
-    case 3: // 边界与错误处理
-      tasks.push({
-        dimension: "code", round, priority: "P0",
-        action: "[R3 边界] 审查全部 src/ 文件：每个 async 函数是否有 try-catch。每个外部输入是否有空值/undefined/null 检查。每个数组/集合操作是否有空集合保护。",
-        verifyCommand: "npx tsc --noEmit && npm test",
-      });
-      tasks.push({
-        dimension: "test", round, priority: "P0",
-        action: "[R3 边界] 补全测试：空输入/超时/并发冲突/上游异常各 ≥1 条。每个 AC 独立测试用例 Given/When/Then。边界值测试（max+1/min-1/0/-1/null/undefined）。",
-        verifyCommand: "npm test -- --coverage",
-      });
-      break;
+  // R3 边界与错误处理
+  if (round >= 3) {
+    tasks.push({ dimension: "code", round, priority: "P0", action: "[R3 边界] 审查全部 src/ 文件：每个 async 函数是否有 try-catch。每个外部输入是否有空值/undefined/null 检查。每个数组/集合操作是否有空集合保护。", verifyCommand: "npx tsc --noEmit && npm test" });
+    tasks.push({ dimension: "test", round, priority: "P0", action: "[R3 边界] 补全测试：空输入/超时/并发冲突/上游异常各 ≥1 条。每个 AC 独立测试用例 Given/When/Then。边界值测试（max+1/min-1/0/-1/null/undefined）。", verifyCommand: "npm test -- --coverage" });
+  }
 
-    case 4: // 可维护性
-      tasks.push({
-        dimension: "code", round, priority: "P0",
-        action: "[R4 维护] 审查全部 src/ 文件：消除 any/unknown 滥用。超过 250 行(纯逻辑)/400 行(含样板)的文件拆分。函数名精确表达意图，参数≤3个。提取重复代码段为共享工具函数。",
-        verifyCommand: "npx tsc --noEmit && npm run lint",
-        targetFiles: ["src/"],
-      });
-      tasks.push({
-        dimension: "code", round, priority: "P1",
-        action: "[R4 维护] 检查模块间耦合度/循环依赖/单一职责违规。检查依赖注入（核心逻辑不直接 new 外部服务，通过接口注入）。检查公开 API 是否有稳定契约。",
-        verifyCommand: "npx depcheck 2>/dev/null || echo 'depcheck not available'",
-      });
-      break;
+  // R4 可维护性
+  if (round >= 4) {
+    tasks.push({ dimension: "code", round, priority: "P0", action: "[R4 维护] 审查全部 src/ 文件：消除 any/unknown 滥用。超过 250 行(纯逻辑)/400 行(含样板)的文件拆分。函数名精确表达意图，参数≤3个。提取重复代码段为共享工具函数。", verifyCommand: "npx tsc --noEmit && npm run lint", targetFiles: ["src/"] });
+    tasks.push({ dimension: "code", round, priority: "P1", action: "[R4 维护] 检查模块间耦合度/循环依赖/单一职责违规。检查依赖注入（核心逻辑不直接 new 外部服务，通过接口注入）。检查公开 API 是否有稳定契约。", verifyCommand: "npx depcheck 2>/dev/null || echo 'depcheck not available'" });
+  }
 
-    case 5: // 终审
-      tasks.push({
-        dimension: "code", round, priority: "P0",
-        action: "[R5 终审] 全部维度最终审查：确认 R1-R4 所有问题已修复。确认代码/文档/测试评分均 ≥ 9.5。确认无新增 high finding。确认 CHANGELOG/README 已更新。若仍不达标，记录 TODOS 并降低复杂度。",
-        verifyCommand: "npm test && npm run lint && npm audit",
-      });
-      break;
-
-    default:
-      return [];
+  // R5 终审（包含全部）
+  if (round >= 5) {
+    tasks.push({ dimension: "code", round, priority: "P0", action: "[R5 终审] 全部维度最终审查：确认 R1-R4 所有问题已修复。确认代码/文档/测试评分均 ≥ 9.5。确认无新增 high finding。确认 CHANGELOG/README 已更新。若仍不达标，记录 TODOS 并降低复杂度。", verifyCommand: "npm test && npm run lint && npm audit" });
   }
 
   return tasks;
