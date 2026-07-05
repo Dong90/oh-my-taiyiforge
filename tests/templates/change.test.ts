@@ -27,6 +27,10 @@ describe("change.hbs", () => {
       { id: "SC-01", description: "登录成功率 ≥ 99%", is_checked: false },
       { id: "SC-02", description: "超时从 60s 降到 10s", is_checked: true },
     ],
+    impact_map: [
+      { module: "auth-service", impact: "新增 OAuth 超时配置", owner: "@alice" },
+      { module: "user-service", impact: "无影响", owner: "@bob" },
+    ],
   };
 
   it("renders title as H1 with prefix", () => {

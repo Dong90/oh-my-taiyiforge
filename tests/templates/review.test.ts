@@ -11,6 +11,19 @@ const tplPath = path.join(
 
 Handlebars.registerHelper("eq", function (a, b) { return a === b; });
 Handlebars.registerHelper("neq", function (a, b) { return a !== b; });
+Handlebars.registerHelper("not", function (a) { return !a; });
+Handlebars.registerHelper("and", function (...args: unknown[]) {
+  return args.slice(0, -1).every((v) => Boolean(v));
+});
+Handlebars.registerHelper("or", function (...args: unknown[]) {
+  return args.slice(0, -1).some((v) => Boolean(v));
+});
+Handlebars.registerHelper("nonempty", function (v: unknown) {
+  if (v == null) return false;
+  if (typeof v === "string") return v.trim().length > 0;
+  if (Array.isArray(v)) return v.length > 0;
+  return true;
+});
 
 function render(data: unknown) {
   const source = fs.readFileSync(tplPath, "utf-8");
@@ -97,9 +110,12 @@ describe("review.hbs", () => {
   it("renders with no findings (falls back to default placeholders)", () => {
     const out = render({ title: "无问题", verdict: "approved" });
     expect(out).toContain("# REVIEW: 无问题");
-    expect(out).toContain("### R1: Functional — 暂无");
-    expect(out).toContain("### R2: Architecture — 暂无");
-    expect(out).toMatch(/R3.*暂无/);
+    expect(out).toMatch(/R1: Functional Review/);
+    expect(out).toMatch(/R2: Architecture Review/);
+    expect(out).toMatch(/R3: Test Review/);
+    expect(out).toMatch(/R4: Documentation Review/);
+    // Empty findings should produce STAMP warning
+    expect(out).toContain("REVIEW 缺口");
     expect(out).not.toMatch(/\{\{[#/]?[a-zA-Z]+\}\}/);
   });
 });

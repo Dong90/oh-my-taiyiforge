@@ -15,12 +15,28 @@ downstream: [integration]
 
 ## Verdict
 
-{{#if verdict}}
+{{#if (eq verdict "approved")}}
 - [x] **Approve** — 可合并
+{{else}}{{#if (eq verdict "changes_requested")}}
+- [x] **Request changes** — 需修复后重审
+{{else}}{{#if (eq verdict "blocked")}}
+- [x] **Blocked** — 阻塞合并
+{{else}}{{#if (eq verdict "unreviewable")}}
+- [ ] **⚠ Unreviewable** — 审查未实质开展，需重做
 {{else}}
-- [ ] **Approve**
+- [ ] **Approve** (未确认，需 explicit verdict 字段)
 - [ ] **Request changes**
+- [ ] **Blocked**
+- [ ] **Unreviewable** (审查跳过)
+{{/if}}{{/if}}{{/if}}{{/if}}
+
+{{#if (and (eq verdict "approved") (or (not findings) (eq findings.length 0)))}}
+> 🚨 **STAMP WARNING**: verdict=approved 但 findings=[]. 这是盖印式审查。Schema 已要求 explicit verdict + findings (或 findings_acknowledged=true).
 {{/if}}
+
+{{#unless findings}}
+> 🚨 **REVIEW 缺口**: 没有 findings. 实际审查过才能选 `approved`. 否则选 `unreviewable` + `findings_acknowledged=true`.
+{{/unless}}
 
 ---
 
@@ -45,37 +61,44 @@ downstream: [integration]
 ## Step 1: Rounds & Findings
 > **[ALL]** Goal: R1/R2/R3/R4 四轮结构化审查，每轮按 Critical → Low 排序 | Inputs: 代码diff + TEST.md
 
+> ⚠️ **约束**: schema 已强制 findings ≥ 1 (除非 findings_acknowledged=true). 这是 review.hbs 渲染结果的硬性约束；空 findings 在此阶段会显式 STAMP 警告 + 不推荐 approved.
+
 ### R1: Functional Review
-{{#if findings}}
-{{#each findings}}{{#if (eq round "R1")}}
-- {{id}} `[{{severity}}]` {{#if resolved}}✅{{else}}❌{{/if}}: {{description}}{{#if file}} [`{{file}}{{#if line}}:{{line}}{{/if}}`]{{/if}}
+{{#each findings}}
+{{#if (eq round "R1")}}
+- {{id}} `[{{severity}}]` {{#if resolved}}✅{{else}}❌{{/if}}: {{description}}{{#if file}} (`{{file}}{{#if line}}:{{line}}{{/if}}`){{/if}}
   {{#if suggestion}}- 建议: {{suggestion}}{{/if}}
-{{/if}}{{/each}}
-{{#each findings}}{{#if (neq round "R1")}}{{#if (neq round "R2")}}{{#if (neq round "R3")}}{{#if (neq round "R4")}}
-- {{id}} `[{{severity}}]` {{#if resolved}}✅{{else}}❌{{/if}}: {{description}}{{#if file}} [`{{file}}{{#if line}}:{{line}}{{/if}}`]{{/if}}
-  {{#if suggestion}}- 建议: {{suggestion}}{{/if}}
-{{/if}}{{/if}}{{/if}}{{/if}}{{/each}}
-### R2: Architecture Review
-{{#each findings}}{{#if (eq round "R2")}}
-- {{id}} `[{{severity}}]` {{#if resolved}}✅{{else}}❌{{/if}}: {{description}}{{#if file}} [`{{file}}{{#if line}}:{{line}}{{/if}}`]{{/if}}
-  {{#if suggestion}}- 建议: {{suggestion}}{{/if}}
-{{/if}}{{/each}}
-### R3: Test Review
-{{#each findings}}{{#if (eq round "R3")}}
-- {{id}} `[{{severity}}]` {{#if resolved}}✅{{else}}❌{{/if}}: {{description}}{{#if file}} [`{{file}}{{#if line}}:{{line}}{{/if}}`]{{/if}}
-  {{#if suggestion}}- 建议: {{suggestion}}{{/if}}
-{{/if}}{{/each}}
-### R4: Documentation Review
-{{#each findings}}{{#if (eq round "R4")}}
-- {{id}} `[{{severity}}]` {{#if resolved}}✅{{else}}❌{{/if}}: {{description}}{{#if file}} [`{{file}}{{#if line}}:{{line}}{{/if}}`]{{/if}}
-  {{#if suggestion}}- 建议: {{suggestion}}{{/if}}
-{{/if}}{{/each}}
-{{else}}
-### R1: Functional — 暂无
-### R2: Architecture — 暂无
-### R3: Test — 暂无
-### R4: Documentation — 暂无
 {{/if}}
+{{/each}}
+
+### R2: Architecture Review
+{{#each findings}}
+{{#if (eq round "R2")}}
+- {{id}} `[{{severity}}]` {{#if resolved}}✅{{else}}❌{{/if}}: {{description}}{{#if file}} (`{{file}}{{#if line}}:{{line}}{{/if}}`){{/if}}
+  {{#if suggestion}}- 建议: {{suggestion}}{{/if}}
+{{/if}}
+{{/each}}
+
+### R3: Test Review
+{{#each findings}}
+{{#if (eq round "R3")}}
+- {{id}} `[{{severity}}]` {{#if resolved}}✅{{else}}❌{{/if}}: {{description}}{{#if file}} (`{{file}}{{#if line}}:{{line}}{{/if}}`){{/if}}
+  {{#if suggestion}}- 建议: {{suggestion}}{{/if}}
+{{/if}}
+{{/each}}
+
+### R4: Documentation Review
+{{#each findings}}
+{{#if (eq round "R4")}}
+- {{id}} `[{{severity}}]` {{#if resolved}}✅{{else}}❌{{/if}}: {{description}}{{#if file}} (`{{file}}{{#if line}}:{{line}}{{/if}}`){{/if}}
+  {{#if suggestion}}- 建议: {{suggestion}}{{/if}}
+{{/if}}
+{{/each}}
+
+{{#unless findings}}
+> 🚨 **REVIEW 缺口警告**: schema 已强制 findings ≥ 1 (除非 findings_acknowledged=true).
+> 实际审查过才能选 verdict=approved. 否则选 unreviewable.
+{{/unless}}
 
 <!-- Validate: 每个finding有具体位置+置信度+修复建议？ -->
 

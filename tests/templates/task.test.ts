@@ -29,6 +29,9 @@ describe("task.hbs", () => {
         parallelizable: true,
       },
     ],
+    slice_risks: [
+      { slice: "T01", risk: "迁移脚本失败", probability: "低", mitigation: "备份 + 回滚脚本" },
+    ],
   };
 
   it("renders title", () => {

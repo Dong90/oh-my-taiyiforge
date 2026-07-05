@@ -67,7 +67,10 @@ export class TemplateEngine {
     // 内置对比 helper，供模板 {{#if (eq a b)}} 使用
     this.handlebars.registerHelper("eq", (a: unknown, b: unknown) => a === b);
     this.handlebars.registerHelper("neq", (a: unknown, b: unknown) => a !== b);
-    // Logical or for subexpressions: {{#if (or a b c)}}
+    this.handlebars.registerHelper("not", (a: unknown) => !a);
+    this.handlebars.registerHelper("and", (...args: unknown[]) =>
+      args.slice(0, -1).every((v) => Boolean(v)),
+    );
     this.handlebars.registerHelper("or", (...args: unknown[]) =>
       args.slice(0, -1).some((v) => Boolean(v)),
     );

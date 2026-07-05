@@ -132,7 +132,7 @@ flowchart LR
 
 <!-- Validate: 禁动清单是否从 CONTEXT 复用？新增模块有没有侵入禁动区？ -->
 
-## Options
+## Step 3: Options
 
 > **[ALL]** Goal: ≥2方案含对照 | Inputs: Step1+2
 <!-- Action: 每个方案: 思路/优点/缺点/代价。A=不改/最小改动 -->
@@ -145,7 +145,7 @@ flowchart LR
 
 <!-- Validate: ≥2方案？含"不改"对照？代价量化？ -->
 
-## Reuse Analysis
+## Step 4a: Reuse Analysis
 
 > **[ALL]** Goal: 显式声明复用既有代码 / 模块 / 模式
 <!-- Action: 列出本次会复用的现有模块、新增/修改的边界 -->
@@ -163,7 +163,7 @@ flowchart LR
 
 **不重写**: 复用既有 helper（这是来自 现有 模块的一种 trade-off 决策，避免 复杂度 漂移）。
 
-## Decision
+## Step 4b: Decision
 
 > **[ALL]** Goal: 选定方案并说清理由 | Inputs: Step3
 <!-- Action: 基于数据/约束决策，不写"感觉这个好" -->
@@ -229,10 +229,6 @@ flowchart LR
 {{#each design_innovation_tokens}}
 | {{decision}} | {{#if is_token}}✅是{{else}}否{{/if}} | {{reason}} |
 {{/each}}
-{{else}}
-| 决策 | Token? | 不选成熟方案的理由 |
-|-----|:--:|-------------------|
-| 本次无新技术 | 否 | 全栈已有技术栈 |
 {{/if}}
 
 **累计: {{#if design_innovation_tokens}}{{design_innovation_tokens.length}}{{else}}0{{/if}}/3**
@@ -277,10 +273,6 @@ flowchart LR
 {{#each security_threats}}
 | {{threat}} | {{vector}} | {{mitigation}} |
 {{/each}}
-{{else}}
-| 威胁 | 攻击向量 | 缓解 |
-|------|---------|------|
-| 本次变更无新增攻击面 | 纯测试代码，无运行时暴露 | N/A |
 {{/if}}
 
 <!-- Validate: OWASP Top10全覆盖？敏感数据加密+日志脱敏？ -->

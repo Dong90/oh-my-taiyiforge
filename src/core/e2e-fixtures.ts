@@ -111,8 +111,8 @@ const E2E_JSON_ARTIFACTS: Record<Exclude<PhaseId, "dev">, object> = {
         { id: "NFR-P02", description: "单阶段 artifact 写入 < 500ms" },
       ],
       security: [
-        { id: "NFR-S01", description: "无硬编码密钥/令牌" },
-        { id: "NFR-S02", description: "state.json 不包含敏感路径信息" },
+        { id: "NFR-S01", description: "全代码 0 硬编码密钥/token（grep -r \"AKIA\\|sk-\" 预期 0 hit）", unit: "count", threshold: "= 0" },
+        { id: "NFR-S02", description: "state.json 0 敏感路径泄露（绝对路径 ≤ 0）", unit: "count", threshold: "= 0" },
       ],
       availability: [
         { id: "NFR-A01", description: "CI 可用性 99%+" },

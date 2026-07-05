@@ -51,6 +51,10 @@ describe("design.hbs", () => {
       newModules: ["src/features/notifications/*"],
       doNotTouch: ["src/services/payment.ts"],
     },
+    security_threats: [
+      { threat: "会话劫持", vector: "XSS 注入", mitigation: "HttpOnly cookie + CSP" },
+      { threat: "CSRF", vector: "跨站表单提交", mitigation: "SameSite=Lax + CSRF token" },
+    ],
   };
 
   it("renders title as H1", () => {

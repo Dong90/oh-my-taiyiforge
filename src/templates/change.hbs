@@ -81,11 +81,9 @@ downstream: [requirement]
 {{#each impact_map}}
 | {{module}} | {{impact}} | {{owner}} |
 {{/each}}
-{{else}}
-| 模块/服务/团队 | 影响 | 负责人 |
-|--------------|------|--------|
-| 本次变更仅影响测试套件 | 无生产模块 | CI/CD |
 {{/if}}
+
+> ⚠️ 如未列出 impact_map，Zod 校验会要求 ≥ 1 条；占位 fallback 已删除。
 
 <!-- Validate: 遗漏=上线事故 -->
 

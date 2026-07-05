@@ -204,10 +204,6 @@ flowchart LR
 {{#each slice_risks}}
 | {{slice}} | {{risk}} | {{probability}} | {{mitigation}} |
 {{/each}}
-{{else}}
-| Slice | 风险 | 概率 | 缓解 |
-|-------|------|------|------|
-| _S1_ | _E2E 测试假阳性_ | _低_ | _CI 重试机制_ |
 {{/if}}
 
 <!-- Validate: 高风险Slice有独立回滚？ -->

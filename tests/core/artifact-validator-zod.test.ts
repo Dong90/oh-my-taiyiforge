@@ -27,7 +27,7 @@ describe("artifact-validator with Zod (mandatory)", () => {
     ],
     non_functional: {
       performance: [{ id: "NFR-P01", description: "响应时间<500ms" }],
-      security: [{ id: "NFR-S01", description: "密码加密存储" }],
+      security: [{ id: "NFR-S01", description: "密码 bcrypt 加密 ≥ 12 rounds (cost=12)" }],
       availability: [{ id: "NFR-A01", description: "99.9% uptime" }],
     },
     error_rescue_map: [

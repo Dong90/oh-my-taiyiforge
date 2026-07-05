@@ -109,6 +109,20 @@ STEP C — IMPLEMENT GREEN
 
 STEP D — REFACTOR
   - Optional cleanup. Tests MUST stay green.
+
+<three_case_rule>
+最低测试覆盖 (强制) — 每个新函数必须 ≥ 3 个 test case:
+  1. happy case — 正常输入返回预期输出
+  2. edge case — 边界输入 (空/null/0/最大值/Unicode/...)
+  3. error case — 异常输入 (类型错/null/无效格式) 走 error 处理分支
+
+禁止单 case 提交. 三个 case 缺一即视为覆盖不足.
+
+反模式 (禁止):
+  - 只测 happy path 不测边界
+  - console.log / TODO 代替断言
+  - 把 3 个 case 写成"复用同一断言"的循环 (虽然技术正确但语义模糊)
+</three_case_rule>
 </tdd_enforcement>
 
 **TDD 违规处理**：Agent 跳过 RED 证据直接写实现 → 删除实现代码，回退到 A 步。
