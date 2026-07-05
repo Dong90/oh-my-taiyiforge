@@ -474,6 +474,15 @@ export class WorkflowEngine {
     }
     const workingState = { ...sync.state };
 
+    // 禁止 admin 过人审门（change/design/review）
+    const humanGated = new Set(["change", "design", "review"]);
+    if (humanGated.has(phaseId) && gates.human?.approver?.toLowerCase() === "admin") {
+      return {
+        ok: false,
+        error: `[Admin Block] 禁止使用 "admin" 作为审批人。${phaseId} 阶段须由真实人审批。\n请使用 --approver "你的名字" 并确认工件内容已仔细审查。`,
+      };
+    }
+
     if (
       phaseId === "review" &&
       (workingState.complexity?.level === "high" ||
@@ -522,6 +531,10 @@ export class WorkflowEngine {
             error: `[Upstream Gate] 上游阶段工件不完整，禁止进入 review:\n${gaps.join("\n")}\n\n请回退补全上述阶段工件后再 review。`,
           };
         }
+
+        // 未启动 review-loop 时跳过分数和轮次门禁（向后兼容）
+        const loopStateFile = path.join(changeDir, ".review-loop-state.json");
+        if (!fs.existsSync(loopStateFile)) return { ok: true };
 
         const reviewPath = path.join(changeDir, "REVIEW.md");
         if (fs.existsSync(reviewPath)) {
