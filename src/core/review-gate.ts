@@ -43,12 +43,11 @@ function scoreThresholds(): ReviewScoreThresholds {
   const rawTest = process.env.TAIYI_REVIEW_MIN_TEST_SCORE;
   const rawOverall = process.env.TAIYI_REVIEW_MIN_OVERALL_SCORE;
   const enforce = process.env.TAIYI_REVIEW_ENFORCE_SCORES !== "0";
-  const d = rawCode ?? rawDoc ?? rawTest ?? rawOverall;
   return {
-    minCodeScore: rawCode ? Number(rawCode) : d ? Number(d) : 9,
-    minDocScore: rawDoc ? Number(rawDoc) : d ? Number(d) : 9,
-    minTestScore: rawTest ? Number(rawTest) : d ? Number(d) : 9,
-    minOverallScore: rawOverall ? Number(rawOverall) : d ? Number(d) : 9,
+    minCodeScore: rawCode ? Number(rawCode) : 9,
+    minDocScore: rawDoc ? Number(rawDoc) : 9,
+    minTestScore: rawTest ? Number(rawTest) : 9,
+    minOverallScore: rawOverall ? Number(rawOverall) : 9,
     enforce,
   };
 }
@@ -256,8 +255,15 @@ export function evaluateReviewLoopStatus(content: string, round?: number): Revie
     hints.push(...stratHints);
   }
 
-  if (scoreBlocked && !hints.some(h => h.includes("⚠️") || h.includes("同步更新"))) {
-    hints.push("⚠️ 任一维度修改后，其余维度也需要重新检查——文档改完代码注释要跟上，代码改完测试要跑，测试改完文档 AC 要对齐。");
+  if (scoreBlocked) {
+    const dimsBlocked = [
+      codeScore > 0 && codeScore < thresholds.minCodeScore,
+      docScore > 0 && docScore < thresholds.minDocScore,
+      testScore > 0 && testScore < thresholds.minTestScore,
+    ].filter(Boolean).length;
+    if (dimsBlocked >= 2) {
+      hints.push("⚠️ 多维度不达标：任一维度修改后，其余维度也需要重新检查——文档改完代码注释要跟上，代码改完测试要跑，测试改完文档 AC 要对齐。");
+    }
   }
 
   const canStop =
