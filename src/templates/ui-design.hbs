@@ -9,7 +9,7 @@ downstream: [task, dev]
 <!-- phase:ui-design skill:taiyi-ui-design gate:auto est:20min produces:UI-DESIGN.md upstream:[design,requirement] downstream:[task,dev] cplx:[ALL]5steps +[M+]2 +[H]1 -->
 # UI-DESIGN: {{title}}
 
-> **Scope**: {{#if scope}}{{scope}}{{else}}[涉及页面/组件]{{/if}}
+> **Scope**: {{#if scope}}{{scope}}{{/if}}
 
 ---
 
@@ -24,9 +24,11 @@ downstream: [task, dev]
 > - **例外**: {{styling_contract.exceptions}}
 {{/if}}
 {{else}}
-> - _待选定 CSS 方案（Tailwind / CSS Modules / styled-components）_
-> - _内联样式禁止策略_
-> - _主题变量规则_
+{{#if is_cli_only}}
+> - **CSS 方案**: N/A（CLI-only 变更，无 UI 样式）
+> - **内联样式**: N/A（无 UI 层，不涉及内联样式）
+> - **主题变量**: N/A（无 UI 层，不涉及主题变量）
+{{/if}}
 {{/if}}
 > 
 > <!-- Validate: CSS 方案单一无混用？无内联 style？颜色/间距/字体仅用主题变量？ -->
@@ -37,8 +39,6 @@ downstream: [task, dev]
 |----------|------|------|------|
 {{#if is_cli_only}}
 | N/A — {{scope}} |
-{{else}}
-| _待列出页面/组件_ | _新增/修改/删除_ | _路径_ | _变更描述_ |
 {{/if}}
 
 <!-- Validate: 公共组件(Header/Footer/ErrorBoundary)是否遗漏？ -->
@@ -50,11 +50,6 @@ downstream: [task, dev]
 ```
 {{#if is_cli_only}}
 N/A — {{scope}}
-{{else}}
-_组件树待补充_
-ComponentRoot
-├── ComponentA (props:..., state:...)
-└── ComponentB
 {{/if}}
 ```
 
@@ -99,16 +94,6 @@ N/A — CLI-only change, no visual states
 {{#each interaction_boundaries}}
 | {{boundary}} | {{behavior}} |
 {{/each}}
-{{else}}
-| Double-click | 待填写 |
-| Navigate away | 待填写 |
-| Slow (>3s) | 待填写 |
-| Stale state | 待填写 |
-| Concurrent tabs | 待填写 |
-| Back button | 待填写 |
-| Zero state | 待填写 |
-| Max input | 待填写 |
-| Offline | 待填写 |
 {{/if}}
 
 <!-- Validate: 9种全覆盖？每个有具体行为？ -->
@@ -139,7 +124,7 @@ N/A — CLI-only change, no visual states
 {{#if is_cli_only}}
 | N/A — {{scope}} |
 {{else}}
-| _交互描述_ | _触发条件_ | _动效内容_ | _时长_ |
+| 交互描述 | 触发条件 | 动效内容 | 时长 |
 {{/if}}
 
 <!-- Validate: 动效增强可用性而非纯装饰？有reduced-motion方案？ -->
@@ -174,7 +159,7 @@ N/A — CLI-only change, no visual states
 {{#if is_cli_only}}
 | N/A — {{scope}} |
 {{else}}
-| _Token名称_ | _值_ | _来源_ |
+| Token名称 | 值 | 来源 |
 {{/if}}
 
 <!-- Validate: 新增组件复用现有Token？与DESIGN.md一致？ -->
@@ -193,8 +178,12 @@ N/A — CLI-only change, no visual states
 - [ ] S1 组件清单完整
 - [ ] S2 组件树清晰
 - [ ] S3 6状态全覆盖
+{{#if interaction_boundaries}}
 - [ ] S4 9种交互边界全覆盖 | PD#4
+{{/if}}
 - [ ] [M+] S5 响应式断点已定义
 - [ ] [M+] S6 动效有规范(含prefers-reduced-motion)
+{{#if accessibility}}
 - [ ] [ALL] S7 WCAG AA已覆盖 | axe/Lighthouse审计通过
+{{/if}}
 - [ ] [H]  S8 Design Token对齐

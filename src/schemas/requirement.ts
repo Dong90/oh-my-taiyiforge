@@ -5,12 +5,8 @@ const NfrEntry = z.object({
   id: z.string(),
   description: z.string()
     .refine(
-      (s) => s.trim().length >= 8,
-      { message: "NFR description 必须 ≥ 8 字符（trim 后），禁止 'fast/safe/always' 类占位" }
-    )
-    .refine(
-      (s) => /(\d|%|s\b|ms\b|MB|KB|次|毫秒|秒|分|小时|天|req|RPS|LOC|倍|x\b|≤|≥|k\b|M\b|G\b)/i.test(s),
-      { message: "NFR 必须包含可度量指标（数字/单位/比较符号/百分比）" }
+      (s) => s.trim().length === 0 || s.trim().length >= 8,
+      { message: "NFR description 若填写则必须 ≥ 8 字符（trim 后），空值允许（seed 默认）" }
     ),
   metric_type: z.enum(["quantitative", "qualitative"]).optional()
     .describe("度量类型：quantitative=数字/单位，qualitative=行为/规范"),

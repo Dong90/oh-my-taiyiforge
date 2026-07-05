@@ -6,6 +6,7 @@ import { getPhase } from "./phase-registry.js";
 import { resolveHbsTemplatesDir } from "./package-root.js";
 import { renderPhaseMarkdown, writeRenderSnapshot } from "./artifact-seed.js";
 import { isSeedTemplate } from "./seed-marker.js";
+import { autoFillJson } from "./json-auto-fill.js";
 
 export type ForceRenderResult =
   | { ok: true; artifact: string; phaseId: PhaseId }
@@ -37,16 +38,32 @@ export function forceRenderPhaseFromJson(
     return { ok: false, error: `Invalid JSON: ${phaseId}.json` };
   }
 
+  const slug = options?.slug ?? path.basename(changeDir);
+
+  // Read complexity from state.json so autoFill can seed the right fields
+  let complexity: { level: string; score: number } | undefined;
+  try {
+    const statePath = path.join(changeDir, "state.json");
+    const raw = JSON.parse(fs.readFileSync(statePath, "utf8"));
+    if (raw.complexity?.level && typeof raw.complexity.score === "number") {
+      complexity = raw.complexity;
+    }
+  } catch { /* state.json may not exist yet — fine */ }
+
   if (options?.validate !== false) {
+    // Auto-fill missing fields from schema defaults before validation.
+    // This ensures templates never encounter missing fields, eliminating
+    // [xxx] / _xxx_ placeholder generation at the source.
+    const filled = autoFillJson(phaseId, data as Record<string, unknown>, slug, complexity);
     try {
-      ZOD_SCHEMAS[phaseId as Exclude<PhaseId, "dev">].parse(data);
+      ZOD_SCHEMAS[phaseId as Exclude<PhaseId, "dev">].parse(filled);
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : String(e);
       return { ok: false, error: `[Zod] ${phaseId}.json: ${msg}` };
     }
+    data = filled;
   }
 
-  const slug = options?.slug ?? path.basename(changeDir);
   const title =
     typeof data.title === "string" ? data.title : slug.replace(/-/g, " ");
 
