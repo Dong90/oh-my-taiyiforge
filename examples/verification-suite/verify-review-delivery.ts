@@ -49,10 +49,10 @@ assert(scores["文档完整性"] === 6, "scores 文档完整性 = 6");
 assert(scores["可维护性"] === 8, "scores 可维护性 = 8");
 
 // ── Test 2: Scores below 8.5 → canStop=false ──
-section("Test 2: Scores below 8.5 → blocked");
+section("Test 2: Scores below 9.5 → blocked");
 
 const result = evaluateReviewLoopStatus(reviewMd, 1);
-assert(result.canStop === false, "canStop = false (code 7.7 < 8.5)");
+assert(result.canStop === false, "canStop = false (code 7.7 < 9.5)");
 assert(result.codeScore === 7.7, `codeScore = ${result.codeScore} (expected 7.7)`);
 assert(result.docScore === 6, `docScore = ${result.docScore} (expected 6)`);
 assert(result.testScore === 9, `testScore = ${result.testScore} (expected 9)`);
@@ -79,8 +79,8 @@ assert(r3hasR2, "Round 3 has R2 strategies");
 assert(r3hasR3, "Round 3 has R3 strategies");
 assert(r3.hints.length > r1.hints.length, "Round 3 has more hints than Round 1");
 
-// ── Test 5: All scores 8.5+ → canStop=true ──
-section("Test 5: All scores ≥ 8.5 → passes");
+// ── Test 5: All scores 9.5+ → canStop=true ──
+section("Test 5: All scores ≥ 9.5 → passes");
 
 const perfectMd = `
 ## Verdict
@@ -88,16 +88,16 @@ const perfectMd = `
 
 | 维度 | 评分 | 备注 |
 |------|------|------|
-| 功能正确性 | 9/10 | great |
-| 架构一致性 | 9/10 | great |
-| 测试覆盖 | 9/10 | great |
-| 文档完整性 | 9/10 | great |
-| 可维护性 | 9/10 | great |
+| 功能正确性 | 10/10 | perfect |
+| 架构一致性 | 10/10 | perfect |
+| 测试覆盖 | 10/10 | perfect |
+| 文档完整性 | 10/10 | perfect |
+| 可维护性 | 10/10 | perfect |
 
-⭐ **9/10**
+⭐ **10/10**
 `;
 const perfect = evaluateReviewLoopStatus(perfectMd, 1);
-assert(perfect.canStop === true, "canStop = true (all scores ≥ 8.5)");
+assert(perfect.canStop === true, "canStop = true (all scores ≥ 9.5)");
 assert(perfect.hints.length === 0, "no hints when passing");
 
 // ── Test 6: Cascading reminder when 2+ dims fail ──
@@ -109,13 +109,13 @@ const twoFailMd = `
 
 | 维度 | 评分 | 备注 |
 |------|------|------|
-| 功能正确性 | 5/10 | bad |
-| 架构一致性 | 8/10 | ok |
-| 测试覆盖 | 5/10 | bad |
-| 文档完整性 | 5/10 | bad |
-| 可维护性 | 8/10 | ok |
+| 功能正确性 | 9/10 | bad |
+| 架构一致性 | 10/10 | ok |
+| 测试覆盖 | 9/10 | bad |
+| 文档完整性 | 9/10 | bad |
+| 可维护性 | 10/10 | ok |
 
-⭐ **6/10**
+⭐ **9/10**
 `;
 const twoFail = evaluateReviewLoopStatus(twoFailMd, 1);
 assert(twoFail.canStop === false, "canStop = false (3 dims fail)");
@@ -137,16 +137,16 @@ const oneFailMd = `
 
 | 维度 | 评分 | 备注 |
 |------|------|------|
-| 功能正确性 | 9/10 | ok |
-| 架构一致性 | 9/10 | ok |
-| 测试覆盖 | 9/10 | ok |
-| 文档完整性 | 5/10 | bad |
-| 可维护性 | 9/10 | ok |
+| 功能正确性 | 10/10 | ok |
+| 架构一致性 | 10/10 | ok |
+| 测试覆盖 | 10/10 | ok |
+| 文档完整性 | 9/10 | low |
+| 可维护性 | 10/10 | ok |
 
-⭐ **9/10**
+⭐ **9.5/10**
 `;
 const oneFail = evaluateReviewLoopStatus(oneFailMd, 1);
-assert(oneFail.canStop === false, "canStop = false (doc < 9)");
+assert(oneFail.canStop === false, "canStop = false (doc 9 < 9.5)");
 const noCascade = !oneFail.hints.some(h => h.includes("多维度不达标"));
 assert(noCascade, "no cascading reminder for single dim failure");
 
