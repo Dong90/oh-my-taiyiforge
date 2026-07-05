@@ -6,7 +6,7 @@ export type ReviewLoopStateFile = {
   round: number;
   maxRounds?: number;
   lastVerdict?: string;
-  /** review-loop 发起时间；REVIEW.md 须在此之后更新才算「新一轮 review」 */
+  completedRounds?: number[];
   loopStartedAt?: string;
   lastReviewMdMtimeMs?: number;
   updatedAt: string;
@@ -37,11 +37,15 @@ export function bumpReviewLoopRound(
   extra?: Partial<Pick<ReviewLoopStateFile, "loopStartedAt" | "lastReviewMdMtimeMs">>,
 ): ReviewLoopStateFile {
   const prev = readReviewLoopState(changeDir);
+  const prevRound = prev?.slug === slug ? prev.round : 0;
+  const completed = prev?.completedRounds ?? [];
+  if (prevRound > 0 && !completed.includes(prevRound)) completed.push(prevRound);
   const next: ReviewLoopStateFile = {
     slug,
-    round: (prev?.slug === slug ? prev.round : 0) + 1,
+    round: prevRound + 1,
     maxRounds,
     lastVerdict,
+    completedRounds: completed,
     loopStartedAt: extra?.loopStartedAt ?? prev?.loopStartedAt,
     lastReviewMdMtimeMs: extra?.lastReviewMdMtimeMs ?? prev?.lastReviewMdMtimeMs,
     updatedAt: new Date().toISOString(),

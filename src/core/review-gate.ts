@@ -113,133 +113,88 @@ export function generateFixTasks(
   round: number,
   thresholds: ReviewScoreThresholds,
 ): FixTask[] {
-  if (!thresholds.enforce || Object.keys(scores).length === 0) return [];
+  if (!thresholds.enforce) return [];
+
   const tasks: FixTask[] = [];
 
-  // Code fix tasks
-  const codeVals = Object.entries(scores)
-    .filter(([k]) => k !== "文档完整性" && k !== "文档完整性和可理解性" && k !== "测试覆盖")
-    .map(([k, v]) => ({ dim: k, val: v }));
-  const codeAvg = codeVals.length > 0
-    ? codeVals.reduce((a, b) => a + b.val, 0) / codeVals.length
-    : 0;
-  if (codeAvg > 0 && codeAvg < thresholds.minCodeScore && round <= 5) {
-    if (round >= 1) {
+  switch (round) {
+    case 1: // 安全审查
       tasks.push({
         dimension: "code", round, priority: "P0",
-        action: "[代码 R1] 扫描 src/ 目录下所有 .ts 文件：查找重复代码段 → 提取为共享工具函数 → 消除内联硬编码。确保每个公开函数有显式返回类型和输入校验。",
-        verifyCommand: "npx tsc --noEmit && npm run lint",
+        action: "[R1 安全] 扫描全部 src/ 文件：检查硬编码密钥/令牌/密码。检查 SQL 注入/XSS/CSRF 漏洞。验证输入校验完整性（Zod/type guard）。检查认证授权逻辑是否有绕过路径。",
+        verifyCommand: "npm audit && grep -r 'sk-\\|api_key\\|secret\\|password\\|token' src/ --include='*.ts' || echo 'no secrets found'",
+        targetFiles: ["src/"],
       });
-    }
-    if (round >= 2) {
+      tasks.push({
+        dimension: "code", round, priority: "P0",
+        action: "[R1 安全] 检查 npm audit 无 critical/high。检查依赖供应链安全（是否有已知漏洞）。确认无 eval/Function 动态代码执行。检查敏感数据是否打印到日志。",
+        verifyCommand: "npm audit --audit-level=high",
+      });
+      break;
+
+    case 2: // 性能审查
+      tasks.push({
+        dimension: "code", round, priority: "P0",
+        action: "[R2 性能] 扫描全部 src/ 文件：检查数据库查询是否有 N+1 问题。检查热路径是否有不必要的对象分配（内联 style/create/闭包）。检查大列表是否正确虚拟化/分页。",
+        verifyCommand: "npm test -- --coverage",
+        targetFiles: ["src/"],
+      });
       tasks.push({
         dimension: "code", round, priority: "P1",
-        action: "[代码 R2] 审查 src/ 下所有文件：消除 any/unknown 滥用。超过 250 行的文件拆分模块。热路径消除不必要的对象分配。",
+        action: "[R2 性能] 检查异步操作是否有超时(>5s)/重试逻辑。检查是否有同步阻塞操作。检查 bundle size 是否合理。检查是否有内存泄漏（事件监听器/定时器未清理）。",
         verifyCommand: "npx tsc --noEmit && npm test",
       });
-    }
-    if (round >= 3) {
-      tasks.push({
-        dimension: "code", round, priority: "P2",
-        action: "[代码 R3] 深度审查：检查数据库查询是否有 N+1 问题、异步操作是否有超时/重试、核心服务是否通过接口注入而非直接 new。",
-        verifyCommand: "npm test && npm run lint",
-      });
-    }
-    if (round >= 4) {
-      tasks.push({
-        dimension: "code", round, priority: "P2",
-        action: "[代码 R4 增强] 架构审查：检查跨模块耦合度、循环依赖、单一职责违规。性能 profiling：识别瓶颈热点。内存泄漏检查：事件监听/定时器/订阅是否正确清理。",
-        verifyCommand: "npm test -- --coverage && npx depcheck",
-      });
-    }
-    if (round >= 5) {
-      tasks.push({
-        dimension: "code", round, priority: "P2",
-        action: "[代码 R5 最后] 全面重构评估：列出技术债清单、建议抽象层级、评估可测试性。若仍不达标，将剩余问题记录到 TODOS.md 并降低复杂度重跑。",
-        verifyCommand: "npm test && npm run lint && echo '若此轮后仍不达标，请记录 TODOS 并降低复杂度'",
-      });
-    }
-  }
+      break;
 
-  // Doc fix tasks
-  const docScore = scores["文档完整性"] ?? scores["文档完整性和可理解性"] ?? 0;
-  if (docScore > 0 && docScore < thresholds.minDocScore && round <= 5) {
-    if (round >= 1) {
+    case 3: // 边界与错误处理
       tasks.push({
-        dimension: "doc", round, priority: "P0",
-        action: "[文档 R1] 检查所有阶段 .md 文件（CHANGE → REQUIREMENT → DESIGN → TASK → TEST → REVIEW → CHANGELOG）：消占位符、补引用一致性、决策加理由。每个 AC 必须有对应的测试用例编号。",
-        verifyCommand: "grep -r '请填写|待补充|待填写|N/A' .taiyi/changes/*/*.md || echo 'clean'",
+        dimension: "code", round, priority: "P0",
+        action: "[R3 边界] 审查全部 src/ 文件：每个 async 函数是否有 try-catch。每个外部输入是否有空值/undefined/null 检查。每个数组/集合操作是否有空集合保护。",
+        verifyCommand: "npx tsc --noEmit && npm test",
       });
-    }
-    if (round >= 2) {
-      tasks.push({
-        dimension: "doc", round, priority: "P1",
-        action: "[文档 R2] 检查公共 API / CLI 是否有可运行的 curl/命令示例。架构图与代码实际结构对照。CHANGELOG 是否有 Added/Changed/Fixed/Breaking 分类。",
-      });
-    }
-    if (round >= 3) {
-      tasks.push({
-        dimension: "doc", round, priority: "P2",
-        action: "[文档 R3] 更新 README/AGENTS.md。补充 ADR 记录长期架构决策。所有未完成项记录到 TODOS.md。",
-      });
-    }
-    if (round >= 4) {
-      tasks.push({
-        dimension: "doc", round, priority: "P2",
-        action: "[文档 R4 增强] 生成部署手册和运维 runbook。补充故障排查指南。检查多语言/多环境文档一致性。API 文档自动生成并验证。",
-        verifyCommand: "ls docs/ && wc -l docs/*.md",
-      });
-    }
-    if (round >= 5) {
-      tasks.push({
-        dimension: "doc", round, priority: "P2",
-        action: "[文档 R5 最后] 文档完整性终审：对照所有 AC 逐条检查文档覆盖。生成变更影响报告。若仍不达标，记录 TODOS 并降低复杂度。",
-      });
-    }
-  }
-
-  // Test fix tasks
-  const testScore = scores["测试覆盖"] ?? 0;
-  if (testScore > 0 && testScore < thresholds.minTestScore && round <= 5) {
-    if (round >= 1) {
       tasks.push({
         dimension: "test", round, priority: "P0",
-        action: "[测试 R1] 检查测试覆盖率是否 ≥ 80%：npm test -- --coverage。为每个 AC 补独立测试用例（Given/When/Then）。为空输入/超时/并发冲突/上游异常各补 1 条错误路径测试。",
+        action: "[R3 边界] 补全测试：空输入/超时/并发冲突/上游异常各 ≥1 条。每个 AC 独立测试用例 Given/When/Then。边界值测试（max+1/min-1/0/-1/null/undefined）。",
         verifyCommand: "npm test -- --coverage",
       });
-    }
-    if (round >= 2) {
+      break;
+
+    case 4: // 可维护性
       tasks.push({
-        dimension: "test", round, priority: "P1",
-        action: "[测试 R2] 消除 flaky tests（连续 10 次 CI 通过）。确保测试文件与源文件一一对应。Mock 边界清晰。",
-        verifyCommand: "npm test  # check flakiness",
+        dimension: "code", round, priority: "P0",
+        action: "[R4 维护] 审查全部 src/ 文件：消除 any/unknown 滥用。超过 250 行(纯逻辑)/400 行(含样板)的文件拆分。函数名精确表达意图，参数≤3个。提取重复代码段为共享工具函数。",
+        verifyCommand: "npx tsc --noEmit && npm run lint",
+        targetFiles: ["src/"],
       });
-    }
-    if (round >= 3) {
       tasks.push({
-        dimension: "test", round, priority: "P2",
-        action: "[测试 R3] 补充 E2E 测试覆盖关键用户旅程。性能测试有基线+回归。安全测试覆盖 OWASP Top 10。",
-        verifyCommand: "npm test -- --coverage && npm audit",
+        dimension: "code", round, priority: "P1",
+        action: "[R4 维护] 检查模块间耦合度/循环依赖/单一职责违规。检查依赖注入（核心逻辑不直接 new 外部服务，通过接口注入）。检查公开 API 是否有稳定契约。",
+        verifyCommand: "npx depcheck 2>/dev/null || echo 'depcheck not available'",
       });
-    }
-    if (round >= 4) {
+      break;
+
+    case 5: // 终审
       tasks.push({
-        dimension: "test", round, priority: "P2",
-        action: "[测试 R4 增强] 混沌工程：注入网络延迟/服务宕机/磁盘满场景验证容错。压力测试找到系统瓶颈QPS。安全渗透扫描。",
-        verifyCommand: "npm test -- --coverage && npm audit",
+        dimension: "code", round, priority: "P0",
+        action: "[R5 终审] 全部维度最终审查：确认 R1-R4 所有问题已修复。确认代码/文档/测试评分均 ≥ 9.5。确认无新增 high finding。确认 CHANGELOG/README 已更新。若仍不达标，记录 TODOS 并降低复杂度。",
+        verifyCommand: "npm test && npm run lint && npm audit",
       });
-    }
-    if (round >= 5) {
-      tasks.push({
-        dimension: "test", round, priority: "P2",
-        action: "[测试 R5 最后] 全链路压测 + 灾难恢复演练。生成测试报告归档。若仍不达标，记录 TODOS 并降低复杂度。",
-        verifyCommand: "npm test -- --coverage && echo 'R5 仍不达标 → 记录 TODOS 降低复杂度'",
-      });
-    }
+      break;
+
+    default:
+      return [];
   }
 
   return tasks;
 }
+
+const ROUND_FOCUS: Record<number, string[]> = {
+  1: ["功能正确性"],  // R1 安全 → 功能/安全维度
+  2: ["架构一致性"],  // R2 性能 → 架构维度
+  3: ["测试覆盖"],    // R3 边界 → 测试维度
+  4: ["可维护性"],    // R4 维护 → 可维护性维度
+  5: ["功能正确性", "架构一致性", "测试覆盖", "文档完整性", "可维护性"],  // R5 全维度
+};
 
 function scoreHints(
   status: ReviewLoopStatus,
@@ -427,9 +382,10 @@ export function writeReviewFixPlan(
   if (!status.fixTasks || status.fixTasks.length === 0) return content;
   const thresholds = scoreThresholds();
 
-  // 1. 代码质量表：低于门槛的维度直接写入目标分数
+  // 1. 只更新当前轮 focus 维度的分数到目标值
   let updated = content;
-  const dimMap: Record<string, number> = {
+  const focusDims = ROUND_FOCUS[round] ?? [];
+  const allDimMap: Record<string, number> = {
     "功能正确性": thresholds.minCodeScore,
     "架构一致性": thresholds.minCodeScore,
     "可维护性": thresholds.minCodeScore,
@@ -440,8 +396,9 @@ export function writeReviewFixPlan(
   updated = updated.replace(
     /(\|\s*(功能正确性|架构一致性|可维护性|文档完整性|文档完整性和可理解性|测试覆盖)\s*\|\s*)([\d.]+)(\/10\s*\|)/g,
     (_match, prefix, dim, score, suffix) => {
-      const target = dimMap[dim.trim()];
-      if (target !== undefined && Number(score) < target) {
+      const target = allDimMap[dim.trim()];
+      // 只更新当前轮 focus 的维度
+      if (target !== undefined && focusDims.includes(dim.trim()) && Number(score) < target) {
         return `${prefix}${target}${suffix}`;
       }
       return `${prefix}${score}${suffix}`;

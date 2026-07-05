@@ -45,6 +45,7 @@ import { auditTaskPlan, formatPlanAudit, type PlanAuditResult } from "./plan-aud
 import { resolveArchTemplateForChange } from "./profile.js";
 import { evaluateArchitecture } from "./review-arch-check.js";
 import { evaluateReviewLoopStatus, scoreThresholds } from "./review-gate.js";
+import { readReviewLoopState, defaultReviewLoopMaxRounds } from "./review-loop-state.js";
 import { syncRootChangelog } from "./sync-root-changelog.js";
 import { syncChangeState } from "./state-sync.js";
 import {
@@ -517,6 +518,19 @@ export class WorkflowEngine {
               error: `[Score Gate] 分数不达标，禁止 complete review:\n${blockedDims.map(d => `  - ${d}`).join("\n")}\n\n请运行 /taiyi:review-loop 执行修复任务，达标后再 complete。\n（设 TAIYI_REVIEW_ENFORCE_SCORES=0 关闭此门禁）`,
             };
           }
+        }
+
+        // Check that all 5 rounds have been completed
+        const loopState = readReviewLoopState(changeDir);
+        const maxRounds = loopState?.maxRounds ?? defaultReviewLoopMaxRounds();
+        const completed = loopState?.completedRounds ?? [];
+        if (completed.length < maxRounds) {
+          const missing = Array.from({ length: maxRounds }, (_, i) => i + 1).filter(r => !completed.includes(r));
+          const roundNames: Record<number, string> = { 1: "安全审查", 2: "性能审查", 3: "边界审查", 4: "可维护性审查", 5: "终审" };
+          return {
+            ok: false,
+            error: `[Round Gate] 还差 ${maxRounds - completed.length} 轮未完成:\n${missing.map(r => `  - R${r}: ${roundNames[r] ?? '未知'}`).join("\n")}\n\n已通过: ${completed.length > 0 ? completed.map(r => `R${r}`).join(", ") : "无"}\n请继续运行 /taiyi:review-loop 直到 ${maxRounds} 轮全部完成。\n（设 TAIYI_REVIEW_ENFORCE_SCORES=0 关闭此门禁）`,
+          };
         }
       }
     }
