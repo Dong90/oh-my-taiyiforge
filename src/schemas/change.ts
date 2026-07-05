@@ -54,6 +54,7 @@ export const ChangeSchema = z.object({
     excludes: z.array(z.string()).optional().describe("明确排除的事"),
   }),
   fileBoundary: FileBoundarySchema.optional().describe("文件边界声明 — 用于代码一致性自动校验"),
+  is_cli_only: z.boolean().optional().describe("本变更是否仅 CLI/library — 为 true 时跳过 Step 3 Visual Direction 整段"),
   visual_tone: z.string().optional().describe("视觉基调"),
   visual_reason: z.string().optional().describe("视觉选择理由"),
   visual_references: z.string().optional().describe("视觉参考"),

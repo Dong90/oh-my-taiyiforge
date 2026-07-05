@@ -32,7 +32,9 @@ export function buildSeedJson(
       return {
         title,
         user_stories: [
-          { as_a: "待填写", i_want: "待填写", so_that: "待填写" },
+          { as_a: "主用户", i_want: "待填写", so_that: "待填写", priority: "P0" },
+          { as_a: "反向场景", i_want: "待填写", so_that: "待填写", priority: "P1" },
+          { as_a: "边界场景", i_want: "待填写", so_that: "待填写", priority: "P2" },
         ],
         acceptance_criteria: [
           { id: "AC-01", description: "待填写", is_checked: false },
@@ -65,6 +67,13 @@ export function buildSeedJson(
       return {
         title,
         test_plan: [{ id: "T-01", description: "待填写", status: "pending" }],
+        test_rounds: [
+          { round: "Round 1 · 功能", scope: "全部 AC", status: "✅", skip_reason: "—" },
+          { round: "Round 2 · 性能", scope: "Lighthouse / k6 / bundle", status: "⚠️", skip_reason: "性能无退化风险可跳过" },
+          { round: "Round 3 · 安全", scope: "依赖审计 / SAST / OWASP", status: "⚠️", skip_reason: "无新增攻击面可跳过" },
+          { round: "Round 4 · 兼容", scope: "浏览器 / 视口 / 数据迁移", status: "⚠️", skip_reason: "纯逻辑变更可跳过" },
+          { round: "Round 5 · 可观测", scope: "日志 / 指标 / 告警", status: "⚠️", skip_reason: "无新运维面可跳过" },
+        ],
       };
     case "review":
       return {

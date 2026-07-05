@@ -9,9 +9,23 @@ const tplPath = path.join(
   "../../src/templates/design.hbs"
 );
 
+// Mirror the helpers registered in src/core/template-engine.ts so test renders match production
+const _h = Handlebars.create();
+_h.registerHelper("eq", (a: unknown, b: unknown) => a === b);
+_h.registerHelper("neq", (a: unknown, b: unknown) => a !== b);
+_h.registerHelper("or", (...args: unknown[]) =>
+  args.slice(0, -1).some((v) => Boolean(v)),
+);
+_h.registerHelper("nonempty", (v: unknown) => {
+  if (v == null) return false;
+  if (typeof v === "string") return v.trim().length > 0;
+  if (Array.isArray(v)) return v.length > 0;
+  return true;
+});
+
 function render(data: unknown) {
   const source = fs.readFileSync(tplPath, "utf-8");
-  return Handlebars.compile(source)(data);
+  return _h.compile(source)(data);
 }
 
 describe("design.hbs", () => {
@@ -82,10 +96,21 @@ describe("design.hbs", () => {
   });
 
   it("renders detailed design section", () => {
-    const out = render(data);
+    const out = render({
+      ...data,
+      data_model: "ALTER TABLE users ADD COLUMN email VARCHAR(255);",
+      api_changes: "POST /api/login + DELETE /api/login",
+    });
     expect(out).toContain("## Step 5: Detailed Design");
     expect(out).toContain("### 数据模型");
     expect(out).toContain("### API 设计");
+  });
+
+  it("skips detailed design subsections when all three fields are empty", () => {
+    const out = render({ ...data, data_model: "", api_changes: "", key_flow: "" });
+    expect(out).toContain("## Step 5: Detailed Design");
+    expect(out).not.toContain("### 数据模型");
+    expect(out).toContain("无详细设计变更");
   });
 
   it("renders blast radius section", () => {

@@ -40,11 +40,7 @@ downstream: [review]
 | {{round}} | {{scope}} | {{status}} | {{#if skip_reason}}{{skip_reason}}{{else}}—{{/if}} |
 {{/each}}
 {{else}}
-| Round 1 · 功能 | 全部 AC | ✅ 必跑 | — |
-| Round 2 · 性能 | Lighthouse / k6 / bundle | ⚠️ 待定 | 性能无退化风险可跳过 |
-| Round 3 · 安全 | 依赖审计 / SAST / OWASP | ⚠️ 待定 | 无新增攻击面可跳过 |
-| Round 4 · 兼容 | 浏览器 / 视口 / 数据迁移 | ⚠️ 待定 | 纯逻辑变更可跳过 |
-| Round 5 · 可观测 | 日志 / 指标 / 告警 | ⚠️ 待定 | 无新运维面可跳过 |
+> ⚠️ 请在 test.json 提供 `test_rounds[]` (5 轮：功能/性能/安全/兼容/可观测) — 标题: round / scope / status / skip_reason
 {{/if}}
 
 <!-- Validate: 每轮状态明确？跳过有理由？ -->

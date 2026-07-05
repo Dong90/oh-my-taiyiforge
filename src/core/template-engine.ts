@@ -67,6 +67,17 @@ export class TemplateEngine {
     // 内置对比 helper，供模板 {{#if (eq a b)}} 使用
     this.handlebars.registerHelper("eq", (a: unknown, b: unknown) => a === b);
     this.handlebars.registerHelper("neq", (a: unknown, b: unknown) => a !== b);
+    // Logical or for subexpressions: {{#if (or a b c)}}
+    this.handlebars.registerHelper("or", (...args: unknown[]) =>
+      args.slice(0, -1).some((v) => Boolean(v)),
+    );
+    // Empty check for strings/arrays: {{#if (nonempty a)}}
+    this.handlebars.registerHelper("nonempty", (v: unknown) => {
+      if (v == null) return false;
+      if (typeof v === "string") return v.trim().length > 0;
+      if (Array.isArray(v)) return v.length > 0;
+      return true;
+    });
     if (opts?.partials) {
       for (const [name, content] of Object.entries(opts.partials)) {
         this.handlebars.registerPartial(name, content);

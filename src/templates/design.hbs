@@ -180,6 +180,7 @@ flowchart LR
 > **[MEDIUM+]** Goal: 落地细节完整 | Inputs: Step4
 <!-- Action: DDL+API契约+时序图 -->
 
+{{#if (or (nonempty data_model) (nonempty api_changes) (nonempty key_flow))}}
 ### 数据模型
 ```sql
 {{#if data_model}}{{data_model}}{{else}}-- 无数据模型变更{{/if}}
@@ -192,6 +193,9 @@ flowchart LR
 
 ### 关键流程
 {{#if key_flow}}{{key_flow}}{{else}}无关键流程变更{{/if}}
+{{else}}
+> ✅ 无详细设计变更 (无 DDL/API/时序图差异)
+{{/if}}
 
 <!-- Validate: DDL有索引？API有rate limit？流程有错误路径？ -->
 

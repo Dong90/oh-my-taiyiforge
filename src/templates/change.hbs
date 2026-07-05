@@ -45,6 +45,9 @@ downstream: [requirement]
 
 <!-- Validate: In/Out互斥且穷尽？ -->
 
+{{#if is_cli_only}}
+> ✅ **Step 3 skipped**: 本变更仅 CLI/library — 无视觉面。详细 UI 决策见 Phase 4 ui-design。
+{{else}}
 ## Step 3: Visual Direction
 > **[UI]** Goal: 前端项目预选视觉方向 | Inputs: 产品定位/品牌/竞品
 <!-- Action: 前端项目必填，纯后端 skip。此选择被 Phase 4 ui-design 继承并深化 -->
@@ -55,6 +58,7 @@ downstream: [requirement]
 - **明确排除**: {{#if visual_excluded}}{{visual_excluded}}{{else}}无 — CLI/workflow only; no visual surface{{/if}}
 
 <!-- Validate: 调性选择有理由支撑？参考产品有可比性？ -->
+{{/if}}
 
 ## Step 4: Premise Challenge
 > **[ALL]** Goal: 确认这是正确的问题 | Inputs: Step1+2

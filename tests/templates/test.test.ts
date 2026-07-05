@@ -20,6 +20,11 @@ describe("test.hbs", () => {
     test_plan: [
       { id: "TC-01", description: "邮箱登录成功", status: "unit" },
     ],
+    test_rounds: [
+      { round: "Round 1 · 功能", scope: "全部 AC", status: "✅", skip_reason: "—" },
+      { round: "Round 3 · 安全", scope: "依赖审计", status: "⚠️", skip_reason: "无新增攻击面" },
+      { round: "Round 5 · 可观测", scope: "日志", status: "⚠️", skip_reason: "无新运维面" },
+    ],
   };
 
   it("renders title", () => {

@@ -55,7 +55,7 @@ const UserStory = z.object({
 export const RequirementSchema = z.object({
   title: z.string().describe("用一句话概括核心需求"),
   one_liner: z.string().optional().describe("一句线描述"),
-  user_stories: z.array(UserStory).min(1).describe("用户故事 (As a / I want / So that)"),
+  user_stories: z.array(UserStory).min(1).describe("用户故事 (As a / I want / So that) — 至少一条主路径; 反向/边界/异常建议各加一条以达到 ≥ 3 条"),
   features: z.array(z.string()).optional().describe("[deprecated] 由 user_stories 取代"),
   scope_v1: z.array(z.string()).optional().describe("v1 范围"),
   scope_v2: z.array(z.string()).optional().describe("v2 范围"),

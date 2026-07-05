@@ -2,13 +2,47 @@
  *  Used by tryPromoteSeedArtifact and validateArtifactFile to block
  *  auto-promotion and mark quality scores when content is still skeletal.
  *
- *  Convention: HBS fallback placeholders use either:
- *    _中文描述_  — underline-wrapped Chinese (e.g. _待定_, _现状_)
- *    [中文描述] — bracket-wrapped Chinese (e.g. [量化], [性能指标])
- *    [TODO]/[TBD]/[FILL] — English action keywords
- *  All caught by 5 generic patterns below.
+ *  ─────────── Convention ───────────
+ *  HBS fallback placeholders use either:
+ *    `_中文描述_`    — underline-wrapped Chinese  (e.g. `_待定_`, `_现状_`)
+ *    `[中文描述]`    — bracket-wrapped Chinese     (e.g. `[量化]`, `[性能指标]`)
+ *    `[TODO]/[TBD]/[FILL]` — English action keywords
+ *
+ *  All caught by 5 generic patterns in PLACEHOLDER_PATTERNS (below).
+ *
+ *  ─────────── Exclusions (intentional) ───────────
+ *  - `<!-- …  -->` HTML comments: stripped before detection
+ *    (the hbs templates use comments as inline Skill instructions).
+ *  - `` ```…``` `` fenced code blocks: stripped before detection
+ *    because Mermaid diagrams and code samples legitimately contain
+ *    bracket/underline patterns like `[实现 hello]` or `_未提供_`
+ *    that are *not* placeholders. Without this, every mermaid node
+ *    label would trigger false positives, blocking the task phase.
+ *  - English-only `_hello world_`: caught-as-content (no Chinese),
+ *    italic formatting preserved.
+ *
+ *  Module-local helpers:
+ *    stripCodeBlocks(body)  — remove all fenced code blocks.
+ *    stripComments(body)    — remove HTML comments (kept separate
+ *    here so callers can apply different orderings if needed).
+ *
+ *  See docs/taiyi/quality-gate.md for the broader design rationale.
  */
 import type { PhaseId } from "./types.js";
+
+/** Strip fenced code blocks (``` ... ```) — used so that placeholders inside
+ *  code samples (especially Mermaid labels like `[实现 hello]`) don't trigger
+ *  false positives during quality checks. Mirrored by validator-side
+ *  stripComments() so HTML-comment placeholders are also ignored there.
+ *
+ *  Code blocks are uniformly skipped regardless of language tag
+ *  (mermaid / sql / bash / shell / unspecified).  Justification: any
+ *  square-bracket text inside a code block is *payload* for that
+ *  language's parser, not markdown content for TaiyiForge to fill in.
+ */
+function stripCodeBlocks(body: string): string {
+  return body.replace(/```[\s\S]*?```/g, "").replace(/~~~\n[\s\S]*?\n~~~/g, "");
+}
 
 /** Patterns that indicate a section was rendered from hbs but never edited. */
 export const PLACEHOLDER_PATTERNS: RegExp[] = [
@@ -43,13 +77,6 @@ const PLACEHOLDER_STRIP_PATTERNS = [
   /<!--\s*FILL-ME:\s*-->/g,
   /_([^_]+)_/g,               // legacy: strip any remaining underline text (already stripped above, safety net)
 ];
-
-/** Strip fenced code blocks (``` ... ```) — used so that placeholders inside
- *  code samples (especially Mermaid labels like `[实现 hello]`) don't trigger
- *  false positives during quality checks. */
-function stripCodeBlocks(body: string): string {
-  return body.replace(/```[\s\S]*?```/g, "").replace(/~~~\n[\s\S]*?\n~~~/g, "");
-}
 
 function strippedBodyOf(body: string): string {
   return body

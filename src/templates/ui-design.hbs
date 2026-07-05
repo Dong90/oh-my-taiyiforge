@@ -90,15 +90,15 @@ N/A — CLI-only change, no visual states
 > **[ALL]** Goal: 交互边界不翻车 | Inputs: Step3
 <!-- Action: PD#4: 9种交互边界全覆盖 -->
 
+{{#if is_cli_only}}
+> ✅ **Step 4 skipped**: 本变更仅 CLI/library — 无交互边界。
+{{else}}
 | 边界 | 行为 |
 |------|------|
 {{#if interaction_boundaries}}
 {{#each interaction_boundaries}}
 | {{boundary}} | {{behavior}} |
 {{/each}}
-{{else}}
-{{#if is_cli_only}}
-| N/A | CLI-only change, no interactive UI |
 {{else}}
 | Double-click | 待填写 |
 | Navigate away | 待填写 |
@@ -110,9 +110,9 @@ N/A — CLI-only change, no visual states
 | Max input | 待填写 |
 | Offline | 待填写 |
 {{/if}}
-{{/if}}
 
 <!-- Validate: 9种全覆盖？每个有具体行为？ -->
+{{/if}}
 
 ## Step 5: Responsive Breakpoints
 > **[MEDIUM+]** Goal: 多端都可用 | Inputs: Step1+2
