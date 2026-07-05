@@ -27,6 +27,17 @@ export type ReviewLoopStatus = {
   testScore?: number;
   /** 总评分数 */
   overallScore?: number;
+  /** 修复任务列表（Agent 可执行） */
+  fixTasks?: FixTask[];
+};
+
+export type FixTask = {
+  dimension: "code" | "doc" | "test";
+  round: number;
+  priority: "P0" | "P1" | "P2";
+  action: string;
+  targetFiles?: string[];
+  verifyCommand?: string;
 };
 
 export type ReviewScoreThresholds = {
@@ -96,6 +107,98 @@ const SCORE_STRATEGIES: Record<string, string[]> = {
     "⚠️ 总评达标后确认无新增 high finding 且 Verdict = Approve。",
   ],
 };
+
+export function generateFixTasks(
+  scores: Record<string, number>,
+  round: number,
+  thresholds: ReviewScoreThresholds,
+): FixTask[] {
+  if (!thresholds.enforce || Object.keys(scores).length === 0) return [];
+  const tasks: FixTask[] = [];
+
+  // Code fix tasks
+  const codeVals = Object.entries(scores)
+    .filter(([k]) => k !== "文档完整性" && k !== "文档完整性和可理解性" && k !== "测试覆盖")
+    .map(([k, v]) => ({ dim: k, val: v }));
+  const codeAvg = codeVals.length > 0
+    ? codeVals.reduce((a, b) => a + b.val, 0) / codeVals.length
+    : 0;
+  if (codeAvg > 0 && codeAvg < thresholds.minCodeScore && round <= 3) {
+    if (round === 1) {
+      tasks.push({
+        dimension: "code", round, priority: "P0",
+        action: "[代码 R1] 扫描 src/ 目录下所有 .ts 文件：查找重复代码段 → 提取为共享工具函数 → 消除内联硬编码。确保每个公开函数有显式返回类型和输入校验。",
+        verifyCommand: "npx tsc --noEmit && npm run lint",
+      });
+    }
+    if (round >= 2) {
+      tasks.push({
+        dimension: "code", round, priority: "P1",
+        action: "[代码 R2] 审查 src/ 下所有文件：消除 any/unknown 滥用。超过 250 行的文件拆分模块。热路径消除不必要的对象分配。",
+        verifyCommand: "npx tsc --noEmit && npm test",
+      });
+    }
+    if (round >= 3) {
+      tasks.push({
+        dimension: "code", round, priority: "P2",
+        action: "[代码 R3] 深度审查：检查数据库查询是否有 N+1 问题、异步操作是否有超时/重试、核心服务是否通过接口注入而非直接 new。",
+        verifyCommand: "npm test && npm run lint",
+      });
+    }
+  }
+
+  // Doc fix tasks
+  const docScore = scores["文档完整性"] ?? scores["文档完整性和可理解性"] ?? 0;
+  if (docScore > 0 && docScore < thresholds.minDocScore && round <= 3) {
+    if (round === 1) {
+      tasks.push({
+        dimension: "doc", round, priority: "P0",
+        action: "[文档 R1] 检查所有阶段 .md 文件（CHANGE → REQUIREMENT → DESIGN → TASK → TEST → REVIEW → CHANGELOG）：消占位符、补引用一致性、决策加理由。每个 AC 必须有对应的测试用例编号。",
+        verifyCommand: "grep -r '请填写|待补充|待填写|N/A' .taiyi/changes/*/*.md || echo 'clean'",
+      });
+    }
+    if (round >= 2) {
+      tasks.push({
+        dimension: "doc", round, priority: "P1",
+        action: "[文档 R2] 检查公共 API / CLI 是否有可运行的 curl/命令示例。架构图与代码实际结构对照。CHANGELOG 是否有 Added/Changed/Fixed/Breaking 分类。",
+      });
+    }
+    if (round >= 3) {
+      tasks.push({
+        dimension: "doc", round, priority: "P2",
+        action: "[文档 R3] 更新 README/AGENTS.md。补充 ADR 记录长期架构决策。所有未完成项记录到 TODOS.md。",
+      });
+    }
+  }
+
+  // Test fix tasks
+  const testScore = scores["测试覆盖"] ?? 0;
+  if (testScore > 0 && testScore < thresholds.minTestScore && round <= 3) {
+    if (round === 1) {
+      tasks.push({
+        dimension: "test", round, priority: "P0",
+        action: "[测试 R1] 检查测试覆盖率是否 ≥ 80%：npm test -- --coverage。为每个 AC 补独立测试用例（Given/When/Then）。为空输入/超时/并发冲突/上游异常各补 1 条错误路径测试。",
+        verifyCommand: "npm test -- --coverage",
+      });
+    }
+    if (round >= 2) {
+      tasks.push({
+        dimension: "test", round, priority: "P1",
+        action: "[测试 R2] 消除 flaky tests（连续 10 次 CI 通过）。确保测试文件与源文件一一对应。Mock 边界清晰。",
+        verifyCommand: "npm test -- --run 10x  # check flakiness",
+      });
+    }
+    if (round >= 3) {
+      tasks.push({
+        dimension: "test", round, priority: "P2",
+        action: "[测试 R3] 补充 E2E 测试覆盖关键用户旅程。性能测试有基线+回归。安全测试覆盖 OWASP Top 10。",
+        verifyCommand: "npm test -- --coverage && npm audit",
+      });
+    }
+  }
+
+  return tasks;
+}
 
 function scoreHints(
   status: ReviewLoopStatus,
@@ -271,7 +374,8 @@ export function evaluateReviewLoopStatus(content: string, round?: number): Revie
     verdict !== "request_changes" &&
     verdict !== "missing" &&
     !scoreBlocked;
-  return { canStop, verdict, openHighFindings, hints, scores, codeScore, docScore, testScore, overallScore };
+  const fixTasks = scoreBlocked ? generateFixTasks(scores, round ?? 1, thresholds) : [];
+  return { canStop, verdict, openHighFindings, hints, scores, codeScore, docScore, testScore, overallScore, fixTasks };
 }
 
 export function formatReviewLoopPlain(
@@ -316,6 +420,24 @@ export function formatReviewLoopPlain(
   for (const f of status.openHighFindings.slice(0, 5)) {
     lines.push(`  · high: ${f}`);
   }
+
+  // Agent-executable fix tasks
+  if (status.fixTasks && status.fixTasks.length > 0) {
+    lines.push("");
+    lines.push("── Agent 修复协议（start-of-fix-tasks）──");
+    for (const t of status.fixTasks) {
+      lines.push(`→ [${t.dimension}] ${t.priority} 轮${t.round}: ${t.action}`);
+      if (t.verifyCommand) lines.push(`   verify: ${t.verifyCommand}`);
+    }
+    lines.push("── Agent 修复协议（end-of-fix-tasks）──");
+    lines.push("");
+    lines.push("Agent 执行步骤：");
+    lines.push("1. 按 P0→P1→P2 顺序执行上述修复任务");
+    lines.push("2. 每个任务完成后运行 verify 命令确认通过");
+    lines.push("3. 更新 REVIEW.md 中 code_quality 表各项分数（根据实际修复效果）");
+    lines.push(`4. 重新运行 review-loop 评估`);
+  }
+
   lines.push("");
   lines.push("→ 修代码/TEST.md → taiyi-review 重新审查 → review-check");
   if (slug) lines.push(`→ ${reviewCheckForge(slug)}`);
