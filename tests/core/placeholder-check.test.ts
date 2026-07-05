@@ -138,6 +138,60 @@ describe("HTML comments containing bracket patterns", () => {
 });
 
 // ---------------------------------------------------------------------------
+// Mermaid / fenced code blocks containing bracket or underscore placeholders
+// ---------------------------------------------------------------------------
+
+describe("fenced code blocks (Mermaid, code samples)", () => {
+  it("ignores [节点名] inside ```mermaid block", () => {
+    const md = `Step 1 graph:
+\`\`\`mermaid
+flowchart LR
+  SS1[实现 hello] --> SS2[写测试]
+\`\`\`
+`;
+    expect(hasPlaceholders(md)).toBe(false);
+  });
+
+  it("ignores _占位符_ inside ```mermaid block", () => {
+    const md = `\`\`\`mermaid
+flowchart LR
+  A[_待定_] --> B
+\`\`\`
+`;
+    expect(hasPlaceholders(md)).toBe(false);
+  });
+
+  it("detects placeholder outside code block but not inside", () => {
+    const md = `前面有 _待定_ 占位符:
+
+\`\`\`mermaid
+A[_待定_] --> B
+\`\`\`
+
+后面: [角色] 替换`;
+    expect(hasPlaceholders(md)).toBe(true);
+  });
+
+  it("ignores [node] inside bare ``` code block (no language)", () => {
+    const md = `\`\`\`
+[量化] or [步骤] should be ignored
+\`\`\`
+`;
+    expect(hasPlaceholders(md)).toBe(false);
+  });
+
+  it("countPlaceholders excludes code-block matches", () => {
+    const md = `\`\`\`mermaid
+A[实现 hello]
+\`\`\`
+_待定_`;
+    const found = countPlaceholders(md);
+    expect(found).toContain("_待定_");
+    expect(found).not.toContain("[实现 hello]");
+  });
+});
+
+// ---------------------------------------------------------------------------
 // countPlaceholders
 // ---------------------------------------------------------------------------
 

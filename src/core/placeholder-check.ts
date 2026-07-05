@@ -44,6 +44,13 @@ const PLACEHOLDER_STRIP_PATTERNS = [
   /_([^_]+)_/g,               // legacy: strip any remaining underline text (already stripped above, safety net)
 ];
 
+/** Strip fenced code blocks (``` ... ```) — used so that placeholders inside
+ *  code samples (especially Mermaid labels like `[实现 hello]`) don't trigger
+ *  false positives during quality checks. */
+function stripCodeBlocks(body: string): string {
+  return body.replace(/```[\s\S]*?```/g, "").replace(/~~~\n[\s\S]*?\n~~~/g, "");
+}
+
 function strippedBodyOf(body: string): string {
   return body
     .replace(/<!--[\s\S]*?-->/g, "")
@@ -58,11 +65,15 @@ function strippedBodyOf(body: string): string {
     .trim();
 }
 
-/** Counts placeholder occurrences in the rendered markdown. */
+/** Counts placeholder occurrences in the rendered markdown.
+ *  Fenced code blocks (Mermaid, code samples) are stripped first so labels
+ *  like `[实现 hello]` or mermaid node ids aren't mistaken for fill-in
+ *  placeholders. */
 export function countPlaceholders(content: string): string[] {
+  const scannable = stripCodeBlocks(content);
   const found: string[] = [];
   for (const re of PLACEHOLDER_PATTERNS) {
-    const match = re.exec(content);
+    const match = re.exec(scannable);
     if (match) found.push(match[0]);
     re.lastIndex = 0;
   }
@@ -71,7 +82,8 @@ export function countPlaceholders(content: string): string[] {
 
 /** Whether the markdown content still contains any known unresolved placeholder. */
 export function hasPlaceholders(content: string): boolean {
-  return PLACEHOLDER_PATTERNS.some((re) => re.test(content));
+  const scannable = stripCodeBlocks(content);
+  return PLACEHOLDER_PATTERNS.some((re) => re.test(scannable));
 }
 
 function stripPlaceholders(text: string): string {
