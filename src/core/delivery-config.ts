@@ -61,6 +61,7 @@ export type DeliveryVerifyConfig = {
 export type DeliveryChainConfig = {
   steps: string[];
   requireConfirm: string[];
+  requireConfirmBeforeStart: boolean;
 };
 
 export type DeliveryConfig = {
@@ -114,6 +115,7 @@ export const DEFAULT_DELIVERY_CONFIG: DeliveryConfig = {
   chain: {
     steps: ["commit", "verify", "ship", "land", "continue-integration", "archive"],
     requireConfirm: ["ship", "land"],
+    requireConfirmBeforeStart: true,
   },
 };
 
@@ -275,6 +277,8 @@ export function parseDeliveryYaml(content: string): DeepPartial<DeliveryConfig> 
     if (steps) chain.steps = steps;
     const requireConfirm = asStringArray(chainObj.requireConfirm);
     if (requireConfirm) chain.requireConfirm = requireConfirm;
+    const rcb = asBoolean(chainObj.requireConfirmBeforeStart);
+    if (rcb !== undefined) chain.requireConfirmBeforeStart = rcb;
     if (Object.keys(chain).length > 0) out.chain = chain;
   }
 

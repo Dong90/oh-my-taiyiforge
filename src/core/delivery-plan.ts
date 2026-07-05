@@ -157,6 +157,15 @@ export function planDeliveryChain(
     }
   }
 
+  // 归档完成后、交付链启动前：确认闸门
+  if (config.chain.requireConfirmBeforeStart && steps.length > 0) {
+    steps.unshift({
+      id: "confirm-delivery",
+      kind: "confirm",
+      description: `确认启动交付链: ${config.chain.steps.join(" → ")}（slug: ${slug}, phase: ${phase}）`,
+    });
+  }
+
   return {
     slug,
     phase,

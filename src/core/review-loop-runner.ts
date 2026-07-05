@@ -6,6 +6,7 @@ import {
   evaluateReviewLoopStatus,
   formatMachineReviewPlain,
   formatReviewLoopPlain,
+  writeReviewFixPlan,
   type MachineReviewResult,
   type ReviewLoopStatus,
 } from "./review-gate.js";
@@ -156,7 +157,14 @@ export function runReviewMachineCheck(
   }
 
   const content = fs.readFileSync(reviewPath, "utf8");
-  const loopStatus = evaluateReviewLoopStatus(content);
+  const currentRound = loopStateBefore?.round ?? 0;
+  const loopStatus = evaluateReviewLoopStatus(content, currentRound + 1);
+
+  // Write fix plan back to REVIEW.md so Agent knows target scores
+  if (loopStatus.fixTasks && loopStatus.fixTasks.length > 0) {
+    const updatedMd = writeReviewFixPlan(content, loopStatus, currentRound + 1);
+    fs.writeFileSync(reviewPath, updatedMd, "utf8");
+  }
   let loopState: ReviewLoopStateFile;
   if (options?.bumpRound === false) {
     if (loopStatus.canStop) {
