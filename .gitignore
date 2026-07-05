@@ -17,7 +17,6 @@ coverage/
 .taiyi/**/.lock
 .taiyi/**/__pycache__/
 .taiyi/**/.token-usage.json
-.taiyi/changes/
 .flow-x/
 *.log
 .gstack/
