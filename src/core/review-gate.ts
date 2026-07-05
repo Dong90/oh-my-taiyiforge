@@ -378,6 +378,58 @@ export function evaluateReviewLoopStatus(content: string, round?: number): Revie
   return { canStop, verdict, openHighFindings, hints, scores, codeScore, docScore, testScore, overallScore, fixTasks };
 }
 
+export function writeReviewFixPlan(
+  content: string,
+  status: ReviewLoopStatus,
+  round: number,
+): string {
+  if (!status.fixTasks || status.fixTasks.length === 0) return content;
+  const thresholds = scoreThresholds();
+
+  // 1. 更新 code_quality 表：附加目标分数
+  let updated = content;
+  const tablePattern = /(\|\s*(.+?)\s*\|\s*)(\d+)(\/10\s*\|)/g;
+  const dimMap: Record<string, number> = {
+    "功能正确性": thresholds.minCodeScore,
+    "架构一致性": thresholds.minCodeScore,
+    "可维护性": thresholds.minCodeScore,
+    "文档完整性": thresholds.minDocScore,
+    "文档完整性和可理解性": thresholds.minDocScore,
+    "测试覆盖": thresholds.minTestScore,
+  };
+  updated = updated.replace(tablePattern, (match, prefix, dim, score, suffix) => {
+    const target = dimMap[dim.trim()];
+    if (target !== undefined && Number(score) < target) {
+      return `${prefix}${score} → ${target}${suffix}`;
+    }
+    return match;
+  });
+
+  // 2. 写入 fix plan section（追加或替换）
+  const planHeader = "## Fix Plan (review-loop R" + round + ")";
+  const existingIdx = updated.indexOf("## Fix Plan (review-loop");
+  const planLines = [
+    planHeader,
+    "<!-- " + new Date().toISOString() + " -->",
+    "",
+  ];
+  for (const t of status.fixTasks) {
+    planLines.push(`- [ ] **[${t.priority}] ${t.dimension}**: ${t.action}`);
+    if (t.verifyCommand) planLines.push(`  - verify: \`${t.verifyCommand}\``);
+  }
+  planLines.push("", "> Agent 执行完所有任务后，更新上方 code_quality 表分数，重新运行 review-loop。");
+
+  if (existingIdx >= 0) {
+    const nextSection = updated.indexOf("\n##", existingIdx + 5);
+    const endIdx = nextSection > 0 ? nextSection : updated.length;
+    updated = updated.slice(0, existingIdx) + planLines.join("\n") + "\n" + updated.slice(endIdx);
+  } else {
+    updated = updated.trimEnd() + "\n\n" + planLines.join("\n") + "\n";
+  }
+
+  return updated;
+}
+
 export function formatReviewLoopPlain(
   status: ReviewLoopStatus,
   round?: number,
