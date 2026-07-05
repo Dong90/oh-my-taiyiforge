@@ -536,6 +536,18 @@ export class WorkflowEngine {
         const loopStateFile = path.join(changeDir, ".review-loop-state.json");
         if (!fs.existsSync(loopStateFile)) return { ok: true };
 
+        // 检查 TEST.md 是否有真实测试文件支撑
+        const testMdPath = path.join(changeDir, "TEST.md");
+        if (fs.existsSync(testMdPath)) {
+          const testMd = fs.readFileSync(testMdPath, "utf8");
+          if (testMd.includes("build passes") && !testMd.includes(".test.ts")) {
+            return {
+              ok: false,
+              error: "[TEST Gate] TEST.md 只写了 'build passes' 但未引用任何 .test.ts 文件。请补充真实测试证据（文件名 + 测试结果），而非仅声明构建通过。",
+            };
+          }
+        }
+
         const reviewPath = path.join(changeDir, "REVIEW.md");
         if (fs.existsSync(reviewPath)) {
           const reviewContent = fs.readFileSync(reviewPath, "utf8");
