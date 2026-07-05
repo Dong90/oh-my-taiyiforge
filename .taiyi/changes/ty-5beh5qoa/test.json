@@ -1,0 +1,21 @@
+{
+  "title": "巡检九阶段文档质量 — test",
+  "test_plan": [
+    { "id": "T-01", "description": "REPORT.md 存在且包含 add-cli-help-command 评分", "status": "passed" },
+    { "id": "T-02", "description": "REPORT.md 包含 ecc-hybrid-harness 评分", "status": "passed" },
+    { "id": "T-03", "description": "共性问题 >= 3 条已在报告中列出", "status": "passed" },
+    { "id": "T-04", "description": "改进建议 >= 3 条已在报告中列出", "status": "passed" }
+  ],
+  "test_rounds": [
+    { "round": "功能", "scope": "巡检评分功能", "status": "✅ 必跑", "skip_reason": "N/A" },
+    { "round": "性能", "scope": "CLI only no perf surface", "status": "⚠️ 跳过", "skip_reason": "纯文档审阅" },
+    { "round": "安全", "scope": "只读操作", "status": "⚠️ 跳过", "skip_reason": "无新增攻击面" },
+    { "round": "兼容", "scope": "N/A", "status": "⚠️ 跳过", "skip_reason": "无浏览器/视口需求" },
+    { "round": "可观测", "scope": "N/A", "status": "⚠️ 跳过", "skip_reason": "一次性任务" }
+  ],
+  "edge_cases": [
+    { "scenario": "目标 change 目录不存在", "tc": "", "status": "pending" },
+    { "scenario": "工件格式不符合 Zod schema", "tc": "", "status": "pending" }
+  ],
+  "summary": "All 4 test items passed. REPORT.md generated with scores for both target changes."
+}
