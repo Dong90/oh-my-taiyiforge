@@ -124,7 +124,7 @@ export function generateFixTasks(
     ? codeVals.reduce((a, b) => a + b.val, 0) / codeVals.length
     : 0;
   if (codeAvg > 0 && codeAvg < thresholds.minCodeScore && round <= 3) {
-    if (round === 1) {
+    if (round >= 1) {
       tasks.push({
         dimension: "code", round, priority: "P0",
         action: "[代码 R1] 扫描 src/ 目录下所有 .ts 文件：查找重复代码段 → 提取为共享工具函数 → 消除内联硬编码。确保每个公开函数有显式返回类型和输入校验。",
@@ -150,7 +150,7 @@ export function generateFixTasks(
   // Doc fix tasks
   const docScore = scores["文档完整性"] ?? scores["文档完整性和可理解性"] ?? 0;
   if (docScore > 0 && docScore < thresholds.minDocScore && round <= 3) {
-    if (round === 1) {
+    if (round >= 1) {
       tasks.push({
         dimension: "doc", round, priority: "P0",
         action: "[文档 R1] 检查所有阶段 .md 文件（CHANGE → REQUIREMENT → DESIGN → TASK → TEST → REVIEW → CHANGELOG）：消占位符、补引用一致性、决策加理由。每个 AC 必须有对应的测试用例编号。",
@@ -174,7 +174,7 @@ export function generateFixTasks(
   // Test fix tasks
   const testScore = scores["测试覆盖"] ?? 0;
   if (testScore > 0 && testScore < thresholds.minTestScore && round <= 3) {
-    if (round === 1) {
+    if (round >= 1) {
       tasks.push({
         dimension: "test", round, priority: "P0",
         action: "[测试 R1] 检查测试覆盖率是否 ≥ 80%：npm test -- --coverage。为每个 AC 补独立测试用例（Given/When/Then）。为空输入/超时/并发冲突/上游异常各补 1 条错误路径测试。",
