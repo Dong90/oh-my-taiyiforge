@@ -499,6 +499,30 @@ export class WorkflowEngine {
     if (phaseId === "review") {
       const thresholds = scoreThresholds();
       if (thresholds.enforce) {
+        // 0. 检查上游所有阶段工件完整性
+        const upstreamPhases = listPhases().filter((p: { order: number }) => p.order < 8);
+        const gaps: string[] = [];
+        for (const ph of upstreamPhases) {
+          const ap = path.join(changeDir, ph.artifact);
+          if (!fs.existsSync(ap)) {
+            gaps.push(`  - ${ph.artifact} 缺失（${ph.id} 阶段）`);
+            continue;
+          }
+          const content = fs.readFileSync(ap, "utf8");
+          if (content.includes("<!-- taiyi:seed-template -->")) {
+            gaps.push(`  - ${ph.artifact} 仍为 seed 模板（${ph.id} 阶段未填写）`);
+          }
+          if (/请填写|待补充|待填写|待决策/.test(content)) {
+            gaps.push(`  - ${ph.artifact} 含占位符（${ph.id} 阶段未完善）`);
+          }
+        }
+        if (gaps.length > 0) {
+          return {
+            ok: false,
+            error: `[Upstream Gate] 上游阶段工件不完整，禁止进入 review:\n${gaps.join("\n")}\n\n请回退补全上述阶段工件后再 review。`,
+          };
+        }
+
         const reviewPath = path.join(changeDir, "REVIEW.md");
         if (fs.existsSync(reviewPath)) {
           const reviewContent = fs.readFileSync(reviewPath, "utf8");

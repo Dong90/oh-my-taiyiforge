@@ -149,14 +149,6 @@ export function generateFixTasks(
   return tasks;
 }
 
-const ROUND_FOCUS: Record<number, string[]> = {
-  1: ["功能正确性"],  // R1 安全 → 功能/安全维度
-  2: ["架构一致性"],  // R2 性能 → 架构维度
-  3: ["测试覆盖"],    // R3 边界 → 测试维度
-  4: ["可维护性"],    // R4 维护 → 可维护性维度
-  5: ["功能正确性", "架构一致性", "测试覆盖", "文档完整性", "可维护性"],  // R5 全维度
-};
-
 function scoreHints(
   status: ReviewLoopStatus,
   thresholds: ReviewScoreThresholds,
@@ -343,39 +335,9 @@ export function writeReviewFixPlan(
   if (!status.fixTasks || status.fixTasks.length === 0) return content;
   const thresholds = scoreThresholds();
 
-  // 1. 只更新当前轮 focus 维度的分数到目标值
+  // 不自动修改分数——Agent 执行 Fix Plan 后手动更新分数
+  // 只追加修复计划段
   let updated = content;
-  const focusDims = ROUND_FOCUS[round] ?? [];
-  const allDimMap: Record<string, number> = {
-    "功能正确性": thresholds.minCodeScore,
-    "架构一致性": thresholds.minCodeScore,
-    "可维护性": thresholds.minCodeScore,
-    "文档完整性": thresholds.minDocScore,
-    "文档完整性和可理解性": thresholds.minDocScore,
-    "测试覆盖": thresholds.minTestScore,
-  };
-  updated = updated.replace(
-    /(\|\s*(功能正确性|架构一致性|可维护性|文档完整性|文档完整性和可理解性|测试覆盖)\s*\|\s*)([\d.]+)(\/10\s*\|)/g,
-    (_match, prefix, dim, score, suffix) => {
-      const target = allDimMap[dim.trim()];
-      // 只更新当前轮 focus 的维度
-      if (target !== undefined && focusDims.includes(dim.trim()) && Number(score) < target) {
-        return `${prefix}${target}${suffix}`;
-      }
-      return `${prefix}${score}${suffix}`;
-    },
-  );
-
-  // 2. 总评：低于门槛直接写到目标值
-  updated = updated.replace(
-    /⭐\s*\*{1,2}([\d.]+)\/10\*{1,2}/,
-    (_match, score) => {
-      const newOverall = Math.max(Number(score), thresholds.minOverallScore);
-      return `⭐ **${newOverall}/10**`;
-    },
-  );
-
-  // 3. 写入 fix plan section（追加或替换）
   const planHeader = "## Fix Plan (review-loop R" + round + ")";
   const existingIdx = updated.indexOf("## Fix Plan (review-loop");
   const planLines = [
