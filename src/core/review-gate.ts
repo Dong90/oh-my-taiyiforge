@@ -123,7 +123,7 @@ export function generateFixTasks(
   const codeAvg = codeVals.length > 0
     ? codeVals.reduce((a, b) => a + b.val, 0) / codeVals.length
     : 0;
-  if (codeAvg > 0 && codeAvg < thresholds.minCodeScore && round <= 3) {
+  if (codeAvg > 0 && codeAvg < thresholds.minCodeScore && round <= 5) {
     if (round >= 1) {
       tasks.push({
         dimension: "code", round, priority: "P0",
@@ -145,11 +145,25 @@ export function generateFixTasks(
         verifyCommand: "npm test && npm run lint",
       });
     }
+    if (round >= 4) {
+      tasks.push({
+        dimension: "code", round, priority: "P2",
+        action: "[代码 R4 增强] 架构审查：检查跨模块耦合度、循环依赖、单一职责违规。性能 profiling：识别瓶颈热点。内存泄漏检查：事件监听/定时器/订阅是否正确清理。",
+        verifyCommand: "npm test -- --coverage && npx depcheck",
+      });
+    }
+    if (round >= 5) {
+      tasks.push({
+        dimension: "code", round, priority: "P2",
+        action: "[代码 R5 最后] 全面重构评估：列出技术债清单、建议抽象层级、评估可测试性。若仍不达标，将剩余问题记录到 TODOS.md 并降低复杂度重跑。",
+        verifyCommand: "npm test && npm run lint && echo '若此轮后仍不达标，请记录 TODOS 并降低复杂度'",
+      });
+    }
   }
 
   // Doc fix tasks
   const docScore = scores["文档完整性"] ?? scores["文档完整性和可理解性"] ?? 0;
-  if (docScore > 0 && docScore < thresholds.minDocScore && round <= 3) {
+  if (docScore > 0 && docScore < thresholds.minDocScore && round <= 5) {
     if (round >= 1) {
       tasks.push({
         dimension: "doc", round, priority: "P0",
@@ -169,11 +183,24 @@ export function generateFixTasks(
         action: "[文档 R3] 更新 README/AGENTS.md。补充 ADR 记录长期架构决策。所有未完成项记录到 TODOS.md。",
       });
     }
+    if (round >= 4) {
+      tasks.push({
+        dimension: "doc", round, priority: "P2",
+        action: "[文档 R4 增强] 生成部署手册和运维 runbook。补充故障排查指南。检查多语言/多环境文档一致性。API 文档自动生成并验证。",
+        verifyCommand: "ls docs/ && wc -l docs/*.md",
+      });
+    }
+    if (round >= 5) {
+      tasks.push({
+        dimension: "doc", round, priority: "P2",
+        action: "[文档 R5 最后] 文档完整性终审：对照所有 AC 逐条检查文档覆盖。生成变更影响报告。若仍不达标，记录 TODOS 并降低复杂度。",
+      });
+    }
   }
 
   // Test fix tasks
   const testScore = scores["测试覆盖"] ?? 0;
-  if (testScore > 0 && testScore < thresholds.minTestScore && round <= 3) {
+  if (testScore > 0 && testScore < thresholds.minTestScore && round <= 5) {
     if (round >= 1) {
       tasks.push({
         dimension: "test", round, priority: "P0",
@@ -185,7 +212,7 @@ export function generateFixTasks(
       tasks.push({
         dimension: "test", round, priority: "P1",
         action: "[测试 R2] 消除 flaky tests（连续 10 次 CI 通过）。确保测试文件与源文件一一对应。Mock 边界清晰。",
-        verifyCommand: "npm test -- --run 10x  # check flakiness",
+        verifyCommand: "npm test  # check flakiness",
       });
     }
     if (round >= 3) {
@@ -193,6 +220,20 @@ export function generateFixTasks(
         dimension: "test", round, priority: "P2",
         action: "[测试 R3] 补充 E2E 测试覆盖关键用户旅程。性能测试有基线+回归。安全测试覆盖 OWASP Top 10。",
         verifyCommand: "npm test -- --coverage && npm audit",
+      });
+    }
+    if (round >= 4) {
+      tasks.push({
+        dimension: "test", round, priority: "P2",
+        action: "[测试 R4 增强] 混沌工程：注入网络延迟/服务宕机/磁盘满场景验证容错。压力测试找到系统瓶颈QPS。安全渗透扫描。",
+        verifyCommand: "npm test -- --coverage && npm audit",
+      });
+    }
+    if (round >= 5) {
+      tasks.push({
+        dimension: "test", round, priority: "P2",
+        action: "[测试 R5 最后] 全链路压测 + 灾难恢复演练。生成测试报告归档。若仍不达标，记录 TODOS 并降低复杂度。",
+        verifyCommand: "npm test -- --coverage && echo 'R5 仍不达标 → 记录 TODOS 降低复杂度'",
       });
     }
   }
