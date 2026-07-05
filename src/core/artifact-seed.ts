@@ -6,6 +6,10 @@ import { getTemplateEngine, type SeedVars } from "./template-engine.js";
 import { isSeedTemplate, wrapSeedTemplate } from "./seed-marker.js";
 import { getHash } from "./state-manager.js";
 import { getPhase } from "./phase-registry.js";
+import {
+  COMPLEXITY_MEDIUM_THRESHOLD,
+  COMPLEXITY_HIGH_THRESHOLD,
+} from "./routing/complexity.js";
 
 function resolveTitle(vars: SeedVars): string {
   return vars.title ?? vars.slug.replace(/-/g, " ");
@@ -17,6 +21,9 @@ export function buildSeedJson(
   vars: SeedVars,
 ): Record<string, unknown> {
   const title = resolveTitle(vars);
+  const cScore = vars.complexity?.score ?? 0;
+  const isMediumPlus = cScore >= COMPLEXITY_MEDIUM_THRESHOLD;
+  const isHigh = cScore >= COMPLEXITY_HIGH_THRESHOLD;
 
   switch (phaseId) {
     case "change":
@@ -25,48 +32,109 @@ export function buildSeedJson(
         motivation: vars.motivation ?? "",
         scope: { includes: [], excludes: [] },
         success_criteria: [
-          { id: "SC-01", description: "待填写", is_checked: false },
+          { id: "SC-01", description: "", is_checked: false },
         ],
+        ...(isMediumPlus ? {
+          do_nothing_cost: "",
+          impact_map: [{ area: "", impact: "" }],
+          dream_state: { current: "", this_change: "", ideal: "" },
+          innovation_tokens: [],
+          premise_redefine: "",
+          premise_cost: "",
+          premise_existing: "",
+          premise_scrap: "",
+        } : {}),
+        ...(isHigh ? {
+          target_state: "",
+        } : {}),
       };
     case "requirement":
       return {
         title,
+        one_liner: "",
         user_stories: [
-          { as_a: "主用户", i_want: "待填写", so_that: "待填写", priority: "P0" },
-          { as_a: "反向场景", i_want: "待填写", so_that: "待填写", priority: "P1" },
-          { as_a: "边界场景", i_want: "待填写", so_that: "待填写", priority: "P2" },
+          { as_a: "", i_want: "", so_that: "", priority: "P0" },
         ],
+        scope_v1: [""],
+        scope_v2: [""],
+        scope_out: [""],
+        functional_requirements: [
+          { module: "", items: [{ id: "FR-01", description: "" }] },
+        ],
+        non_functional: {
+          performance: [{ id: "NFR-P01", description: "" }],
+          security: [{ id: "NFR-S01", description: "" }],
+          ...(isMediumPlus ? { availability: [{ id: "NFR-A01", description: "" }] } : {}),
+        },
         acceptance_criteria: [
-          { id: "AC-01", description: "待填写", is_checked: false },
+          { id: "AC-01", description: "", is_checked: false },
         ],
+        ...(isMediumPlus ? {
+          error_rescue_map: [
+            { error: "", trigger: "", catch: "", user_sees: "", recovery: "" },
+          ],
+          shadow_paths: [
+            { flow: "", happy_input: "", happy_expected: "", nil_input: "", nil_expected: "", empty_input: "", empty_expected: "", upstream_input: "", upstream_expected: "" },
+          ],
+          non_happy_path_cases: [
+            { scenario: "", behavior: "" },
+          ],
+          dependencies: [
+            { dependency: "", type: "", status: "", risk: "" },
+          ],
+        } : {}),
       };
     case "design":
       return {
         title,
+        techStack: { selected: "", reason: "" },
+        existingArchitecture: { touchedModules: [], newModules: [] },
+        modules: [],
         options: [
           { id: "A", name: "Option A", pros: [], cons: [] },
           { id: "B", name: "Option B", pros: [], cons: [] },
         ],
-        decision: { chosen: "A", reason: "待填写" },
+        decision: { chosen: "A", reason: "" },
         current_state: "",
         data_model: "",
         api_changes: "",
         key_flow: "",
+        security_threats: [],
+        blast_radius: [],
+        tradeoffs: [],
+        dependency_sandbox: [],
+        rollout_steps: [],
+        evolutionSuggestions: [],
       };
     case "ui-design":
       return {
         title,
-        scope: "待填写",
+        scope: "",
+        styling_contract: {
+          scheme: "",
+          no_inline_styles: true,
+          theme_var_only: true,
+        },
+        is_cli_only: false,
+        component_name: "",
+        states: [],
+        accessibility: [],
+        links: [],
       };
     case "task":
       return {
         title,
-        slices: [{ id: "S-01", description: "待填写" }],
+        slices: [
+          { id: "S1", label: "", description: "", time_estimate: "", read_files: [], write_files: [], dependencies: "", parallelizable: false },
+        ],
+        waves: [],
+        slice_risks: [],
+        slice_rollbacks: [],
       };
     case "test":
       return {
         title,
-        test_plan: [{ id: "T-01", description: "待填写", status: "pending" }],
+        test_plan: [{ id: "T-01", description: "", status: "pending" }],
         test_rounds: [
           { round: "Round 1 · 功能", scope: "全部 AC", status: "✅", skip_reason: "—" },
           { round: "Round 2 · 性能", scope: "Lighthouse / k6 / bundle", status: "⚠️", skip_reason: "性能无退化风险可跳过" },
@@ -74,17 +142,42 @@ export function buildSeedJson(
           { round: "Round 4 · 兼容", scope: "浏览器 / 视口 / 数据迁移", status: "⚠️", skip_reason: "纯逻辑变更可跳过" },
           { round: "Round 5 · 可观测", scope: "日志 / 指标 / 告警", status: "⚠️", skip_reason: "无新运维面可跳过" },
         ],
+        edge_cases: [],
+        performance_tests: [],
+        security_checks: [],
+        regression_items: [],
+        mocking_boundaries: [],
       };
     case "review":
       return {
         title,
-        verdict: "commented",
+        verdict: "unreviewable",
         overall_score: "",
+        findings_acknowledged: true,
+        code_quality: [
+          { dimension: "功能正确性", score: "N/A", note: "" },
+          { dimension: "架构一致性", score: "N/A", note: "" },
+          { dimension: "测试覆盖", score: "N/A", note: "" },
+          { dimension: "文档完整性", score: "N/A", note: "" },
+          { dimension: "可维护性", score: "N/A", note: "" },
+        ],
+        test_coverage: [],
+        findings: [
+          { severity: "Low", description: "" },
+        ],
+        blocking_items: [],
+        suggestion_items: [],
+        security_audit: [],
+        performance_audit: [],
+        summary: "",
       };
     case "integration":
       return {
         title,
-        changelog_entries: [{ type: "chore", description: "待填写" }],
+        changelog_entries: [{ type: "chore", description: "" }],
+        breaking_changes: [],
+        alerts: [],
+        monitoring: [],
       };
     default:
       return { title };

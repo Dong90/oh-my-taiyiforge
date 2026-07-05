@@ -21,8 +21,6 @@ downstream: [dev, test]
 flowchart LR
 {{#each slices}}
   S{{id}}[{{label}}]
-{{else}}
-  NoSlices[_待拆解_]
 {{/each}}
 ```
 
@@ -37,7 +35,7 @@ flowchart LR
 
 {{#each slices}}
 ### Slice {{id}}: {{label}}
-> **[ALL]** | ⇧ {{#if dependencies}}Slice {{dependencies}}{{else}}无{{/if}} | ⇶ {{#if parallelizable}}✅可并行{{else}}❌须顺序{{/if}} | Score: {{#if completeness_score}}{{completeness_score}}/10{{else}}[N]/10 — 评估基准: read_files√ + write_files√ + verify√ + checkpoints≥3 + rollback√ = 8/10+{{/if}}
+> **[ALL]** | ⇧ {{#if dependencies}}Slice {{dependencies}}{{else}}无{{/if}} | ⇶ {{#if parallelizable}}✅可并行{{else}}❌须顺序{{/if}} | Score: {{#if completeness_score}}{{completeness_score}}/10{{/if}}
 
 {{#if description}}
 {{description}}
@@ -48,8 +46,6 @@ flowchart LR
 {{#each read_files}}
 - `{{this}}`
 {{/each}}
-{{else}}
-- （无 — 请填写 read_files 字段）
 {{/if}}
 
 **write_files**（写边界 · 不越界）:
@@ -58,8 +54,6 @@ flowchart LR
 {{#each write_files}}
 - `{{this}}`
 {{/each}}
-{{else}}
-- （无 — 请填写 write_files 字段）
 {{/if}}
 
 {{#if test_command}}
@@ -79,8 +73,6 @@ flowchart LR
 {{#each checkpoints}}
 - ⬜ {{this}}
 {{/each}}
-{{else}}
-⬜ （待补充验收项 — 请填写 checkpoints 字段）
 {{/if}}
 
 <!-- Validate: 可独立merge/deploy？文件范围精确？ -->
@@ -186,9 +178,6 @@ flowchart LR
 - {{slice_id}}: {{description}}
 {{/each}}
 {{/each}}
-{{else}}
-### Wave 1 (无依赖,并行)
-- Slice N: 描述
 {{/if}}
 {{/if}}
 
@@ -238,9 +227,15 @@ flowchart LR
 - [ ] S2 每个Slice可独立交付
 - [ ] S2 每个Slice有 read_files/write_files + 验证 + 验收点
 - [ ] S2 每个Slice有Completeness评分
+{{#if waves}}
 - [ ] [M+] S3 Wave分波合理
+{{/if}}
+{{#if slice_risks}}
 - [ ] [M+] S4 每Slice风险已评估
+{{/if}}
+{{#if slice_rollbacks}}
 - [ ] [H]  S5 每Slice有独立回滚
+{{/if}}
 - [ ] **PITFALLS.md**: 已扫描触达模块的 PITFALLS（`.pitfalls/scan.sh --module <path>` + 人工 grep 关键词），无已知踩坑或已声明规避方案
 - [ ] **项目上下文**: 已查 PHASE-CONTEXT.md 既有抽象索引，无重复实现
 - [ ] **Refactor-first**: 重构PR和功能PR分开了？(Rule: make change easy, then make easy change)

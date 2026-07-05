@@ -17,11 +17,11 @@ downstream: [requirement]
 > **[ALL]** Goal: 证明值得做 | Inputs: 用户反馈/监控/业务指标
 <!-- Action: 用数据回答: 当前多痛、不改多惨、改了多好 -->
 
-**当前状态**: {{#if motivation}}{{motivation}}{{else}}{{#if description}}{{description}}{{else}}[变更目的和价值]{{/if}}{{/if}}
+**当前状态**: {{#if motivation}}{{motivation}}{{else}}{{#if description}}{{description}}{{/if}}{{/if}}
 
-**不改的代价**: {{#if do_nothing_cost}}{{do_nothing_cost}}{{else}}[量化]{{/if}}
+**不改的代价**: {{#if do_nothing_cost}}{{do_nothing_cost}}{{/if}}
 
-**目标状态**: {{#if target_state}}{{target_state}}{{else}}[理想结果]{{/if}}
+**目标状态**: {{#if target_state}}{{target_state}}{{/if}}
 
 <!-- Validate: 有可度量数字？ -->
 
@@ -52,9 +52,9 @@ downstream: [requirement]
 > **[UI]** Goal: 前端项目预选视觉方向 | Inputs: 产品定位/品牌/竞品
 <!-- Action: 前端项目必填，纯后端 skip。此选择被 Phase 4 ui-design 继承并深化 -->
 
-- **调性**: {{#if visual_tone}}{{visual_tone}}{{else}}待选定{{/if}}
-- **理由**: {{#if visual_reason}}{{visual_reason}}{{else}}结合业务说明{{/if}}
-- **参考产品**: {{#if visual_references}}{{visual_references}}{{else}}3 个参考产品{{/if}}
+- **调性**: {{#if visual_tone}}{{visual_tone}}{{/if}}
+- **理由**: {{#if visual_reason}}{{visual_reason}}{{/if}}
+- **参考产品**: {{#if visual_references}}{{visual_references}}{{/if}}
 - **明确排除**: {{#if visual_excluded}}{{visual_excluded}}{{else}}无 — CLI/workflow only; no visual surface{{/if}}
 
 <!-- Validate: 调性选择有理由支撑？参考产品有可比性？ -->
@@ -64,10 +64,10 @@ downstream: [requirement]
 > **[ALL]** Goal: 确认这是正确的问题 | Inputs: Step1+2
 <!-- Action: 换角度重新审视 — 能不能不做/复用/更简单定义？有没有完全不同的路径？ -->
 
-- **换个角度**: {{#if premise_redefine}}{{premise_redefine}}{{else}}[重新定义问题会怎样？]{{/if}}
-- **不做代价**: {{#if premise_cost}}{{premise_cost}}{{else}}[量化]{{/if}}
-- **已有复用**: {{#if premise_existing}}{{premise_existing}}{{else}}[有无现成方案？]{{/if}}
-- **Scrap it?**: {{#if premise_scrap}}{{premise_scrap}}{{else}}[有没有完全不同的方案更值得做？PD#9: 有更好的方法就说]{{/if}}
+- **换个角度**: {{#if premise_redefine}}{{premise_redefine}}{{/if}}
+- **不做代价**: {{#if premise_cost}}{{premise_cost}}{{/if}}
+- **已有复用**: {{#if premise_existing}}{{premise_existing}}{{/if}}
+- **Scrap it?**: {{#if premise_scrap}}{{premise_scrap}}{{/if}}
 
 <!-- Validate: 挑战≥2个假设 + 至少考虑了一个替代路径 -->
 
@@ -103,7 +103,7 @@ downstream: [requirement]
 
 ```
   CURRENT              THIS CHANGE              12-MONTH IDEAL
-  {{#if dream_state.current}}{{dream_state.current}}{{else}}现状{{/if}}     --->      {{#if dream_state.this_change}}{{dream_state.this_change}}{{else}}本次增量{{/if}}    --->        {{#if dream_state.ideal}}{{dream_state.ideal}}{{else}}理想终态{{/if}}
+  {{#if dream_state.current}}{{dream_state.current}}{{/if}}     --->      {{#if dream_state.this_change}}{{dream_state.this_change}}{{/if}}    --->        {{#if dream_state.ideal}}{{dream_state.ideal}}{{/if}}
 ```
 
 <!-- Validate: 向理想靠近而非引入未来技术债？ -->
@@ -150,10 +150,10 @@ downstream: [requirement]
 > **[HIGH]** Goal: 上线回退有预案 | Inputs: Step4+7
 <!-- Action: 数据迁移/API变更/行为变更时描述切换和回退 -->
 
-**迁移**: {{#if migration_steps}}{{migration_steps}}{{else}}[步骤]{{/if}}
-**回滚触发**: {{#if rollback_trigger}}{{rollback_trigger}}{{else}}[量化条件]{{/if}}
-**回滚操作**: {{#if rollback_ops}}{{rollback_ops}}{{else}}[精确到命令]{{/if}}
-**回滚时间**: {{#if rollback_time}}≤{{rollback_time}}{{else}}≤N min{{/if}}
+**迁移**: {{#if migration_steps}}{{migration_steps}}{{/if}}
+**回滚触发**: {{#if rollback_trigger}}{{rollback_trigger}}{{/if}}
+**回滚操作**: {{#if rollback_ops}}{{rollback_ops}}{{/if}}
+**回滚时间**: {{#if rollback_time}}≤{{rollback_time}}{{/if}}
 
 <!-- Validate: 回滚≤30min？步骤精确？ -->
 
@@ -179,13 +179,23 @@ downstream: [requirement]
 
 ⬜ S1 有量化数据
 ⬜ S2 边界清晰
+{{#unless is_cli_only}}
 ⬜ [UI] S3 视觉调性已选定
+{{/unless}}
 ⬜ S4 挑战≥2假设 + 有Scrap-it备选
 ⬜ S5 影响模块无遗漏
 ⬜ S6 每条SC可度量
+{{#if dream_state.current}}
 ⬜ [M+] S7 向理想靠近
+{{/if}}
+{{#if risks}}
 ⬜ [M+] S8 三类风险全覆盖
+{{/if}}
+{{#if innovation_tokens.length}}
 ⬜ [M+] S9 Token≤3
+{{/if}}
 ⬜ [H]  S10 回滚方案可执行
+{{#if stakeholders}}
 ⬜ [M+] S11 干系人无遗漏
+{{/if}}
 ⬜ **TODOS.md**: 延期项已记录 | PD#7: 没写=不存在

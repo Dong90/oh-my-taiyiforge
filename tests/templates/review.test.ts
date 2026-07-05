@@ -38,6 +38,16 @@ describe("review.hbs", () => {
       { id: "F-01", severity: "critical", resolved: false, description: "密码明文日志问题", round: "R1" },
       { id: "F-02", severity: "medium", resolved: true, description: "缺少 loading 状态", round: "R1" },
     ],
+    code_quality: [
+      { dimension: "功能", score: "8", note: "核心逻辑正确" },
+    ],
+    test_coverage: [
+      { layer: "单元", passed: 42, total: 42, coverage: "95%", status: "✅" },
+    ],
+    security_audit: ["无硬编码密钥"],
+    performance_audit: [
+      { item: "N+1 查询", status: "N/A", note: "无数据库操作" },
+    ],
   };
 
   it("renders title as H1 with prefix", () => {
@@ -85,8 +95,7 @@ describe("review.hbs", () => {
   it("renders security audit section", () => {
     const out = render(fullData);
     expect(out).toContain("## Step 5: Security Audit");
-    expect(out).toContain("认证/授权检查完整");
-    expect(out).toContain("npm audit");
+    expect(out).toContain("无硬编码密钥");
   });
 
   it("renders performance audit section", () => {

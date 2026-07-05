@@ -11,6 +11,7 @@ import {
   renderPhaseMarkdown,
   seedPhaseArtifacts,
 } from "../src/core/artifact-seed.js";
+import { autoFillJson } from "../src/core/json-auto-fill.js";
 
 const HBS_DIR = path.resolve(
   path.dirname(fileURLToPath(import.meta.url)),
@@ -67,5 +68,50 @@ describe("artifact-seed", () => {
     expect(fs.existsSync(path.join(changeDir, ".taiyi", "snapshots", "change.hash"))).toBe(
       true,
     );
+  });
+
+  it("complexity upgrade: low→medium re-render fills [MEDIUM+] fields", () => {
+    // Step 1: simulate low complexity creation — user filled some data
+    const userJson = {
+      title: "Upgrade测试",
+      one_liner: "测试复杂度升级",
+      user_stories: [{ as_a: "用户", i_want: "登录", so_that: "安全", priority: "P0" }],
+      functional_requirements: [{ module: "auth", items: [{ id: "FR-01", description: "新增功能" }] }],
+      acceptance_criteria: [{ id: "AC-01", description: "功能可用", is_checked: false }],
+    };
+    expect("shadow_paths" in userJson).toBe(false);
+    expect("error_rescue_map" in userJson).toBe(false);
+
+    // Step 2: upgrade to medium complexity, re-render via autoFill
+    const filled = autoFillJson("requirement", { ...userJson }, "upgrade-test", {
+      level: "medium",
+      score: 9,
+    });
+
+    // Verify [MEDIUM+] fields are now present
+    expect("shadow_paths" in filled).toBe(true);
+    expect("error_rescue_map" in filled).toBe(true);
+    expect("non_happy_path_cases" in filled).toBe(true);
+    expect("dependencies" in filled).toBe(true);
+    expect("non_functional" in filled).toBe(true);
+    expect(filled.non_functional).toHaveProperty("availability");
+
+    // Step 3: existing user data preserved
+    expect(filled.title).toBe("Upgrade测试");
+    expect(filled.user_stories[0].as_a).toBe("用户");
+    expect(filled.functional_requirements[0].module).toBe("auth");
+
+    // Step 4: Zod should accept the filled result
+    expect(() => RequirementSchema.parse(filled)).not.toThrow();
+  });
+
+  it("complexity stay-low: autoFill with low complexity skips [MEDIUM+]", () => {
+    const userJson = { title: "低复杂度" };
+    const filled = autoFillJson("requirement", { ...userJson }, "low-test", {
+      level: "low",
+      score: 3,
+    });
+    expect("shadow_paths" in filled).toBe(false);
+    expect("dependencies" in filled).toBe(false);
   });
 });
