@@ -44,6 +44,7 @@ import { auditDesignApproach, formatDesignApproachAudit, type DesignApproachResu
 import { auditTaskPlan, formatPlanAudit, type PlanAuditResult } from "./plan-audit.js";
 import { resolveArchTemplateForChange } from "./profile.js";
 import { evaluateArchitecture } from "./review-arch-check.js";
+import { evaluateReviewLoopStatus, scoreThresholds } from "./review-gate.js";
 import { syncRootChangelog } from "./sync-root-changelog.js";
 import { syncChangeState } from "./state-sync.js";
 import {
@@ -490,6 +491,33 @@ export class WorkflowEngine {
           error:
             "Medium/high complexity: health-report.md 未就绪（非模板占位），先 /taiyi:health 再 mark-aux",
         };
+      }
+    }
+
+    // Review score gate: block completion if score thresholds not met
+    if (phaseId === "review") {
+      const thresholds = scoreThresholds();
+      if (thresholds.enforce) {
+        const reviewPath = path.join(changeDir, "REVIEW.md");
+        if (fs.existsSync(reviewPath)) {
+          const reviewContent = fs.readFileSync(reviewPath, "utf8");
+          const loopStatus = evaluateReviewLoopStatus(reviewContent);
+          if (!loopStatus.canStop) {
+            const blockedDims: string[] = [];
+            if ((loopStatus.codeScore ?? 0) > 0 && (loopStatus.codeScore ?? 0) < thresholds.minCodeScore)
+              blockedDims.push(`代码 ${loopStatus.codeScore}/${thresholds.minCodeScore}`);
+            if ((loopStatus.docScore ?? 0) > 0 && (loopStatus.docScore ?? 0) < thresholds.minDocScore)
+              blockedDims.push(`文档 ${loopStatus.docScore}/${thresholds.minDocScore}`);
+            if ((loopStatus.testScore ?? 0) > 0 && (loopStatus.testScore ?? 0) < thresholds.minTestScore)
+              blockedDims.push(`测试 ${loopStatus.testScore}/${thresholds.minTestScore}`);
+            if ((loopStatus.overallScore ?? 0) > 0 && (loopStatus.overallScore ?? 0) < thresholds.minOverallScore)
+              blockedDims.push(`总评 ${loopStatus.overallScore}/${thresholds.minOverallScore}`);
+            return {
+              ok: false,
+              error: `[Score Gate] 分数不达标，禁止 complete review:\n${blockedDims.map(d => `  - ${d}`).join("\n")}\n\n请运行 /taiyi:review-loop 执行修复任务，达标后再 complete。\n（设 TAIYI_REVIEW_ENFORCE_SCORES=0 关闭此门禁）`,
+            };
+          }
+        }
       }
     }
 

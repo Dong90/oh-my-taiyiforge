@@ -48,7 +48,7 @@ export type ReviewScoreThresholds = {
   enforce: boolean;
 };
 
-function scoreThresholds(): ReviewScoreThresholds {
+export function scoreThresholds(): ReviewScoreThresholds {
   const rawCode = process.env.TAIYI_REVIEW_MIN_CODE_SCORE;
   const rawDoc = process.env.TAIYI_REVIEW_MIN_DOC_SCORE;
   const rawTest = process.env.TAIYI_REVIEW_MIN_TEST_SCORE;
