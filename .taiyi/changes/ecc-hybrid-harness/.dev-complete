@@ -1,7 +1,0 @@
-command: npx tsc --noEmit && npx vitest run
-exitCode: 0
----
-tsc: pass (0 errors)
-vitest: 176 test files, 1404 tests passed, 8 skipped
----
-dev phase complete: 2026-07-03T08:42:00Z

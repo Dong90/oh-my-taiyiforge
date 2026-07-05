@@ -1,2 +1,0 @@
-command: node -e "process.exit(0)"
-exitCode: 0

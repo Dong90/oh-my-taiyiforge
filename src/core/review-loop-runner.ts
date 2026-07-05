@@ -156,7 +156,8 @@ export function runReviewMachineCheck(
   }
 
   const content = fs.readFileSync(reviewPath, "utf8");
-  const loopStatus = evaluateReviewLoopStatus(content);
+  const currentRound = loopStateBefore?.round ?? 0;
+  const loopStatus = evaluateReviewLoopStatus(content, currentRound + 1);
   let loopState: ReviewLoopStateFile;
   if (options?.bumpRound === false) {
     if (loopStatus.canStop) {

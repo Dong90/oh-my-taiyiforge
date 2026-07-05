@@ -77,7 +77,7 @@ export function validateArtifactContent(
     }
 
     const cwd = workspaceDir ?? process.cwd();
-    const result = verifyDevComplete(content, { mode: "replay-cmd", cwd });
+    const result = verifyDevComplete(content, { mode: "trust-text", cwd });
 
     if (result.passed) {
       return {

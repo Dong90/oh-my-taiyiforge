@@ -55,51 +55,77 @@ function scoreThresholds(): ReviewScoreThresholds {
 
 const SCORE_STRATEGIES: Record<string, string[]> = {
   code: [
-    "• 消除硬编码/重复代码，提取公共方法或工具函数",
-    "• 确保函数名称精确表达意图，参数简洁、职责单一",
-    "• 确保错误处理完整（try-catch + 用户可见提示），边界条件有测试覆盖",
-    "• 使用给定框架的最佳实践（React hooks 规则 / FastAPI 依赖注入 / …）",
-    "• 运行 linter + typecheck，消除所有 warning",
-    "⚠️ 代码修改后，文档和测试可能需要同步更新。",
+    "R1 基础 · 消除硬编码/重复代码，提取公共方法或工具函数",
+    "R1 基础 · 确保函数名精确表达意图，参数 ≤ 3 个、无布尔旗标参数",
+    "R1 基础 · 每个公开函数有显式返回类型 + 输入校验（Zod / type guard）",
+    "R2 进阶 · 消除所有 any/unknown 滥用，用泛型或 discriminated union 替代",
+    "R2 进阶 · 文件 ≤ 250 行（纯逻辑）/ ≤ 400 行（含样板），超限拆分模块",
+    "R2 进阶 · 热路径避免不必要的对象分配（内联 style / 闭包重建）",
+    "R3 深度 · 数据库查询无 N+1，复杂查询走索引且有 EXPLAIN 验证",
+    "R3 深度 · 并发安全：无全局可变状态，异步操作有超时 + 取消 + 重试",
+    "R3 深度 · 依赖注入：核心逻辑不直接 new 外部服务，通过接口注入便于测试",
+    "⚠️ 代码修改后，文档和测试需同步更新。",
   ],
   doc: [
-    "• 确保每段/每张表都有具体内容，无占位符或 N/A 填充",
-    "• 各阶段工件间引用一致（CHANGE → REQUIREMENT → DESIGN → TEST 可追溯）",
-    "• 为关键决策添加 ADR 风格的「为什么选择这个方案」说明",
-    "• 如有公共 API / CLI，确保有可运行的示例命令或请求",
-    "⚠️ 文档修改后，代码注释和测试用例可能需要同步更新。",
+    "R1 基础 · 每段/每张表有具体内容，无占位符 / N/A / 待填写填充",
+    "R1 基础 · 各工件间引用一致（CHANGE §SC → REQUIREMENT §AC → TEST §TC 可追溯）",
+    "R1 基础 · 每个决策有「为什么」而非「是什么」——选 A 不选 B 的理由 > 两句话",
+    "R2 进阶 · 公共 API / CLI 有可运行的 curl 或命令示例（复制→粘贴→回车即通）",
+    "R2 进阶 · 架构图(DESIGN §2)与代码实际结构一致，无图码漂移",
+    "R2 进阶 · CHANGELOG 有 Added/Changed/Fixed/Breaking 分类，非开发者也看得懂",
+    "R3 深度 · README / AGENTS.md 已更新反映本次变更影响",
+    "R3 深度 · ADR 记录了跨版本/跨模块的长期架构决策",
+    "R3 深度 · 所有未完成项已在 TODOS.md 或延后 issue 中记录",
+    "⚠️ 文档修改后，代码注释和测试用例需同步更新。",
   ],
   test: [
-    "• 补全缺失的单元/集成/E2E 测试用例，确保覆盖率 ≥ 80%",
-    "• 为边缘路径（空输入/超时/并发/异常）添加独立测试",
-    "• 测试用例名称使用 Given/When/Then 结构，一眼读懂验证什么",
-    "• 消除 flaky test（随机失败 → 确定性断言 → 稳定 CI）",
-    "⚠️ 测试修改后，代码和文档可能需要同步更新。",
+    "R1 基础 · 单元/集成/E2E 三层覆盖率均 ≥ 80%",
+    "R1 基础 · 每个 AC（验收标准）有至少 1 个独立测试用例，用例名 Given/When/Then",
+    "R1 基础 · 错误路径有测试：空输入、超时、并发冲突、上游异常各 ≥ 1 条",
+    "R2 进阶 · 消除 flaky test（随机失败→确定性断言→CI 稳定 10 次连续通过）",
+    "R2 进阶 · 测试文件与源文件一一对应（auth.ts → auth.test.ts），无孤儿源文件",
+    "R2 进阶 · Mock 边界明确：外部 API / DB / 时间可 mock，核心逻辑 / 验证 / 契约禁 mock",
+    "R3 深度 · E2E 覆盖关键用户旅程（登录→操作→登出），非 happy-path-only",
+    "R3 深度 · 性能测试有基线数据 + 回归对比，安全测试覆盖 OWASP Top 10",
+    "R3 深度 · test/ 目录结构清晰，conftest / fixtures 复用不重复",
+    "⚠️ 测试修改后，代码和文档需同步更新。",
   ],
   overall: [
-    "• 总评是代码/文档/测试的综合反映，单项提升会拉动总评",
-    "• 优先修复最低分维度，再逐一推进其余维度至 ≥ 9.0",
-    "⚠️ 总评达标后，仍需确认无新增 high finding 和 Verdict 为 Approve。",
+    "总评 = 代码/文档/测试的综合反映，单项提升自动拉动总评",
+    "策略：优先修复最低分维度 → 逐一推进 → 全部 ≥ 9.0 → 总评自然达标",
+    "若三轮后仍不达标：将剩余问题记录到 TODOS.md，降低复杂度重跑或人工介入",
+    "⚠️ 总评达标后确认无新增 high finding 且 Verdict = Approve。",
   ],
 };
 
-function scoreHints(status: ReviewLoopStatus, thresholds: ReviewScoreThresholds): string[] {
+function scoreHints(
+  status: ReviewLoopStatus,
+  thresholds: ReviewScoreThresholds,
+  round: number,
+): string[] {
   const hints: string[] = [];
   if (!thresholds.enforce) return hints;
+
+  const filterByRound = (items: string[], r: number) => {
+    if (r === 1) return items.filter(s => s.startsWith("R1 "));
+    if (r === 2) return items.filter(s => s.startsWith("R1 ") || s.startsWith("R2 "));
+    return items; // R3+: all
+  };
+
   if (status.codeScore != null && status.codeScore < thresholds.minCodeScore) {
-    hints.push(`\n📋 代码评分 ${status.codeScore}/10 不达标（需 ≥ ${thresholds.minCodeScore}）`);
-    hints.push(...SCORE_STRATEGIES.code.map(s => `   ${s}`));
+    hints.push(`\n📋 代码评分 ${status.codeScore}/10 不达标（需 ≥ ${thresholds.minCodeScore}）· 第 ${round} 轮`);
+    hints.push(...filterByRound(SCORE_STRATEGIES.code, round).map(s => `   ${s}`));
   }
   if (status.docScore != null && status.docScore < thresholds.minDocScore) {
-    hints.push(`\n📋 文档评分 ${status.docScore}/10 不达标（需 ≥ ${thresholds.minDocScore}）`);
-    hints.push(...SCORE_STRATEGIES.doc.map(s => `   ${s}`));
+    hints.push(`\n📋 文档评分 ${status.docScore}/10 不达标（需 ≥ ${thresholds.minDocScore}）· 第 ${round} 轮`);
+    hints.push(...filterByRound(SCORE_STRATEGIES.doc, round).map(s => `   ${s}`));
   }
   if (status.testScore != null && status.testScore < thresholds.minTestScore) {
-    hints.push(`\n📋 测试评分 ${status.testScore}/10 不达标（需 ≥ ${thresholds.minTestScore}）`);
-    hints.push(...SCORE_STRATEGIES.test.map(s => `   ${s}`));
+    hints.push(`\n📋 测试评分 ${status.testScore}/10 不达标（需 ≥ ${thresholds.minTestScore}）· 第 ${round} 轮`);
+    hints.push(...filterByRound(SCORE_STRATEGIES.test, round).map(s => `   ${s}`));
   }
   if (status.overallScore != null && status.overallScore > 0 && status.overallScore < thresholds.minOverallScore) {
-    hints.push(`\n📋 总评 ${status.overallScore}/10 不达标（需 ≥ ${thresholds.minOverallScore}）`);
+    hints.push(`\n📋 总评 ${status.overallScore}/10 不达标（需 ≥ ${thresholds.minOverallScore}）· 第 ${round} 轮`);
     hints.push(...SCORE_STRATEGIES.overall.map(s => `   ${s}`));
   }
   return hints;
@@ -202,7 +228,7 @@ export function evaluateMachineReview(content: string): MachineReviewResult {
 }
 
 /** review-loop / review-check：无未解决 high、非 Request changes、分数达标即可停循环 */
-export function evaluateReviewLoopStatus(content: string): ReviewLoopStatus {
+export function evaluateReviewLoopStatus(content: string, round?: number): ReviewLoopStatus {
   const verdict = parseReviewVerdict(content);
   const openHighFindings = findOpenHighFindings(content);
   const { codeScore, docScore, testScore, overallScore, scores } = computeReviewScores(content);
@@ -223,7 +249,7 @@ export function evaluateReviewLoopStatus(content: string): ReviewLoopStatus {
   let scoreBlocked = false;
   if (thresholds.enforce && Object.keys(scores).length > 0) {
     const status = { codeScore, docScore, testScore, overallScore, scores } as ReviewLoopStatus;
-    const stratHints = scoreHints(status, thresholds);
+    const stratHints = scoreHints(status, thresholds, round ?? 1);
     if (stratHints.length > 0) {
       scoreBlocked = true;
     }
