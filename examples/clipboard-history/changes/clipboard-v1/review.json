@@ -1,0 +1,12 @@
+{
+  "title": "R",
+  "verdict": "approved",
+  "findings_acknowledged": true,
+  "findings": [
+    {
+      "severity": "Low",
+      "description": "clean implementation",
+      "resolved": true
+    }
+  ]
+}

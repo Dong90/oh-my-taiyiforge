@@ -202,3 +202,8 @@ Legacy：`npx taiyi complete <slug> ui-design` 仍可用；聊天优先 `/taiyi:
 - [ ] 与 DESIGN.md 的差异已记录（或无差异声明）
 - [ ] 没有写入实现代码
 - [ ] 所有参考的设计 Token 来自项目已有配置
+
+## 引擎门控（自动，无需手动确认）
+
+- **states >= 3**: ui-design.json states 至少 loading/empty/error → 阻止。CLI-only 跳过
+- **accessibility >= 1**: accessibility 至少 1 条 WCAG 合规项 → 阻止。CLI-only 跳过

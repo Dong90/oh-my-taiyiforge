@@ -17,11 +17,14 @@ downstream: [requirement]
 > **[ALL]** Goal: 证明值得做 | Inputs: 用户反馈/监控/业务指标
 <!-- Action: 用数据回答: 当前多痛、不改多惨、改了多好 -->
 
-**当前状态**: {{#if motivation}}{{motivation}}{{else}}{{#if description}}{{description}}{{/if}}{{/if}}
+**当前状态**: {{#if motivation}}{{motivation}}{{else}}> 💡 用一句话说明当前痛点，最好带数据。例: "用户登录超时后必须重新输入密码，日均流失 3%。"
+{{#if description}}{{description}}{{/if}}{{/if}}
 
-**不改的代价**: {{#if do_nothing_cost}}{{do_nothing_cost}}{{/if}}
+**不改的代价**: {{#if do_nothing_cost}}{{do_nothing_cost}}{{else}}> 💡 如果不改会怎样? 例: "继续流失用户，Q3 预测 NPS 下降 5 点"
+{{/if}}
 
-**目标状态**: {{#if target_state}}{{target_state}}{{/if}}
+**目标状态**: {{#if target_state}}{{target_state}}{{else}}> 💡 改完之后目标状态是什么? 例: "登录态保持 7 天，超时后刷新 Token 无需重新登录"
+{{/if}}
 
 <!-- Validate: 有可度量数字？ -->
 

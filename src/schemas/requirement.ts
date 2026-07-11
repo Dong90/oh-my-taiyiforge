@@ -14,9 +14,25 @@ const NfrEntry = z.object({
   threshold: z.string().optional().describe("阈值或目标（如 ≤ 50ms、= 0 errors）"),
 });
 
+/**
+ * trigger: 谁在什么时机调用这个 FR（如 "executor.dispatch() 每次调用后"）
+ * caller_module: 触发函数所在的源文件路径
+ * blocked_by: 当 caller 不在本 change scope 中时，标注依赖的 change slug
+ */
 const FuncReqItem = z.object({
   id: z.string(),
   description: z.string(),
+  trigger: z.string()
+    .trim()
+    .min(1, "trigger 不可为空字符串（填入谁调用、什么时机，或省略整个字段）")
+    .optional()
+    .describe("谁在什么时机调用这个 FR"),
+  caller_module: z.string()
+    .optional()
+    .describe("触发函数所在的源文件路径"),
+  blocked_by: z.string()
+    .optional()
+    .describe("caller 不在本 scope 时标注依赖的 change slug"),
 });
 
 const FuncReqModule = z.object({

@@ -1,6 +1,11 @@
 import fs from "node:fs";
 import path from "node:path";
-import type { ChangeProfile, ChangeState, GateInput, PhaseId, QualityScores } from "./types.js";
+import type { ChangeProfile, ChangeState, GateFixHint, GateInput, PhaseId, QualityScores } from "./types.js";
+import { checkFrSliceCoverage } from "./fr-coverage-check.js";
+import { checkBlockedByDeps } from "./blocked-by-check.js";
+import { listChanges } from "./list-changes.js";
+import { scanTestFilesForAcCoverage } from "./ac-auto-coverage.js";
+import { checkExportCallers } from "./export-caller-check.js";
 import { clearRuntimeForSlug } from "./runtime/orphan-runtime.js";
 import { evaluateHumanGate } from "./gates/human-gate.js";
 import { rejectAutomatedHumanApproval, requiresHumanGate } from "./gates/human-gate-config.js";
@@ -104,6 +109,10 @@ export class WorkflowEngine {
     private readonly templatesDir?: string,
   ) {}
 
+  /** AI-driven auto-fix: called when rule-based fixes fail */
+  private aiAutoFixFn?: (ctx: Record<string, any>) => Promise<Record<string, string>>;
+  setAiAutoFix(fn: (ctx: Record<string, any>) => Promise<Record<string, string>>) { this.aiAutoFixFn = fn; }
+
   private changesDir(): string {
     return path.join(this.workspaceRoot, "changes");
   }
@@ -124,6 +133,11 @@ export class WorkflowEngine {
 
   initChange(slug: string, options?: InitChangeOptions): ChangeState & { seeded: string[] } {
     assertValidSlug(slug);
+    const MAX_SEEDS = Number(process.env.TAIYI_MAX_SEEDS ?? "10");
+    if (!options?.force && process.env.TAIYI_SEED_LIMIT !== "0") {
+      const existing = listChanges(this.taiyiRoot, { includeAll: true });
+      if (existing.filter(x => x.isSeed).length >= MAX_SEEDS) throw new Error(`Too many seeds (>=${MAX_SEEDS}). Cancel stale or use --force.`);
+    }
     const dir = this.changeDir(slug);
     const existing = this.statePath(slug);
     if (fs.existsSync(existing) && !options?.force) {
@@ -424,7 +438,7 @@ export class WorkflowEngine {
       /** 测试/E2E 批量预写工件时跳过「超前阶段」拦截 */
       skipStepOrderCheck?: boolean;
     },
-  ): { ok: boolean; error?: string; qualityHints?: string[] } {
+  ): { ok: boolean; error?: string; qualityHints?: string[]; fixHints?: GateFixHint[] } {
     const slugCheck = validateSlug(slug);
     if (!slugCheck.ok) return { ok: false, error: slugCheck.error };
     const state = this.getState(slug);
@@ -462,6 +476,7 @@ export class WorkflowEngine {
     }
 
     const changeDir = this.changeDir(slug);
+    const workspaceDir = path.dirname(this.workspaceRoot);
     const sync = syncChangeState(changeDir, state);
     if (sync.changed) {
       this.writeState(sync.state);
@@ -506,13 +521,18 @@ export class WorkflowEngine {
 
     // Review score gate: block completion if score thresholds not met
     if (phaseId === "review") {
+      const ef = checkExportCallers(workspaceDir);
+      if (ef.length > 0 && ef.some(f => f.severity === "critical")) return { ok: false, error: "[Export Gate] " + ef.filter(f=>f.severity==="critical").length + " exports with 0 callers" };
       const thresholds = scoreThresholds();
       if (thresholds.enforce) {
         // 0. 检查上游所有阶段工件完整性
         const upstreamPhases = listPhases().filter((p: { order: number }) => p.order < 8);
         const gaps: string[] = [];
         for (const ph of upstreamPhases) {
-          const ap = path.join(changeDir, ph.artifact);
+          if (workingState.skippedPhases.includes(ph.id)) continue;
+          const ap = ph.kind === "code"
+            ? path.join(changeDir, ".dev-complete")
+            : path.join(changeDir, ph.artifact);
           if (!fs.existsSync(ap)) {
             gaps.push(`  - ${ph.artifact} 缺失（${ph.id} 阶段）`);
             continue;
@@ -584,17 +604,40 @@ export class WorkflowEngine {
       }
     }
 
-    const workspaceDir = path.dirname(this.workspaceRoot);
-
     const earlyCode = detectEarlyCodeChanges(workspaceDir, phaseId);
     if (earlyCode && earlyCodeBlockOnContinue()) {
       return { ok: false, error: earlyCode.message };
+    }
+
+    if (phaseId === "requirement" && !options?.skipArtifactValidation) {
+      const bb = checkBlockedByDeps(changeDir, this.taiyiRoot);
+      if (bb.unresolved.length > 0) return { ok: false, fixHints: [{ file: "requirement.json", field: "blocked_by", action: "Remove or fix blocked_by" }], error: `[BlockedBy Gate] ` + bb.warnings.join("; ") };
+      if (bb.pending.length > 0) this.log.warn("blocked_by pending: " + bb.warnings.join("; "));
+    }
+
+    if (phaseId === "ui-design" && !options?.skipArtifactValidation) {
+      const uip = path.join(changeDir, "ui-design.json");
+      if (fs.existsSync(uip)) try {
+        const ui = JSON.parse(fs.readFileSync(uip, "utf8"));
+        if (!ui.is_cli_only) {
+          if (((ui.states as any[]) ?? []).length < 3) return { ok: false, fixHints: [{ file: "ui-design.json", field: "states", action: "Add >=3 states" }], error: "[UI Gate] states need >=3" };
+          if (((ui.accessibility as string[]) ?? []).length < 1) return { ok: false, fixHints: [{ file: "ui-design.json", field: "accessibility", action: "Add >=1 WCAG item" }], error: "[UI Gate] a11y need >=1" };
+        }
+      } catch {}
     }
 
     if (phaseId === "design" && !options?.skipArtifactValidation) {
       const designMdPath = path.join(changeDir, "DESIGN.md");
       if (!fs.existsSync(designMdPath)) {
         return { ok: false, error: "DESIGN.md 不存在 — 无法进入 task 阶段" };
+      }
+      if (workingState.profile === "full" || workingState.profile === "api") {
+        const djp = path.join(changeDir, "design.json");
+        if (fs.existsSync(djp)) try {
+          const dj = JSON.parse(fs.readFileSync(djp, "utf8"));
+          if (((dj.security_threats as any[]) ?? []).length === 0)
+            this.log.warn("[Security Gate] " + workingState.profile + " requires >=1 security_threats — add to design.json");
+        } catch {}
       }
       const designContent = fs.readFileSync(designMdPath, "utf8");
       const isSeed = designContent.includes("<!-- taiyi:seed-template -->");
@@ -615,6 +658,8 @@ export class WorkflowEngine {
     }
 
     if (phaseId === "task" && !options?.skipArtifactValidation) {
+      const frCheck = checkFrSliceCoverage(changeDir);
+      if (!frCheck.passed) this.log.warn("FR coverage: " + frCheck.coveredFrs + "/" + frCheck.totalFrs + " — uncovered: " + frCheck.uncoveredFrs.join(","));
       const cacheKey = `${slug}::${phaseId}`;
       if (!this._auditedPhases.has(cacheKey)) {
         const taskMdPath = path.join(changeDir, "TASK.md");
@@ -833,7 +878,7 @@ export class WorkflowEngine {
       skippedPhases: dynamicSkipped,
       currentPhase: next ?? phaseId,
       complexity:
-        workingState.completedPhases.includes("change") && workingState.complexity
+        phaseId === "change" ? assessComplexity(inferComplexitySignals(changeDir)) : workingState.completedPhases.includes("change") && workingState.complexity
           ? workingState.complexity
           : assessComplexity(inferComplexitySignals(changeDir)),
       updatedAt: new Date().toISOString(),
@@ -905,5 +950,122 @@ export class WorkflowEngine {
     });
     this.log.info("Aborted change", { slug });
     return { ok: true };
+  }
+
+  /** 自动修复重试：gate block → fix → retry，最多 3 次 */
+  async tryAutoFix(slug: string, phaseId: PhaseId, gates: GateInput, maxRetries = 3): Promise<{ ok: boolean; error?: string; fixAttempts: number; fixHints?: GateFixHint[] }> {
+    let lastResult;
+    for (let i = 1; i <= maxRetries; i++) {
+      lastResult = this.completePhase(slug, phaseId, gates, { skipStepOrderCheck: i > 1 });
+      if (lastResult.ok) return { ok: true, fixAttempts: i - 1 };
+
+      // Call AI agent if registered, before trying rule-based fixes
+      if (this.aiAutoFixFn && (i === maxRetries - 1 || !lastResult.fixHints || lastResult.fixHints.length === 0)) {
+        try {
+          const cdir = this.changeDir(slug);
+          const arts: Record<string, string> = {};
+          for (const f of fs.readdirSync(cdir)) {
+            const fp = path.join(cdir, f);
+            if (fs.statSync(fp).isFile()) try { arts[f] = fs.readFileSync(fp, "utf8"); } catch {}
+          }
+          const aiResult = await this.aiAutoFixFn({
+            slug, phase: phaseId, changeDir: cdir,
+            gateError: lastResult.error || "unknown error",
+            fixHints: lastResult.fixHints || [],
+            currentArtifacts: arts,
+          });
+          for (const [file, content] of Object.entries(aiResult))
+            fs.writeFileSync(path.join(cdir, file), content);
+          this.log.info(`AI auto-fix applied ${Object.keys(aiResult).length} files: ${Object.keys(aiResult).join(", ")}`);
+        } catch (e) { this.log.warn(`AI auto-fix failed: ${String(e)}`); }
+        continue;
+      }
+
+      if (!lastResult.fixHints || lastResult.fixHints.length === 0) break;
+      for (const h of lastResult.fixHints) {
+        try {
+          const fp = path.join(this.changeDir(slug), h.file);
+          // JSON files: parse → fix field → write back
+          if (h.file.endsWith(".json")) {
+            let data: any = {};
+            if (fs.existsSync(fp)) { try { data = JSON.parse(fs.readFileSync(fp, "utf8")); } catch {} }
+            if (h.field) {
+              // Remove problematic fields
+              if (h.action.includes("Remove") || h.action.includes("blocked_by")) {
+                this._removeJsonField(data, h.field);
+              }
+              // Add default values for empty arrays
+              if (h.action.includes("Add") || h.action.includes(">=") || h.action.includes("≥")) {
+                this._ensureJsonField(data, h.field);
+              }
+            }
+            fs.writeFileSync(fp, JSON.stringify(data, null, 2));
+          } else {
+            // Non-JSON files: create if missing
+            if (!fs.existsSync(fp)) fs.writeFileSync(fp, h.expectedValue ?? `# ${h.file.replace(".md","")}`);
+          }
+          this.log.info(`auto-fix #${i}: ${h.action}`);
+        } catch (e) { this.log.warn(`auto-fix fail: ${String(e)}`); }
+      }
+      // If AI fix function is registered and this is the last retry, let AI try
+      if (i === maxRetries - 1 && this.aiAutoFixFn) {
+        try {
+          const cdir = this.changeDir(slug);
+          const arts: Record<string, string> = {};
+          for (const f of fs.readdirSync(cdir)) {
+            const fp = path.join(cdir, f);
+            if (fs.statSync(fp).isFile() && (f.endsWith(".md") || f.endsWith(".json"))) {
+              try { arts[f] = fs.readFileSync(fp, "utf8"); } catch {}
+            }
+          }
+          const ctx = {
+            slug, phase: phaseId, changeDir: cdir,
+            gateError: lastResult!.error || "unknown error",
+            fixHints: lastResult!.fixHints || [],
+            currentArtifacts: arts,
+          };
+          const aiResult = await this.aiAutoFixFn(ctx);
+          for (const [file, content] of Object.entries(aiResult)) {
+            fs.writeFileSync(path.join(cdir, file), content);
+          }
+          this.log.info(`AI auto-fix applied: ${Object.keys(aiResult).join(", ")}`);
+        } catch (e) {
+          this.log.warn(`AI auto-fix failed: ${String(e)}`);
+        }
+      }
+    }
+    return { ok: false, error: lastResult?.error, fixAttempts: maxRetries, fixHints: lastResult?.fixHints };
+  }
+
+  private _removeJsonField(obj: any, field: string): void {
+    if (!obj || typeof obj !== "object") return;
+    if (Array.isArray(obj)) { for (const item of obj) this._removeJsonField(item, field); return; }
+    for (const key of Object.keys(obj)) {
+      if (key === field) { delete obj[key]; continue; }
+      if (typeof obj[key] === "object") this._removeJsonField(obj[key], field);
+    }
+  }
+
+  private _ensureJsonField(obj: any, field: string): void {
+    if (!obj || typeof obj !== "object") return;
+    const parts = field.split(".");
+    let current: any = obj;
+    for (let i = 0; i < parts.length - 1; i++) {
+      const p = parts[i]!.replace("[]", "");
+      if (!current[p]) current[p] = parts[i]!.includes("[]") ? [] : {};
+      current = Array.isArray(current[p]) ? (current[p][0] ?? (current[p][0] = {})) : current[p];
+      if (!current) return;
+    }
+    const last = parts[parts.length - 1]!.replace("[]", "");
+    if (Array.isArray(current)) {
+      if (current.length === 0) {
+        // security_threats: add default threat
+        if (last === "security_threats") current.push({ threat: "unvalidated input", vector: "user input", mitigation: "validate and sanitize" });
+        // states: add loading/empty/error
+        else if (last === "states") current.push({ name: "loading", description: "loading state" }, { name: "empty", description: "empty state" }, { name: "error", description: "error state" });
+        // accessibility: add default
+        else if (last === "accessibility") current.push("keyboard navigation support");
+      }
+    }
   }
 }

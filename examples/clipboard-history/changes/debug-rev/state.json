@@ -1,0 +1,30 @@
+{
+  "slug": "debug-rev",
+  "currentPhase": "review",
+  "completedPhases": [
+    "change",
+    "requirement",
+    "design",
+    "task",
+    "dev",
+    "test"
+  ],
+  "profile": "api",
+  "skippedPhases": [
+    "ui-design"
+  ],
+  "strictDev": false,
+  "autoHarness": false,
+  "complexity": {
+    "level": "low",
+    "score": 3,
+    "recommendedSkills": [
+      "taiyi-intel-scan"
+    ]
+  },
+  "auxiliaryCompleted": [],
+  "workflowStatus": "active",
+  "createdAt": "2026-07-06T11:56:41.447Z",
+  "updatedAt": "2026-07-06T11:56:41.492Z",
+  "version": 7
+}

@@ -63,7 +63,10 @@ export const TaskSchema = z.object({
         { message: "预估时间需符合格式如 '30min'/'2h'/'1d'/'2.5h'，或 ≥ 3 字符" }
       ).describe("预估时间（如 30min / 2h / 1d）"),
       verification: SubstantiveString.optional().describe("验证方式"),
-      physical_verification: SubstantiveString.optional().describe("物理锚点：`git diff --name-only` 确认 write_files 已被修改"),
+      physical_verification: SubstantiveString.optional().describe("physical anchor: git diff --name-only to confirm write_files modified"),
+      covers_frs: z.array(
+        z.string().min(1, "FR id must not be empty")
+      ).optional().describe("FR ids covered by this slice (maps to requirement.json functional_requirements.items[].id)"),
     })
   ).min(1).describe("至少一个切片"),
   waves: z.array(Wave).optional().describe("执行波次"),

@@ -1,0 +1,18 @@
+{
+  "version": 1,
+  "slug": "clipboard-v1",
+  "totalTokens": 735,
+  "estimatedCostUsd": 0.002205,
+  "byPhase": {
+    "integration": 735
+  },
+  "entries": [
+    {
+      "at": "2026-07-06T11:55:29.624Z",
+      "phase": "integration",
+      "kind": "scan",
+      "tokens": 735,
+      "label": "7 files"
+    }
+  ]
+}

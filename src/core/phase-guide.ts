@@ -28,6 +28,29 @@ import {
 } from "./state-sync.js";
 import { detectEarlyCodeChanges } from "./dev-phase-guard.js";
 
+function readBlockedByFrWarnings(changeDir: string): string[] | undefined {
+  const reqPath = path.join(changeDir, "requirement.json");
+  if (!fs.existsSync(reqPath)) return undefined;
+  try {
+    const data = JSON.parse(fs.readFileSync(reqPath, "utf8"));
+    const frModules = (data.functional_requirements as Array<{
+      module: string;
+      items: Array<{ id: string; description: string; blocked_by?: string }>;
+    }>) ?? [];
+    const warnings: string[] = [];
+    for (const mod of frModules) {
+      for (const item of mod.items ?? []) {
+        if (item.blocked_by) {
+          warnings.push(`FR ${item.id} (${mod.module}) blocked_by: ${item.blocked_by} — 等此 change 完成后继续`);
+        }
+      }
+    }
+    return warnings.length > 0 ? warnings : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
 export type PhaseGuide = {
   slug: string;
   profile: ChangeState["profile"];
@@ -69,6 +92,8 @@ export type PhaseGuide = {
   earlyCodeWarning?: string;
   /** review 前 medium/high 须 taiyi-health */
   healthGateLine?: string;
+  /** requirement.json 中 blocked_by 非空的 FR 依赖告警 */
+  blockedByWarnings?: string[];
 };
 
 export function buildPhaseGuide(
@@ -238,6 +263,8 @@ export function buildPhaseGuide(
     ? `⚠ ${state.complexity?.level} 复杂度 review 门禁：health → health-report.md → mark-aux → review-loop`
     : undefined;
 
+  const blockedByWarnings = readBlockedByFrWarnings(changeDir);
+
   if (needsHealth) {
     nextAction = `${state.complexity?.level} 复杂度：health → mark-aux，再 review-loop`;
   } else if (state.currentPhase === "review" && !qualityReady) {
@@ -292,5 +319,6 @@ export function buildPhaseGuide(
     autoHarness: state.autoHarness ?? false,
     harness,
     healthGateLine,
+    blockedByWarnings,
   });
 }

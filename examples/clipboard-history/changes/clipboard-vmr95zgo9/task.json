@@ -1,0 +1,28 @@
+{
+  "title": "T",
+  "slices": [
+    {
+      "id": "S1",
+      "description": "storage",
+      "time_estimate": "2h",
+      "write_files": [
+        "src/storage.ts"
+      ],
+      "covers_frs": [
+        "FR-03"
+      ]
+    },
+    {
+      "id": "S2",
+      "description": "cli",
+      "time_estimate": "2h",
+      "write_files": [
+        "src/cli.ts"
+      ],
+      "covers_frs": [
+        "FR-01",
+        "FR-02"
+      ]
+    }
+  ]
+}

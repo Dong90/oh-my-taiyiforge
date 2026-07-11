@@ -75,6 +75,13 @@ flowchart LR
 {{/each}}
 {{/if}}
 
+{{#if covers_frs}}
+**覆盖的 FR**:
+{{#each covers_frs}}
+- {{this}}
+{{/each}}
+{{/if}}
+
 <!-- Validate: 可独立merge/deploy？文件范围精确？ -->
 
 ---

@@ -116,6 +116,30 @@ export type ChangeState = {
 
 export type ComplexityLevel = "low" | "medium" | "high";
 
+/** Auto-fix hint returned by phase gates when blocking */
+export type GateFixHint = {
+  file: string;
+  field?: string;
+  action: string;
+  expectedValue?: string;
+};
+
+export type AiAutoFixContext = {
+  slug: string;
+  phase: PhaseId;
+  changeDir: string;
+  gateError: string;
+  fixHints: GateFixHint[];
+  currentArtifacts: Record<string, string>;
+};
+
+export type AiAutoFixResult = {
+  files: Record<string, string>;
+  summary: string;
+};
+
+export type AiAutoFixFn = (ctx: AiAutoFixContext) => Promise<AiAutoFixResult>;
+
 export type ComplexityAssessment = {
   level: ComplexityLevel;
   score: number;

@@ -1,0 +1,317 @@
+{"ts":"2026-07-06T06:21:10.499Z","event":"change:created","slug":"clipboard-manager","profile":"api"}
+{"ts":"2026-07-06T06:21:10.506Z","event":"quality:passed","slug":"clipboard-manager","phase":"change","qualityScores":{"completeness":true,"consistency":true,"verifiability":true,"traceability":true,"engineering_quality":true}}
+{"ts":"2026-07-06T06:21:10.521Z","event":"phase:complete","slug":"clipboard-manager","phase":"change"}
+{"ts":"2026-07-06T06:21:10.523Z","event":"quality:passed","slug":"clipboard-manager","phase":"requirement","qualityScores":{"completeness":true,"consistency":true,"verifiability":true,"traceability":true,"engineering_quality":true}}
+{"ts":"2026-07-06T06:21:10.525Z","event":"phase:complete","slug":"clipboard-manager","phase":"requirement"}
+{"ts":"2026-07-06T06:21:10.527Z","event":"quality:passed","slug":"clipboard-manager","phase":"design","qualityScores":{"completeness":true,"consistency":true,"verifiability":true,"traceability":true,"engineering_quality":true}}
+{"ts":"2026-07-06T06:21:10.529Z","event":"phase:complete","slug":"clipboard-manager","phase":"design"}
+{"ts":"2026-07-06T06:21:10.531Z","event":"plan-audit:blocked","slug":"clipboard-manager","findings":["缺少任务列表（Slice table 或 task list）；缺少范围边界说明（Non-goals / Out of scope）","切片缺少完成标准列（Done / 验收）","缺少依赖关系说明"]}
+{"ts":"2026-07-06T06:21:10.532Z","event":"quality:passed","slug":"clipboard-manager","phase":"task","qualityScores":{"completeness":true,"consistency":true,"verifiability":true,"traceability":true,"engineering_quality":true}}
+{"ts":"2026-07-06T06:21:10.535Z","event":"phase:complete","slug":"clipboard-manager","phase":"task"}
+{"ts":"2026-07-06T06:21:10.543Z","event":"quality:passed","slug":"clipboard-manager","phase":"dev","qualityScores":{"completeness":true,"consistency":true,"verifiability":true,"traceability":true,"engineering_quality":true}}
+{"ts":"2026-07-06T06:21:10.545Z","event":"phase:complete","slug":"clipboard-manager","phase":"dev"}
+{"ts":"2026-07-06T06:21:10.546Z","event":"quality:passed","slug":"clipboard-manager","phase":"test","qualityScores":{"completeness":true,"consistency":true,"verifiability":true,"traceability":true,"engineering_quality":true}}
+{"ts":"2026-07-06T06:21:10.548Z","event":"phase:complete","slug":"clipboard-manager","phase":"test"}
+{"ts":"2026-07-06T06:21:10.738Z","event":"integration:readiness-warning","slug":"clipboard-manager","warnings":["missing package.json"]}
+{"ts":"2026-07-06T06:21:10.741Z","event":"quality:failed","slug":"clipboard-manager","phase":"integration","error":"Quality gate failed: completeness, consistency, traceability — [Zod] 缺少 integration.json，用 executor.generateStageData 生成","hints":["[Zod] 缺少 integration.json，用 executor.generateStageData 生成"]}
+{"ts":"2026-07-06T09:46:10.965Z","event":"change:created","slug":"clipboard-manager","profile":"api"}
+{"ts":"2026-07-06T09:46:10.968Z","event":"quality:passed","slug":"clipboard-manager","phase":"change","qualityScores":{"completeness":true,"consistency":true,"verifiability":true,"traceability":true,"engineering_quality":true}}
+{"ts":"2026-07-06T09:46:10.985Z","event":"phase:complete","slug":"clipboard-manager","phase":"change"}
+{"ts":"2026-07-06T09:46:10.987Z","event":"quality:passed","slug":"clipboard-manager","phase":"requirement","qualityScores":{"completeness":true,"consistency":true,"verifiability":true,"traceability":true,"engineering_quality":true}}
+{"ts":"2026-07-06T09:46:10.989Z","event":"phase:complete","slug":"clipboard-manager","phase":"requirement"}
+{"ts":"2026-07-06T09:46:10.990Z","event":"quality:passed","slug":"clipboard-manager","phase":"design","qualityScores":{"completeness":true,"consistency":true,"verifiability":true,"traceability":true,"engineering_quality":true}}
+{"ts":"2026-07-06T09:46:10.992Z","event":"phase:complete","slug":"clipboard-manager","phase":"design"}
+{"ts":"2026-07-06T09:46:10.994Z","event":"plan-audit:blocked","slug":"clipboard-manager","findings":["缺少任务列表（Slice table 或 task list）；缺少范围边界说明（Non-goals / Out of scope）","切片缺少完成标准列（Done / 验收）","缺少依赖关系说明"]}
+{"ts":"2026-07-06T09:46:10.995Z","event":"quality:passed","slug":"clipboard-manager","phase":"task","qualityScores":{"completeness":true,"consistency":true,"verifiability":true,"traceability":true,"engineering_quality":true}}
+{"ts":"2026-07-06T09:46:10.997Z","event":"phase:complete","slug":"clipboard-manager","phase":"task"}
+{"ts":"2026-07-06T09:46:11.005Z","event":"quality:passed","slug":"clipboard-manager","phase":"dev","qualityScores":{"completeness":true,"consistency":true,"verifiability":true,"traceability":true,"engineering_quality":true}}
+{"ts":"2026-07-06T09:46:11.007Z","event":"phase:complete","slug":"clipboard-manager","phase":"dev"}
+{"ts":"2026-07-06T09:46:11.007Z","event":"quality:passed","slug":"clipboard-manager","phase":"test","qualityScores":{"completeness":true,"consistency":true,"verifiability":true,"traceability":true,"engineering_quality":true}}
+{"ts":"2026-07-06T09:46:11.009Z","event":"phase:complete","slug":"clipboard-manager","phase":"test"}
+{"ts":"2026-07-06T09:46:11.177Z","event":"integration:readiness-warning","slug":"clipboard-manager","warnings":["missing package.json"]}
+{"ts":"2026-07-06T09:46:11.178Z","event":"quality:failed","slug":"clipboard-manager","phase":"integration","error":"Quality gate failed: completeness, consistency, traceability — [Zod] 缺少 integration.json，用 executor.generateStageData 生成","hints":["[Zod] 缺少 integration.json，用 executor.generateStageData 生成"]}
+{"ts":"2026-07-06T10:12:51.165Z","event":"change:created","slug":"e2e-auto-fix","profile":"api"}
+{"ts":"2026-07-06T10:12:51.172Z","event":"quality:failed","slug":"e2e-auto-fix","phase":"change","error":"Quality gate failed: completeness, consistency, verifiability, traceability, engineering_quality — [Zod] 缺少 change.json，用 executor.generateStageData 生成","hints":["[Zod] 缺少 change.json，用 executor.generateStageData 生成"]}
+{"ts":"2026-07-06T10:12:51.173Z","event":"phase:blocked","slug":"e2e-auto-fix","phase":"requirement","reason":"wrong phase, expected change"}
+{"ts":"2026-07-06T10:12:51.174Z","event":"phase:blocked","slug":"e2e-auto-fix","phase":"design","reason":"wrong phase, expected change"}
+{"ts":"2026-07-06T10:12:51.175Z","event":"phase:blocked","slug":"e2e-auto-fix","phase":"task","reason":"wrong phase, expected change"}
+{"ts":"2026-07-06T10:12:51.176Z","event":"phase:blocked","slug":"e2e-auto-fix","phase":"dev","reason":"wrong phase, expected change"}
+{"ts":"2026-07-06T10:12:51.176Z","event":"phase:blocked","slug":"e2e-auto-fix","phase":"test","reason":"wrong phase, expected change"}
+{"ts":"2026-07-06T10:12:51.177Z","event":"phase:blocked","slug":"e2e-auto-fix","phase":"review","reason":"wrong phase, expected change"}
+{"ts":"2026-07-06T10:12:51.261Z","event":"integration:cross-change-warning","slug":"e2e-auto-fix","code":"cross-change.pending-changes","message":"e2e-auto-fix 集成完成但还有 1 个变更正在开发中: clipboard-manager(integration)。请确认兼容性后整体验证。"}
+{"ts":"2026-07-06T10:12:51.266Z","event":"integration:readiness-warning","slug":"e2e-auto-fix","warnings":["missing package.json"]}
+{"ts":"2026-07-06T10:12:51.267Z","event":"semantic-gate:failed","slug":"e2e-auto-fix","phase":"integration"}
+{"ts":"2026-07-06T10:13:25.688Z","event":"change:created","slug":"e2e-auto-fix2","profile":"api"}
+{"ts":"2026-07-06T10:13:25.691Z","event":"quality:passed","slug":"e2e-auto-fix2","phase":"change","qualityScores":{"completeness":true,"consistency":true,"verifiability":true,"traceability":true,"engineering_quality":true}}
+{"ts":"2026-07-06T10:13:25.705Z","event":"phase:complete","slug":"e2e-auto-fix2","phase":"change"}
+{"ts":"2026-07-06T10:13:25.708Z","event":"phase:blocked","slug":"e2e-auto-fix2","phase":"design","reason":"wrong phase, expected requirement"}
+{"ts":"2026-07-06T10:13:25.709Z","event":"phase:blocked","slug":"e2e-auto-fix2","phase":"task","reason":"wrong phase, expected requirement"}
+{"ts":"2026-07-06T10:13:25.709Z","event":"phase:blocked","slug":"e2e-auto-fix2","phase":"dev","reason":"wrong phase, expected requirement"}
+{"ts":"2026-07-06T10:13:25.710Z","event":"phase:blocked","slug":"e2e-auto-fix2","phase":"test","reason":"wrong phase, expected requirement"}
+{"ts":"2026-07-06T10:13:25.710Z","event":"phase:blocked","slug":"e2e-auto-fix2","phase":"review","reason":"wrong phase, expected requirement"}
+{"ts":"2026-07-06T10:25:53.815Z","event":"change:created","slug":"e2e-auto-fix2","profile":"api"}
+{"ts":"2026-07-06T10:25:53.821Z","event":"quality:passed","slug":"e2e-auto-fix2","phase":"change","qualityScores":{"completeness":true,"consistency":true,"verifiability":true,"traceability":true,"engineering_quality":true}}
+{"ts":"2026-07-06T10:25:53.838Z","event":"phase:complete","slug":"e2e-auto-fix2","phase":"change"}
+{"ts":"2026-07-06T10:25:53.841Z","event":"phase:blocked","slug":"e2e-auto-fix2","phase":"design","reason":"wrong phase, expected requirement"}
+{"ts":"2026-07-06T10:25:53.842Z","event":"phase:blocked","slug":"e2e-auto-fix2","phase":"task","reason":"wrong phase, expected requirement"}
+{"ts":"2026-07-06T10:25:53.843Z","event":"phase:blocked","slug":"e2e-auto-fix2","phase":"dev","reason":"wrong phase, expected requirement"}
+{"ts":"2026-07-06T10:25:53.844Z","event":"phase:blocked","slug":"e2e-auto-fix2","phase":"test","reason":"wrong phase, expected requirement"}
+{"ts":"2026-07-06T10:25:53.844Z","event":"phase:blocked","slug":"e2e-auto-fix2","phase":"review","reason":"wrong phase, expected requirement"}
+{"ts":"2026-07-06T10:26:24.481Z","event":"change:created","slug":"e2e-auto-fix2","profile":"api"}
+{"ts":"2026-07-06T10:26:24.484Z","event":"quality:passed","slug":"e2e-auto-fix2","phase":"change","qualityScores":{"completeness":true,"consistency":true,"verifiability":true,"traceability":true,"engineering_quality":true}}
+{"ts":"2026-07-06T10:26:24.500Z","event":"phase:complete","slug":"e2e-auto-fix2","phase":"change"}
+{"ts":"2026-07-06T10:26:24.531Z","event":"quality:failed","slug":"e2e-auto-fix2","phase":"requirement","error":"Quality gate failed (basic): completeness — MD 过短; [建议] REQUIREMENT.md 可补充 User Story 三段式 (As a / I want / So that); [建议] 可补充 Domain Language / 术语表（hbs 模板 ## Domain Language 章节）","hints":["MD 过短","[建议] REQUIREMENT.md 可补充 User Story 三段式 (As a / I want / So that)","[建议] 可补充 Domain Language / 术语表（hbs 模板 ## Domain Language 章节）"]}
+{"ts":"2026-07-06T10:26:24.532Z","event":"phase:blocked","slug":"e2e-auto-fix2","phase":"design","reason":"wrong phase, expected requirement"}
+{"ts":"2026-07-06T10:26:24.532Z","event":"phase:blocked","slug":"e2e-auto-fix2","phase":"task","reason":"wrong phase, expected requirement"}
+{"ts":"2026-07-06T10:26:24.533Z","event":"phase:blocked","slug":"e2e-auto-fix2","phase":"dev","reason":"wrong phase, expected requirement"}
+{"ts":"2026-07-06T10:26:24.534Z","event":"phase:blocked","slug":"e2e-auto-fix2","phase":"test","reason":"wrong phase, expected requirement"}
+{"ts":"2026-07-06T10:26:24.534Z","event":"phase:blocked","slug":"e2e-auto-fix2","phase":"review","reason":"wrong phase, expected requirement"}
+{"ts":"2026-07-06T10:27:02.341Z","event":"change:created","slug":"e2e-auto-fix3","profile":"api"}
+{"ts":"2026-07-06T10:27:02.343Z","event":"quality:passed","slug":"e2e-auto-fix3","phase":"change","qualityScores":{"completeness":true,"consistency":true,"verifiability":true,"traceability":true,"engineering_quality":true}}
+{"ts":"2026-07-06T10:27:02.358Z","event":"phase:complete","slug":"e2e-auto-fix3","phase":"change"}
+{"ts":"2026-07-06T10:27:02.390Z","event":"quality:passed","slug":"e2e-auto-fix3","phase":"requirement","qualityScores":{"completeness":true,"consistency":true,"verifiability":true,"traceability":true,"engineering_quality":true},"hints":["[建议] 可补充 Domain Language / 术语表（hbs 模板 ## Domain Language 章节）"]}
+{"ts":"2026-07-06T10:27:02.393Z","event":"phase:complete","slug":"e2e-auto-fix3","phase":"requirement"}
+{"ts":"2026-07-06T10:27:02.395Z","event":"design:approach-warning","slug":"e2e-auto-fix3","findings":["alternatives: Options 表缺少 ≥2 个方案（选项 A/B），无法证明多方案对比","reuse_analysis: 未检查已有代码/模块复用（缺少 ## Reuse Analysis 节或复用关键词）","decision_rationale: 缺少 **Chosen:** 决策行；决策（Reason）缺少实质性理由（性能/成本/复杂度等权衡）","risk_tradeoff: 缺少 Risks 表，未评估所选方案的风险"]}
+{"ts":"2026-07-06T10:27:02.396Z","event":"phase:blocked","slug":"e2e-auto-fix3","phase":"task","reason":"wrong phase, expected design"}
+{"ts":"2026-07-06T10:27:02.397Z","event":"phase:blocked","slug":"e2e-auto-fix3","phase":"dev","reason":"wrong phase, expected design"}
+{"ts":"2026-07-06T10:27:02.397Z","event":"phase:blocked","slug":"e2e-auto-fix3","phase":"test","reason":"wrong phase, expected design"}
+{"ts":"2026-07-06T10:27:02.398Z","event":"phase:blocked","slug":"e2e-auto-fix3","phase":"review","reason":"wrong phase, expected design"}
+{"ts":"2026-07-06T10:27:02.478Z","event":"integration:cross-change-warning","slug":"e2e-auto-fix3","code":"cross-change.pending-changes","message":"e2e-auto-fix3 集成完成但还有 3 个变更正在开发中: clipboard-manager(integration), e2e-auto-fix(integration), e2e-auto-fix2(requirement)。请确认兼容性后整体验证。"}
+{"ts":"2026-07-06T10:27:02.486Z","event":"integration:readiness-warning","slug":"e2e-auto-fix3","warnings":["missing package.json"]}
+{"ts":"2026-07-06T10:27:02.486Z","event":"semantic-gate:failed","slug":"e2e-auto-fix3","phase":"integration"}
+{"ts":"2026-07-06T10:28:01.475Z","event":"change:created","slug":"final-test","profile":"api"}
+{"ts":"2026-07-06T10:28:01.477Z","event":"phase:blocked","slug":"final-test","phase":"final-test","reason":"wrong phase, expected change"}
+{"ts":"2026-07-06T10:28:01.478Z","event":"phase:blocked","slug":"final-test","phase":"final-test","reason":"wrong phase, expected change"}
+{"ts":"2026-07-06T10:28:01.479Z","event":"phase:blocked","slug":"final-test","phase":"final-test","reason":"wrong phase, expected change"}
+{"ts":"2026-07-06T10:28:01.479Z","event":"phase:blocked","slug":"final-test","phase":"final-test","reason":"wrong phase, expected change"}
+{"ts":"2026-07-06T10:28:01.480Z","event":"phase:blocked","slug":"final-test","phase":"final-test","reason":"wrong phase, expected change"}
+{"ts":"2026-07-06T10:28:01.480Z","event":"phase:blocked","slug":"final-test","phase":"final-test","reason":"wrong phase, expected change"}
+{"ts":"2026-07-06T10:28:01.481Z","event":"phase:blocked","slug":"final-test","phase":"final-test","reason":"wrong phase, expected change"}
+{"ts":"2026-07-06T10:28:01.481Z","event":"phase:blocked","slug":"final-test","phase":"final-test","reason":"wrong phase, expected change"}
+{"ts":"2026-07-06T10:28:01.482Z","event":"phase:blocked","slug":"final-test","phase":"final-test","reason":"wrong phase, expected change"}
+{"ts":"2026-07-06T10:28:01.528Z","event":"integration:cross-change-warning","slug":"final-test","code":"cross-change.pending-changes","message":"final-test 集成完成但还有 4 个变更正在开发中: clipboard-manager(integration), e2e-auto-fix(integration), e2e-auto-fix2(requirement), e2e-auto-fix3(integration)。请确认兼容性后整体验证。"}
+{"ts":"2026-07-06T10:28:01.534Z","event":"integration:readiness-warning","slug":"final-test","warnings":["missing package.json"]}
+{"ts":"2026-07-06T10:28:01.535Z","event":"semantic-gate:failed","slug":"final-test","phase":"integration"}
+{"ts":"2026-07-06T10:28:32.638Z","event":"change:created","slug":"demo","profile":"api"}
+{"ts":"2026-07-06T10:28:32.644Z","event":"phase:blocked","slug":"demo","phase":"demo","reason":"wrong phase, expected change"}
+{"ts":"2026-07-06T10:28:32.645Z","event":"phase:blocked","slug":"demo","phase":"demo","reason":"wrong phase, expected change"}
+{"ts":"2026-07-06T10:28:32.646Z","event":"phase:blocked","slug":"demo","phase":"demo","reason":"wrong phase, expected change"}
+{"ts":"2026-07-06T10:28:32.647Z","event":"phase:blocked","slug":"demo","phase":"demo","reason":"wrong phase, expected change"}
+{"ts":"2026-07-06T10:28:32.647Z","event":"phase:blocked","slug":"demo","phase":"demo","reason":"wrong phase, expected change"}
+{"ts":"2026-07-06T10:28:32.649Z","event":"phase:blocked","slug":"demo","phase":"demo","reason":"wrong phase, expected change"}
+{"ts":"2026-07-06T10:28:32.649Z","event":"phase:blocked","slug":"demo","phase":"demo","reason":"wrong phase, expected change"}
+{"ts":"2026-07-06T10:28:32.650Z","event":"phase:blocked","slug":"demo","phase":"demo","reason":"wrong phase, expected change"}
+{"ts":"2026-07-06T10:28:32.650Z","event":"phase:blocked","slug":"demo","phase":"demo","reason":"wrong phase, expected change"}
+{"ts":"2026-07-06T10:28:32.694Z","event":"integration:cross-change-warning","slug":"demo","code":"cross-change.pending-changes","message":"demo 集成完成但还有 5 个变更正在开发中: clipboard-manager(integration), e2e-auto-fix(integration), e2e-auto-fix2(requirement), e2e-auto-fix3(integration), final-test(integration)。请确认兼容性后整体验证。"}
+{"ts":"2026-07-06T10:28:32.700Z","event":"integration:readiness-warning","slug":"demo","warnings":["missing package.json"]}
+{"ts":"2026-07-06T10:28:32.700Z","event":"semantic-gate:failed","slug":"demo","phase":"integration"}
+{"ts":"2026-07-06T10:28:46.208Z","event":"change:created","slug":"test-gate","profile":"api"}
+{"ts":"2026-07-06T10:28:46.212Z","event":"quality:passed","slug":"test-gate","phase":"change","qualityScores":{"completeness":true,"consistency":true,"verifiability":true,"traceability":true,"engineering_quality":true}}
+{"ts":"2026-07-06T10:28:46.226Z","event":"phase:complete","slug":"test-gate","phase":"change"}
+{"ts":"2026-07-06T10:29:16.590Z","event":"change:created","slug":"final-v2","profile":"api"}
+{"ts":"2026-07-06T10:29:16.594Z","event":"quality:passed","slug":"final-v2","phase":"change","qualityScores":{"completeness":true,"consistency":true,"verifiability":true,"traceability":true,"engineering_quality":true}}
+{"ts":"2026-07-06T10:29:16.609Z","event":"phase:complete","slug":"final-v2","phase":"change"}
+{"ts":"2026-07-06T10:29:16.610Z","event":"quality:passed","slug":"final-v2","phase":"requirement","qualityScores":{"completeness":true,"consistency":true,"verifiability":true,"traceability":true,"engineering_quality":true}}
+{"ts":"2026-07-06T10:29:16.612Z","event":"phase:complete","slug":"final-v2","phase":"requirement"}
+{"ts":"2026-07-06T10:29:16.614Z","event":"quality:passed","slug":"final-v2","phase":"design","qualityScores":{"completeness":true,"consistency":true,"verifiability":true,"traceability":true,"engineering_quality":true}}
+{"ts":"2026-07-06T10:29:16.615Z","event":"phase:complete","slug":"final-v2","phase":"design"}
+{"ts":"2026-07-06T10:29:16.617Z","event":"quality:passed","slug":"final-v2","phase":"task","qualityScores":{"completeness":true,"consistency":true,"verifiability":true,"traceability":true,"engineering_quality":true}}
+{"ts":"2026-07-06T10:29:16.619Z","event":"phase:complete","slug":"final-v2","phase":"task"}
+{"ts":"2026-07-06T10:29:16.620Z","event":"quality:passed","slug":"final-v2","phase":"dev","qualityScores":{"completeness":true,"consistency":true,"verifiability":true,"traceability":true,"engineering_quality":true}}
+{"ts":"2026-07-06T10:29:16.621Z","event":"phase:complete","slug":"final-v2","phase":"dev"}
+{"ts":"2026-07-06T10:29:16.622Z","event":"quality:passed","slug":"final-v2","phase":"test","qualityScores":{"completeness":true,"consistency":true,"verifiability":true,"traceability":true,"engineering_quality":true}}
+{"ts":"2026-07-06T10:29:16.623Z","event":"phase:complete","slug":"final-v2","phase":"test"}
+{"ts":"2026-07-06T10:29:16.800Z","event":"integration:cross-change-warning","slug":"final-v2","code":"cross-change.pending-changes","message":"final-v2 集成完成但还有 7 个变更正在开发中: clipboard-manager(integration), demo(integration), e2e-auto-fix(integration), e2e-auto-fix2(requirement), e2e-auto-fix3(integration), final-test(integration), test-gate(requirement)。请确认兼容性后整体验证。"}
+{"ts":"2026-07-06T10:29:16.809Z","event":"integration:readiness-warning","slug":"final-v2","warnings":["missing package.json"]}
+{"ts":"2026-07-06T10:29:16.810Z","event":"quality:failed","slug":"final-v2","phase":"integration","error":"Quality gate failed: completeness, consistency, traceability — [Zod] 缺少 integration.json，用 executor.generateStageData 生成","hints":["[Zod] 缺少 integration.json，用 executor.generateStageData 生成"]}
+{"ts":"2026-07-06T10:36:36.229Z","event":"change:created","slug":"demo","profile":"api"}
+{"ts":"2026-07-06T10:36:36.232Z","event":"phase:blocked","slug":"demo","phase":"demo","reason":"wrong phase, expected change"}
+{"ts":"2026-07-06T10:36:36.233Z","event":"phase:blocked","slug":"demo","phase":"demo","reason":"wrong phase, expected change"}
+{"ts":"2026-07-06T10:36:36.234Z","event":"phase:blocked","slug":"demo","phase":"demo","reason":"wrong phase, expected change"}
+{"ts":"2026-07-06T10:36:36.235Z","event":"phase:blocked","slug":"demo","phase":"demo","reason":"wrong phase, expected change"}
+{"ts":"2026-07-06T10:36:36.235Z","event":"phase:blocked","slug":"demo","phase":"demo","reason":"wrong phase, expected change"}
+{"ts":"2026-07-06T10:36:36.236Z","event":"phase:blocked","slug":"demo","phase":"demo","reason":"wrong phase, expected change"}
+{"ts":"2026-07-06T10:36:36.236Z","event":"phase:blocked","slug":"demo","phase":"demo","reason":"wrong phase, expected change"}
+{"ts":"2026-07-06T10:36:36.237Z","event":"phase:blocked","slug":"demo","phase":"demo","reason":"wrong phase, expected change"}
+{"ts":"2026-07-06T10:36:36.237Z","event":"phase:blocked","slug":"demo","phase":"demo","reason":"wrong phase, expected change"}
+{"ts":"2026-07-06T10:36:36.322Z","event":"integration:cross-change-warning","slug":"demo","code":"cross-change.pending-changes","message":"demo 集成完成但还有 7 个变更正在开发中: clipboard-manager(integration), e2e-auto-fix(integration), e2e-auto-fix2(requirement), e2e-auto-fix3(integration), final-test(integration), final-v2(integration), test-gate(requirement)。请确认兼容性后整体验证。"}
+{"ts":"2026-07-06T10:36:36.328Z","event":"integration:readiness-warning","slug":"demo","warnings":["missing package.json"]}
+{"ts":"2026-07-06T10:36:36.329Z","event":"semantic-gate:failed","slug":"demo","phase":"integration"}
+{"ts":"2026-07-06T10:37:07.632Z","event":"change:created","slug":"ai-test","profile":"api"}
+{"ts":"2026-07-06T10:37:07.638Z","event":"phase:blocked","slug":"ai-test","phase":"ai-test","reason":"wrong phase, expected change"}
+{"ts":"2026-07-06T10:37:07.639Z","event":"phase:blocked","slug":"ai-test","phase":"requirement","reason":"wrong phase, expected change"}
+{"ts":"2026-07-06T10:37:07.640Z","event":"phase:blocked","slug":"ai-test","phase":"requirement","reason":"wrong phase, expected change"}
+{"ts":"2026-07-06T10:37:07.640Z","event":"phase:blocked","slug":"ai-test","phase":"design","reason":"wrong phase, expected change"}
+{"ts":"2026-07-06T10:37:07.641Z","event":"phase:blocked","slug":"ai-test","phase":"ai-test","reason":"wrong phase, expected change"}
+{"ts":"2026-07-06T10:37:07.642Z","event":"phase:blocked","slug":"ai-test","phase":"ai-test","reason":"wrong phase, expected change"}
+{"ts":"2026-07-06T10:37:07.642Z","event":"phase:blocked","slug":"ai-test","phase":"ai-test","reason":"wrong phase, expected change"}
+{"ts":"2026-07-06T10:37:07.642Z","event":"phase:blocked","slug":"ai-test","phase":"ai-test","reason":"wrong phase, expected change"}
+{"ts":"2026-07-06T10:37:07.643Z","event":"phase:blocked","slug":"ai-test","phase":"ai-test","reason":"wrong phase, expected change"}
+{"ts":"2026-07-06T10:37:07.724Z","event":"integration:cross-change-warning","slug":"ai-test","code":"cross-change.pending-changes","message":"ai-test 集成完成但还有 8 个变更正在开发中: clipboard-manager(integration), demo(integration), e2e-auto-fix(integration), e2e-auto-fix2(requirement), e2e-auto-fix3(integration), final-test(integration), final-v2(integration), test-gate(requirement)。请确认兼容性后整体验证。"}
+{"ts":"2026-07-06T10:37:07.731Z","event":"integration:readiness-warning","slug":"ai-test","warnings":["missing package.json"]}
+{"ts":"2026-07-06T10:37:07.732Z","event":"semantic-gate:failed","slug":"ai-test","phase":"integration"}
+{"ts":"2026-07-06T10:38:02.131Z","event":"change:created","slug":"ai-test2","profile":"api"}
+{"ts":"2026-07-06T10:38:02.136Z","event":"phase:blocked","slug":"ai-test2","phase":"ai-test2","reason":"wrong phase, expected change"}
+{"ts":"2026-07-06T10:38:02.137Z","event":"phase:blocked","slug":"ai-test2","phase":"requirement","reason":"wrong phase, expected change"}
+{"ts":"2026-07-06T10:38:02.138Z","event":"phase:blocked","slug":"ai-test2","phase":"requirement","reason":"wrong phase, expected change"}
+{"ts":"2026-07-06T10:38:02.139Z","event":"phase:blocked","slug":"ai-test2","phase":"requirement","reason":"wrong phase, expected change"}
+{"ts":"2026-07-06T10:38:02.140Z","event":"phase:blocked","slug":"ai-test2","phase":"requirement","reason":"wrong phase, expected change"}
+{"ts":"2026-07-06T10:38:02.140Z","event":"phase:blocked","slug":"ai-test2","phase":"requirement","reason":"wrong phase, expected change"}
+{"ts":"2026-07-06T10:38:02.141Z","event":"phase:blocked","slug":"ai-test2","phase":"requirement","reason":"wrong phase, expected change"}
+{"ts":"2026-07-06T10:38:02.142Z","event":"phase:blocked","slug":"ai-test2","phase":"design","reason":"wrong phase, expected change"}
+{"ts":"2026-07-06T10:38:02.143Z","event":"phase:blocked","slug":"ai-test2","phase":"design","reason":"wrong phase, expected change"}
+{"ts":"2026-07-06T10:38:02.143Z","event":"phase:blocked","slug":"ai-test2","phase":"design","reason":"wrong phase, expected change"}
+{"ts":"2026-07-06T10:38:02.144Z","event":"phase:blocked","slug":"ai-test2","phase":"ai-test2","reason":"wrong phase, expected change"}
+{"ts":"2026-07-06T10:38:02.145Z","event":"phase:blocked","slug":"ai-test2","phase":"ai-test2","reason":"wrong phase, expected change"}
+{"ts":"2026-07-06T10:38:02.145Z","event":"phase:blocked","slug":"ai-test2","phase":"ai-test2","reason":"wrong phase, expected change"}
+{"ts":"2026-07-06T10:38:02.146Z","event":"phase:blocked","slug":"ai-test2","phase":"ai-test2","reason":"wrong phase, expected change"}
+{"ts":"2026-07-06T10:38:02.146Z","event":"phase:blocked","slug":"ai-test2","phase":"ai-test2","reason":"wrong phase, expected change"}
+{"ts":"2026-07-06T10:38:02.235Z","event":"integration:cross-change-warning","slug":"ai-test2","code":"cross-change.pending-changes","message":"ai-test2 集成完成但还有 9 个变更正在开发中: ai-test(integration), clipboard-manager(integration), demo(integration), e2e-auto-fix(integration), e2e-auto-fix2(requirement), e2e-auto-fix3(integration), final-test(integration), final-v2(integration), test-gate(requirement)。请确认兼容性后整体验证。"}
+{"ts":"2026-07-06T10:38:02.241Z","event":"integration:readiness-warning","slug":"ai-test2","warnings":["missing package.json"]}
+{"ts":"2026-07-06T10:38:02.241Z","event":"semantic-gate:failed","slug":"ai-test2","phase":"integration"}
+{"ts":"2026-07-06T10:46:39.412Z","event":"change:created","slug":"clipboard-v1","profile":"api"}
+{"ts":"2026-07-06T10:46:39.416Z","event":"quality:passed","slug":"clipboard-v1","phase":"change","qualityScores":{"completeness":true,"consistency":true,"verifiability":true,"traceability":true,"engineering_quality":true}}
+{"ts":"2026-07-06T10:46:39.431Z","event":"phase:complete","slug":"clipboard-v1","phase":"change"}
+{"ts":"2026-07-06T10:46:39.466Z","event":"quality:passed","slug":"clipboard-v1","phase":"requirement","qualityScores":{"completeness":true,"consistency":true,"verifiability":true,"traceability":true,"engineering_quality":true},"hints":["[建议] REQUIREMENT.md 可补充 User Story 三段式 (As a / I want / So that)","[建议] 可补充 Domain Language / 术语表（hbs 模板 ## Domain Language 章节）"]}
+{"ts":"2026-07-06T10:46:39.469Z","event":"phase:complete","slug":"clipboard-v1","phase":"requirement"}
+{"ts":"2026-07-06T10:46:39.473Z","event":"design:approach-warning","slug":"clipboard-v1","findings":["reuse_analysis: 提及复用但缺少 ## Reuse Analysis 专节，建议显式声明","decision_rationale: 缺少 **Chosen:** 决策行；决策（Reason）缺少实质性理由（性能/成本/复杂度等权衡）","risk_tradeoff: 缺少 Risks 表，未评估所选方案的风险"]}
+{"ts":"2026-07-06T10:46:39.475Z","event":"design:approach-warning","slug":"clipboard-v1","findings":["reuse_analysis: 提及复用但缺少 ## Reuse Analysis 专节，建议显式声明","decision_rationale: 缺少 **Chosen:** 决策行；决策（Reason）缺少实质性理由（性能/成本/复杂度等权衡）","risk_tradeoff: 缺少 Risks 表，未评估所选方案的风险"]}
+{"ts":"2026-07-06T10:46:39.476Z","event":"quality:passed","slug":"clipboard-v1","phase":"design","qualityScores":{"completeness":true,"consistency":true,"verifiability":true,"traceability":true,"engineering_quality":true}}
+{"ts":"2026-07-06T10:46:39.478Z","event":"phase:complete","slug":"clipboard-v1","phase":"design"}
+{"ts":"2026-07-06T10:46:39.479Z","event":"quality:passed","slug":"clipboard-v1","phase":"task","qualityScores":{"completeness":true,"consistency":true,"verifiability":true,"traceability":true,"engineering_quality":true}}
+{"ts":"2026-07-06T10:46:39.482Z","event":"phase:complete","slug":"clipboard-v1","phase":"task"}
+{"ts":"2026-07-06T10:46:39.482Z","event":"quality:passed","slug":"clipboard-v1","phase":"dev","qualityScores":{"completeness":true,"consistency":true,"verifiability":true,"traceability":true,"engineering_quality":true}}
+{"ts":"2026-07-06T10:46:39.486Z","event":"phase:complete","slug":"clipboard-v1","phase":"dev"}
+{"ts":"2026-07-06T10:46:39.487Z","event":"quality:passed","slug":"clipboard-v1","phase":"test","qualityScores":{"completeness":true,"consistency":true,"verifiability":true,"traceability":true,"engineering_quality":true}}
+{"ts":"2026-07-06T10:46:39.489Z","event":"phase:complete","slug":"clipboard-v1","phase":"test"}
+{"ts":"2026-07-06T10:46:39.576Z","event":"integration:readiness-warning","slug":"clipboard-v1","warnings":["missing package.json"]}
+{"ts":"2026-07-06T10:46:39.577Z","event":"quality:failed","slug":"clipboard-v1","phase":"integration","error":"Quality gate failed: completeness, consistency, traceability — [Zod] 缺少 integration.json，用 executor.generateStageData 生成","hints":["[Zod] 缺少 integration.json，用 executor.generateStageData 生成"]}
+{"ts":"2026-07-06T11:13:35.246Z","event":"change:created","slug":"clipboard-v1","profile":"api"}
+{"ts":"2026-07-06T11:13:35.254Z","event":"quality:passed","slug":"clipboard-v1","phase":"change","qualityScores":{"completeness":true,"consistency":true,"verifiability":true,"traceability":true,"engineering_quality":true}}
+{"ts":"2026-07-06T11:13:35.271Z","event":"phase:complete","slug":"clipboard-v1","phase":"change"}
+{"ts":"2026-07-06T11:13:35.304Z","event":"quality:passed","slug":"clipboard-v1","phase":"requirement","qualityScores":{"completeness":true,"consistency":true,"verifiability":true,"traceability":true,"engineering_quality":true},"hints":["[建议] REQUIREMENT.md 可补充 User Story 三段式 (As a / I want / So that)","[建议] 可补充 Domain Language / 术语表（hbs 模板 ## Domain Language 章节）"]}
+{"ts":"2026-07-06T11:13:35.307Z","event":"phase:complete","slug":"clipboard-v1","phase":"requirement"}
+{"ts":"2026-07-06T11:13:35.310Z","event":"design:approach-warning","slug":"clipboard-v1","findings":["reuse_analysis: 提及复用但缺少 ## Reuse Analysis 专节，建议显式声明","decision_rationale: 缺少 **Chosen:** 决策行；决策（Reason）缺少实质性理由（性能/成本/复杂度等权衡）","risk_tradeoff: 缺少 Risks 表，未评估所选方案的风险"]}
+{"ts":"2026-07-06T11:13:35.313Z","event":"design:approach-warning","slug":"clipboard-v1","findings":["reuse_analysis: 提及复用但缺少 ## Reuse Analysis 专节，建议显式声明","decision_rationale: 缺少 **Chosen:** 决策行；决策（Reason）缺少实质性理由（性能/成本/复杂度等权衡）","risk_tradeoff: 缺少 Risks 表，未评估所选方案的风险"]}
+{"ts":"2026-07-06T11:13:35.315Z","event":"quality:passed","slug":"clipboard-v1","phase":"design","qualityScores":{"completeness":true,"consistency":true,"verifiability":true,"traceability":true,"engineering_quality":true}}
+{"ts":"2026-07-06T11:13:35.318Z","event":"phase:complete","slug":"clipboard-v1","phase":"design"}
+{"ts":"2026-07-06T11:13:35.320Z","event":"quality:passed","slug":"clipboard-v1","phase":"task","qualityScores":{"completeness":true,"consistency":true,"verifiability":true,"traceability":true,"engineering_quality":true}}
+{"ts":"2026-07-06T11:13:35.322Z","event":"phase:complete","slug":"clipboard-v1","phase":"task"}
+{"ts":"2026-07-06T11:13:35.323Z","event":"quality:passed","slug":"clipboard-v1","phase":"dev","qualityScores":{"completeness":true,"consistency":true,"verifiability":true,"traceability":true,"engineering_quality":true}}
+{"ts":"2026-07-06T11:13:35.325Z","event":"phase:complete","slug":"clipboard-v1","phase":"dev"}
+{"ts":"2026-07-06T11:13:35.325Z","event":"quality:passed","slug":"clipboard-v1","phase":"test","qualityScores":{"completeness":true,"consistency":true,"verifiability":true,"traceability":true,"engineering_quality":true}}
+{"ts":"2026-07-06T11:13:35.327Z","event":"phase:complete","slug":"clipboard-v1","phase":"test"}
+{"ts":"2026-07-06T11:13:35.396Z","event":"integration:readiness-warning","slug":"clipboard-v1","warnings":["missing package.json"]}
+{"ts":"2026-07-06T11:13:35.397Z","event":"quality:failed","slug":"clipboard-v1","phase":"integration","error":"Quality gate failed: completeness, consistency, traceability — [Zod] 缺少 integration.json，用 executor.generateStageData 生成","hints":["[Zod] 缺少 integration.json，用 executor.generateStageData 生成"]}
+{"ts":"2026-07-06T11:52:43.633Z","event":"change:created","slug":"clipboard-v1","profile":"api"}
+{"ts":"2026-07-06T11:52:43.638Z","event":"quality:passed","slug":"clipboard-v1","phase":"change","qualityScores":{"completeness":true,"consistency":true,"verifiability":true,"traceability":true,"engineering_quality":true}}
+{"ts":"2026-07-06T11:52:43.654Z","event":"phase:complete","slug":"clipboard-v1","phase":"change"}
+{"ts":"2026-07-06T11:52:43.686Z","event":"quality:passed","slug":"clipboard-v1","phase":"requirement","qualityScores":{"completeness":true,"consistency":true,"verifiability":true,"traceability":true,"engineering_quality":true},"hints":["[建议] REQUIREMENT.md 可补充 User Story 三段式 (As a / I want / So that)","[建议] 可补充 Domain Language / 术语表（hbs 模板 ## Domain Language 章节）"]}
+{"ts":"2026-07-06T11:52:43.688Z","event":"phase:complete","slug":"clipboard-v1","phase":"requirement"}
+{"ts":"2026-07-06T11:52:43.693Z","event":"design:approach-warning","slug":"clipboard-v1","findings":["reuse_analysis: 提及复用但缺少 ## Reuse Analysis 专节，建议显式声明","decision_rationale: 缺少 **Chosen:** 决策行；决策（Reason）缺少实质性理由（性能/成本/复杂度等权衡）","risk_tradeoff: 缺少 Risks 表，未评估所选方案的风险"]}
+{"ts":"2026-07-06T11:52:43.695Z","event":"design:approach-warning","slug":"clipboard-v1","findings":["reuse_analysis: 提及复用但缺少 ## Reuse Analysis 专节，建议显式声明","decision_rationale: 缺少 **Chosen:** 决策行；决策（Reason）缺少实质性理由（性能/成本/复杂度等权衡）","risk_tradeoff: 缺少 Risks 表，未评估所选方案的风险"]}
+{"ts":"2026-07-06T11:52:43.696Z","event":"quality:passed","slug":"clipboard-v1","phase":"design","qualityScores":{"completeness":true,"consistency":true,"verifiability":true,"traceability":true,"engineering_quality":true}}
+{"ts":"2026-07-06T11:52:43.699Z","event":"phase:complete","slug":"clipboard-v1","phase":"design"}
+{"ts":"2026-07-06T11:52:43.700Z","event":"quality:passed","slug":"clipboard-v1","phase":"task","qualityScores":{"completeness":true,"consistency":true,"verifiability":true,"traceability":true,"engineering_quality":true}}
+{"ts":"2026-07-06T11:52:43.702Z","event":"phase:complete","slug":"clipboard-v1","phase":"task"}
+{"ts":"2026-07-06T11:52:43.703Z","event":"quality:passed","slug":"clipboard-v1","phase":"dev","qualityScores":{"completeness":true,"consistency":true,"verifiability":true,"traceability":true,"engineering_quality":true}}
+{"ts":"2026-07-06T11:52:43.704Z","event":"phase:complete","slug":"clipboard-v1","phase":"dev"}
+{"ts":"2026-07-06T11:52:43.705Z","event":"quality:passed","slug":"clipboard-v1","phase":"test","qualityScores":{"completeness":true,"consistency":true,"verifiability":true,"traceability":true,"engineering_quality":true}}
+{"ts":"2026-07-06T11:52:43.707Z","event":"phase:complete","slug":"clipboard-v1","phase":"test"}
+{"ts":"2026-07-06T11:52:43.784Z","event":"integration:readiness-warning","slug":"clipboard-v1","warnings":["missing package.json"]}
+{"ts":"2026-07-06T11:52:43.785Z","event":"quality:failed","slug":"clipboard-v1","phase":"integration","error":"Quality gate failed: completeness, consistency, traceability — [Zod] 缺少 integration.json，用 executor.generateStageData 生成","hints":["[Zod] 缺少 integration.json，用 executor.generateStageData 生成"]}
+{"ts":"2026-07-06T11:52:56.522Z","event":"phase:blocked","slug":"clipboard-v1","phase":"review","reason":"wrong phase, expected integration"}
+{"ts":"2026-07-06T11:54:14.419Z","event":"change:created","slug":"clipboard-v1","profile":"api"}
+{"ts":"2026-07-06T11:54:14.423Z","event":"quality:passed","slug":"clipboard-v1","phase":"change","qualityScores":{"completeness":true,"consistency":true,"verifiability":true,"traceability":true,"engineering_quality":true}}
+{"ts":"2026-07-06T11:54:14.437Z","event":"phase:complete","slug":"clipboard-v1","phase":"change"}
+{"ts":"2026-07-06T11:54:14.472Z","event":"quality:passed","slug":"clipboard-v1","phase":"requirement","qualityScores":{"completeness":true,"consistency":true,"verifiability":true,"traceability":true,"engineering_quality":true},"hints":["[建议] REQUIREMENT.md 可补充 User Story 三段式 (As a / I want / So that)","[建议] 可补充 Domain Language / 术语表（hbs 模板 ## Domain Language 章节）"]}
+{"ts":"2026-07-06T11:54:14.475Z","event":"phase:complete","slug":"clipboard-v1","phase":"requirement"}
+{"ts":"2026-07-06T11:54:14.479Z","event":"design:approach-warning","slug":"clipboard-v1","findings":["reuse_analysis: 提及复用但缺少 ## Reuse Analysis 专节，建议显式声明","decision_rationale: 缺少 **Chosen:** 决策行；决策（Reason）缺少实质性理由（性能/成本/复杂度等权衡）","risk_tradeoff: 缺少 Risks 表，未评估所选方案的风险"]}
+{"ts":"2026-07-06T11:54:14.482Z","event":"design:approach-warning","slug":"clipboard-v1","findings":["reuse_analysis: 提及复用但缺少 ## Reuse Analysis 专节，建议显式声明","decision_rationale: 缺少 **Chosen:** 决策行；决策（Reason）缺少实质性理由（性能/成本/复杂度等权衡）","risk_tradeoff: 缺少 Risks 表，未评估所选方案的风险"]}
+{"ts":"2026-07-06T11:54:14.483Z","event":"quality:passed","slug":"clipboard-v1","phase":"design","qualityScores":{"completeness":true,"consistency":true,"verifiability":true,"traceability":true,"engineering_quality":true}}
+{"ts":"2026-07-06T11:54:14.486Z","event":"phase:complete","slug":"clipboard-v1","phase":"design"}
+{"ts":"2026-07-06T11:54:14.487Z","event":"quality:passed","slug":"clipboard-v1","phase":"task","qualityScores":{"completeness":true,"consistency":true,"verifiability":true,"traceability":true,"engineering_quality":true}}
+{"ts":"2026-07-06T11:54:14.489Z","event":"phase:complete","slug":"clipboard-v1","phase":"task"}
+{"ts":"2026-07-06T11:54:14.490Z","event":"quality:passed","slug":"clipboard-v1","phase":"dev","qualityScores":{"completeness":true,"consistency":true,"verifiability":true,"traceability":true,"engineering_quality":true}}
+{"ts":"2026-07-06T11:54:14.491Z","event":"phase:complete","slug":"clipboard-v1","phase":"dev"}
+{"ts":"2026-07-06T11:54:14.492Z","event":"quality:passed","slug":"clipboard-v1","phase":"test","qualityScores":{"completeness":true,"consistency":true,"verifiability":true,"traceability":true,"engineering_quality":true}}
+{"ts":"2026-07-06T11:54:14.494Z","event":"phase:complete","slug":"clipboard-v1","phase":"test"}
+{"ts":"2026-07-06T11:54:14.561Z","event":"integration:readiness-warning","slug":"clipboard-v1","warnings":["missing package.json"]}
+{"ts":"2026-07-06T11:54:14.562Z","event":"quality:failed","slug":"clipboard-v1","phase":"integration","error":"Quality gate failed: completeness, consistency, traceability — [Zod] 缺少 integration.json，用 executor.generateStageData 生成","hints":["[Zod] 缺少 integration.json，用 executor.generateStageData 生成"]}
+{"ts":"2026-07-06T11:54:34.840Z","event":"change:created","slug":"test-review","profile":"api"}
+{"ts":"2026-07-06T11:54:34.850Z","event":"quality:passed","slug":"test-review","phase":"change","qualityScores":{"completeness":true,"consistency":true,"verifiability":true,"traceability":true,"engineering_quality":true}}
+{"ts":"2026-07-06T11:54:34.876Z","event":"phase:complete","slug":"test-review","phase":"change"}
+{"ts":"2026-07-06T11:54:34.878Z","event":"quality:passed","slug":"test-review","phase":"requirement","qualityScores":{"completeness":true,"consistency":true,"verifiability":true,"traceability":true,"engineering_quality":true}}
+{"ts":"2026-07-06T11:54:34.881Z","event":"phase:complete","slug":"test-review","phase":"requirement"}
+{"ts":"2026-07-06T11:54:34.882Z","event":"quality:passed","slug":"test-review","phase":"design","qualityScores":{"completeness":true,"consistency":true,"verifiability":true,"traceability":true,"engineering_quality":true}}
+{"ts":"2026-07-06T11:54:34.884Z","event":"phase:complete","slug":"test-review","phase":"design"}
+{"ts":"2026-07-06T11:54:34.886Z","event":"quality:passed","slug":"test-review","phase":"task","qualityScores":{"completeness":true,"consistency":true,"verifiability":true,"traceability":true,"engineering_quality":true}}
+{"ts":"2026-07-06T11:54:34.890Z","event":"phase:complete","slug":"test-review","phase":"task"}
+{"ts":"2026-07-06T11:54:34.891Z","event":"quality:passed","slug":"test-review","phase":"dev","qualityScores":{"completeness":true,"consistency":true,"verifiability":true,"traceability":true,"engineering_quality":true}}
+{"ts":"2026-07-06T11:54:34.892Z","event":"phase:complete","slug":"test-review","phase":"dev"}
+{"ts":"2026-07-06T11:54:34.896Z","event":"quality:passed","slug":"test-review","phase":"test","qualityScores":{"completeness":true,"consistency":true,"verifiability":true,"traceability":true,"engineering_quality":true}}
+{"ts":"2026-07-06T11:54:34.900Z","event":"phase:complete","slug":"test-review","phase":"test"}
+{"ts":"2026-07-06T11:55:29.473Z","event":"change:created","slug":"clipboard-v1","profile":"api"}
+{"ts":"2026-07-06T11:55:29.477Z","event":"quality:passed","slug":"clipboard-v1","phase":"change","qualityScores":{"completeness":true,"consistency":true,"verifiability":true,"traceability":true,"engineering_quality":true}}
+{"ts":"2026-07-06T11:55:29.492Z","event":"phase:complete","slug":"clipboard-v1","phase":"change"}
+{"ts":"2026-07-06T11:55:29.525Z","event":"quality:passed","slug":"clipboard-v1","phase":"requirement","qualityScores":{"completeness":true,"consistency":true,"verifiability":true,"traceability":true,"engineering_quality":true},"hints":["[建议] REQUIREMENT.md 可补充 User Story 三段式 (As a / I want / So that)","[建议] 可补充 Domain Language / 术语表（hbs 模板 ## Domain Language 章节）"]}
+{"ts":"2026-07-06T11:55:29.528Z","event":"phase:complete","slug":"clipboard-v1","phase":"requirement"}
+{"ts":"2026-07-06T11:55:29.532Z","event":"design:approach-warning","slug":"clipboard-v1","findings":["reuse_analysis: 提及复用但缺少 ## Reuse Analysis 专节，建议显式声明","decision_rationale: 缺少 **Chosen:** 决策行；决策（Reason）缺少实质性理由（性能/成本/复杂度等权衡）","risk_tradeoff: 缺少 Risks 表，未评估所选方案的风险"]}
+{"ts":"2026-07-06T11:55:29.534Z","event":"design:approach-warning","slug":"clipboard-v1","findings":["reuse_analysis: 提及复用但缺少 ## Reuse Analysis 专节，建议显式声明","decision_rationale: 缺少 **Chosen:** 决策行；决策（Reason）缺少实质性理由（性能/成本/复杂度等权衡）","risk_tradeoff: 缺少 Risks 表，未评估所选方案的风险"]}
+{"ts":"2026-07-06T11:55:29.535Z","event":"quality:passed","slug":"clipboard-v1","phase":"design","qualityScores":{"completeness":true,"consistency":true,"verifiability":true,"traceability":true,"engineering_quality":true}}
+{"ts":"2026-07-06T11:55:29.537Z","event":"phase:complete","slug":"clipboard-v1","phase":"design"}
+{"ts":"2026-07-06T11:55:29.539Z","event":"quality:passed","slug":"clipboard-v1","phase":"task","qualityScores":{"completeness":true,"consistency":true,"verifiability":true,"traceability":true,"engineering_quality":true}}
+{"ts":"2026-07-06T11:55:29.542Z","event":"phase:complete","slug":"clipboard-v1","phase":"task"}
+{"ts":"2026-07-06T11:55:29.543Z","event":"quality:passed","slug":"clipboard-v1","phase":"dev","qualityScores":{"completeness":true,"consistency":true,"verifiability":true,"traceability":true,"engineering_quality":true}}
+{"ts":"2026-07-06T11:55:29.545Z","event":"phase:complete","slug":"clipboard-v1","phase":"dev"}
+{"ts":"2026-07-06T11:55:29.546Z","event":"quality:passed","slug":"clipboard-v1","phase":"test","qualityScores":{"completeness":true,"consistency":true,"verifiability":true,"traceability":true,"engineering_quality":true}}
+{"ts":"2026-07-06T11:55:29.547Z","event":"phase:complete","slug":"clipboard-v1","phase":"test"}
+{"ts":"2026-07-06T11:55:29.633Z","event":"integration:cross-change-warning","slug":"clipboard-v1","code":"cross-change.pending-changes","message":"clipboard-v1 集成完成但还有 1 个变更正在开发中: test-review(review)。请确认兼容性后整体验证。"}
+{"ts":"2026-07-06T11:55:29.638Z","event":"integration:readiness-warning","slug":"clipboard-v1","warnings":["missing package.json"]}
+{"ts":"2026-07-06T11:55:29.639Z","event":"quality:failed","slug":"clipboard-v1","phase":"integration","error":"Quality gate failed: completeness, consistency, traceability — [Zod] 缺少 integration.json，用 executor.generateStageData 生成","hints":["[Zod] 缺少 integration.json，用 executor.generateStageData 生成"]}
+{"ts":"2026-07-06T11:55:46.037Z","event":"change:created","slug":"test-review2","profile":"api"}
+{"ts":"2026-07-06T11:55:46.044Z","event":"quality:passed","slug":"test-review2","phase":"change","qualityScores":{"completeness":true,"consistency":true,"verifiability":true,"traceability":true,"engineering_quality":true}}
+{"ts":"2026-07-06T11:55:46.059Z","event":"phase:complete","slug":"test-review2","phase":"change"}
+{"ts":"2026-07-06T11:55:46.060Z","event":"quality:passed","slug":"test-review2","phase":"requirement","qualityScores":{"completeness":true,"consistency":true,"verifiability":true,"traceability":true,"engineering_quality":true}}
+{"ts":"2026-07-06T11:55:46.061Z","event":"phase:complete","slug":"test-review2","phase":"requirement"}
+{"ts":"2026-07-06T11:55:46.062Z","event":"quality:passed","slug":"test-review2","phase":"design","qualityScores":{"completeness":true,"consistency":true,"verifiability":true,"traceability":true,"engineering_quality":true}}
+{"ts":"2026-07-06T11:55:46.064Z","event":"phase:complete","slug":"test-review2","phase":"design"}
+{"ts":"2026-07-06T11:55:46.064Z","event":"quality:passed","slug":"test-review2","phase":"task","qualityScores":{"completeness":true,"consistency":true,"verifiability":true,"traceability":true,"engineering_quality":true}}
+{"ts":"2026-07-06T11:55:46.066Z","event":"phase:complete","slug":"test-review2","phase":"task"}
+{"ts":"2026-07-06T11:55:46.067Z","event":"quality:passed","slug":"test-review2","phase":"dev","qualityScores":{"completeness":true,"consistency":true,"verifiability":true,"traceability":true,"engineering_quality":true}}
+{"ts":"2026-07-06T11:55:46.069Z","event":"phase:complete","slug":"test-review2","phase":"dev"}
+{"ts":"2026-07-06T11:55:46.070Z","event":"quality:passed","slug":"test-review2","phase":"test","qualityScores":{"completeness":true,"consistency":true,"verifiability":true,"traceability":true,"engineering_quality":true}}
+{"ts":"2026-07-06T11:55:46.071Z","event":"phase:complete","slug":"test-review2","phase":"test"}
+{"ts":"2026-07-06T11:55:46.236Z","event":"phase:blocked","slug":"test-review2","phase":"integration","reason":"wrong phase, expected review"}
+{"ts":"2026-07-06T11:56:21.425Z","event":"change:created","slug":"clipboard-vmr95zgo9","profile":"api"}
+{"ts":"2026-07-06T11:56:21.434Z","event":"quality:passed","slug":"clipboard-vmr95zgo9","phase":"change","qualityScores":{"completeness":true,"consistency":true,"verifiability":true,"traceability":true,"engineering_quality":true}}
+{"ts":"2026-07-06T11:56:21.456Z","event":"phase:complete","slug":"clipboard-vmr95zgo9","phase":"change"}
+{"ts":"2026-07-06T11:56:21.524Z","event":"quality:passed","slug":"clipboard-vmr95zgo9","phase":"requirement","qualityScores":{"completeness":true,"consistency":true,"verifiability":true,"traceability":true,"engineering_quality":true},"hints":["[建议] REQUIREMENT.md 可补充 User Story 三段式 (As a / I want / So that)","[建议] 可补充 Domain Language / 术语表（hbs 模板 ## Domain Language 章节）"]}
+{"ts":"2026-07-06T11:56:21.535Z","event":"phase:complete","slug":"clipboard-vmr95zgo9","phase":"requirement"}
+{"ts":"2026-07-06T11:56:21.545Z","event":"design:approach-warning","slug":"clipboard-vmr95zgo9","findings":["reuse_analysis: 提及复用但缺少 ## Reuse Analysis 专节，建议显式声明","decision_rationale: 缺少 **Chosen:** 决策行；决策（Reason）缺少实质性理由（性能/成本/复杂度等权衡）","risk_tradeoff: 缺少 Risks 表，未评估所选方案的风险"]}
+{"ts":"2026-07-06T11:56:21.552Z","event":"design:approach-warning","slug":"clipboard-vmr95zgo9","findings":["reuse_analysis: 提及复用但缺少 ## Reuse Analysis 专节，建议显式声明","decision_rationale: 缺少 **Chosen:** 决策行；决策（Reason）缺少实质性理由（性能/成本/复杂度等权衡）","risk_tradeoff: 缺少 Risks 表，未评估所选方案的风险"]}
+{"ts":"2026-07-06T11:56:21.554Z","event":"quality:passed","slug":"clipboard-vmr95zgo9","phase":"design","qualityScores":{"completeness":true,"consistency":true,"verifiability":true,"traceability":true,"engineering_quality":true}}
+{"ts":"2026-07-06T11:56:21.558Z","event":"phase:complete","slug":"clipboard-vmr95zgo9","phase":"design"}
+{"ts":"2026-07-06T11:56:21.559Z","event":"quality:passed","slug":"clipboard-vmr95zgo9","phase":"task","qualityScores":{"completeness":true,"consistency":true,"verifiability":true,"traceability":true,"engineering_quality":true}}
+{"ts":"2026-07-06T11:56:21.563Z","event":"phase:complete","slug":"clipboard-vmr95zgo9","phase":"task"}
+{"ts":"2026-07-06T11:56:21.564Z","event":"quality:passed","slug":"clipboard-vmr95zgo9","phase":"dev","qualityScores":{"completeness":true,"consistency":true,"verifiability":true,"traceability":true,"engineering_quality":true}}
+{"ts":"2026-07-06T11:56:21.567Z","event":"phase:complete","slug":"clipboard-vmr95zgo9","phase":"dev"}
+{"ts":"2026-07-06T11:56:21.569Z","event":"quality:passed","slug":"clipboard-vmr95zgo9","phase":"test","qualityScores":{"completeness":true,"consistency":true,"verifiability":true,"traceability":true,"engineering_quality":true}}
+{"ts":"2026-07-06T11:56:21.572Z","event":"phase:complete","slug":"clipboard-vmr95zgo9","phase":"test"}
+{"ts":"2026-07-06T11:56:21.672Z","event":"integration:cross-change-warning","slug":"clipboard-vmr95zgo9","code":"cross-change.pending-changes","message":"clipboard-vmr95zgo9 集成完成但还有 3 个变更正在开发中: clipboard-v1(integration), test-review(review), test-review2(review)。请确认兼容性后整体验证。"}
+{"ts":"2026-07-06T11:56:21.680Z","event":"integration:readiness-warning","slug":"clipboard-vmr95zgo9","warnings":["missing package.json"]}
+{"ts":"2026-07-06T11:56:21.682Z","event":"quality:failed","slug":"clipboard-vmr95zgo9","phase":"integration","error":"Quality gate failed: completeness, consistency, traceability — [Zod] 缺少 integration.json，用 executor.generateStageData 生成","hints":["[Zod] 缺少 integration.json，用 executor.generateStageData 生成"]}
+{"ts":"2026-07-06T11:56:41.453Z","event":"change:created","slug":"debug-rev","profile":"api"}
+{"ts":"2026-07-06T11:56:41.459Z","event":"quality:passed","slug":"debug-rev","phase":"change","qualityScores":{"completeness":true,"consistency":true,"verifiability":true,"traceability":true,"engineering_quality":true}}
+{"ts":"2026-07-06T11:56:41.479Z","event":"phase:complete","slug":"debug-rev","phase":"change"}
+{"ts":"2026-07-06T11:56:41.480Z","event":"quality:passed","slug":"debug-rev","phase":"requirement","qualityScores":{"completeness":true,"consistency":true,"verifiability":true,"traceability":true,"engineering_quality":true}}
+{"ts":"2026-07-06T11:56:41.482Z","event":"phase:complete","slug":"debug-rev","phase":"requirement"}
+{"ts":"2026-07-06T11:56:41.483Z","event":"quality:passed","slug":"debug-rev","phase":"design","qualityScores":{"completeness":true,"consistency":true,"verifiability":true,"traceability":true,"engineering_quality":true}}
+{"ts":"2026-07-06T11:56:41.485Z","event":"phase:complete","slug":"debug-rev","phase":"design"}
+{"ts":"2026-07-06T11:56:41.486Z","event":"quality:passed","slug":"debug-rev","phase":"task","qualityScores":{"completeness":true,"consistency":true,"verifiability":true,"traceability":true,"engineering_quality":true}}
+{"ts":"2026-07-06T11:56:41.488Z","event":"phase:complete","slug":"debug-rev","phase":"task"}
+{"ts":"2026-07-06T11:56:41.489Z","event":"quality:passed","slug":"debug-rev","phase":"dev","qualityScores":{"completeness":true,"consistency":true,"verifiability":true,"traceability":true,"engineering_quality":true}}
+{"ts":"2026-07-06T11:56:41.491Z","event":"phase:complete","slug":"debug-rev","phase":"dev"}
+{"ts":"2026-07-06T11:56:41.492Z","event":"quality:passed","slug":"debug-rev","phase":"test","qualityScores":{"completeness":true,"consistency":true,"verifiability":true,"traceability":true,"engineering_quality":true}}
+{"ts":"2026-07-06T11:56:41.494Z","event":"phase:complete","slug":"debug-rev","phase":"test"}
+{"ts":"2026-07-06T11:56:41.614Z","event":"phase:blocked","slug":"debug-rev","phase":"integration","reason":"wrong phase, expected review"}

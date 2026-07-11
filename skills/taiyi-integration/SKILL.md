@@ -209,3 +209,12 @@ npx taiyi remember --note "lesson: 翻译 API 流式响应用 SSE 而非 WebSock
 - [ ] archive 成功
 - [ ] 对话中已给出整合回应
 - [ ] 项目记忆已更新（如有可复用结论）
+
+## 引擎门控（自动，无需手动确认）
+
+- **CHANGELOG 质量**: 必须存在且非种子 → 阻止
+- **工件完整性**: 所有非跳过阶段工件存在且非种子 → 阻止
+- **覆盖率阈值**: 单元测试覆盖率 < 80% → 阻止
+- **审计**: schema/gate/export/AC/dep/commit 六项审计 → 阻止
+- **架构复查**: 可设 TAIYI_STRICT_INTEGRATION 严格拦截
+- **投产就绪**: health endpoint / scripts / CORS

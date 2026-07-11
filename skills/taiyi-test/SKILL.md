@@ -226,3 +226,9 @@ Legacy：`npx taiyi complete <slug> test` 仍可用；聊天优先 `/taiyi:conti
 - [ ] 所有测试命令可实际运行（非占位符）
 - [ ] Traceability（AC→Test Coverage）已更新
 - [ ] 全部测试通过（实跑证据）
+
+## 引擎门控（自动，无需手动确认）
+
+- **AC 自动扫描**: .test.ts 中 AC-XX 引用 → 自动填入 ac_coverage
+- **AC 覆盖验证**: 每条未完成 AC 必须有测试覆盖 → 阻止
+- **覆盖率阈值**: 单元测试覆盖率 < 80% → 阻止

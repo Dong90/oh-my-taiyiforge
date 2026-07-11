@@ -75,6 +75,20 @@ downstream: [review]
 
 <!-- Validate: 每个TC有Given/When/Then？覆盖成功+失败？ -->
 
+{{#if ac_coverage}}
+## Step 2b: AC to TC Traceability Matrix
+> **[ALL]** Goal: 每个 AC 都有测试覆盖 | Inputs: REQUIREMENT.md Step 4
+<!-- Action: 逐一对照 AC 编号，确保 test_plan 中有对应的测试用例 -->
+
+| AC | 覆盖的测试用例 | 状态 |
+|----|-------------|------|
+{{#each ac_coverage}}
+| {{ac_id}} | {{#each test_case_ids}}`{{this}}`{{#unless @last}}, {{/unless}}{{/each}} | ⚠ |
+{{/each}}
+
+<!-- Validate: 每个 AC 至少 1 个 TC？遗漏的 AC 已标注？ -->
+{{/if}}
+
 ## Step 3: Code Path Coverage
 > **[MEDIUM+]** Goal: 不漏测试 | Inputs: 实现代码diff
 <!-- Action: ASCII树追踪每个函数/分支/错误路径的测试覆盖。★★★=边界+错误 ★★=happy ★=冒烟 -->
