@@ -524,7 +524,7 @@ export class WorkflowEngine {
       const ef = checkExportCallers(workspaceDir);
       if (ef.length > 0 && ef.some(f => f.severity === "critical")) return { ok: false, error: "[Export Gate] " + ef.filter(f=>f.severity==="critical").length + " exports with 0 callers" };
       const thresholds = scoreThresholds();
-      if (thresholds.enforce) {
+      if (thresholds.enforce && !options?.skipArtifactValidation) {
         // 0. 检查上游所有阶段工件完整性
         const upstreamPhases = listPhases().filter((p: { order: number }) => p.order < 8);
         const gaps: string[] = [];
@@ -554,9 +554,10 @@ export class WorkflowEngine {
 
         // 未启动 review-loop 时跳过分数和轮次门禁（向后兼容）
         const loopStateFile = path.join(changeDir, ".review-loop-state.json");
-        if (!fs.existsSync(loopStateFile)) return { ok: true };
+        const skipReviewLoopGates = !fs.existsSync(loopStateFile);
 
         // 检查 TEST.md 是否有真实测试文件支撑
+        if (!skipReviewLoopGates) {
         const testMdPath = path.join(changeDir, "TEST.md");
         if (fs.existsSync(testMdPath)) {
           const testMd = fs.readFileSync(testMdPath, "utf8");
@@ -600,6 +601,7 @@ export class WorkflowEngine {
             ok: false,
             error: `[Round Gate] 还差 ${maxRounds - completed.length} 轮未完成:\n${missing.map(r => `  - R${r}: ${roundNames[r] ?? '未知'}`).join("\n")}\n\n已通过: ${completed.length > 0 ? completed.map(r => `R${r}`).join(", ") : "无"}\n请继续运行 /taiyi:review-loop 直到 ${maxRounds} 轮全部完成。\n（设 TAIYI_REVIEW_ENFORCE_SCORES=0 关闭此门禁）`,
           };
+        }
         }
       }
     }
