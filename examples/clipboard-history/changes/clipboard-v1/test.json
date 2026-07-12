@@ -1,0 +1,20 @@
+{
+  "title": "T",
+  "test_plan": [
+    {
+      "id": "src/storage.test.ts",
+      "description": "storage",
+      "status": "passed"
+    },
+    {
+      "id": "src/cli.test.ts",
+      "description": "cli",
+      "status": "passed"
+    }
+  ],
+  "test_coverage": {
+    "unit": "85%",
+    "integration": "60%",
+    "e2e": "30%"
+  }
+}

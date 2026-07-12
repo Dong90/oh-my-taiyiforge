@@ -353,7 +353,7 @@ const handlers: Record<string, CliHandler> = {
     else if ("text" in r && r.text) console.log(r.text);
     if (!r.ok) { log.error("error" in r ? r.error : "render 失败"); process.exitCode = 1; }
   },
-  continue: (a) => {
+  continue: async (a) => {
     const { argv: continueArgs, approver } = extractApprover(a);
     const { slug, times } = requireSlugAndRepeat(continueArgs);
     if (times > 1) {
@@ -367,8 +367,17 @@ const handlers: Record<string, CliHandler> = {
     if (isWorkflowCompleted(state)) { console.log("变更 " + slug + " 已完成，可归档"); return; }
     if (isChangeAborted(state)) { log.error("变更 " + slug + " 已取消"); process.exitCode = 1; return; }
     const phaseId = state.currentPhase as PhaseId;
-    const attempt = tryCompletePhase(slug, { approver });
+    let attempt = tryCompletePhase(slug, { approver });
     if (attempt.ok) { printCompleteSuccess(slug, phaseId); return; }
+
+    const afEngine = engine as any;
+    if (afEngine.aiAutoFixFn) {
+      try {
+        const af = await afEngine.tryAutoFix(slug, phaseId, { quality: { completeness: true, consistency: true, verifiability: true, traceability: true, engineering_quality: true }, human: approver ? { approved: true, approver } : { approved: false, approver: "" } });
+        if (af.ok) { printCompleteSuccess(slug, phaseId); return; }
+      } catch (e) { log.warn("auto-fix failed: " + String(e)); }
+    }
+
     const r = taiyiNext(workspaceDir, slug, !jsonMode);
     if (!r.ok) { log.error(r.error); process.exitCode = 1; return; }
     if (jsonMode) {

@@ -75,6 +75,9 @@ export function formatStatusCompact(guide: PhaseGuide): string {
   } else if (guide.qualityHints.length && !guide.qualityReady) {
     lines.push(`hints: ${guide.qualityHints.slice(0, 2).join("; ")}`);
   }
+  if (guide.blockedByWarnings?.length) {
+    lines.push(`⚠ blocked_by: ${guide.blockedByWarnings.join("; ")}`);
+  }
   return lines.join("\n");
 }
 
@@ -217,7 +220,7 @@ export function formatChangeListPlain(changes: ChangeSummary[]): string {
   return changes
     .map((c) => {
       const phase = c.workflowCompleted ? "completed" : c.workflowAborted ? "aborted" : c.currentPhase;
-      const tag = c.archived ? "\t[archived]" : "";
+      const tag = c.archived ? "\t[archived]" : c.isSeed ? "\t[seed]" : "";
       return `${c.slug}\t${phase}\t${c.completed}/${c.total}\t${c.profile}${c.complexity ? `\t${c.complexity}` : ""}${tag}`;
     })
     .join("\n");

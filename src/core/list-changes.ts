@@ -3,6 +3,7 @@ import path from "node:path";
 import type { ChangeState } from "./types.js";
 import { displayPhase, isChangeAborted, isChangeActive, isWorkflowCompleted } from "./change-status.js";
 import { normalizeState } from "./normalize-state.js";
+import { isSeedTemplate } from "./seed-marker.js";
 
 export type ChangeSummary = {
   slug: string;
@@ -17,6 +18,8 @@ export type ChangeSummary = {
   updatedAt: string;
   /** 来自 .taiyi/archive/ 时为 true */
   archived?: boolean;
+  /** CHANGE.md is still a seed template (not yet filled by user) */
+  isSeed?: boolean;
 };
 
 export type ListChangesOptions = {
@@ -28,6 +31,8 @@ export type ListChangesOptions = {
    * - --all --archived → changes/（全状态）+ archive/
    */
   includeArchived?: boolean;
+  /** 过滤掉 seed template（仅模板，未填内容） */
+  excludeSeeds?: boolean;
 };
 
 function summaryFromState(
@@ -56,7 +61,16 @@ function readChangeSummary(statePath: string, archived = false): ChangeSummary |
   if (!fs.existsSync(statePath)) return null;
   try {
     const raw = JSON.parse(fs.readFileSync(statePath, "utf8")) as ChangeState;
-    return summaryFromState(normalizeState(raw), archived);
+    const summary = summaryFromState(normalizeState(raw), archived);
+
+    const changeMd = path.join(path.dirname(statePath), "CHANGE.md");
+    if (fs.existsSync(changeMd)) {
+      try {
+        summary.isSeed = isSeedTemplate(fs.readFileSync(changeMd, "utf8"));
+      } catch { /* keep isSeed undefined */ }
+    }
+
+    return summary;
   } catch {
     return null;
   }
@@ -84,6 +98,10 @@ export function listChanges(taiyiRoot: string, options?: ListChangesOptions): Ch
   }
 
   let active = scanChangesDir(path.join(taiyiRoot, "changes"), false);
+
+  if (options?.excludeSeeds) {
+    active = active.filter((c) => !c.isSeed);
+  }
 
   if (!wantAllActive) {
     active = active.filter((c) => c.workflowActive);

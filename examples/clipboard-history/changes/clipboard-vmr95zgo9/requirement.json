@@ -1,0 +1,53 @@
+{
+  "title": "R",
+  "user_stories": [
+    {
+      "as_a": "dev",
+      "i_want": "save",
+      "so_that": "find",
+      "priority": "P0"
+    }
+  ],
+  "acceptance_criteria": [
+    {
+      "id": "AC-01",
+      "description": "save <100ms",
+      "is_checked": false
+    },
+    {
+      "id": "AC-02",
+      "description": "list 20",
+      "is_checked": false
+    }
+  ],
+  "functional_requirements": [
+    {
+      "module": "cli",
+      "items": [
+        {
+          "id": "FR-01",
+          "description": "save",
+          "trigger": "clip save",
+          "caller_module": "src/cli.ts"
+        },
+        {
+          "id": "FR-02",
+          "description": "list",
+          "trigger": "clip list",
+          "caller_module": "src/cli.ts"
+        }
+      ]
+    },
+    {
+      "module": "storage",
+      "items": [
+        {
+          "id": "FR-03",
+          "description": "persist",
+          "trigger": "save()",
+          "caller_module": "src/storage.ts"
+        }
+      ]
+    }
+  ]
+}

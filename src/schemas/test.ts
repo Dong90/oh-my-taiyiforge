@@ -69,7 +69,13 @@ export const TestSchema = z.object({
     integration: z.string().describe("集成测试覆盖率，如 '60%'"),
     e2e: z.string().describe("E2E 测试覆盖率，如 '30%'"),
   }).optional().describe("测试覆盖率数据"),
-  test_results_summary: z.string().optional().describe("测试结果摘要，如 '1494/1502 passed'"),
+  test_results_summary: z.string().optional().describe("test results summary, e.g. '1494/1502 passed'"),
+  ac_coverage: z.array(
+    z.object({
+      ac_id: z.string().describe("REQUIREMENT AC id, e.g. AC-01"),
+      test_case_ids: z.array(z.string()).describe("test_plan case ids covering this AC"),
+    })
+  ).optional().describe("AC→TC traceability: which test cases cover each acceptance criterion"),
 }).strict();
 
 export type TestSpec = z.infer<typeof TestSchema>;

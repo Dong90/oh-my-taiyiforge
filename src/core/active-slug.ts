@@ -16,20 +16,32 @@ export function resolveActiveSlug(taiyiRoot: string, explicit?: string): Resolve
     return { ok: true, slug, inferred: false };
   }
 
-  const active = listChanges(taiyiRoot).filter((c) => c.workflowActive);
-  if (active.length === 0) {
+  const allActive = listChanges(taiyiRoot).filter((c) => c.workflowActive);
+  const nonSeedActive = allActive.filter((c) => !c.isSeed);
+
+  if (nonSeedActive.length === 1) {
+    return { ok: true, slug: nonSeedActive[0]!.slug, inferred: true };
+  }
+
+  if (allActive.length === 0) {
     return {
       ok: false,
       error: "没有进行中的变更。先用 /taiyi:new <名称> 创建。",
     };
   }
-  if (active.length > 1) {
+  if (nonSeedActive.length > 1) {
     return {
       ok: false,
-      error: formatMultipleActiveChanges(active.map((c) => c.slug)),
+      error: formatMultipleActiveChanges(nonSeedActive.map((c) => c.slug)),
     };
   }
-  return { ok: true, slug: active[0]!.slug, inferred: true };
+  if (allActive.length === 1) {
+    return { ok: true, slug: allActive[0]!.slug, inferred: true };
+  }
+  return {
+    ok: false,
+    error: formatMultipleActiveChanges(allActive.map((c) => c.slug)),
+  };
 }
 
 /** 显式 slug 时在 changes 或 archive 查找；未传则回退 resolveActiveSlug */

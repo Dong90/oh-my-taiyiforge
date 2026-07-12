@@ -235,6 +235,7 @@ Legacy：`npx taiyi complete <slug> task` 仍可用；聊天优先 `/taiyi:conti
 - [ ] 入口预设已写（Engineer Context）
 - [ ] T0.1–T0.7 逐层检查全部 ✅
 - [ ] 每个任务有 Level / Estimate / Why separate / Write files / Dependencies / Verify
+- [ ] 每个 FR（caller_module 在本 scope 内的）至少 1 个切片覆盖（covers_frs 字段）
 - [ ] Verify 命令可实际运行（非占位符）
 - [ ] Scope Break 已通过
 - [ ] Write files 不超出 DESIGN 范围

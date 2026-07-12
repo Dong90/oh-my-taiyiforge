@@ -130,7 +130,7 @@ phase_defaults:
   ui-design: [designer]
   task: [planner, test-engineer]
   dev: [executor, debugger, test-engineer]
-  test: [verifier, qa-tester, tracer, debugger]
+  test: [verifier, qa-tester, tracer, debugger, test-engineer]
   review: [code-reviewer, security-reviewer, style-reviewer, api-reviewer, performance-reviewer, critic, git-master]
   integration: [verifier, writer, git-master]
 

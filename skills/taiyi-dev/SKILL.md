@@ -250,3 +250,9 @@ Legacy：`npx taiyi apply <slug> dev` 或 `npx taiyi complete <slug> dev` 仍可
 - [ ] 所有测试通过
 - [ ] .dev-complete 已写入
 - [ ] 预估 vs 实际偏差已记录
+
+## 引擎门控（自动，无需手动确认）
+
+- **TDD 检查**: .dev-complete 必须含测试命令或 .test.ts 引用 → 阻止
+- **scope boundary**: 修改文件不超出 CHANGE.md 范围 → 阻止
+- **architecture**: 代码结构符合架构模板 → 阻止

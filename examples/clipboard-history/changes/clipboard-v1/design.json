@@ -1,0 +1,30 @@
+{
+  "title": "D",
+  "options": [
+    {
+      "id": "A",
+      "name": "SQLite",
+      "pros": [
+        "fast"
+      ],
+      "cons": [
+        "dep"
+      ]
+    },
+    {
+      "id": "B",
+      "name": "JSON",
+      "pros": [
+        "simple"
+      ],
+      "cons": [
+        "slow"
+      ]
+    }
+  ],
+  "decision": {
+    "chosen": "A",
+    "reason": "search perf"
+  },
+  "security_threats": []
+}

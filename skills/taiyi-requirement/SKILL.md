@@ -35,9 +35,33 @@ paradigm: Partner
 | `micro/spike` | 可跳过本阶段 |
 | `nano` | 跳过 |
 
-### 0.3 前置检查清单
+### 0.3 触发者检查
+
+每个 FR 必须声明触发点：
+
+- 每个 FR 必须填写 `trigger`（谁调用、什么时机）
+- `trigger` 指向的 `caller_module` 不在本 change scope 中 → 填 `blocked_by` 标注依赖
+- `blocked_by` 非空 → 本阶段不能过关，等依赖 change 完成后再继续
+
+```
+"functional_requirements": [{
+  "module": "orchestrator",
+  "items": [{
+    "id": "FR-T01",
+    "description": "track(slug,role,amount) 更新 pipeline.json tokenBudget.used",
+    "trigger": "executor.dispatch() 每次调用后",
+    "caller_module": "packages/orchestrator/src/executor.ts",
+    "blocked_by": "M4-executor"
+  }]
+}]
+```
+
+`blocked_by` 非空时引擎会在 status 中报 blocker，阻止进入 design 阶段。
+
+### 0.4 前置检查清单
 - [ ] change 阶段已过关
 - [ ] 理解 CHANGE Scope 和 Out of Scope 边界
+- [ ] 每个 FR 有 trigger（谁调用、什么时机）；caller 不在 scope 时填 blocked_by
 
 ---
 
@@ -214,5 +238,10 @@ Legacy：`npx taiyi complete <slug> requirement` 仍可用；聊天优先 `/taiy
 - [ ] 每条 AC 用 Given/When/Then 格式
 - [ ] Traceability 完整（AC ↔ CHANGE Success Criteria ↔ 验证方式）
 - [ ] 域语言已提取并与已有术语一致
+- [ ] 每条 FR 已声明 trigger（谁调用、什么时机）；caller 不在 scope 的已填 blocked_by
 - [ ] 没有写入技术实现方案
 - [ ] 每条 AC 可量化（不是"应该正常"）
+
+## 引擎门控（自动，无需手动确认）
+
+- **blocked_by 验证**: requirement.json 中 FR 的 blocked_by 指向不存在的 change → 阻止过关。指向未完成的 change → 日志 warn
