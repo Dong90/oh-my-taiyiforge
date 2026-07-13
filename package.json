@@ -3,6 +3,9 @@
   "version": "1.0.0-rc.1",
   "description": "TaiyiForge — OpenCode 插件 + Claude/Codex/Cursor 共用 taiyi-* 九阶段研发工作流",
   "license": "MIT",
+  "overrides": {
+    "hono": "4.12.30"
+  },
   "type": "module",
   "main": "./dist/plugin/index.js",
   "types": "./dist/plugin/index.d.ts",
