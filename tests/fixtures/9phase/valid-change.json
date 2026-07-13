@@ -1,0 +1,52 @@
+{
+  "slug": "valid-e2e-change",
+  "title": "E2E Valid Change",
+  "profile": "full",
+  "workflowStatus": "completed",
+  "currentPhase": "integration",
+  "completedPhases": [
+    "change",
+    "requirement",
+    "design",
+    "ui-design",
+    "task",
+    "dev",
+    "test",
+    "review",
+    "integration"
+  ],
+  "skippedPhases": [],
+  "gates": {
+    "change": {
+      "quality": { "completeness": true, "consistency": true, "verifiability": true, "traceability": true, "engineering_quality": true },
+      "human": { "approved": true, "approver": "test-user" }
+    },
+    "requirement": {
+      "quality": { "completeness": true, "consistency": true, "verifiability": true, "traceability": true, "engineering_quality": true },
+      "human": { "approved": false }
+    },
+    "design": {
+      "quality": { "completeness": true, "consistency": true, "verifiability": true, "traceability": true, "engineering_quality": true },
+      "human": { "approved": true, "approver": "test-user" }
+    },
+    "ui-design": {
+      "quality": { "completeness": true, "consistency": true, "verifiability": true, "traceability": true, "engineering_quality": true }
+    },
+    "task": {
+      "quality": { "completeness": true, "consistency": true, "verifiability": true, "traceability": true, "engineering_quality": true }
+    },
+    "dev": {
+      "quality": { "completeness": true, "consistency": true, "verifiability": true, "traceability": true, "engineering_quality": true }
+    },
+    "test": {
+      "quality": { "completeness": true, "consistency": true, "verifiability": true, "traceability": true, "engineering_quality": true }
+    },
+    "review": {
+      "quality": { "completeness": true, "consistency": true, "verifiability": true, "traceability": true, "engineering_quality": true },
+      "human": { "approved": true, "approver": "test-user" }
+    },
+    "integration": {
+      "quality": { "completeness": true, "consistency": true, "verifiability": true, "traceability": true, "engineering_quality": true }
+    }
+  }
+}
