@@ -95,7 +95,7 @@
     "@vitest/coverage-v8": "^4.1.9",
     "commander": "^15.0.0",
     "tsx": "^4.19.0",
-    "typescript": "^6.0.3",
+    "typescript": "^7.0.2",
     "vitest": "^4.1.9"
   },
   "taiyi": {
