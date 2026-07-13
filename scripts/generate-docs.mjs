@@ -22,7 +22,8 @@ import {
   parseProfileCommands,
   parseSlashCatalogLists,
   slashVerb,
-  validateV28CatalogSync,
+  validateCanonicalCatalogSync,
+  CANONICAL_CATALOG_VERSION,
 } from "./lib/parse-commands-yaml.mjs";
 
 const pkgRoot = path.dirname(fileURLToPath(new URL("../package.json", import.meta.url)));
@@ -45,10 +46,10 @@ const BEGIN_DELIVERY = "<!-- BEGIN GENERATED delivery-chain -->";
 const END_DELIVERY = "<!-- END GENERATED delivery-chain -->";
 
 const BROWSER_E2E_ROWS = [
-  { label: "/taiyi:test smoke", needle: "/taiyi:browser-smoke", source: "aux", desc: "内置 Playwright 冒烟（v28 伞形 `test smoke`）" },
-  { label: "/taiyi:test e2e", needle: "/taiyi:e2e", source: "delivery", desc: "目标项目 `npx playwright test`（v28 伞形 `test e2e`）" },
-  { label: "/taiyi:test qa", needle: "gstack qa", source: "delivery", desc: "gstack browse 走查（v28 伞形 `test qa`）" },
-  { label: "/taiyi:test ui", needle: "/taiyi:ui-test", source: "aux", desc: "test 阶段 UI QA（v28 伞形 `test ui`）" },
+  { label: "/taiyi:test smoke", needle: "/taiyi:browser-smoke", source: "aux", desc: "内置 Playwright 冒烟（伞形 `test smoke`）" },
+  { label: "/taiyi:test e2e", needle: "/taiyi:e2e", source: "delivery", desc: "目标项目 `npx playwright test`（伞形 `test e2e`）" },
+  { label: "/taiyi:test qa", needle: "browser qa", source: "delivery", desc: "browse 走查（伞形 `test qa`）" },
+  { label: "/taiyi:test ui", needle: "/taiyi:ui-test", source: "aux", desc: "test 阶段 UI QA（伞形 `test ui`）" },
 ];
 
 const DIAGRAM_SLASHES = [
@@ -59,14 +60,15 @@ const DIAGRAM_SLASHES = [
   { verb: "/taiyi:diagram flow", needle: "/taiyi:diagram-flow", step: "—" },
 ];
 
-const V28_SECTION_LABELS = {
+const CANONICAL_VER_LABEL = `v${CANONICAL_CATALOG_VERSION}`;
+
+const CANONICAL_SECTION_LABELS = {
   main_chain: "1. 主链（6）",
   session: "2. 会话（4）",
-  triage: "3. 排查（3）",
-  delivery: "4. 交付（4）",
-  routers: "5. 外挂路由（2）",
-  phase_shortcuts: "6. 阶段捷径（3）",
-  umbrellas: "7. 伞形命令（6）",
+  triage: "3. 排查（2）",
+  delivery: "4. 交付（3）",
+  project: "5. 项目（1）",
+  umbrellas: "6. 伞形命令（5）",
 };
 
 const LEGACY_SECTION_LABELS = {
@@ -79,12 +81,12 @@ function renderSlashCatalog(sections) {
   const lines = [
     "<!-- AUTO-GENERATED from docs/taiyi/commands.yaml — do not edit; run npm run generate:docs -->",
     "",
-    "## 斜杠目录（generated · canonical v28）",
+    `## 斜杠目录（generated · canonical ${CANONICAL_VER_LABEL}）`,
     "",
-    "推荐顶栏 **28 条**；旧斜杠见 Legacy 段。叙事：[`canonical-commands.md`](../../docs/taiyi/canonical-commands.md)",
+    `推荐顶栏 **21 条**；旧斜杠见 Legacy 段。叙事：[\`canonical-commands.md\`](../../docs/taiyi/canonical-commands.md)`,
     "",
   ];
-  for (const [key, label] of Object.entries(V28_SECTION_LABELS)) {
+  for (const [key, label] of Object.entries(CANONICAL_SECTION_LABELS)) {
     const items = sections[key];
     if (!items?.length) continue;
     lines.push(`### ${label}`, "", "| 斜杠 |", "|------|");
@@ -131,44 +133,45 @@ function renderCanonicalTables(yaml, coreCmds, auxCmds, scenarios) {
   ];
 
   const scenarioLabels = {
-    "/taiyi:feature": "新功能 full 九阶段（`/taiyi:flow feature`）",
-    "/taiyi:bug": "lite 修 bug（`/taiyi:flow bug`）",
+    "/taiyi:feature": "新功能 full 九阶段（`taiyi-forge.sh flow feature`）",
+    "/taiyi:bug": "lite 修 bug（`taiyi-forge.sh flow bug`）",
     "/taiyi:ui-test": "test UI QA（`/taiyi:test ui`）",
   };
 
-  const v28SessionRows = [
-    ["暂停", "`/taiyi:handoff`"],
-    ["恢复", "`/taiyi:resume`"],
+  const sessionRows = [
+    ["暂停", "`/taiyi:pause`"],
+    ["恢复（pause --resume）", "`/taiyi:pause --resume`"],
     ["放弃变更", "`/taiyi:cancel`"],
     ["多变更列表", "`/taiyi:list`"],
   ];
 
-  const v28TriageRows = [
-    ["安装自检", "`/taiyi:doctor`（Agent `doctor --json --compact`）"],
-    ["流程/交付排查", "`/taiyi:audit`（Agent `audit --json --compact`）"],
+  const triageRows = [
     ["PR/CI 工件门禁", "`/taiyi:verify`"],
+    ["json → md 强制同步", "`/taiyi:render [slug] [phase]`"],
   ];
 
-  const v28DeliveryRows = [
+  const deliveryRows = [
     ["带 trailer 提交", "`/taiyi:commit`"],
     ["创建 PR", "`/taiyi:ship`"],
     ["合并部署", "`/taiyi:land`"],
-    ["文档/CHANGELOG", "`/taiyi:release`"],
   ];
 
-  const v28UmbrellaRows = [
+  const projectRows = [
+    ["项目级规划", "`/taiyi:plan [file]`（README/PRD/PDF/URL → 多个 change）"],
+  ];
+
+  const umbrellaRows = [
+    ["外部 Skill 路由", "`/taiyi:skill <name>`（吸收 sp · explore · tdd · flow）"],
     ["Token", "`/taiyi:token status|record|scan|compress`"],
     ["测试", "`/taiyi:test smoke|e2e|qa|ui|security`"],
-    ["Review", "`/taiyi:review loop|check|health|gstack`"],
+    ["Review", "`/taiyi:review loop|check|health`"],
     ["架构图", "`/taiyi:diagram pipeline|c4|arch|render|flow`"],
-    ["多 Agent / OMC", "`/taiyi:mode ralph|autopilot|…`"],
-    ["工作流扩展", "`/taiyi:workflow plan|loop|sync|…`"],
   ];
 
   const lines = [
     "<!-- AUTO-GENERATED from docs/taiyi/commands.yaml — do not edit; run npm run generate:docs -->",
     "",
-    "## v28 主链（6）",
+    `## ${CANONICAL_VER_LABEL} 主链（6）`,
     "",
     "| 意图 | 推荐斜杠 | 说明 |",
     "|------|----------|------|",
@@ -177,31 +180,32 @@ function renderCanonicalTables(yaml, coreCmds, auxCmds, scenarios) {
     lines.push(`| ${intent} | ${slash} | ${note} |`);
   }
 
-  lines.push("", "## v28 会话（4）", "", "| 意图 | 推荐斜杠 |", "|------|----------|");
-  for (const [intent, slash] of v28SessionRows) {
+  lines.push("", `## ${CANONICAL_VER_LABEL} 会话（4）`, "", "| 意图 | 推荐斜杠 |", "|------|----------|");
+  for (const [intent, slash] of sessionRows) {
     lines.push(`| ${intent} | ${slash} |`);
   }
 
-  lines.push("", "## v28 排查（3）", "", "| 意图 | 推荐斜杠 |", "|------|----------|");
-  for (const [intent, slash] of v28TriageRows) {
+  lines.push("", `## ${CANONICAL_VER_LABEL} 排查（2）`, "", "| 意图 | 推荐斜杠 |", "|------|----------|");
+  for (const [intent, slash] of triageRows) {
     lines.push(`| ${intent} | ${slash} |`);
   }
 
-  lines.push("", "## v28 交付（4）", "", "| 意图 | 推荐斜杠 |", "|------|----------|");
-  for (const [intent, slash] of v28DeliveryRows) {
+  lines.push("", `## ${CANONICAL_VER_LABEL} 交付（3）`, "", "| 意图 | 推荐斜杠 |", "|------|----------|");
+  for (const [intent, slash] of deliveryRows) {
     lines.push(`| ${intent} | ${slash} |`);
   }
 
-  lines.push("", "## v28 路由与捷径", "", "| 分组 | 斜杠 |", "|------|------|");
-  lines.push("| 外挂 | `/taiyi:gstack <skill>` · `/taiyi:sp <skill>` |");
-  lines.push("| 阶段 | `/taiyi:explore` · `/taiyi:tdd plan|dev` · `/taiyi:flow` |");
+  lines.push("", `## ${CANONICAL_VER_LABEL} 项目（1）`, "", "| 意图 | 推荐斜杠 |", "|------|----------|");
+  for (const [intent, slash] of projectRows) {
+    lines.push(`| ${intent} | ${slash} |`);
+  }
 
-  lines.push("", "## v28 伞形命令（6）", "", "| 域 | 斜杠 |", "|----|------|");
-  for (const [label, slash] of v28UmbrellaRows) {
+  lines.push("", `## ${CANONICAL_VER_LABEL} 伞形命令（5）`, "", "| 域 | 斜杠 |", "|----|------|");
+  for (const [label, slash] of umbrellaRows) {
     lines.push(`| ${label} | ${slash} |`);
   }
 
-  lines.push("", "## 场景（legacy → flow）", "", "| 旧斜杠 | v28 入口 |", "|--------|----------|");
+  lines.push("", "## 场景（legacy → plan）", "", `| 旧斜杠 | ${CANONICAL_VER_LABEL} 入口 |`, "|--------|----------|");
   for (const slash of scenarios) {
     const verb = slashVerb(slash);
     const label = scenarioLabels[verb] ?? slash;
@@ -221,9 +225,9 @@ function renderDiagramPipeline(auxCmds) {
   const lines = [
     "<!-- AUTO-GENERATED from docs/taiyi/commands.yaml — do not edit; run npm run generate:docs -->",
     "",
-    "## 架构图（v28 · `/taiyi:diagram`）",
+    `## 架构图（${CANONICAL_VER_LABEL} · \`/taiyi:diagram\`）`,
     "",
-    "| v28 子命令 | 步骤 | 说明 | legacy 斜杠 |",
+    `| ${CANONICAL_VER_LABEL} 子命令 | 步骤 | 说明 | legacy 斜杠 |`,
     "|------------|------|------|-------------|",
   ];
   for (const row of DIAGRAM_SLASHES) {
@@ -273,7 +277,7 @@ function renderDeliveryChain(yamlText) {
   const lines = [
     "<!-- AUTO-GENERATED from docs/taiyi/commands.yaml — do not edit; run npm run generate:docs -->",
     "",
-    "## 交付链（gstack）",
+    "## 交付链（delivery.yaml + git/gh）",
     "",
     "```text",
     chainText,
@@ -325,13 +329,13 @@ function writeOrCheck(label, filePath, content, checkOnly) {
 
 const yaml = fs.readFileSync(yamlPath, "utf8");
 const sections = parseSlashCatalogLists(yaml);
-sections.delivery_gstack = parseChatSlashes(yaml, /^  delivery_gstack:/);
+sections.delivery_chain = parseChatSlashes(yaml, /^  delivery_chain:/);
 sections.engine_slash = parseChatSlashes(yaml, /^    engine_slash:/);
 
-const v28Sync = validateV28CatalogSync(yaml, sections);
-if (!v28Sync.ok) {
-  console.error("canonical_v28 ↔ recommended_v28 不一致 — 修 docs/taiyi/commands.yaml:");
-  for (const e of v28Sync.errors) console.error(`  · ${e}`);
+const catalogSync = validateCanonicalCatalogSync(yaml, sections);
+if (!catalogSync.ok) {
+  console.error(`canonical_v${CANONICAL_CATALOG_VERSION} ↔ slash_catalog.recommended_v${CANONICAL_CATALOG_VERSION} 不一致 — 修 docs/taiyi/commands.yaml:`);
+  for (const e of catalogSync.errors) console.error(`  · ${e}`);
   process.exit(1);
 }
 

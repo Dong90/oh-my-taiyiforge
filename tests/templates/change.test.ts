@@ -27,6 +27,18 @@ describe("change.hbs", () => {
       { id: "SC-01", description: "登录成功率 ≥ 99%", is_checked: false },
       { id: "SC-02", description: "超时从 60s 降到 10s", is_checked: true },
     ],
+    impact_map: [
+      { module: "auth-service", impact: "新增 OAuth 超时配置", owner: "@alice" },
+      { module: "user-service", impact: "无影响", owner: "@bob" },
+    ],
+    dream_state: { current: "手动超时处理", this_change: "自动超时重试", ideal: "零延迟" },
+    stakeholders: [
+      { role: "PM", name: "Alice", needs: "确认需求" },
+    ],
+    innovation_tokens: [{ decision: "新增 library", is_token: true, reason: "无符合要求的既有方案" }],
+    risks: [
+      { risk: "并发锁冲突", probability: "中", impact: "服务降级", mitigation: "乐观锁" },
+    ],
   };
 
   it("renders title as H1 with prefix", () => {
@@ -93,7 +105,7 @@ describe("change.hbs", () => {
   it("renders innovation token check section", () => {
     const out = render(fullData);
     expect(out).toContain("## Step 9: Innovation Token Check");
-    expect(out).toContain("_已花费:");
+    expect(out).toContain("**已花费:");
   });
 
   it("renders migration & rollback section", () => {
@@ -137,6 +149,6 @@ describe("change.hbs", () => {
       scope: { includes: [], excludes: [] },
       success_criteria: [],
     });
-    expect(out).toContain("- _无_");
+    expect(out).toContain("- 无\n");
   });
 });

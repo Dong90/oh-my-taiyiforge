@@ -102,9 +102,9 @@ taiyi-ui-design → taiyi-task
 - [ ] 移动端与桌面若 UI-DESIGN 有要求，任务表分别列验收
 - [ ] 未引入未在 UI-DESIGN 出现的 scope（新页面须回 requirement）
 
-## 与铁三角
+## 与双线 harness
 
-- **gstack `design-review` / `plan-design-review`**：评审结论中的「必改项」编入 R* 或 A*
+- 评审结论中的「必改项」编入 R* 或 A*
 - **Superpowers `verification-before-completion`**：合并前须有截图或 CI 视觉检查记录
 
 ## 禁止

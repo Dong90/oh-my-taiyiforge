@@ -1,3 +1,9 @@
+/** Discriminated-union result type used by all Registry modules.
+ *  Prefer over throwing for predictable error handling at boundaries. */
+export type Result<T, E = Error> =
+  | { ok: true; value: T }
+  | { ok: false; error: E };
+
 /** Base built-in phase IDs. Use PhaseId for autocomplete + custom extension. */
 export type PhaseIdBase =
   | "change"
@@ -98,7 +104,7 @@ export type ChangeState = {
   profile: ChangeProfile;
   skippedPhases: PhaseId[];
   strictDev: boolean;
-  /** 全自动编排：铁三角 + 辅助 Skill 为 complete 前置条件 */
+  /** 全自动编排：双线 harness + 辅助 Skill 为 complete 前置条件 */
   autoHarness?: boolean;
   complexity?: ComplexityAssessment;
   auxiliaryCompleted: string[];
@@ -109,6 +115,30 @@ export type ChangeState = {
 };
 
 export type ComplexityLevel = "low" | "medium" | "high";
+
+/** Auto-fix hint returned by phase gates when blocking */
+export type GateFixHint = {
+  file: string;
+  field?: string;
+  action: string;
+  expectedValue?: string;
+};
+
+export type AiAutoFixContext = {
+  slug: string;
+  phase: PhaseId;
+  changeDir: string;
+  gateError: string;
+  fixHints: GateFixHint[];
+  currentArtifacts: Record<string, string>;
+};
+
+export type AiAutoFixResult = {
+  files: Record<string, string>;
+  summary: string;
+};
+
+export type AiAutoFixFn = (ctx: AiAutoFixContext) => Promise<AiAutoFixResult>;
 
 export type ComplexityAssessment = {
   level: ComplexityLevel;

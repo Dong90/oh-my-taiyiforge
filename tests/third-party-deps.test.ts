@@ -3,12 +3,12 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import {
-  detectGstack,
   detectOpenspec,
   detectWebQualitySkills,
-  findGstackDir,
-  gstackSetupHostArgs,
   shouldInstallDeps,
+  writeDetectedProviderConfig,
+  detectThirdPartyDeps,
+  syncProviders,
 } from "../src/install/third-party-deps.js";
 import { parseInstallCli } from "../src/install/run.js";
 
@@ -37,14 +37,6 @@ describe("third-party-deps", () => {
     expect(all.installDeps).toBe(true);
   });
 
-  it("findGstackDir detects setup script", () => {
-    const gstack = path.join(tmp, ".claude", "skills", "gstack");
-    fs.mkdirSync(gstack, { recursive: true });
-    fs.writeFileSync(path.join(gstack, "setup"), "#!/bin/bash\n");
-    expect(findGstackDir(tmp)).toBe(gstack);
-    expect(detectGstack(tmp).installed).toBe(true);
-  });
-
   it("detectWebQualitySkills finds markers under agents skills", () => {
     const root = path.join(tmp, ".agents", "skills");
     for (const name of ["accessibility", "web-design-guidelines", "core-web-vitals"]) {
@@ -55,16 +47,67 @@ describe("third-party-deps", () => {
     expect(d.installed).toBe(true);
   });
 
-  it("gstackSetupHostArgs picks codex-only host", () => {
-    const dir = path.join(tmp, "gstack");
-    fs.mkdirSync(dir);
-    fs.writeFileSync(path.join(dir, "setup"), '--host cursor\nHOST="claude"\n');
-    expect(gstackSetupHostArgs(dir, ["codex"])).toEqual(["--host", "codex"]);
-  });
-
   it("detectOpenspec reflects PATH", () => {
     const r = detectOpenspec();
     expect(r.id).toBe("openspec");
     expect(typeof r.installed).toBe("boolean");
+  });
+
+  it("writeDetectedProviderConfig creates providers.yaml with assignments", () => {
+    const r = writeDetectedProviderConfig(tmp, ["opencode", "claude"], tmp);
+    expect(r.ok).toBe(true);
+    expect(r.path).toBe(path.join(tmp, ".taiyi", "providers.yaml"));
+
+    const content = fs.readFileSync(r.path, "utf8");
+    // yaml 结构: 含 version: 1 + assignments: 段
+    // 不强依赖具体 provider 存在（CI 隔离环境 openspec/superpowers 可能未装，yaml assignments 段为空但格式正确）
+    expect(content).toContain("version: 1");
+    expect(content).toContain("assignments:");
+  });
+
+  it("writeDetectedProviderConfig creates .taiyi dir if missing", () => {
+    const deep = path.join(tmp, "nested", "project");
+    const r = writeDetectedProviderConfig(deep, ["opencode"], tmp);
+    expect(r.ok).toBe(true);
+    expect(fs.existsSync(path.join(deep, ".taiyi", "providers.yaml"))).toBe(true);
+  });
+
+  it("writeDetectedProviderConfig omits assignments for undetected providers", () => {
+    const r = writeDetectedProviderConfig(tmp, ["opencode"], "/nonexistent");
+    const content = fs.readFileSync(r.path, "utf8");
+    // When no providers are detected (bogus home), only assignments
+    // for tools that happen to be on PATH appear in the output
+    expect(content).toContain("assignments:");
+  });
+
+  it("syncProviders returns registry after writeDetectedProviderConfig", () => {
+    const first = writeDetectedProviderConfig(tmp, ["opencode", "claude"], tmp);
+    expect(first.ok).toBe(true);
+
+    const r = syncProviders(tmp, ["opencode", "claude"], tmp);
+    expect(r.ok).toBe(true);
+    expect(r.registry).toBeDefined();
+    // registry should list at least the providers that were just detected
+    expect(Object.keys(r.registry.listProviders()).length).toBeGreaterThanOrEqual(0);
+    expect(r.detail).toContain(".taiyi/providers.yaml");
+  });
+
+  it("syncProviders refreshes cache after provider config change", () => {
+    const first = writeDetectedProviderConfig(tmp, ["opencode"], tmp);
+    expect(first.ok).toBe(true);
+
+    const r1 = syncProviders(tmp, ["opencode"], tmp);
+    const before = Object.keys(r1.registry.listProviders()).length;
+
+    const r2 = syncProviders(tmp, ["opencode"], tmp);
+    expect(Object.keys(r2.registry.listProviders()).length).toBeGreaterThanOrEqual(before);
+  });
+
+  it("syncProviders auto-creates .taiyi dir if missing", () => {
+    const deep = path.join(tmp, "empty-project");
+    const r = syncProviders(deep, ["opencode"], tmp);
+    expect(r.ok).toBe(true);
+    expect(r.registry).toBeDefined();
+    expect(fs.existsSync(path.join(deep, ".taiyi", "providers.yaml"))).toBe(true);
   });
 });

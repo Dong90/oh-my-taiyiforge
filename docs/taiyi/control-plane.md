@@ -2,14 +2,14 @@
 
 ## 核心原则
 
-1. **模型决策在聊天里**：阶段 Skill、Superpowers、gstack 在对话中加载。
+1. **模型决策在聊天里**：阶段 Skill、Superpowers、ECC 在对话中加载。
 2. **引擎过关由 Agent 代跑 shell**：`scripts/taiyi-forge.sh`，用户不必手打 `npx taiyi`。
 3. **OpenCode 例外**：用 `taiyi_*` 插件工具，与 shell 等价。
 4. **证据回流**：`.taiyi/changes/<slug>/` 工件 + `state.json` + `.harness-checkpoints.json`。
 
 ## 禁止
 
-- 禁止未跑 `complete` 就声称阶段已完成。
+- 禁止未跑 `continue`（或等价 `complete` CLI）就声称阶段已完成。
 - 禁止 auto 模式下跳过 `harness-check`。
 - 禁止用引擎命令代替阶段 Skill 写 Markdown 工件（引擎只校验与推进）。
 
@@ -33,6 +33,23 @@
 | E2E | CI / 后台跑 `playwright` · `npm test` · probe | 聊天只写 TEST.md 证据，不灌日志 |
 
 详见 `prompts/inc/stage-protocol.md` · Skill `taiyi-compress`。
+
+## 工件契约（Zod + hbs + md）
+
+| 层 | 真源 | 职责 |
+|----|------|------|
+| **`{phase}.json`** | Zod schema（`src/schemas/`） | 语义、过关校验 |
+| **`src/templates/*.hbs`** | Handlebars | 版式；json → md 渲染 |
+| **`{PHASE}.md`** | 生成视图 | 人读、PR review；由引擎从 json 渲染 |
+| **Skill** | `skills/taiyi-*` | 流程、门禁、写作纪律（不重复贴大纲） |
+
+**默认主路径**
+
+1. `new` / `continue`：`seedPhaseArtifacts` → 写 `{phase}.json` 骨架 + hbs 渲染 `{PHASE}.md`（带 seed 标记）
+2. Agent **优先改 json**；改完后 `taiyi render [slug] [phase]` 或 `continue` 前引擎 `syncMarkdownFromJsonIfStale` 重渲染 md
+3. 人只改 md 时 → `autoSyncLocalEdits` / reverse-sync 拉回 json
+
+详见 [`artifact-contract.md`](./artifact-contract.md)。
 
 ## 探测与回归
 

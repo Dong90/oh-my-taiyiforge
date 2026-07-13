@@ -4,6 +4,9 @@
  * Groups changes into waves respecting dependency order and max concurrency.
  * Same-layer items split by maxConcurrent are labeled 1a/1b (not 1/2) since
  * they can run in parallel — no dependency between them.
+ *
+ * 环检测（best-effort）：如果拓扑排序无法推进（环依赖），剩余节点塞入
+ * 最终 wave 同时推入 `circularDeps` 字段。需要严格环检测请用 `task-dag.ts`。
  */
 
 export interface ChangeDep {
@@ -20,9 +23,19 @@ export interface WaveGroup {
   changes: ChangeDep[];
 }
 
-export function allocateWaves(changes: ChangeDep[], maxConcurrent: number = 5): WaveGroup[] {
+export interface WaveAllocationResult {
+  waves: WaveGroup[];
+  circularDeps: string[]; // 环依赖链（空数组 = 无环）
+}
+
+/** 环检测版：返回 waves + circularDeps */
+export function allocateWavesWithCycleCheck(
+  changes: ChangeDep[],
+  maxConcurrent: number = 5,
+): WaveAllocationResult {
   const waves: WaveGroup[] = [];
-  if (changes.length === 0) return waves;
+  const circularDeps: string[] = [];
+  if (changes.length === 0) return { waves, circularDeps };
   if (maxConcurrent < 1) maxConcurrent = 1;
 
   const slugSet = new Set(changes.map((c) => c.slug));
@@ -39,8 +52,15 @@ export function allocateWaves(changes: ChangeDep[], maxConcurrent: number = 5): 
     );
 
     if (ready.length === 0) {
-      const leftover = changes.filter((c) => remaining.has(c.slug));
-      waves.push({ layer, sub: "a", label: `Wave ${layer}`, changes: leftover });
+      for (const c of changes) {
+        if (remaining.has(c.slug)) {
+          const unsatisfied = c.dependsOn.filter((d) => slugSet.has(d) && !satisfied.has(d));
+          if (unsatisfied.length > 0) {
+            circularDeps.push(`${c.slug} → [${unsatisfied.join(", ")}]`);
+          }
+        }
+      }
+      waves.push({ layer, sub: "a", label: `Wave ${layer} (循环依赖)`, changes: changes.filter((c) => remaining.has(c.slug)) });
       break;
     }
 
@@ -61,5 +81,10 @@ export function allocateWaves(changes: ChangeDep[], maxConcurrent: number = 5): 
     }
   }
 
-  return waves;
+  return { waves, circularDeps };
+}
+
+/** 旧 API：保持向后兼容，只返回 waves（环会被塞进最后 wave） */
+export function allocateWaves(changes: ChangeDep[], maxConcurrent: number = 5): WaveGroup[] {
+  return allocateWavesWithCycleCheck(changes, maxConcurrent).waves;
 }

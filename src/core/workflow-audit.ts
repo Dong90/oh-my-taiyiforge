@@ -6,6 +6,7 @@ import { buildPhaseGuide } from "./phase-guide.js";
 import { buildHarnessPlan } from "./harness-runner.js";
 import { normalizeState } from "./normalize-state.js";
 import { deliveryGateEnabled, evaluateDeliveryGate } from "./gates/delivery-gate.js";
+import { countOpenCheckboxes } from "./gates/semantic-gate.js";
 import { getOpenspecStatus } from "../integrations/openspec.js";
 import { detectAheadArtifacts } from "./ahead-artifacts.js";
 import { resolveChangeDir } from "./taiyi-archive.js";
@@ -71,8 +72,7 @@ function changeCheckboxDrift(
   const changelogPath = path.join(changeDir, "CHANGELOG.md");
   if (!fs.existsSync(changePath)) return [];
 
-  const change = fs.readFileSync(changePath, "utf8");
-  const openBoxes = (change.match(/- \[ \]/g) ?? []).length;
+  const openBoxes = countOpenCheckboxes(changeDir);
   if (openBoxes === 0) return [];
 
   const out: AuditFinding[] = [];
@@ -81,11 +81,11 @@ function changeCheckboxDrift(
 
   if (integrationDone || preIntegrationAudit) {
     out.push({
-      severity: preIntegrationAudit || integrationDone ? "high" : "medium",
+      severity: "medium",
       code: preIntegrationAudit ? "ac.open-before-integration" : "ac.open-after-integration",
       message: preIntegrationAudit
-        ? `complete integration 前 CHANGE.md 仍有 ${openBoxes} 条 Success Criteria 未勾选`
-        : `integration 已完成但 CHANGE.md 仍有 ${openBoxes} 条 Success Criteria 未勾选`,
+        ? `[提示] complete integration 前 CHANGE.md 仍有 ${openBoxes} 条 Success Criteria 未勾选（可补勾选再 archive，本关不强制）`
+        : `[提示] integration 已完成但 CHANGE.md 仍有 ${openBoxes} 条 Success Criteria 未勾选（archive 前推荐补勾选）`,
     });
   } else if (earlyPhase) {
     out.push({
@@ -171,7 +171,69 @@ function deliveryFindings(
 export type AuditChangeOptions = {
   /** integration complete 前的预检：按 integration 已完成评估交付/勾选/OpenSpec */
   pretendIntegrationComplete?: boolean;
+  /** 强制重新审计（忽略 TTL 缓存） */
+  force?: boolean;
+  /** 缓存 TTL（毫秒），默认 30000 = 30s；设 0 禁用 */
+  cacheTtlMs?: number;
 };
+
+/** 缓存 layout: .taiyi/cache/audit/<slug>.json，含 expiresAt + report。TTL 失效下次自动重算。 */
+const DEFAULT_AUDIT_TTL_MS = 30_000;
+const AUDIT_CACHE_DIR = ".taiyi/cache/audit";
+
+interface AuditCacheEntry {
+  expiresAt: number;
+  mtimeMs: number;
+  report: ChangeAuditReport;
+}
+
+function readAuditCache(changeDir: string, slug: string, now: number, ttl: number): ChangeAuditReport | null {
+  if (ttl <= 0) return null;
+  const p = path.join(changeDir, AUDIT_CACHE_DIR, `${slug}.json`);
+  if (!fs.existsSync(p)) return null;
+  try {
+    const raw = JSON.parse(fs.readFileSync(p, "utf8")) as AuditCacheEntry;
+    if (typeof raw.expiresAt !== "number" || raw.expiresAt < now) return null;
+    if (typeof raw.mtimeMs !== "number") return null;
+    // 只在 mtime 未变时用缓存：state.json / 工件被改了就失效
+    const stateMtime = stateMtimeOf(changeDir);
+    if (stateMtime !== null && raw.mtimeMs < stateMtime) return null;
+    return raw.report;
+  } catch {
+    return null;
+  }
+}
+
+function writeAuditCache(changeDir: string, slug: string, report: ChangeAuditReport, now: number, ttl: number): void {
+  if (ttl <= 0) return;
+  try {
+    const dir = path.join(changeDir, AUDIT_CACHE_DIR);
+    fs.mkdirSync(dir, { recursive: true });
+    const stateMtime = stateMtimeOf(changeDir) ?? now;
+    const entry: AuditCacheEntry = { expiresAt: now + ttl, mtimeMs: stateMtime, report };
+    const p = path.join(dir, `${slug}.json`);
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const { safeWriteFileSync } = require("./file-writer.js") as typeof import("./file-writer.js");
+    safeWriteFileSync(p, JSON.stringify(entry, null, 2) + "\n", { skipRedact: true });
+  } catch {
+    /* cache write best-effort */
+  }
+}
+
+function stateMtimeOf(changeDir: string): number | null {
+  let max = 0;
+  for (const f of ["state.json", "change.json", "task.json", "design.json", "review.json"]) {
+    const p = path.join(changeDir, f);
+    if (!fs.existsSync(p)) continue;
+    try {
+      const m = fs.statSync(p).mtimeMs;
+      if (m > max) max = m;
+    } catch {
+      /* ignore */
+    }
+  }
+  return max > 0 ? max : null;
+}
 
 export function auditChange(
   workspaceDir: string,
@@ -182,6 +244,12 @@ export function auditChange(
   const changeDir = resolveChangeDir(taiyiRoot, slug) ?? path.join(taiyiRoot, "changes", slug);
   const raw = readRawState(changeDir);
   if (!raw) return null;
+
+  const cacheTtl = options?.cacheTtlMs ?? DEFAULT_AUDIT_TTL_MS;
+  if (!options?.force) {
+    const cached = readAuditCache(changeDir, slug, Date.now(), cacheTtl);
+    if (cached) return cached;
+  }
 
   const findings: AuditFinding[] = [...legacyStateFindings(raw)];
   const state = normalizeState(raw);
@@ -239,13 +307,15 @@ export function auditChange(
   );
 
   const hasHigh = findings.some((f) => f.severity === "high");
-  return {
+  const report: ChangeAuditReport = {
     slug,
     phase: guide.workflowCompleted ? "completed" : guide.currentPhase,
     workflowCompleted: guide.workflowCompleted,
     findings,
     ok: !hasHigh,
   };
+  if (!options?.force) writeAuditCache(changeDir, slug, report, Date.now(), cacheTtl);
+  return report;
 }
 
 export function auditWorkspace(
@@ -273,6 +343,15 @@ export function auditWorkspace(
     : listChanges(taiyiRoot).map((c) => c.slug);
 
   const changes: ChangeAuditReport[] = [];
+  if (slugs.length === 0) {
+    return {
+      ok: true,
+      workspaceDir,
+      taiyiRoot,
+      changes: [],
+      notes: [...notes, "无 .taiyi/changes/"],
+    };
+  }
   for (const slug of slugs) {
     const r = auditChange(workspaceDir, taiyiRoot, slug);
     if (r) changes.push(r);

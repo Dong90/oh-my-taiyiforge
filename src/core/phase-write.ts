@@ -23,7 +23,11 @@ export const PHASE_WRITE_HINTS: Record<PhaseId, PhaseWriteHint> = {
     auxiliary: ["taiyi-intel-scan"],
     external: [],
     slashExtras: ["/taiyi:explore"],
-    notes: ["Schema 驱动：executor.generateStageData(ChangeSchema) → persistAndRender"],
+    notes: [
+      "Schema 驱动 — Agent 须调用 executor.generateStageData(ChangeSchema) 生成 change.json",
+      "quality gate 要求 change.json 通过 Zod 校验，否则 complete 被拒",
+      "写完 CHANGE.md → 手写或调用 LLM 生成 change.json → continue",
+    ],
   },
   requirement: {
     superpowers: [],
@@ -34,68 +38,71 @@ export const PHASE_WRITE_HINTS: Record<PhaseId, PhaseWriteHint> = {
     notes: [
       "Schema 驱动：调用 executor.generateStageData(RequirementSchema) → persistAndRender 写 requirement.json + REQUIREMENT.md",
       "禁止手写 MD：数据真源是 requirement.json，MD 由 Handlebars 自动渲染",
+      "quality gate 要求 requirement.json 通过 Zod 校验",
     ],
   },
   design: {
     superpowers: [],
     superpowersOptional: [],
     auxiliary: ["taiyi-architect"],
-    external: ["/taiyi:gstack plan-eng-review"],
+    external: ["/taiyi:skill ecc architecture-audit"],
     slashExtras: ["/taiyi:diagram-pipeline"],
     notes: [
       "Schema 驱动：调用 executor.generateStageData(DesignSchema) → persistAndRender 写 design.json + DESIGN.md",
       "禁止手写 MD：数据真源是 design.json，MD 由 Handlebars 自动渲染",
+      "quality gate 要求 design.json 通过 Zod 校验",
+      "DESIGN.md 须含 ## Options 表格（≥2 方案）+ ## Decision（Chosen + Reason）",
     ],
   },
   "ui-design": {
     superpowers: [],
     superpowersOptional: [],
     auxiliary: ["taiyi-restyle"],
-    external: ["/taiyi:gstack plan-design-review"],
+    external: ["/taiyi:skill ecc web-design-guidelines"],
     slashExtras: [],
     notes: ["UI 契约 + 无障碍；无 UI 也须 ## Links 指向 DESIGN/REQUIREMENT"],
   },
   task: {
-    superpowers: ["writing-plans", "test-driven-development"],
-    superpowersOptional: ["executing-plans", "using-git-worktrees"],
+    superpowers: [],
+    superpowersOptional: ["using-git-worktrees"],
     auxiliary: ["taiyi-diagram-flow"],
-    external: [],
+    external: ["/taiyi:skill ecc planner", "/taiyi:skill ecc tdd-workflow", "/taiyi:skill ecc autonomous-loops"],
     slashExtras: ["/taiyi:tdd plan", "/taiyi:diagram-flow"],
     notes: ["独立可 PR 切片；Checklist 须含测试先行/RED/npm test"],
   },
   dev: {
-    superpowers: ["test-driven-development"],
-    superpowersOptional: [
-      "subagent-driven-development",
-      "dispatching-parallel-agents",
-      "systematic-debugging",
-    ],
+    superpowers: [],
+    superpowersOptional: ["using-git-worktrees"],
     auxiliary: [],
-    external: [],
+    external: ["/taiyi:skill ecc tdd-workflow", "/taiyi:skill ecc agent-introspection-debugging", "/taiyi:skill ecc autonomous-loops"],
     slashExtras: ["/taiyi:tdd dev", "/taiyi:apply", "/taiyi:ralph", "/taiyi:ultrawork"],
-    notes: ["TDD 红绿重构；完成须 .dev-complete（command + exitCode 0）"],
+    notes: [
+      "TDD 红绿重构；完成须 .dev-complete",
+      ".dev-complete 格式：第一行 `command: npx tsc --noEmit && npx vitest run`，第二行 `exitCode: 0`",
+      "缺少 command: 行或 exitCode: 0 → quality gate 被拒",
+    ],
   },
   test: {
-    superpowers: ["verification-before-completion"],
-    superpowersOptional: ["systematic-debugging"],
+    superpowers: [],
+    superpowersOptional: [],
     auxiliary: ["taiyi-evolve"],
-    external: ["/taiyi:e2e", "/taiyi:gstack qa", "/taiyi:ui-test"],
+    external: ["/taiyi:e2e", "/taiyi:ui-test", "/taiyi:skill ecc verification-loop"],
     slashExtras: ["/taiyi:apply"],
-    notes: ["TEST.md 须有真实运行证据表格"],
+    notes: ["TEST.md 须有真实运行证据表格；ECC verification-loop 提供证据检查"],
   },
   review: {
-    superpowers: ["requesting-code-review"],
+    superpowers: [],
     superpowersOptional: ["receiving-code-review"],
     auxiliary: ["taiyi-health"],
-    external: ["/taiyi:security", "/taiyi:gstack review"],
+    external: ["/taiyi:security", "/taiyi:skill ecc code-review"],
     slashExtras: ["/taiyi:review-loop", "/taiyi:health"],
     notes: ["Verdict 须 - [x] **Approve**（勿写 PASS 文本）；人工门"],
   },
   integration: {
-    superpowers: ["finishing-a-development-branch", "verification-before-completion"],
+    superpowers: [],
     superpowersOptional: [],
     auxiliary: [],
-    external: ["/taiyi:release"],
+    external: ["/taiyi:release", "/taiyi:skill ecc delivery-gate", "/taiyi:skill ecc verification-loop"],
     slashExtras: ["/taiyi:commit", "/taiyi:verify", "/taiyi:archive"],
     notes: ["CHANGELOG + 交付门（git commit + 干净工作区）"],
   },
@@ -231,7 +238,7 @@ export function runPhaseWriteGuide(
   lines.push(`  quality 就绪 → /taiyi:continue${requiresHumanGate(phase) ? ' --approver "名字"' : ""}`);
 
   if (phase === "dev") {
-    lines.push("  实现后: /taiyi:ralph → complete dev（或 test 阶段 continue）");
+    lines.push("  实现后: /taiyi:ralph → status → continue（dev；test 阶段同理）");
   }
 
   return {

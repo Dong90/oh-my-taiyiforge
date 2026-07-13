@@ -50,7 +50,7 @@ export function formatPhaseProgressLine(guide: PhaseGuide): string {
   }
   const { index, total } = profilePhaseOrdinal(guide.skippedPhases, guide.currentPhase);
   const impl = guide.currentPhase === "dev" || guide.currentPhase === "test";
-  const verb = impl ? "apply 或 complete" : "complete 过关";
+  const verb = impl ? "apply 或 continue" : "continue 过关";
   return `当前: ${guide.currentPhase}（${index}/${total}）| Skill: ${guide.skill} | 推进: ${verb}`;
 }
 
@@ -74,6 +74,9 @@ export function formatStatusCompact(guide: PhaseGuide): string {
     lines.push(`⚠ ${guide.earlyCodeWarning}`);
   } else if (guide.qualityHints.length && !guide.qualityReady) {
     lines.push(`hints: ${guide.qualityHints.slice(0, 2).join("; ")}`);
+  }
+  if (guide.blockedByWarnings?.length) {
+    lines.push(`⚠ blocked_by: ${guide.blockedByWarnings.join("; ")}`);
   }
   return lines.join("\n");
 }
@@ -132,7 +135,7 @@ export function formatStatusPlain(guide: PhaseGuide): string {
   lines.push(`系统建议: ${guide.nextAction}`);
   if (guide.nextSkill) lines.push(`过关后 Skill: ${guide.nextSkill}`);
   lines.push("");
-  lines.push("常用: status · complete · apply（dev/test）· review-loop（review 机器审查）");
+  lines.push("常用: status · write · continue · apply（dev/test）· review-loop（review 机器审查）");
   return lines.join("\n");
 }
 
@@ -196,7 +199,7 @@ export function formatGuidePlain(guide: PhaseGuide): string {
   }
   if (guide.harness?.hooks?.length) {
     lines.push("");
-    lines.push(guide.autoHarness ? "铁三角（auto 须必选打卡，可选见标注）:" : "铁三角推荐:");
+    lines.push(guide.autoHarness ? "双线 harness（auto 须必选打卡，可选见标注）:" : "双线 harness 推荐:");
     for (const h of guide.harness.hooks) {
       const opt = h.optional ? " (可选)" : "";
       lines.push(`  - ${h.tool}: ${h.skill ?? h.command ?? ""} (${h.when})${opt}`);
@@ -204,7 +207,7 @@ export function formatGuidePlain(guide: PhaseGuide): string {
   }
   if (guide.autoHarness) {
     lines.push("");
-    lines.push(`编排: complete 过关（或 taiyi-forge.sh harness ${guide.slug}）`);
+    lines.push(`编排: harness-check → continue 过关（或 taiyi-forge.sh harness ${guide.slug}）`);
   }
   lines.push("");
   lines.push(`→ ${guide.nextAction}`);
@@ -217,7 +220,7 @@ export function formatChangeListPlain(changes: ChangeSummary[]): string {
   return changes
     .map((c) => {
       const phase = c.workflowCompleted ? "completed" : c.workflowAborted ? "aborted" : c.currentPhase;
-      const tag = c.archived ? "\t[archived]" : "";
+      const tag = c.archived ? "\t[archived]" : c.isSeed ? "\t[seed]" : "";
       return `${c.slug}\t${phase}\t${c.completed}/${c.total}\t${c.profile}${c.complexity ? `\t${c.complexity}` : ""}${tag}`;
     })
     .join("\n");

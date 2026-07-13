@@ -119,7 +119,7 @@ export function buildModeStopFollowup(active, taiyiRoot) {
 
   const lines = {
     autopilot: `[AUTOPILOT] ${workflowIncompleteLabel(taiyiRoot, slug)}。代跑: ${cmd}`,
-    ultraqa: `[ULTRAQA] 继续 QA: ${cmd} · /taiyi:gstack qa`,
+    ultraqa: `[ULTRAQA] 继续 QA: ${cmd} · /taiyi:test qa`,
     ultrawork: `[ULTRAWORK] 切片未完成。${cmd}`,
     team: `[TEAM] 泳道未完成。${cmd}`,
   };

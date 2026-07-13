@@ -5,7 +5,7 @@
 |-------|-------|---------|
 | unit | | |
 | integration | | |
-| e2e | | gstack qa |
+| e2e | | playwright |
 
 ## Coverage
 | AC (REQ) | Evidence |

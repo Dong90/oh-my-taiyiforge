@@ -1,0 +1,10 @@
+{
+  "slug": "invalid-e2e-change",
+  "title": "E2E Invalid Change",
+  "profile": "full",
+  "workflowStatus": "in_progress",
+  "currentPhase": "change",
+  "completedPhases": [],
+  "skippedPhases": [],
+  "gates": {}
+}

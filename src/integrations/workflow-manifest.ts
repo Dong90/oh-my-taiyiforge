@@ -7,15 +7,15 @@ import type { HarnessHook } from "./harness-hooks.js";
 export type SuperpowersCatalogEntry = { when: string };
 
 export type PhaseSkillMap = {
-  order?: number;
   taiyi_skill: string;
   artifact: string;
-  kind?: string;
-  requires?: string[];
   superpowers: string[];
   superpowers_optional: string[];
   external_optional: string[];
-  auxiliary: string[];
+  capabilities?: {
+    required: string[];
+    optional: string[];
+  };
   slash: string[];
   human_gate?: boolean;
   engine_gate?: string;
@@ -30,23 +30,35 @@ export type AuxiliarySkillDef = {
   when?: string;
 };
 
-export type WorkflowGates = {
-  human_phases: PhaseId[];
-  delivery_phase: PhaseId;
-  quality_dimensions: string[];
-  dev_complete?: string;
-  integration?: string;
-};
-
 export type WorkflowManifest = {
-  profiles: Record<string, { skip_phases: PhaseId[] }>;
-  gates: WorkflowGates;
   superpowers_catalog: Record<string, SuperpowersCatalogEntry>;
   auxiliary_skills: AuxiliarySkillDef[];
   phases: Record<string, PhaseSkillMap>;
 };
 
 let cached: WorkflowManifest | null = null;
+let cachedFilePath: string | null = null;
+
+/** 当前 manifest 文件路径（可被 TAIYI_WORKFLOW_MANIFEST 覆盖） */
+export function currentManifestPath(): string {
+  const pkgRoot = resolvePackageRoot(import.meta.url);
+  const explicit = process.env.TAIYI_WORKFLOW_MANIFEST;
+  if (explicit && explicit.length > 0) {
+    if (explicit === "default") {
+      return path.join(pkgRoot, "docs", "taiyi", "workflow-manifest.yaml");
+    }
+    if (!explicit.includes("/") && !explicit.endsWith(".yaml")) {
+      return path.join(pkgRoot, "docs", "taiyi", `workflow-manifest-${explicit}.yaml`);
+    }
+    return path.isAbsolute(explicit)
+      ? explicit
+      : path.join(pkgRoot, "docs", "taiyi", explicit);
+  }
+  return path.join(pkgRoot, "docs", "taiyi", "workflow-manifest.yaml");
+}
+
+/** 列出可用的 manifest preset（不含扩展名） */
+export const MANIFEST_PRESETS = ["default", "optimized"] as const;
 
 function parseArray(raw: string): string[] {
   return raw
@@ -61,43 +73,40 @@ function parseBool(v: string | undefined): boolean | undefined {
   return undefined;
 }
 
-function loadManifestFile(): WorkflowManifest {
-  if (cached) return cached;
+/** 跳过已废弃、仅文档用途的顶栏 section（旧 manifest 兼容） */
+function isSkippedTopLevelSection(line: string): boolean {
+  return (
+    line.startsWith("version:") ||
+    line.startsWith("description:") ||
+    line.startsWith("profiles:") ||
+    line.startsWith("gates:") ||
+    line.startsWith("orchestrator:") ||
+    line.startsWith("external_skills:") ||
+    line.startsWith("token_compress:") ||
+    line.startsWith("archive:")
+  );
+}
 
-  const pkgRoot = resolvePackageRoot(import.meta.url);
-  const file = path.join(pkgRoot, "docs", "taiyi", "workflow-manifest.yaml");
+function loadManifestFile(): WorkflowManifest {
+  if (cached && cachedFilePath === currentManifestPath()) return cached;
+
+  const file = currentManifestPath();
   const empty: WorkflowManifest = {
-    profiles: {},
-    gates: {
-      human_phases: ["change", "design", "review"],
-      delivery_phase: "integration",
-      quality_dimensions: [],
-    },
     superpowers_catalog: {},
     auxiliary_skills: [],
     phases: {},
   };
   if (!fs.existsSync(file)) {
     cached = empty;
+    cachedFilePath = file;
     return cached;
   }
 
-  const profiles: WorkflowManifest["profiles"] = {};
-  const gates: Partial<WorkflowGates> = {};
   const superpowers_catalog: Record<string, SuperpowersCatalogEntry> = {};
   const auxiliary_skills: AuxiliarySkillDef[] = [];
   const phases: Record<string, PhaseSkillMap> = {};
 
-  let section:
-    | "none"
-    | "profiles"
-    | "gates"
-    | "superpowers"
-    | "auxiliary"
-    | "phases"
-    | "harness"
-    | "archive" = "none";
-  let profileId: string | null = null;
+  let section: "none" | "superpowers" | "auxiliary" | "phases" | "harness" | "skip" = "none";
   let spId: string | null = null;
   let spWhen = "";
   let phaseId: string | null = null;
@@ -117,15 +126,12 @@ function loadManifestFile(): WorkflowManifest {
     flushHarness();
     if (phaseId && phaseDraft.taiyi_skill) {
       phases[phaseId] = {
-        order: phaseDraft.order,
         taiyi_skill: phaseDraft.taiyi_skill,
         artifact: phaseDraft.artifact ?? "",
-        kind: phaseDraft.kind,
-        requires: phaseDraft.requires ?? [],
         superpowers: phaseDraft.superpowers ?? [],
         superpowers_optional: phaseDraft.superpowers_optional ?? [],
         external_optional: phaseDraft.external_optional ?? [],
-        auxiliary: phaseDraft.auxiliary ?? [],
+        capabilities: phaseDraft.capabilities,
         slash: phaseDraft.slash ?? [],
         human_gate: phaseDraft.human_gate,
         engine_gate: phaseDraft.engine_gate,
@@ -155,18 +161,18 @@ function loadManifestFile(): WorkflowManifest {
   };
 
   for (const line of fs.readFileSync(file, "utf8").split("\n")) {
-    if (line === "profiles:") {
+    if (line.startsWith("#")) continue;
+
+    if (isSkippedTopLevelSection(line)) {
+      if (section === "harness") flushHarness();
+      section = "skip";
+      continue;
+    }
+
+    if (line === "superpowers_catalog:") {
       flushSp();
       flushPhase();
       flushAux();
-      section = "profiles";
-      continue;
-    }
-    if (line === "gates:") {
-      section = "gates";
-      continue;
-    }
-    if (line === "superpowers_catalog:") {
       section = "superpowers";
       continue;
     }
@@ -181,49 +187,10 @@ function loadManifestFile(): WorkflowManifest {
       section = "phases";
       continue;
     }
-    if (line === "archive:") {
-      flushPhase();
-      section = "archive";
-      continue;
-    }
-    if (
-      line.startsWith("external_skills:") ||
-      line.startsWith("token_compress:") ||
-      line.startsWith("orchestrator:") ||
-      line.startsWith("description:")
-    ) {
-      if (section === "harness") flushHarness();
-      section = "none";
-      continue;
-    }
 
-    if (section === "profiles") {
-      const m = line.match(/^  ([a-z]+):$/);
-      if (m) {
-        profileId = m[1];
-        profiles[profileId] = { skip_phases: [] };
-        continue;
-      }
-      const skip = line.match(/^    skip_phases:\s*\[(.+)\]$/)?.[1];
-      if (skip && profileId) profiles[profileId].skip_phases = parseArray(skip) as PhaseId[];
-      continue;
-    }
-
-    if (section === "gates") {
-      const arr = line.match(/^  ([a-z_]+):\s*\[(.+)\]$/)?.[2];
-      if (arr) {
-        const key = line.match(/^  ([a-z_]+):/)?.[1];
-        if (key === "human_phases") gates.human_phases = parseArray(arr) as PhaseId[];
-        if (key === "quality_dimensions") gates.quality_dimensions = parseArray(arr);
-      }
-      const scalar = line.match(/^  ([a-z_]+):\s*(.+)$/);
-      if (scalar) {
-        const [, k, v] = scalar;
-        if (k === "delivery_phase") gates.delivery_phase = v as PhaseId;
-        if (k === "dev_complete") gates.dev_complete = v;
-        if (k === "integration") gates.integration = v;
-      }
-      continue;
+    if (section === "skip") {
+      if (line.match(/^[a-z_]+:/) && !line.startsWith(" ")) section = "none";
+      else continue;
     }
 
     if (section === "superpowers") {
@@ -267,20 +234,27 @@ function loadManifestFile(): WorkflowManifest {
         section = "harness";
         continue;
       }
+      if (line === "    capabilities:") {
+        phaseDraft.capabilities = { required: [], optional: [] };
+        continue;
+      }
       const arrMatch = line.match(
-        /^    (superpowers|superpowers_optional|external_optional|auxiliary|slash|requires):\s*\[(.+)\]$/,
+        /^    (superpowers|superpowers_optional|external_optional|slash):\s*\[(.+)\]$/,
       );
       if (arrMatch && phaseId) {
         const key = arrMatch[1] as keyof PhaseSkillMap;
         phaseDraft[key] = parseArray(arrMatch[2]) as never;
       }
+      const capMatch = line.match(/^\s{6}(required|optional):\s*\[(.+)\]$/);
+      if (capMatch && phaseDraft.capabilities) {
+        const capKey = capMatch[1] as "required" | "optional";
+        phaseDraft.capabilities[capKey] = parseArray(capMatch[2]);
+      }
       const scalar = line.match(/^    ([a-z_]+):\s*(.+)$/);
       if (scalar && phaseId && section === "phases") {
         const [, k, v] = scalar;
-        if (k === "order") phaseDraft.order = Number(v);
         if (k === "taiyi_skill") phaseDraft.taiyi_skill = v;
         if (k === "artifact") phaseDraft.artifact = v;
-        if (k === "kind") phaseDraft.kind = v;
         if (k === "engine_gate") phaseDraft.engine_gate = v;
         if (k === "human_gate") phaseDraft.human_gate = parseBool(v);
       }
@@ -318,18 +292,11 @@ function loadManifestFile(): WorkflowManifest {
   flushPhase();
 
   cached = {
-    profiles,
-    gates: {
-      human_phases: gates.human_phases ?? ["change", "design", "review"],
-      delivery_phase: gates.delivery_phase ?? "integration",
-      quality_dimensions: gates.quality_dimensions ?? [],
-      dev_complete: gates.dev_complete,
-      integration: gates.integration,
-    },
     superpowers_catalog,
     auxiliary_skills,
     phases,
   };
+  cachedFilePath = file;
   return cached;
 }
 
@@ -339,6 +306,7 @@ export function getWorkflowManifest(): WorkflowManifest {
 
 export function resetWorkflowManifestCache(): void {
   cached = null;
+  cachedFilePath = null;
 }
 
 export function getPhaseFromManifest(phase: PhaseId): PhaseSkillMap | null {
@@ -348,6 +316,13 @@ export function getPhaseFromManifest(phase: PhaseId): PhaseSkillMap | null {
 
 export function getHarnessHooksFromManifest(phase: PhaseId): HarnessHook[] {
   return getPhaseFromManifest(phase)?.harness ?? [];
+}
+
+/** 某阶段关联的全部辅助 Skill（含带 when / required_when 的项，用于展示） */
+export function auxiliarySkillIdsForPhase(phase: PhaseId): string[] {
+  return loadManifestFile()
+    .auxiliary_skills.filter((a) => a.phases.includes(phase))
+    .map((a) => a.id);
 }
 
 export function auxiliaryForPhaseFromManifest(phase: PhaseId): string[] {
@@ -377,36 +352,40 @@ export function formatPhaseWorkflowPlain(phase: PhaseId): string | null {
   if (!map) return null;
 
   const lines: string[] = [];
-  if (map.superpowers.length) {
-    lines.push(`Superpowers（建议）: ${map.superpowers.join(", ")}`);
+  lines.push(`Taiyi Skill: ${map.taiyi_skill} → ${map.artifact}`);
+
+  if (map.capabilities) {
+    if (map.capabilities.required.length) {
+      lines.push(`引擎能力（必选）: ${map.capabilities.required.map((c) => `cap/${c}`).join(", ")}`);
+    }
+    if (map.capabilities.optional.length) {
+      lines.push(`引擎能力（可选）: ${map.capabilities.optional.map((c) => `cap/${c}`).join(", ")}`);
+    }
   }
-  if (map.superpowers_optional.length) {
-    lines.push(`Superpowers（可选）: ${map.superpowers_optional.join(", ")}`);
-  }
-  if (map.external_optional.length) {
-    lines.push(`外部 Skill/CLI（可选）: ${map.external_optional.join(", ")}`);
-  }
-  if (map.auxiliary.length) {
-    lines.push(`辅助 Skill: ${map.auxiliary.join(", ")}`);
-  }
-  const requiredHooks = map.harness.filter((h) => !h.optional);
-  const optionalHooks = map.harness.filter((h) => h.optional);
-  if (requiredHooks.length) {
+
+  const agentHooks = map.harness.filter((h) => h.skill && h.tool !== "openspec");
+  const specialCli = map.harness.filter((h) => h.command && !h.skill);
+  if (agentHooks.length) {
     lines.push(
-      `harness 必选: ${requiredHooks.map((h) => (h.skill ? `${h.tool}/${h.skill}` : h.command ? `${h.tool}:${h.command.split(/\s+/).slice(0, 2).join(" ")}` : h.tool)).join(", ")}`,
+      `Agent harness: ${agentHooks.map((h) => `${h.tool}/${h.skill}${h.optional ? "?" : ""}`).join(", ")}`,
     );
   }
-  if (optionalHooks.length) {
+  if (specialCli.length) {
     lines.push(
-      `harness 可选: ${optionalHooks.map((h) => (h.skill ? `${h.tool}/${h.skill}` : h.tool)).join(", ")}`,
+      `特例 CLI: ${specialCli.map((h) => h.command?.split(/\s+/).slice(0, 3).join(" ")).join(", ")}`,
     );
+  }
+
+  const auxIds = auxiliarySkillIdsForPhase(phase);
+  if (auxIds.length) {
+    lines.push(`辅助 Skill: ${auxIds.join(", ")}`);
   }
   if (map.slash.length) {
-    lines.push(`斜杠命令: ${map.slash.join(" · ")}`);
+    lines.push(`斜杠: ${map.slash.join(" · ")}`);
   }
   if (map.human_gate) lines.push(`人工门: 须 --approver`);
   if (map.engine_gate) lines.push(`引擎门禁: ${map.engine_gate}`);
-  lines.push(`Taiyi Skill: ${map.taiyi_skill} → ${map.artifact}`);
+  lines.push(`capability 解析见 docs/taiyi/invoke-routing.md`);
   return lines.join("\n");
 }
 

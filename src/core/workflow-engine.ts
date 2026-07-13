@@ -1,6 +1,11 @@
 import fs from "node:fs";
 import path from "node:path";
-import type { ChangeProfile, ChangeState, GateInput, PhaseId, QualityScores } from "./types.js";
+import type { ChangeProfile, ChangeState, GateFixHint, GateInput, PhaseId, QualityScores } from "./types.js";
+import { checkFrSliceCoverage } from "./fr-coverage-check.js";
+import { checkBlockedByDeps } from "./blocked-by-check.js";
+import { listChanges } from "./list-changes.js";
+import { scanTestFilesForAcCoverage } from "./ac-auto-coverage.js";
+import { checkExportCallers } from "./export-caller-check.js";
 import { clearRuntimeForSlug } from "./runtime/orphan-runtime.js";
 import { evaluateHumanGate } from "./gates/human-gate.js";
 import { rejectAutomatedHumanApproval, requiresHumanGate } from "./gates/human-gate-config.js";
@@ -28,6 +33,8 @@ import {
   ZOD_PHASES,
 } from "./artifact-validator.js";
 import { autoSyncLocalEdits } from "./reverse-sync.js";
+import { resolveHbsTemplatesDir } from "./package-root.js";
+import { syncMarkdownFromJsonIfStale } from "./artifact-sync.js";
 import {
   enforceAutoHarnessBeforeComplete,
   runPostCompleteShellHooks,
@@ -36,10 +43,14 @@ import { enforceTokenBudgetBeforeComplete } from "./token-runner.js";
 import { expectedPhaseCount, isChangeAborted, isWorkflowCompleted } from "./change-status.js";
 import { normalizeState } from "./normalize-state.js";
 import { deliveryGateEnabled, evaluateDeliveryGate, evaluateProductionReadiness } from "./gates/delivery-gate.js";
+import { semanticGateEnabled, runSemanticVerify } from "./gates/semantic-gate.js";
 import { auditChange, crossChangeFindings } from "./workflow-audit.js";
+import { auditDesignApproach, formatDesignApproachAudit, type DesignApproachResult } from "./design-approach-check.js";
 import { auditTaskPlan, formatPlanAudit, type PlanAuditResult } from "./plan-audit.js";
 import { resolveArchTemplateForChange } from "./profile.js";
 import { evaluateArchitecture } from "./review-arch-check.js";
+import { evaluateReviewLoopStatus, scoreThresholds } from "./review-gate.js";
+import { readReviewLoopState, defaultReviewLoopMaxRounds } from "./review-loop-state.js";
 import { syncRootChangelog } from "./sync-root-changelog.js";
 import { syncChangeState } from "./state-sync.js";
 import {
@@ -50,6 +61,11 @@ import { getLogger } from "./logger.js";
 import { ChangeLock } from "./change-lock.js";
 import { logActivity } from "./activity-log.js";
 import { appendPhaseToContext, generateGraphPhaseContext } from "./phase-context.js";
+import {
+  checkScopeBoundary,
+  checkArtifactQuality,
+  preFlightCheck,
+} from "./boundary-checker.js";
 
 export type InitChangeOptions = {
   title?: string;
@@ -58,6 +74,8 @@ export type InitChangeOptions = {
   /** 较长的变更背景描述（motivation 的第二 fallback） */
   description?: string;
   templatesDir?: string;
+  /** `null` disables canonical json+hbs seed (legacy .md only). */
+  hbsTemplatesDir?: string | null;
   profile?: ChangeProfile;
   strictDev?: boolean;
   autoHarness?: boolean;
@@ -91,6 +109,10 @@ export class WorkflowEngine {
     private readonly templatesDir?: string,
   ) {}
 
+  /** AI-driven auto-fix: called when rule-based fixes fail */
+  private aiAutoFixFn?: (ctx: Record<string, any>) => Promise<Record<string, string>>;
+  setAiAutoFix(fn: (ctx: Record<string, any>) => Promise<Record<string, string>>) { this.aiAutoFixFn = fn; }
+
   private changesDir(): string {
     return path.join(this.workspaceRoot, "changes");
   }
@@ -111,6 +133,11 @@ export class WorkflowEngine {
 
   initChange(slug: string, options?: InitChangeOptions): ChangeState & { seeded: string[] } {
     assertValidSlug(slug);
+    const MAX_SEEDS = Number(process.env.TAIYI_MAX_SEEDS ?? "10");
+    if (!options?.force && process.env.TAIYI_SEED_LIMIT !== "0") {
+      const existing = listChanges(this.taiyiRoot, { includeAll: true });
+      if (existing.filter(x => x.isSeed).length >= MAX_SEEDS) throw new Error(`Too many seeds (>=${MAX_SEEDS}). Cancel stale or use --force.`);
+    }
     const dir = this.changeDir(slug);
     const existing = this.statePath(slug);
     if (fs.existsSync(existing) && !options?.force) {
@@ -135,7 +162,7 @@ export class WorkflowEngine {
             tech_stack_preferences: options?.tech_stack_preferences,
             code_style: options?.code_style,
             module_manifest: options?.module_manifest,
-          })
+          }, { hbsTemplatesDir: options?.hbsTemplatesDir })
         : [];
 
     let initialPhase: PhaseId = "change";
@@ -222,9 +249,10 @@ export class WorkflowEngine {
 
       const incomingVersion = state.version ?? 0;
       if (incomingVersion > 0 && incomingVersion < existingVersion) {
-        process.stderr.write(
-          `[workflow-engine] stale state version for ${state.slug}: ` +
-          `incoming ${incomingVersion} < disk ${existingVersion}, auto-resolving\n`,
+        throw new Error(
+          `stale state version for ${state.slug}: ` +
+          `incoming ${incomingVersion} < disk ${existingVersion}. ` +
+          `Please re-read state and retry.`,
         );
       }
 
@@ -317,14 +345,28 @@ export class WorkflowEngine {
     let qualityScores: QualityScores = { ...qualityGateScores };
     let qualityHints: string[] | undefined;
 
-    // ── 反向同步：本地上传人类 MD 修改 ──
-    if (!options?.skipArtifactValidation && ZOD_PHASES.includes(phaseId) && this.templatesDir) {
-      const candidates = [
-        this.templatesDir ? path.join(path.dirname(this.templatesDir), "src", "templates") : null,
-        path.join(this.workspaceRoot, "..", "src", "templates"),
-      ].filter(Boolean) as string[];
-      const hbsTemplatesDir = candidates.find(d => fs.existsSync(d));
-      if (hbsTemplatesDir) {
+    // ── JSON → MD：json 新于 md 时用 hbs 重渲染视图 ──
+    if (!options?.skipArtifactValidation && ZOD_PHASES.includes(phaseId)) {
+      const hbsTemplatesDir = resolveHbsTemplatesDir(import.meta.url);
+      if (fs.existsSync(path.join(hbsTemplatesDir, `${phaseId}.hbs`))) {
+        const syncMd = syncMarkdownFromJsonIfStale(
+          phaseId,
+          changeDir,
+          hbsTemplatesDir,
+          { slug },
+        );
+        if (syncMd.rendered) {
+          qualityHints = (qualityHints ?? []).concat(
+            `⚡ ${phaseId}.json → ${getPhase(phaseId).artifact} 已从 schema 重渲染`,
+          );
+        }
+      }
+    }
+
+    // ── 反向同步：人类改 MD 后拉回 JSON ──
+    if (!options?.skipArtifactValidation && ZOD_PHASES.includes(phaseId)) {
+      const hbsTemplatesDir = resolveHbsTemplatesDir(import.meta.url);
+      if (fs.existsSync(hbsTemplatesDir)) {
         const syncResult = autoSyncLocalEdits(phaseId, this.changeDir(slug), hbsTemplatesDir);
         if (syncResult.needsLlm) {
           qualityHints = (qualityHints ?? []).concat(syncResult.message);
@@ -361,13 +403,24 @@ export class WorkflowEngine {
     }
 
     if (process.env.TAIYI_SKIP_QUALITY_GATE !== "1") {
-      const isLowComplexity = workingState.complexity?.level === "low";
-      const isHumanGated = requiresHumanGate(phaseId);
       const quality = evaluateQualityGate(qualityScores);
-      const qualityStrict = !isLowComplexity || isHumanGated || phaseId === "integration";
-      if (!quality.passed && qualityStrict) {
-        const hintText = qualityHints?.length ? ` — ${qualityHints.join("; ")}` : "";
-        return { ok: false, error: `Quality gate failed: ${quality.failed.join(", ")}${hintText}`, qualityHints };
+      if (!quality.passed) {
+        const isLowComplexity = workingState.complexity?.level === "low" || !workingState.complexity;
+        const HUMAN_GATED_PHASES = new Set(["change", "design", "review"]);
+        const isHumanGated = HUMAN_GATED_PHASES.has(phaseId);
+        if (isLowComplexity && !isHumanGated && phaseId !== "integration") {
+          // Low complexity: still require basic dimensions (completeness, consistency)
+          const basicFailed = quality.failed.filter(
+            (d) => d === "completeness" || d === "consistency",
+          );
+          if (basicFailed.length > 0) {
+            const hintText = qualityHints?.length ? ` — ${qualityHints.join("; ")}` : "";
+            return { ok: false, error: `Quality gate failed (basic): ${basicFailed.join(", ")}${hintText}`, qualityHints };
+          }
+        } else {
+          const hintText = qualityHints?.length ? ` — ${qualityHints.join("; ")}` : "";
+          return { ok: false, error: `Quality gate failed: ${quality.failed.join(", ")}${hintText}`, qualityHints };
+        }
       }
     }
 
@@ -385,7 +438,7 @@ export class WorkflowEngine {
       /** 测试/E2E 批量预写工件时跳过「超前阶段」拦截 */
       skipStepOrderCheck?: boolean;
     },
-  ): { ok: boolean; error?: string; qualityHints?: string[] } {
+  ): { ok: boolean; error?: string; qualityHints?: string[]; fixHints?: GateFixHint[] } {
     const slugCheck = validateSlug(slug);
     if (!slugCheck.ok) return { ok: false, error: slugCheck.error };
     const state = this.getState(slug);
@@ -423,6 +476,7 @@ export class WorkflowEngine {
     }
 
     const changeDir = this.changeDir(slug);
+    const workspaceDir = path.dirname(this.workspaceRoot);
     const sync = syncChangeState(changeDir, state);
     if (sync.changed) {
       this.writeState(sync.state);
@@ -434,6 +488,15 @@ export class WorkflowEngine {
       };
     }
     const workingState = { ...sync.state };
+
+    // 禁止 admin 过人审门（change/design/review）
+    const humanGated = new Set(["change", "design", "review"]);
+    if (humanGated.has(phaseId) && gates.human?.approver?.toLowerCase() === "admin") {
+      return {
+        ok: false,
+        error: `[Admin Block] 禁止使用 "admin" 作为审批人。${phaseId} 阶段须由真实人审批。\n请使用 --approver "你的名字" 并确认工件内容已仔细审查。`,
+      };
+    }
 
     if (
       phaseId === "review" &&
@@ -456,14 +519,149 @@ export class WorkflowEngine {
       }
     }
 
-    const workspaceDir = path.dirname(this.workspaceRoot);
+    // Review score gate: block completion if score thresholds not met
+    if (phaseId === "review") {
+      const ef = checkExportCallers(workspaceDir);
+      if (ef.length > 0 && ef.some(f => f.severity === "critical")) return { ok: false, error: "[Export Gate] " + ef.filter(f=>f.severity==="critical").length + " exports with 0 callers" };
+      const thresholds = scoreThresholds();
+      if (thresholds.enforce && !options?.skipArtifactValidation) {
+        // 0. 检查上游所有阶段工件完整性
+        const upstreamPhases = listPhases().filter((p: { order: number }) => p.order < 8);
+        const gaps: string[] = [];
+        for (const ph of upstreamPhases) {
+          if (workingState.skippedPhases.includes(ph.id)) continue;
+          const ap = ph.kind === "code"
+            ? path.join(changeDir, ".dev-complete")
+            : path.join(changeDir, ph.artifact);
+          if (!fs.existsSync(ap)) {
+            gaps.push(`  - ${ph.artifact} 缺失（${ph.id} 阶段）`);
+            continue;
+          }
+          const content = fs.readFileSync(ap, "utf8");
+          if (content.includes("<!-- taiyi:seed-template -->")) {
+            gaps.push(`  - ${ph.artifact} 仍为 seed 模板（${ph.id} 阶段未填写）`);
+          }
+          if (/请填写|待补充|待填写|待决策/.test(content)) {
+            gaps.push(`  - ${ph.artifact} 含占位符（${ph.id} 阶段未完善）`);
+          }
+        }
+        if (gaps.length > 0) {
+          return {
+            ok: false,
+            error: `[Upstream Gate] 上游阶段工件不完整，禁止进入 review:\n${gaps.join("\n")}\n\n请回退补全上述阶段工件后再 review。`,
+          };
+        }
+
+        // 未启动 review-loop 时跳过分数和轮次门禁（向后兼容）
+        const loopStateFile = path.join(changeDir, ".review-loop-state.json");
+        const skipReviewLoopGates = !fs.existsSync(loopStateFile);
+
+        // 检查 TEST.md 是否有真实测试文件支撑
+        if (!skipReviewLoopGates) {
+        const testMdPath = path.join(changeDir, "TEST.md");
+        if (fs.existsSync(testMdPath)) {
+          const testMd = fs.readFileSync(testMdPath, "utf8");
+          if (testMd.includes("build passes") && !testMd.includes(".test.ts")) {
+            return {
+              ok: false,
+              error: "[TEST Gate] TEST.md 只写了 'build passes' 但未引用任何 .test.ts 文件。请补充真实测试证据（文件名 + 测试结果），而非仅声明构建通过。",
+            };
+          }
+        }
+
+        const reviewPath = path.join(changeDir, "REVIEW.md");
+        if (fs.existsSync(reviewPath)) {
+          const reviewContent = fs.readFileSync(reviewPath, "utf8");
+          const loopStatus = evaluateReviewLoopStatus(reviewContent);
+          if (!loopStatus.canStop) {
+            const blockedDims: string[] = [];
+            if ((loopStatus.codeScore ?? 0) > 0 && (loopStatus.codeScore ?? 0) < thresholds.minCodeScore)
+              blockedDims.push(`代码 ${loopStatus.codeScore}/${thresholds.minCodeScore}`);
+            if ((loopStatus.docScore ?? 0) > 0 && (loopStatus.docScore ?? 0) < thresholds.minDocScore)
+              blockedDims.push(`文档 ${loopStatus.docScore}/${thresholds.minDocScore}`);
+            if ((loopStatus.testScore ?? 0) > 0 && (loopStatus.testScore ?? 0) < thresholds.minTestScore)
+              blockedDims.push(`测试 ${loopStatus.testScore}/${thresholds.minTestScore}`);
+            if ((loopStatus.overallScore ?? 0) > 0 && (loopStatus.overallScore ?? 0) < thresholds.minOverallScore)
+              blockedDims.push(`总评 ${loopStatus.overallScore}/${thresholds.minOverallScore}`);
+            return {
+              ok: false,
+              error: `[Score Gate] 分数不达标，禁止 complete review:\n${blockedDims.map(d => `  - ${d}`).join("\n")}\n\n请运行 /taiyi:review-loop 执行修复任务，达标后再 complete。\n（设 TAIYI_REVIEW_ENFORCE_SCORES=0 关闭此门禁）`,
+            };
+          }
+        }
+
+        // Check that all 5 rounds have been completed
+        const loopState = readReviewLoopState(changeDir);
+        const maxRounds = loopState?.maxRounds ?? defaultReviewLoopMaxRounds();
+        const completed = loopState?.completedRounds ?? [];
+        if (completed.length < maxRounds) {
+          const missing = Array.from({ length: maxRounds }, (_, i) => i + 1).filter(r => !completed.includes(r));
+          const roundNames: Record<number, string> = { 1: "安全审查", 2: "性能审查", 3: "边界审查", 4: "可维护性审查", 5: "终审" };
+          return {
+            ok: false,
+            error: `[Round Gate] 还差 ${maxRounds - completed.length} 轮未完成:\n${missing.map(r => `  - R${r}: ${roundNames[r] ?? '未知'}`).join("\n")}\n\n已通过: ${completed.length > 0 ? completed.map(r => `R${r}`).join(", ") : "无"}\n请继续运行 /taiyi:review-loop 直到 ${maxRounds} 轮全部完成。\n（设 TAIYI_REVIEW_ENFORCE_SCORES=0 关闭此门禁）`,
+          };
+        }
+        }
+      }
+    }
 
     const earlyCode = detectEarlyCodeChanges(workspaceDir, phaseId);
     if (earlyCode && earlyCodeBlockOnContinue()) {
       return { ok: false, error: earlyCode.message };
     }
 
+    if (phaseId === "requirement" && !options?.skipArtifactValidation) {
+      const bb = checkBlockedByDeps(changeDir, this.taiyiRoot);
+      if (bb.unresolved.length > 0) return { ok: false, fixHints: [{ file: "requirement.json", field: "blocked_by", action: "Remove or fix blocked_by" }], error: `[BlockedBy Gate] ` + bb.warnings.join("; ") };
+      if (bb.pending.length > 0) this.log.warn("blocked_by pending: " + bb.warnings.join("; "));
+    }
+
+    if (phaseId === "ui-design" && !options?.skipArtifactValidation) {
+      const uip = path.join(changeDir, "ui-design.json");
+      if (fs.existsSync(uip)) try {
+        const ui = JSON.parse(fs.readFileSync(uip, "utf8"));
+        if (!ui.is_cli_only) {
+          if (((ui.states as any[]) ?? []).length < 3) return { ok: false, fixHints: [{ file: "ui-design.json", field: "states", action: "Add >=3 states" }], error: "[UI Gate] states need >=3" };
+          if (((ui.accessibility as string[]) ?? []).length < 1) return { ok: false, fixHints: [{ file: "ui-design.json", field: "accessibility", action: "Add >=1 WCAG item" }], error: "[UI Gate] a11y need >=1" };
+        }
+      } catch {}
+    }
+
+    if (phaseId === "design" && !options?.skipArtifactValidation) {
+      const designMdPath = path.join(changeDir, "DESIGN.md");
+      if (!fs.existsSync(designMdPath)) {
+        return { ok: false, error: "DESIGN.md 不存在 — 无法进入 task 阶段" };
+      }
+      if (workingState.profile === "full" || workingState.profile === "api") {
+        const djp = path.join(changeDir, "design.json");
+        if (fs.existsSync(djp)) try {
+          const dj = JSON.parse(fs.readFileSync(djp, "utf8"));
+          if (((dj.security_threats as any[]) ?? []).length === 0)
+            this.log.warn("[Security Gate] " + workingState.profile + " requires >=1 security_threats — add to design.json");
+        } catch {}
+      }
+      const designContent = fs.readFileSync(designMdPath, "utf8");
+      const isSeed = designContent.includes("<!-- taiyi:seed-template -->");
+      if (!isSeed) {
+        const audit: DesignApproachResult = auditDesignApproach(designMdPath);
+        if (!audit.passed) {
+          logActivity(this.taiyiRoot, {
+            event: "design:approach-warning",
+            slug,
+            findings: audit.findings.filter(f => !f.passed).map(f => `${f.dimension}: ${f.message}`),
+          });
+          return {
+            ok: false,
+            error: `DESIGN.md 设计质量审查未通过。请完善后重试。\n${formatDesignApproachAudit(audit)}`,
+          };
+        }
+      }
+    }
+
     if (phaseId === "task" && !options?.skipArtifactValidation) {
+      const frCheck = checkFrSliceCoverage(changeDir);
+      if (!frCheck.passed) this.log.warn("FR coverage: " + frCheck.coveredFrs + "/" + frCheck.totalFrs + " — uncovered: " + frCheck.uncoveredFrs.join(","));
       const cacheKey = `${slug}::${phaseId}`;
       if (!this._auditedPhases.has(cacheKey)) {
         const taskMdPath = path.join(changeDir, "TASK.md");
@@ -509,21 +707,43 @@ export class WorkflowEngine {
           error: `架构检查未通过，请确保代码与架构约定一致:\n${failedLabels}`,
         };
       }
+
+      const scopeResult = checkScopeBoundary(changeDir, workspaceDir, slug);
+      if (!scopeResult.passed) {
+        this.log.warn(`[dev] 文件范围越界: ${scopeResult.findings.join("; ")}`);
+        logActivity(this.taiyiRoot, {
+          event: "dev:scope-boundary-violation",
+          slug,
+          violations: scopeResult.findings,
+        });
+        return {
+          ok: false,
+          error: `所修改文件超出了 CHANGE.md 声明的文件范围。\n` +
+            `请在 change 阶段调整 File Boundary 声明（CHANGE.md → change.json），或移除范围外的修改。\n` +
+            scopeResult.findings.join("\n"),
+          qualityHints: scopeResult.findings,
+        };
+      }
+      for (const finding of scopeResult.findings) {
+        this.log.info(`[boundary] ${finding}`);
+      }
     }
 
     if (phaseId === "integration" && process.env.TAIYI_SKIP_INTEGRATION_AUDIT !== "1") {
       const audit = auditChange(workspaceDir, this.workspaceRoot, slug, {
         pretendIntegrationComplete: true,
       });
-      if (audit && !audit.ok) {
-        const highs = audit.findings
-          .filter((f) => f.severity === "high")
-          .map((f) => `${f.code}: ${f.message}`);
-        logActivity(this.taiyiRoot, { event: "audit:high", slug, findings: highs.length });
-        return {
-          ok: false,
-          error: `Integration audit failed:\n${highs.join("\n")}`,
-        };
+      if (audit) {
+        const blocked = audit.findings
+          .filter((f) => f.severity === "high" || f.severity === "medium")
+          .map((f) => `${f.code} [${f.severity}]: ${f.message}`);
+        if (blocked.length > 0) {
+          logActivity(this.taiyiRoot, { event: "audit:blocked", slug, findings: blocked.length });
+          return {
+            ok: false,
+            error: `Integration audit failed:\n${blocked.join("\n")}`,
+          };
+        }
       }
 
       // 跨变更兼容性检查：是否有其他 active 变更尚未集成？
@@ -538,9 +758,11 @@ export class WorkflowEngine {
         });
       }
 
-      // 架构检查：根据 profile 检测项目代码结构质量
+      // 架构检查已在 dev phase 执行，此处仅保留 archTemplate 供后续检查使用
       const archTemplate = resolveArchTemplateForChange(workingState.profile, workspaceDir);
       const archResult = evaluateArchitecture(workspaceDir, archTemplate);
+      const strictIntegration = process.env.TAIYI_STRICT_INTEGRATION === "1"
+        || process.env.TAIYI_STRICT_INTEGRATION === "true";
       if (!archResult.passed) {
         const failedLabels = archResult.findings
           .filter((f) => !f.passed)
@@ -552,6 +774,9 @@ export class WorkflowEngine {
           slug,
           details: failedLabels,
         });
+        if (strictIntegration) {
+          return { ok: false, error: `架构检查未通过（TAIYI_STRICT_INTEGRATION）:\n${failedLabels}` };
+        }
       }
 
       // 投产就绪检查：health endpoint / package.json scripts / CORS
@@ -564,9 +789,15 @@ export class WorkflowEngine {
           slug,
           warnings: readinessResult.warnings,
         });
+        if (strictIntegration) {
+          return { ok: false, error: `投产就绪检查未通过（TAIYI_STRICT_INTEGRATION）:\n${warnings}` };
+        }
       }
     }
 
+    // 交付门禁（双重检查）：
+    // 1. auditChange 已在 line 529 检查 deliveryFindings（含 audit 块内）
+    // 2. 此处为独立兜底 — 当 TAIYI_SKIP_INTEGRATION_AUDIT=1 跳过 audit 块时仍生效
     if (phaseId === "integration" && deliveryGateEnabled(workspaceDir)) {
       const delivery = evaluateDeliveryGate(workspaceDir, { slug, phase: "integration" });
       if (!delivery.passed) {
@@ -577,6 +808,21 @@ export class WorkflowEngine {
           error: `Delivery gate failed: ${delivery.reason}${hintText}`,
         };
       }
+    }
+
+    if (phaseId === "integration" && semanticGateEnabled(process.env)) {
+      const semanticResult = runSemanticVerify(workspaceDir, slug, { phase: phaseId, taiyiRoot: this.taiyiRoot });
+      if (!semanticResult.passed) {
+        const failedChecks = semanticResult.checks
+          .filter((c) => !c.passed)
+          .map((c) => `  [${c.code}] ${c.label}: ${c.detail ?? "failed"}`);
+        logActivity(this.taiyiRoot, { event: "semantic-gate:failed", slug, phase: phaseId });
+        return {
+          ok: false,
+          error: `Semantic integrity gate failed:\n${failedChecks.join("\n")}`,
+        };
+      }
+      this.log.info(`[integration] Semantic gate passed: ${semanticResult.summary}`);
     }
 
     const autoCheck = enforceAutoHarnessBeforeComplete(
@@ -594,7 +840,11 @@ export class WorkflowEngine {
     }
 
     const qualityResult = this.evaluatePhaseQuality(slug, phaseId, changeDir, gates.quality, state, workingState, options);
-    if (!qualityResult.ok) return qualityResult;
+    if (!qualityResult.ok) {
+      logActivity(this.taiyiRoot, { event: "quality:failed", slug, phase: phaseId, error: qualityResult.error, hints: qualityResult.qualityHints });
+      return qualityResult;
+    }
+    logActivity(this.taiyiRoot, { event: "quality:passed", slug, phase: phaseId, qualityScores: qualityResult.qualityScores, hints: qualityResult.qualityHints });
 
     const needsHuman = requiresHumanGate(phaseId) || options?.forceHuman;
     if (needsHuman) {
@@ -630,7 +880,7 @@ export class WorkflowEngine {
       skippedPhases: dynamicSkipped,
       currentPhase: next ?? phaseId,
       complexity:
-        workingState.completedPhases.includes("change") && workingState.complexity
+        phaseId === "change" ? assessComplexity(inferComplexitySignals(changeDir)) : workingState.completedPhases.includes("change") && workingState.complexity
           ? workingState.complexity
           : assessComplexity(inferComplexitySignals(changeDir)),
       updatedAt: new Date().toISOString(),
@@ -702,5 +952,122 @@ export class WorkflowEngine {
     });
     this.log.info("Aborted change", { slug });
     return { ok: true };
+  }
+
+  /** 自动修复重试：gate block → fix → retry，最多 3 次 */
+  async tryAutoFix(slug: string, phaseId: PhaseId, gates: GateInput, maxRetries = 3): Promise<{ ok: boolean; error?: string; fixAttempts: number; fixHints?: GateFixHint[] }> {
+    let lastResult;
+    for (let i = 1; i <= maxRetries; i++) {
+      lastResult = this.completePhase(slug, phaseId, gates, { skipStepOrderCheck: i > 1 });
+      if (lastResult.ok) return { ok: true, fixAttempts: i - 1 };
+
+      // Call AI agent if registered, before trying rule-based fixes
+      if (this.aiAutoFixFn && (i === maxRetries - 1 || !lastResult.fixHints || lastResult.fixHints.length === 0)) {
+        try {
+          const cdir = this.changeDir(slug);
+          const arts: Record<string, string> = {};
+          for (const f of fs.readdirSync(cdir)) {
+            const fp = path.join(cdir, f);
+            if (fs.statSync(fp).isFile()) try { arts[f] = fs.readFileSync(fp, "utf8"); } catch {}
+          }
+          const aiResult = await this.aiAutoFixFn({
+            slug, phase: phaseId, changeDir: cdir,
+            gateError: lastResult.error || "unknown error",
+            fixHints: lastResult.fixHints || [],
+            currentArtifacts: arts,
+          });
+          for (const [file, content] of Object.entries(aiResult))
+            fs.writeFileSync(path.join(cdir, file), content);
+          this.log.info(`AI auto-fix applied ${Object.keys(aiResult).length} files: ${Object.keys(aiResult).join(", ")}`);
+        } catch (e) { this.log.warn(`AI auto-fix failed: ${String(e)}`); }
+        continue;
+      }
+
+      if (!lastResult.fixHints || lastResult.fixHints.length === 0) break;
+      for (const h of lastResult.fixHints) {
+        try {
+          const fp = path.join(this.changeDir(slug), h.file);
+          // JSON files: parse → fix field → write back
+          if (h.file.endsWith(".json")) {
+            let data: any = {};
+            if (fs.existsSync(fp)) { try { data = JSON.parse(fs.readFileSync(fp, "utf8")); } catch {} }
+            if (h.field) {
+              // Remove problematic fields
+              if (h.action.includes("Remove") || h.action.includes("blocked_by")) {
+                this._removeJsonField(data, h.field);
+              }
+              // Add default values for empty arrays
+              if (h.action.includes("Add") || h.action.includes(">=") || h.action.includes("≥")) {
+                this._ensureJsonField(data, h.field);
+              }
+            }
+            fs.writeFileSync(fp, JSON.stringify(data, null, 2));
+          } else {
+            // Non-JSON files: create if missing
+            if (!fs.existsSync(fp)) fs.writeFileSync(fp, h.expectedValue ?? `# ${h.file.replace(".md","")}`);
+          }
+          this.log.info(`auto-fix #${i}: ${h.action}`);
+        } catch (e) { this.log.warn(`auto-fix fail: ${String(e)}`); }
+      }
+      // If AI fix function is registered and this is the last retry, let AI try
+      if (i === maxRetries - 1 && this.aiAutoFixFn) {
+        try {
+          const cdir = this.changeDir(slug);
+          const arts: Record<string, string> = {};
+          for (const f of fs.readdirSync(cdir)) {
+            const fp = path.join(cdir, f);
+            if (fs.statSync(fp).isFile() && (f.endsWith(".md") || f.endsWith(".json"))) {
+              try { arts[f] = fs.readFileSync(fp, "utf8"); } catch {}
+            }
+          }
+          const ctx = {
+            slug, phase: phaseId, changeDir: cdir,
+            gateError: lastResult!.error || "unknown error",
+            fixHints: lastResult!.fixHints || [],
+            currentArtifacts: arts,
+          };
+          const aiResult = await this.aiAutoFixFn(ctx);
+          for (const [file, content] of Object.entries(aiResult)) {
+            fs.writeFileSync(path.join(cdir, file), content);
+          }
+          this.log.info(`AI auto-fix applied: ${Object.keys(aiResult).join(", ")}`);
+        } catch (e) {
+          this.log.warn(`AI auto-fix failed: ${String(e)}`);
+        }
+      }
+    }
+    return { ok: false, error: lastResult?.error, fixAttempts: maxRetries, fixHints: lastResult?.fixHints };
+  }
+
+  private _removeJsonField(obj: any, field: string): void {
+    if (!obj || typeof obj !== "object") return;
+    if (Array.isArray(obj)) { for (const item of obj) this._removeJsonField(item, field); return; }
+    for (const key of Object.keys(obj)) {
+      if (key === field) { delete obj[key]; continue; }
+      if (typeof obj[key] === "object") this._removeJsonField(obj[key], field);
+    }
+  }
+
+  private _ensureJsonField(obj: any, field: string): void {
+    if (!obj || typeof obj !== "object") return;
+    const parts = field.split(".");
+    let current: any = obj;
+    for (let i = 0; i < parts.length - 1; i++) {
+      const p = parts[i]!.replace("[]", "");
+      if (!current[p]) current[p] = parts[i]!.includes("[]") ? [] : {};
+      current = Array.isArray(current[p]) ? (current[p][0] ?? (current[p][0] = {})) : current[p];
+      if (!current) return;
+    }
+    const last = parts[parts.length - 1]!.replace("[]", "");
+    if (Array.isArray(current)) {
+      if (current.length === 0) {
+        // security_threats: add default threat
+        if (last === "security_threats") current.push({ threat: "unvalidated input", vector: "user input", mitigation: "validate and sanitize" });
+        // states: add loading/empty/error
+        else if (last === "states") current.push({ name: "loading", description: "loading state" }, { name: "empty", description: "empty state" }, { name: "error", description: "error state" });
+        // accessibility: add default
+        else if (last === "accessibility") current.push("keyboard navigation support");
+      }
+    }
   }
 }

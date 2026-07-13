@@ -4,6 +4,9 @@ __pycache__/
 *.pyd
 *.activity.jsonl
 
+# TaiyiForge: temporary scratch / introspection output
+.tmp/
+
 # Embedded example repos (full standalone copies)
 examples/test/
 
@@ -14,6 +17,7 @@ coverage/
 .taiyi/**/.lock
 .taiyi/**/__pycache__/
 .taiyi/**/.token-usage.json
+.taiyi/changes/
 .flow-x/
 *.log
 .gstack/
@@ -60,3 +64,10 @@ docs/taiyi/tdd-workflow.md
 docs/taiyi/token-budget.md
 docs/taiyi/token-compress.md
 _check_artifacts.mjs
+
+# Local-only architecture note
+ARCHITECTURE.md
+ARCHITECTURE.pdf
+ARCHITECTURE.tex
+ARCHITECTURE-with-images.md
+images/

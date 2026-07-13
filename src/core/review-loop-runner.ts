@@ -6,6 +6,7 @@ import {
   evaluateReviewLoopStatus,
   formatMachineReviewPlain,
   formatReviewLoopPlain,
+  writeReviewFixPlan,
   type MachineReviewResult,
   type ReviewLoopStatus,
 } from "./review-gate.js";
@@ -89,7 +90,7 @@ export function runReviewMachineCheck(
     const text = [
       phaseNote,
       phaseNote ? "" : undefined,
-      "① 须先执行新一轮 code review（taiyi-review / gstack review）→ 更新 REVIEW.md",
+      "① 须先执行新一轮 code review（taiyi-review）→ 更新 REVIEW.md",
       "② 再运行: scripts/taiyi-forge.sh review-check " + slug,
       "",
       formatAgentReviewLoopProtocol(
@@ -136,7 +137,7 @@ export function runReviewMachineCheck(
       canStop: false,
       verdict: "missing",
       openHighFindings: [],
-      hints: ["REVIEW.md 不存在 — 立即加载 taiyi-review / gstack review 并写入"],
+      hints: ["REVIEW.md 不存在 — 立即加载 taiyi-review 并写入"],
     };
     const loopState = options?.bumpRound !== false
       ? bumpReviewLoopRound(changeDir, slug, emptyLoop.verdict)
@@ -156,7 +157,14 @@ export function runReviewMachineCheck(
   }
 
   const content = fs.readFileSync(reviewPath, "utf8");
-  const loopStatus = evaluateReviewLoopStatus(content);
+  const currentRound = loopStateBefore?.round ?? 0;
+  const loopStatus = evaluateReviewLoopStatus(content, currentRound + 1);
+
+  // Write fix plan back to REVIEW.md so Agent knows target scores
+  if (loopStatus.fixTasks && loopStatus.fixTasks.length > 0) {
+    const updatedMd = writeReviewFixPlan(content, loopStatus, currentRound + 1);
+    fs.writeFileSync(reviewPath, updatedMd, "utf8");
+  }
   let loopState: ReviewLoopStateFile;
   if (options?.bumpRound === false) {
     if (loopStatus.canStop) {

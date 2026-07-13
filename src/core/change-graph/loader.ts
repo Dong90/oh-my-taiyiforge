@@ -8,6 +8,7 @@ import type { PhaseId } from "../types.js";
 import type { GraphNode, NodeKind } from "./types.js";
 import { tryRepairJson } from "../json-repair.js";
 import { safeObjectArray, safeRecord, safeString } from "../type-guards.js";
+import { getDefaultExtractorRegistry, type ExtractorContext } from "../extractor-registry.js";
 
 const PHASES_WITH_JSON: PhaseId[] = [
   "change", "requirement", "design", "ui-design",
@@ -156,6 +157,9 @@ const extractIntegration: PhaseExtractor = (data, ctx) => {
   return [];
 };
 
+/** @deprecated Use ExtractorRegistry (src/core/extractor-registry.ts) instead.
+ *  This Map is retained for backward compat — registerExtractor delegates to
+ *  the default registry. Will be removed in v1.1. */
 const EXTRACTORS = new Map<PhaseId, PhaseExtractor>([
   ["change", extractChange],
   ["requirement", extractRequirement],
@@ -167,64 +171,68 @@ const EXTRACTORS = new Map<PhaseId, PhaseExtractor>([
   ["integration", extractIntegration],
 ]);
 
-/** Register a custom phase extractor (extensible). */
+/** @deprecated Use registerExtractor from src/core/extractor-registry.ts instead. */
 export function registerExtractor(phase: PhaseId, extractor: PhaseExtractor): void {
   EXTRACTORS.set(phase, extractor);
 }
 
-/** Extract GraphNode entities from a single phase's JSON data using registered extractors. */
+/** Extract GraphNode entities from a single phase's JSON data using the
+ *  default ExtractorRegistry. Backward compatible: existing callers see
+ *  identical behavior. */
 export function extractNodesFromPhase(phase: PhaseId, data: Record<string, unknown>): GraphNode[] {
   if (!data || typeof data !== "object") return [];
+  const registry = getDefaultExtractorRegistry();
+  registry.ensureBuiltins();
+  const extractors = registry.listByPhase(phase);
+  if (extractors.length === 0) return [];
+
   const nodes: GraphNode[] = [];
-  const phaseStr = String(phase);
-  let idx = 0;
-
-  const addItems = (
-    arr: (Record<string, unknown> | string)[] | undefined,
-    kind: NodeKind,
-    labelKey?: string,
-  ) => {
-    if (!Array.isArray(arr)) return;
-    for (const item of arr) {
-      const isString = typeof item === "string";
-      const label = isString
-        ? item
-        : labelKey
-          ? extractString(item as Record<string, unknown>, labelKey, "id", "description", "name", "scenario", "error", "threat", "risk", "metric")
-          : extractString(item as Record<string, unknown>, "id", "description", "name", "scenario", "error", "threat", "risk", "metric");
-      nodes.push({
-        id: mkId(phaseStr, kind, idx),
-        phase,
-        kind,
-        label: label || String(idx),
-        data: isString ? { value: item } : (item as unknown as Record<string, unknown>),
-      });
-      idx++;
-    }
-  };
-
-  const addScalar = (key: string, kind: NodeKind, val: unknown) => {
-    if (typeof val !== "string" || val.length === 0) return;
-    nodes.push({
-      id: mkId(phaseStr, kind, idx),
-      phase,
-      kind,
-      label: val,
-      data: { [key]: val },
-    });
-    idx++;
-  };
-
-  const extractor = EXTRACTORS.get(phase);
-  if (extractor) {
-    const ctx: ExtractContext = { addItems, addScalar, extractString, phaseStr, idx };
-    const subNodes = extractor(data, ctx);
-    // merge sub-nodes from extractor (e.g. design_decision node)
+  // Build a context for each extractor. Since each extractor has its own idx counter,
+  // we instantiate a fresh ctx per extractor. To keep IDs unique, we use a global offset.
+  for (const ext of extractors) {
+    let localIdx = 0;
+    const ctx: ExtractorContext = {
+      addItems(arr, kind, labelKey) {
+        if (!Array.isArray(arr)) return;
+        for (const item of arr) {
+          const isString = typeof item === "string";
+          const label = isString
+            ? item
+            : labelKey
+              ? extractString(item as Record<string, unknown>, labelKey, "id", "description", "name", "scenario", "error", "threat", "risk", "metric")
+              : extractString(item as Record<string, unknown>, "id", "description", "name", "scenario", "error", "threat", "risk", "metric");
+          nodes.push({
+            id: mkId(String(phase), kind, localIdx),
+            phase,
+            kind,
+            label: label || String(localIdx),
+            data: isString ? { value: item } : (item as unknown as Record<string, unknown>),
+          });
+          localIdx++;
+        }
+      },
+      addScalar(key, kind, val) {
+        if (typeof val !== "string" || val.length === 0) return;
+        nodes.push({
+          id: mkId(String(phase), kind, localIdx),
+          phase,
+          kind,
+          label: val,
+          data: { [key]: val },
+        });
+        localIdx++;
+      },
+      extractString: (d, ...keys) => extractString(d, ...keys),
+      phaseStr: String(phase),
+      get idx() {
+        return localIdx;
+      },
+    };
+    const subNodes = ext.extract(data, ctx);
     for (const sn of subNodes) {
       nodes.push(sn);
-      idx++;
+      localIdx++;
     }
   }
-
   return nodes;
 }

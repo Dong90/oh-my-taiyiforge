@@ -20,6 +20,11 @@ describe("test.hbs", () => {
     test_plan: [
       { id: "TC-01", description: "邮箱登录成功", status: "unit" },
     ],
+    test_rounds: [
+      { round: "Round 1 · 功能", scope: "全部 AC", status: "✅", skip_reason: "—" },
+      { round: "Round 3 · 安全", scope: "依赖审计", status: "⚠️", skip_reason: "无新增攻击面" },
+      { round: "Round 5 · 可观测", scope: "日志", status: "⚠️", skip_reason: "无新运维面" },
+    ],
   };
 
   it("renders title", () => {
@@ -112,5 +117,43 @@ describe("test.hbs", () => {
   it("renders no unrendered Handlebars tokens", () => {
     const out = render(data);
     expect(out).not.toMatch(/\{\{[#/]?[\w]+\}\}/);
+  });
+
+  it("renders regression table with test_results_summary", () => {
+    const out = render({
+      title: "测试",
+      test_plan: [{ id: "TC-01", description: "测试" }],
+      test_results_summary: "1494/1502 passed",
+    });
+    expect(out).toContain("1494/1502 passed");
+  });
+
+  it("renders regression test plan with test_results_summary", () => {
+    const out = render({
+      title: "测试",
+      test_plan: [{ id: "TC-01", description: "测试" }],
+      test_results_summary: "1500 cases",
+    });
+    expect(out).toContain("1500 cases");
+  });
+
+  it("renders regression fallback without test_results_summary", () => {
+    const out = render({
+      title: "测试",
+      test_plan: [{ id: "TC-01", description: "测试" }],
+    });
+    expect(out).toContain("待验证");
+    expect(out).toContain("待执行");
+  });
+
+  it("renders unit_framework and coverage target", () => {
+    const out = render({
+      title: "测试",
+      test_plan: [{ id: "TC-01", description: "测试" }],
+      unit_framework: "jest",
+      unit_coverage_target: "95%",
+    });
+    expect(out).toContain("jest");
+    expect(out).toContain("95%");
   });
 });

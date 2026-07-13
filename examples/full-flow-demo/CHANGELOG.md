@@ -1,7 +1,7 @@
 # Changelog
 
+<!-- taiyi:full-flow-demo --> 2026-07-05
 
-<!-- taiyi:full-flow-demo --> 2026-06-08
 # CHANGELOG: E2E Demo
 
 ## Added

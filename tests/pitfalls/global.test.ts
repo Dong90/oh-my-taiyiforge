@@ -60,7 +60,7 @@ describe("PITFALLS — GLOBAL.md", () => {
 });
 
 describe("PITFALLS — per-module files", () => {
-  const modules = ["src/core", "src/cli", "src/templates", "src/schemas", "src/install", "src/integrations"];
+  const modules = ["src/core", "src/cli", "docs", "src/schemas", "src/install", "src/integrations"];
   const entryPattern = /^### [CGISTCLIINT]+-\d+/m;
 
   for (const mod of modules) {
@@ -109,8 +109,8 @@ describe("PITFALLS — entry counts", () => {
     expect(entries.length).toBe(2);
   });
 
-  it("templates has 3 entries", () => {
-    const content = fs.readFileSync(path.join(REPO, "src/templates/PITFALLS.md"), "utf8");
+  it("docs has 3 entries", () => {
+    const content = fs.readFileSync(path.join(REPO, "docs/PITFALLS.md"), "utf8");
     const entries = content.match(/^### T-\d+/gm) ?? [];
     expect(entries.length).toBe(3);
   });
@@ -144,7 +144,7 @@ describe("PITFALLS — entry counts", () => {
     for (const file of [
       ".pitfalls/GLOBAL.md",
       "src/core/PITFALLS.md", "src/cli/PITFALLS.md",
-      "src/templates/PITFALLS.md", "src/schemas/PITFALLS.md",
+      "docs/PITFALLS.md", "src/schemas/PITFALLS.md",
       "src/install/PITFALLS.md", "src/integrations/PITFALLS.md",
     ]) {
       const content = fs.readFileSync(path.join(REPO, file), "utf8");

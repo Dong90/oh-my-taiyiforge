@@ -3,6 +3,7 @@ import fs from "node:fs";
 import path from "node:path";
 import {
   STAGE_PROTOCOL_PLACEHOLDER,
+  SUPERPOWERS_INVOKE_PLACEHOLDER,
   loadStageProtocol,
   renderTaiyiPrompt,
 } from "../src/install/prompt-stage-protocol.js";
@@ -44,23 +45,22 @@ describe("prompt-stage-protocol", () => {
     expect(out).toContain("## Agent 协议");
   });
 
-  it("replaces gstack invoke placeholder", () => {
-    const out = renderTaiyiPrompt(
-      "taiyi-ship.md",
-      `ship\n\n{{GSTACK_INVOKE}}\n`,
-      promptsDir,
-    );
-    expect(out).not.toContain("{{GSTACK_INVOKE}}");
-    expect(out).toContain("gstack Skill");
-  });
-
   it("replaces superpowers invoke placeholder", () => {
     const out = renderTaiyiPrompt(
-      "taiyi-sp.md",
-      `sp\n\n{{SUPERPOWERS_INVOKE}}\n`,
+      "taiyi-ship.md",
+      `ship\n\n{{SUPERPOWERS_INVOKE}}\n`,
       promptsDir,
     );
     expect(out).not.toContain("{{SUPERPOWERS_INVOKE}}");
-    expect(out).toContain("Superpowers Skill");
+    expect(out).toContain("Superpowers");
+  });
+
+  it("taiyi-skill umbrella covers superpowers + explore + tdd + flow", () => {
+    const raw = fs.readFileSync(path.join(promptsDir, "taiyi-skill.md"), "utf8");
+    const out = renderTaiyiPrompt("taiyi-skill.md", raw, promptsDir);
+    expect(out).toContain("Superpowers");
+    expect(out).toContain("explore");
+    expect(out).toContain("tdd");
+    expect(out).toContain("flow");
   });
 });

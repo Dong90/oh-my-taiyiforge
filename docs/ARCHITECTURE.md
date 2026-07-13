@@ -13,10 +13,10 @@
 
 | 标准 | 作用 | 必选？ |
 |------|------|--------|
-| Harness Engineering | 不达标不进、无产出不出 | 是（`--auto` 铁三角 + complete） |
+| Harness Engineering | 不达标不进、无产出不出 | 是（`--auto` 双线 harness + complete） |
 | OpenSpec | 规格驱动，先文档后实现 | **可选层**（未装自动跳过） |
-| GStack | 架构决策 Options + Reason + Cost | 分阶段铁三角（部分 optional） |
-| Superpowers | 有界 Skill、可验证输出 | change/dev/test 铁三角 |
+| ECC | 多维深度分析（架构/安全/编码/语言/框架自动化） | 双线 harness 硬约束（Superpowers + ECC） |
+| Superpowers | 有界 Skill、可验证输出 | 双线 harness（change/dev/review） |
 | OMO | AI 执行，关键节点人审批 | 是（human-gate） |
 | Spec-Kit | 模板与检查清单可执行 | 是（templates + quality-gate） |
 
@@ -25,7 +25,7 @@
 ## 架构总览
 
 > 可编辑真源：[taiyiforge-architecture.svg](./taiyiforge-architecture.svg)（v0.22 · Flow-X 布局）· 重生成：`python3 scripts/generate-architecture-svg.py`  
-> **C4 真源**：[c4/README.md](./c4/README.md) · [c4/containers.md](./c4/containers.md) · **工程补充**：[diagrams/architecture.md](./diagrams/architecture.md) · **流程图**：[diagrams/flows.md](./diagrams/flows.md) · **C4 预览 SVG**：[c4/png/](./c4/png/) · 流水线：[diagrams/pipeline.md](./diagrams/pipeline.md) · `/taiyi:diagram-pipeline --repo`
+> **C4 真源**：[c4/README.md](./c4/README.md) · [c4/containers.md](./c4/containers.md) · **工程补充**：[c4/README.md](./c4/README.md)（即 C4 真源） · **流程图**：[taiyi/full-oss-flow.md](./taiyi/full-oss-flow.md) · **C4 预览 SVG**：[c4/png/](./c4/png/) · 流水线：[taiyi/nine-phase-flow.md](./taiyi/nine-phase-flow.md) · `/taiyi:diagram-pipeline --repo`
 
 ## 核心引擎能力（对齐架构图）
 
@@ -33,7 +33,7 @@
 |------|------|
 | 统一入口 | `taiyi` CLI · `taiyi-forge.sh` · 消费方 `scripts/taiyi-forge.sh`（install 写入）· OpenCode `taiyi_*` · `/taiyi:*` |
 | **意图分析** | `inferComplexitySignals` + `assessComplexity`；`/taiyi:status` 输出「意图分析: …」 |
-| **Token 预算** | `.token-usage.json` · 阶段上限 · 引擎 + **Superpowers/gstack 压缩** · 见 [token-budget.md](./taiyi/token-budget.md) · [token-compress.md](./taiyi/token-compress.md) |
+| **Token 预算** | `.token-usage.json` · 阶段上限 · 引擎 + **Superpowers 压缩** · 见 [token-budget.yaml](./taiyi/token-budget.yaml) · [token-compress-hooks.yaml](./taiyi/token-compress-hooks.yaml) |
 | 前置校验 | artifact 检测 · auto harness blockers · token enforce（可选） |
 | 路由决策 | profile full/api/lite · auxiliary-hints · phase-registry |
 | 复杂度评估 | `assess` · `state.complexity` |
@@ -49,15 +49,17 @@
 
 | # | 阶段 | Skill | 产出 |
 |---|------|-------|------|
-| 1 | change | taiyi-change | CHANGE.md |
-| 2 | requirement | taiyi-requirement | REQUIREMENT.md |
-| 3 | design | taiyi-design | DESIGN.md |
-| 4 | ui-design | taiyi-ui-design | UI-DESIGN.md |
-| 5 | task | taiyi-task | TASK.md |
-| 6 | dev | taiyi-dev | 代码 + 测试（TDD） |
-| 7 | test | taiyi-test | TEST.md |
-| 8 | review | taiyi-review | REVIEW.md |
-| 9 | integration | taiyi-integration | CHANGELOG.md |
+| 1 | change | taiyi-change | `change.json` → CHANGE.md |
+| 2 | requirement | taiyi-requirement | `requirement.json` → REQUIREMENT.md |
+| 3 | design | taiyi-design | `design.json` → DESIGN.md |
+| 4 | ui-design | taiyi-ui-design | `ui-design.json` → UI-DESIGN.md |
+| 5 | task | taiyi-task | `task.json` → TASK.md |
+| 6 | dev | taiyi-dev | 代码 + `.dev-complete`（无 json 视图） |
+| 7 | test | taiyi-test | `test.json` → TEST.md |
+| 8 | review | taiyi-review | `review.json` → REVIEW.md |
+| 9 | integration | taiyi-integration | `integration.json` → 变更目录 CHANGELOG.md |
+
+契约说明：[artifact-contract.md](./taiyi/artifact-contract.md)
 
 辅助工件：`CONTEXT.md`（`templates/CONTEXT.md` + intel-scan）· `adr/` · `health-report.md` · `ui-restyle-tasks.md` · `architecture-sync.md`
 
@@ -67,7 +69,7 @@
 2. **Quality Gate（五维）** — `gates/quality-gate.ts`
 3. **Delivery Gate（0.22）** — `gates/delivery-gate.ts`（git 仓库 integration 前：有新 commit 且工作区干净；配合 integration 前 audit）
 
-铁三角 optional 钩子（ui-design plan-design-review、gstack/qa、OpenSpec）在 `--auto` 下**不阻塞** complete。
+双线 harness optional 钩子（ui-design web-design-guidelines、browser QA、OpenSpec）在 `--auto` 下**不阻塞** complete。
 
 ## 知识沉淀（架构图 footer）
 
@@ -80,18 +82,21 @@
 
 ## 四端支持
 
-见 `docs/taiyi/agents.yaml` 与 `docs/taiyi/control-plane.md`。
+见 `docs/taiyi/control-plane.md` 与 `docs/taiyi/agent-roles.yaml`（导出物，真源 `src/core/agent-roles.ts`）。
 
-Agent 写工件；**状态机与门禁**由引擎校验。
+**prompts vs skills（不一一对应）**：`prompts/taiyi-*.md`（~25，默认装 20 顶栏）是斜杠**入口**；`skills/taiyi-*/`（26）是**剧本**。例如 `/taiyi:write` 一个斜杠对应九阶段 9 个 skill，路由真源是 `phases.yaml` 而非文件名表。详表见仓库根 `ARCHITECTURE.md` §5.1（本地完整架构文档）。
+
+Agent 写工件（优先 json，再 `render`）；**状态机与门禁**由引擎校验。
 
 ## 代码布局
 
 ```
-src/core/           # 引擎（含 infer-complexity、template-seed）
+src/core/           # 引擎（含 infer-complexity、artifact-seed）
 docs/taiyi/         # phases、harness-hooks、commands、workflow
-skills/taiyi-*/     # 23 个 Skill（主流程 9 + 辅助 11 + 编排 3）
+skills/taiyi-*/     # 26 个 Skill（九阶段 9 + 图解 5 + 辅助 9 + 控制面 3）
+prompts/taiyi-*.md  # 25 个斜杠源（安装默认 20 顶栏）
 docs/c4/            # C4 架构真源（diagram-c4 / pipeline）
 docs/diagrams/      # 工程架构 Mermaid + 流程图
-templates/          # 九阶段 + CONTEXT.md
+src/templates/      # Handlebars（json→md）；templates/ 为 npm legacy 兜底
 .taiyi/             # 运行时（gitignore）
 ```

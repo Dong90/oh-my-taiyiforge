@@ -1,7 +1,7 @@
 # Container view — oh-my-taiyiforge
 
 > C4 Level 2 · **流水线 Mermaid 真源** · 更新：2026-06-08  
-> 下游同步：[`../diagrams/architecture.md`](../diagrams/architecture.md)
+> 下游同步：[`../c4/README.md`](../c4/README.md)（C4 L1-L2 总览）
 
 ```mermaid
 flowchart TB
@@ -32,7 +32,7 @@ flowchart TB
       direction LR
       art[("变更工件<br/>.taiyi/changes/")]
       sk["Skill 契约<br/>skills/ · prompts/"]
-      man["工作流清单<br/>workflow-manifest.yaml"]
+      man["Harness 清单<br/>workflow-manifest.yaml"]
     end
   end
 
@@ -59,7 +59,7 @@ flowchart TB
 
 ## Component（L3）
 
-引擎内部组件图见 [`../diagrams/architecture.md`](../diagrams/architecture.md) §1（不在此重复维护）。
+引擎内部组件图见 [`../c4/README.md`](../c4/README.md)（C4 总览 — L1/L2/L3 在本目录）。
 
 ---
 
@@ -76,7 +76,7 @@ flowchart TB
 | 集成层 | `src/integrations/*.ts` |
 | 变更工件 | `.taiyi/changes/<slug>/` |
 | Skill 契约 | `skills/taiyi-*/`, `prompts/taiyi-*.md` |
-| 工作流清单 | `docs/taiyi/workflow-manifest.yaml` |
+| Harness 清单 | `docs/taiyi/workflow-manifest.yaml` |
 
 ---
 

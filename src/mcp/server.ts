@@ -24,6 +24,8 @@ import {
   taiyiRunWorkflow,
   taiyiDoctorCompact,
   taiyiAuditCompact,
+  taiyiSyncProvidersCompact,
+  taiyiDeliveryPlanCompact,
 } from "./state-tools.js";
 import {
   taiyiLspDiagnostics,
@@ -204,6 +206,33 @@ server.setRequestHandler(ListToolsRequestSchema, async () => ({
       },
     },
     {
+      name: "taiyi_delivery_plan",
+      description:
+        "Preview git/gh delivery chain from delivery.yaml. Aligns with `taiyi delivery-plan --json`.",
+      inputSchema: {
+        type: "object",
+        properties: {
+          slug: { type: "string", description: "Change slug; omit for active/inferred slug" },
+          workspace: { type: "string", description: "Project root" },
+        },
+      },
+    },
+    {
+      name: "taiyi_sync_providers",
+      description: "Re-detect installed third-party providers and refresh .taiyi/providers.yaml + ProviderRegistry cache. Post-install or rescan.",
+      inputSchema: {
+        type: "object",
+        properties: {
+          workspace: { type: "string", description: "Project root" },
+          targets: {
+            type: "array",
+            items: { type: "string" },
+            description: "Platform targets (opencode/claude/codex/cursor); defaults to all",
+          },
+        },
+      },
+    },
+    {
       name: "taiyi_lsp_diagnostics",
       description: "Lightweight diagnostics via npm typecheck/lint/tsc (OMC lsp_diagnostics parity). Set TAIYI_LSP=off to skip.",
       inputSchema: {
@@ -253,6 +282,7 @@ server.setRequestHandler(CallToolRequestSchema, async (req) => {
     skill?: string;
     symbol?: string;
     file?: string;
+    targets?: string[];
   };
   const workspace = resolveWorkspaceDir(args.workspace);
 
@@ -425,6 +455,23 @@ server.setRequestHandler(CallToolRequestSchema, async (req) => {
 
     if (req.params.name === "taiyi_audit") {
       const compact = taiyiAuditCompact(workspace, args.slug);
+      return {
+        content: [{ type: "text", text: JSON.stringify(compact, null, 2) }],
+        isError: !compact.ok,
+      };
+    }
+
+    if (req.params.name === "taiyi_delivery_plan") {
+      const compact = taiyiDeliveryPlanCompact(workspace, args.slug);
+      return {
+        content: [{ type: "text", text: JSON.stringify(compact, null, 2) }],
+        isError: !compact.ok,
+      };
+    }
+
+    if (req.params.name === "taiyi_sync_providers") {
+      const targets: string[] | undefined = args.targets;
+      const compact = taiyiSyncProvidersCompact(workspace, targets);
       return {
         content: [{ type: "text", text: JSON.stringify(compact, null, 2) }],
         isError: !compact.ok,

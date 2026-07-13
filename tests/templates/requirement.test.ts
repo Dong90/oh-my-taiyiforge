@@ -17,6 +17,10 @@ function render(data: unknown) {
 describe("requirement.hbs", () => {
   const data = {
     title: "用户登录",
+    user_stories: [
+      { as_a: "用户", i_want: "使用邮箱登录", so_that: "能安全访问账户", priority: "P0" },
+      { as_a: "用户", i_want: "使用手机号登录", so_that: "没有邮箱也能登录", priority: "P1" },
+    ],
     features: ["邮箱登录", "手机号登录"],
     acceptance_criteria: [
       { id: "AC-01", description: "用户能输入邮箱和密码登录", is_checked: false, verify: "npm test -- auth.test.ts" },
@@ -25,6 +29,23 @@ describe("requirement.hbs", () => {
     scope_v1: ["邮箱验证码登录", "OAuth 超时优化"],
     scope_v2: ["指纹登录", "人脸识别"],
     scope_out: ["社交账号绑定"],
+    non_functional: {
+      performance: [{ id: "NFR-P01", description: "页面加载 < 2s" }],
+      security: [{ id: "NFR-S01", description: "OWASP Top10 审计通过" }],
+      availability: [{ id: "NFR-A01", description: "99.9% 可用性" }],
+    },
+    error_rescue_map: [
+      { error: "网络超时", trigger: "API 调用超过 5s", catch: "axios interceptor", user_sees: "网络不稳定，请重试", recovery: "点击重试按钮" },
+    ],
+    shadow_paths: [
+      { flow: "登录流程", happy_input: "正确邮箱+密码", happy_expected: "跳转首页", nil_input: "无输入", nil_expected: "按钮禁用", empty_input: "空邮箱", empty_expected: "提示必填", upstream_input: "认证服务宕机", upstream_expected: "提示稍后重试" },
+    ],
+    non_happy_path_cases: [
+      { scenario: "快速双击", behavior: "仅发送一次请求" },
+    ],
+    dependencies: [
+      { dependency: "vitest", type: "测试框架", status: "active", risk: "none" },
+    ],
   };
 
   it("renders title as H1", () => {
@@ -32,10 +53,10 @@ describe("requirement.hbs", () => {
     expect(out).toContain("# REQUIREMENT: 用户登录");
   });
 
-  it("renders features as unordered list", () => {
+  it("renders user stories in correct format", () => {
     const out = render(data);
-    expect(out).toContain("* 邮箱登录");
-    expect(out).toContain("* 手机号登录");
+    expect(out).toContain("- **As a** 用户, **I want** 使用邮箱登录, **so that** 能安全访问账户 (P0)");
+    expect(out).toContain("- **As a** 用户, **I want** 使用手机号登录, **so that** 没有邮箱也能登录 (P1)");
   });
 
   it("renders unchecked AC with [ ]", () => {
@@ -100,10 +121,7 @@ describe("requirement.hbs", () => {
   it("renders shadow path analysis section", () => {
     const out = render(data);
     expect(out).toContain("## Step 7: Shadow Path Analysis");
-    expect(out).toContain("Happy |");
-    expect(out).toContain("Nil |");
-    expect(out).toContain("Empty |");
-    expect(out).toContain("UpstreamErr |");
+    expect(out).not.toMatch(/\[流程名\]/);
   });
 
   it("renders non-happy-path matrix section", () => {

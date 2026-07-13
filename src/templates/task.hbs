@@ -9,7 +9,7 @@ downstream: [dev, test]
 <!-- phase:task skill:taiyi-task gate:auto est:15min produces:TASK.md upstream:[design,requirement] downstream:[dev,test] cplx:[ALL]2steps +[M+]2 +[H]1 -->
 # TASK: {{title}}
 
-> **总Slice**: {{#if total_slices}}{{total_slices}}{{else}}_待定_{{/if}} | **预估**: {{#if estimated_days}}{{estimated_days}}{{else}}_待估_{{/if}} | **并行**: {{#if max_parallel}}{{max_parallel}}{{else}}_待定_{{/if}}
+> **总Slice**: {{#if total_slices}}{{total_slices}}{{else}}—{{/if}} | **预估**: {{#if estimated_days}}{{estimated_days}}{{else}}—{{/if}} | **并行**: {{#if max_parallel}}{{max_parallel}}{{else}}—{{/if}}
 
 ---
 
@@ -21,8 +21,6 @@ downstream: [dev, test]
 flowchart LR
 {{#each slices}}
   S{{id}}[{{label}}]
-{{else}}
-  NoSlices[_待拆解_]
 {{/each}}
 ```
 
@@ -30,13 +28,14 @@ flowchart LR
 
 ---
 
-## Step 2: Slice Breakdown
+## Slices
+
 > **[ALL]** Goal: 每个Slice独立可交付 | Inputs: Step1+DESIGN.md §5
 <!-- Action: 每个Slice=独立PR，含文件清单/验证命令/验收点/依赖/并行性/Completeness -->
 
 {{#each slices}}
 ### Slice {{id}}: {{label}}
-> **[ALL]** | ⇧ {{#if dependencies}}Slice {{dependencies}}{{else}}无{{/if}} | ⇶ {{#if parallelizable}}✅可并行{{else}}❌须顺序{{/if}} | Score: {{#if completeness_score}}{{completeness_score}}/10{{else}}[N]/10 — 评估基准: read_files√ + write_files√ + verify√ + checkpoints≥3 + rollback√ = 8/10+{{/if}}
+> **[ALL]** | ⇧ {{#if dependencies}}Slice {{dependencies}}{{else}}无{{/if}} | ⇶ {{#if parallelizable}}✅可并行{{else}}❌须顺序{{/if}} | Score: {{#if completeness_score}}{{completeness_score}}/10{{/if}}
 
 {{#if description}}
 {{description}}
@@ -47,8 +46,6 @@ flowchart LR
 {{#each read_files}}
 - `{{this}}`
 {{/each}}
-{{else}}
-- _在此列出只读参考文件（不需要修改的源头代码）_
 {{/if}}
 
 **write_files**（写边界 · 不越界）:
@@ -57,8 +54,6 @@ flowchart LR
 {{#each write_files}}
 - `{{this}}`
 {{/each}}
-{{else}}
-- _在此列出需要创建或修改的文件_
 {{/if}}
 
 {{#if test_command}}
@@ -78,8 +73,13 @@ flowchart LR
 {{#each checkpoints}}
 - ⬜ {{this}}
 {{/each}}
-{{else}}
-⬜ _在此列出验收项（各至少一条通过条件）_
+{{/if}}
+
+{{#if covers_frs}}
+**覆盖的 FR**:
+{{#each covers_frs}}
+- {{this}}
+{{/each}}
 {{/if}}
 
 <!-- Validate: 可独立merge/deploy？文件范围精确？ -->
@@ -87,6 +87,14 @@ flowchart LR
 ---
 
 {{/each}}
+
+## Checklist per slice
+
+- [ ] 测试先行（RED）— 每个 Slice 先写失败测试
+- [ ] 最小实现（GREEN）— 让测试通过
+- [ ] 重构（REFACTOR）— 不改变行为
+- [ ] Done when includes npm test command
+- [ ] 更新追溯（REQUIREMENT AC ↦ 测试用例）
 
 {{#if module_manifest}}
 ## Step 2b: Code-Gen Slices (from DESIGN Step 13)
@@ -177,9 +185,6 @@ flowchart LR
 - {{slice_id}}: {{description}}
 {{/each}}
 {{/each}}
-{{else}}
-### Wave 1 (无依赖,并行)
-- Slice N: _描述_
 {{/if}}
 {{/if}}
 
@@ -195,10 +200,6 @@ flowchart LR
 {{#each slice_risks}}
 | {{slice}} | {{risk}} | {{probability}} | {{mitigation}} |
 {{/each}}
-{{else}}
-| Slice | 风险 | 概率 | 缓解 |
-|-------|------|------|------|
-| _S1_ | _E2E 测试假阳性_ | _低_ | _CI 重试机制_ |
 {{/if}}
 
 <!-- Validate: 高风险Slice有独立回滚？ -->
@@ -216,7 +217,7 @@ flowchart LR
 {{else}}
 | Slice | 回滚方式 | 时间 | 数据影响 |
 |-------|---------|------|---------|
-| _S1_ | _git revert_ | ≤_5_min | _无数据影响_ |
+| S1 | git revert | ≤5min | 无数据影响 |
 {{/if}}
 
 <!-- Validate: 每个Slice可独立回滚？数据一致性？ -->
@@ -227,15 +228,21 @@ flowchart LR
 
 ---
 ## Quality Gate
-<!-- Evidence-first: 每个Slice可独立验证交付。gstack cognitive#13: 先重构再实现，不把结构+行为放同一个PR -->
+<!-- Evidence-first: 每个Slice可独立验证交付。cognitive#13: 先重构再实现，不把结构+行为放同一个PR -->
 
 - [ ] S1 依赖图无循环
 - [ ] S2 每个Slice可独立交付
 - [ ] S2 每个Slice有 read_files/write_files + 验证 + 验收点
 - [ ] S2 每个Slice有Completeness评分
+{{#if waves}}
 - [ ] [M+] S3 Wave分波合理
+{{/if}}
+{{#if slice_risks}}
 - [ ] [M+] S4 每Slice风险已评估
+{{/if}}
+{{#if slice_rollbacks}}
 - [ ] [H]  S5 每Slice有独立回滚
+{{/if}}
 - [ ] **PITFALLS.md**: 已扫描触达模块的 PITFALLS（`.pitfalls/scan.sh --module <path>` + 人工 grep 关键词），无已知踩坑或已声明规避方案
 - [ ] **项目上下文**: 已查 PHASE-CONTEXT.md 既有抽象索引，无重复实现
-- [ ] **Refactor-first**: 重构PR和功能PR分开了？(gstack: make change easy, then make easy change)
+- [ ] **Refactor-first**: 重构PR和功能PR分开了？(Rule: make change easy, then make easy change)

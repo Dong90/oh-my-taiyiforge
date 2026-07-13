@@ -1,0 +1,59 @@
+version: 1
+description: TaiyiForge 交付链默认真源 — commit / git / ship / land / verify
+
+commit:
+  subjectTemplate: "{type}: {summary}"
+  bodyTemplate: ""
+  defaultType: feat
+  defaultSummary: deliver change slice
+  maxSubjectLength: 72
+  requiredTrailers:
+    - key: Taiyi-Change
+      value: "{slug}"
+    - key: Taiyi-Phase
+      value: "{phase}"
+
+git:
+  defaultRemote: origin
+  branchTemplate: "feat/{slug}"
+  baseBranches:
+    - origin/develop
+    - origin/main
+    - origin/master
+    - develop
+    - main
+    - master
+
+verify:
+  command: null
+
+ship:
+  provider: gh
+  push: true
+  preCommands: []
+  pr:
+    titleTemplate: "[{slug}] {summary}"
+    bodyTemplate: ""
+    base: null
+    draft: false
+
+land:
+  provider: manual
+  waitCi: false
+  postMergeCommands: []
+  healthUrl: null
+  merge:
+    method: squash
+    deleteBranch: true
+
+chain:
+  steps:
+    - commit
+    - verify
+    - ship
+    - land
+    - continue-integration
+    - archive
+  requireConfirm:
+    - ship
+    - land

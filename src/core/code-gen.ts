@@ -5,11 +5,14 @@ import fs from "node:fs";
 import path from "node:path";
 import { TemplateEngine, type CodeStyleContract, type ModuleManifestEntry } from "./template-engine.js";
 import { getLogger } from "./logger.js";
+import { getDefaultCodePatternRegistry } from "./code-pattern-registry.js";
 
 const log = getLogger();
 
-/** Map module patterns to prompt template files. */
-const PATTERN_TO_TEMPLATE: Record<string, string> = {
+/** @deprecated Use CodePatternRegistry instead. Kept as a fallback for any
+ *  pattern that isn't registered (e.g. legacy code paths). The default registry
+ *  is the source of truth for pattern → template mapping. */
+const LEGACY_PATTERN_TO_TEMPLATE: Record<string, string> = {
   Adapter: "adapter.hbs",
   Strategy: "strategy-advanced.hbs",
   Service: "service.hbs",
@@ -52,7 +55,14 @@ export function generateCode(options: CodeGenOptions): CodeGenResult {
   const results: CodeGenResult = [];
 
   for (const mod of options.manifest) {
-    const tplName = PATTERN_TO_TEMPLATE[mod.pattern];
+    // Resolve pattern → template via the default registry. Falls back to the
+    // legacy hardcoded map if the registry is empty (e.g. tests without
+    // setDefaultTemplatesDir called).
+    const registry = getDefaultCodePatternRegistry();
+    const resolved = registry.resolve(mod.pattern);
+    const tplName = resolved.ok
+      ? resolved.value.templateFile
+      : (LEGACY_PATTERN_TO_TEMPLATE[mod.pattern] ?? undefined);
     if (!tplName) {
       results.push({ file: mod.file, ok: false, error: `unknown pattern: ${mod.pattern}` });
       continue;
@@ -157,7 +167,7 @@ function generateScaffold(options: CodeGenOptions, results: CodeGenResult): void
   }
 
   // Frontend scaffold (app.js + style.css)
-  const frontendDir = options.frontendDir ?? path.join(options.outputDir, "..", "..", "frontend");
+  const frontendDir = options.frontendDir ?? path.join(path.dirname(options.outputDir), "frontend");
   const feVars = { app_name: options.extraVars?.app_name ?? "App", api_base_url: options.extraVars?.api_base_url ?? "http://localhost:8000" };
   const feFiles: [string, string][] = [
     ["frontend-index.hbs", "index.html"],
@@ -196,7 +206,7 @@ function generateScaffold(options: CodeGenOptions, results: CodeGenResult): void
   }
 
   // LICENSE + QUICK_START.md + frontend README
-  const rootDir = path.join(options.outputDir, "..", "..");
+  const rootDir = path.dirname(options.outputDir);
   fs.mkdirSync(rootDir, { recursive: true });
   const licensePath = path.join(rootDir, "LICENSE");
   if (!fs.existsSync(licensePath)) { fs.writeFileSync(licensePath, "MIT License\n\nCopyright (c) " + new Date().getFullYear() + " TaiyiForge\n\nPermission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the \"Software\"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:\n\nThe above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.\n\nTHE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.\n", "utf8"); results.push({ file: "LICENSE", ok: true }); }

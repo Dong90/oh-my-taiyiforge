@@ -1,0 +1,111 @@
+# =============================================================================
+# TaiyiForge Provider 注册表
+# =============================================================================
+# 用户在此选择每个能力由哪个 provider 提供。
+# 不配 = 用内置默认（当前 6 框架行为）。
+# 配了 = 覆盖该能力指派。
+#
+# 使用流程：
+#   1. 引擎问：谁管 spec_archive？
+#   2. ProviderRegistry 查 providers.yaml assignments
+#   3. 没配 → 回退到 defaults（保持当前行为）
+#   4. 执行对应 provider 的指令
+#
+# 想换成别的：改 assignments 一行，或新增 provider 定义。
+# =============================================================================
+
+version: 1
+
+# 能力 → Provider 指派（去重后默认见 docs/taiyi/library-selection.md）
+# 已从九阶段 manifest 移除：eng_review · design_review · code_review · browser_qa ·
+# accessibility · design_guidelines · sast_scan · vuln_scan（由 ECC harness 或 Playwright 替代）
+assignments:
+  spec_archive: openspec          # 可选: openspec / taiyi-builtin / custom-script
+  spec_sync: openspec              # 可选: openspec / taiyi-builtin
+  browser_qa: playwright           # 可选: playwright / manual / none
+  eng_review: taiyi-builtin        # 可选: taiyi-builtin / manual
+  design_review: taiyi-builtin     # 可选: taiyi-builtin / manual
+  code_review: taiyi-builtin       # 可选: taiyi-builtin / manual
+  doc_release: none                # 可选: manual / none
+  version_release: changesets      # 可选: changesets / manual
+  sast_scan: semgrep               # 可选: semgrep / manual
+  vuln_scan: trivy                 # 可选: trivy / manual
+  accessibility: web-quality       # 可选: web-quality / manual
+  design_guidelines: web-quality   # 可选: web-quality / manual
+  e2e_test: playwright             # 可选: playwright / none
+  process_skills: superpowers      # 可选: superpowers / builtin
+  plugin_platform: omc-plugin      # 可选: omc-plugin / cursor / codex / none
+  archive_hook: taiyi-builtin      # 可选: taiyi-builtin / custom-script
+
+# ---------------------------------------------------------------------------
+# Provider 定义
+# 新增外部框架只需在这里加一条。
+# ---------------------------------------------------------------------------
+providers:
+  # -- 内置（引擎自带，零依赖） --
+  taiyi-builtin:
+    type: builtin
+    provides: [spec_archive, spec_sync, archive_hook]
+  omc-plugin:
+    type: builtin
+    provides: [plugin_platform]
+
+  # -- OpenSpec（npm 包）--
+  openspec:
+    type: cli
+    cli: "openspec archive $SLUG -y"
+    detect: "which openspec"
+    provides: [spec_archive, spec_sync]
+
+  # -- GStack（已移除）--
+
+  # -- Superpowers（skill 集）--
+  superpowers:
+    type: skill_bundle
+    bundle: superpowers
+    provides: [process_skills]
+
+  # -- Web Quality Skills --
+  web-quality:
+    type: skill_bundle
+    bundle: web-quality
+    provides: [accessibility, design_guidelines]
+
+  # -- Playwright --
+  playwright:
+    type: cli
+    cli: "npx playwright test"
+    detect: "npx playwright --version 2>/dev/null"
+    provides: [browser_qa, e2e_test]
+
+  # -- Semgrep --
+  semgrep:
+    type: cli
+    cli: "semgrep scan --config auto"
+    detect: "which semgrep"
+    provides: [sast_scan]
+
+  # -- Trivy --
+  trivy:
+    type: cli
+    cli: "trivy fs ."
+    detect: "which trivy"
+    provides: [vuln_scan]
+
+  # -- Changesets --
+  changesets:
+    type: cli
+    cli: "npx changeset version"
+    detect: "npx changeset --version 2>/dev/null"
+    provides: [version_release]
+
+  # -- 手工（纯指引）--
+  manual:
+    type: manual
+    instructions: "请参考 docs/taiyi/ 按提示手工操作"
+    provides: []
+
+  # -- 禁用 --
+  none:
+    type: none
+    provides: []

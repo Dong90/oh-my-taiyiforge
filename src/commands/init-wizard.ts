@@ -2,12 +2,12 @@ import fs from "node:fs";
 import path from "node:path";
 import type { TaiyiProjectConfig } from "./../core/project-config.js";
 import type { ChangeProfile } from "./../core/types.js";
+import { seedProjectDeliveryYaml } from "../core/delivery-config.js";
 
 export type InitWizardAnswers = {
   scenario: TaiyiProjectConfig["scenario"];
   defaultProfile: ChangeProfile;
   deliveryGate: boolean;
-  commitTrailers: boolean;
 };
 
 const VALID_SCENARIOS = new Set([
@@ -68,13 +68,11 @@ export async function runInitWizard(
     : "api";
 
   const deliveryGate = readEnvBoolean("TAIYI_DELIVERY_GATE", false);
-  const commitTrailers = readEnvBoolean("TAIYI_COMMIT_TRAILERS", true);
 
   const config: TaiyiProjectConfig = {
     scenario,
     defaultProfile,
     deliveryGate,
-    commitTrailers,
   };
 
   const configDir = path.join(workspaceDir, ".taiyi");
@@ -88,5 +86,7 @@ export async function runInitWizard(
     "utf8",
   );
 
-  return { scenario, defaultProfile, deliveryGate, commitTrailers };
+  seedProjectDeliveryYaml(workspaceDir);
+
+  return { scenario, defaultProfile, deliveryGate };
 }

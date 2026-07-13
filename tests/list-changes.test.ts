@@ -3,6 +3,7 @@ import fs from "node:fs";
 import path from "node:path";
 import os from "node:os";
 import { listChanges } from "../src/core/list-changes.js";
+import { TAIYI_SEED_MARKER } from "../src/core/seed-marker.js";
 
 function writeState(
   dir: string,
@@ -25,6 +26,10 @@ function writeState(
       updatedAt: "2026-01-02",
     }),
   );
+}
+
+function writeChangeMd(dir: string, content: string) {
+  fs.writeFileSync(path.join(dir, "CHANGE.md"), content);
 }
 
 describe("list-changes", () => {
@@ -90,5 +95,37 @@ describe("list-changes", () => {
     ], "lite");
     const list = listChanges(taiyiRoot, { includeAll: true, includeArchived: true });
     expect(list.map((c) => c.slug).sort()).toEqual(["active", "old"]);
+  });
+
+  describe("seed template detection", () => {
+    it("marks isSeed=true when CHANGE.md contains seed marker", () => {
+      writeState(path.join(taiyiRoot, "changes", "seed-test"), "seed-test", "active");
+      writeChangeMd(path.join(taiyiRoot, "changes", "seed-test"), `${TAIYI_SEED_MARKER}\n# CHANGE: seed`);
+      const list = listChanges(taiyiRoot);
+      expect(list[0].isSeed).toBe(true);
+    });
+
+    it("marks isSeed=false when CHANGE.md has real content", () => {
+      writeState(path.join(taiyiRoot, "changes", "real-test"), "real-test", "active");
+      writeChangeMd(path.join(taiyiRoot, "changes", "real-test"), "# CHANGE: Auth Timeout\n\n## Motivation\nImplement session timeout for security");
+      const list = listChanges(taiyiRoot);
+      expect(list[0].isSeed).toBe(false);
+    });
+
+    it("excludeSeeds filters out seed templates", () => {
+      writeState(path.join(taiyiRoot, "changes", "seed"), "seed", "active");
+      writeChangeMd(path.join(taiyiRoot, "changes", "seed"), `${TAIYI_SEED_MARKER}\n# CHANGE: seed`);
+      writeState(path.join(taiyiRoot, "changes", "real"), "real", "active");
+      writeChangeMd(path.join(taiyiRoot, "changes", "real"), "# CHANGE: Real Feature\n\n## Motivation\nNeed this");
+
+      const withoutSeeds = listChanges(taiyiRoot, { excludeSeeds: true });
+      expect(withoutSeeds.map((c) => c.slug).sort()).toEqual(["real"]);
+    });
+
+    it("isSeed is undefined when CHANGE.md does not exist", () => {
+      writeState(path.join(taiyiRoot, "changes", "no-md"), "no-md", "active");
+      const list = listChanges(taiyiRoot);
+      expect(list[0].isSeed).toBeUndefined();
+    });
   });
 });

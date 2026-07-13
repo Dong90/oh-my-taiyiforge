@@ -13,12 +13,17 @@ import { formatTokenBudgetPlain } from "./format-token.js";
 import { tokenSlash } from "./token-invoke.js";
 import { formatCompressHooksPlain } from "../integrations/token-compress-hooks.js";
 
+function tokenBudgetForChangeDir(changeDir: string) {
+  const workspaceDir = path.resolve(changeDir, "..", "..", "..");
+  return loadTokenBudgetConfig(process.env, workspaceDir);
+}
+
 export function tokenStatusPlain(
   changeDir: string,
   slug: string,
   phase?: PhaseId,
 ): string {
-  const cfg = loadTokenBudgetConfig();
+  const cfg = tokenBudgetForChangeDir(changeDir);
   let usage = readTokenUsage(changeDir);
 
   // 方案E: 未记录时自动扫描工件入账（token status 无感）
@@ -50,7 +55,7 @@ export function tokenRecord(
   tokens: number,
   opts: { phase: PhaseId; kind?: "agent" | "artifact" | "scan"; label?: string },
 ): string {
-  const cfg = loadTokenBudgetConfig();
+  const cfg = tokenBudgetForChangeDir(changeDir);
   ensureTokenUsage(changeDir, slug, cfg.costPerMillionTokens);
   const usage = recordTokenUsage(
     changeDir,
@@ -68,7 +73,7 @@ export function tokenRecord(
 }
 
 export function tokenScan(changeDir: string, slug: string, phase: PhaseId): string {
-  const cfg = loadTokenBudgetConfig();
+  const cfg = tokenBudgetForChangeDir(changeDir);
   const scan = scanArtifactTokens(changeDir);
   if (scan.total === 0) return "Token scan: 无可扫描工件";
 
@@ -111,7 +116,7 @@ export function tokenCompress(
   slug: string,
   phase: PhaseId,
 ): string {
-  const cfg = loadTokenBudgetConfig();
+  const cfg = tokenBudgetForChangeDir(changeDir);
   const r = compressChangeContext(changeDir, {
     maxSectionChars: cfg.maxSectionChars,
     slug,
@@ -139,7 +144,7 @@ export function enforceTokenBudgetBeforeComplete(
   slug: string,
   phase: PhaseId,
 ): { ok: boolean; error?: string } {
-  const cfg = loadTokenBudgetConfig();
+  const cfg = tokenBudgetForChangeDir(changeDir);
   if (!cfg.enabled || !cfg.enforce) return { ok: true };
   const usage = readTokenUsage(changeDir);
   const evalResult = evaluateTokenBudget(cfg, usage, phase);
@@ -157,7 +162,7 @@ export function buildTokenBudgetSummary(
   slug: string,
   phase: PhaseId,
 ): { cfg: ReturnType<typeof loadTokenBudgetConfig>; evalResult: ReturnType<typeof evaluateTokenBudget>; line: string } {
-  const cfg = loadTokenBudgetConfig();
+  const cfg = tokenBudgetForChangeDir(changeDir);
   let usage = readTokenUsage(changeDir);
 
   // 方案E: 未记录时自动扫描工件入账（status 无感）

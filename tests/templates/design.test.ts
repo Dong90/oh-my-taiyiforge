@@ -9,9 +9,23 @@ const tplPath = path.join(
   "../../src/templates/design.hbs"
 );
 
+// Mirror the helpers registered in src/core/template-engine.ts so test renders match production
+const _h = Handlebars.create();
+_h.registerHelper("eq", (a: unknown, b: unknown) => a === b);
+_h.registerHelper("neq", (a: unknown, b: unknown) => a !== b);
+_h.registerHelper("or", (...args: unknown[]) =>
+  args.slice(0, -1).some((v) => Boolean(v)),
+);
+_h.registerHelper("nonempty", (v: unknown) => {
+  if (v == null) return false;
+  if (typeof v === "string") return v.trim().length > 0;
+  if (Array.isArray(v)) return v.length > 0;
+  return true;
+});
+
 function render(data: unknown) {
   const source = fs.readFileSync(tplPath, "utf-8");
-  return Handlebars.compile(source)(data);
+  return _h.compile(source)(data);
 }
 
 describe("design.hbs", () => {
@@ -37,6 +51,10 @@ describe("design.hbs", () => {
       newModules: ["src/features/notifications/*"],
       doNotTouch: ["src/services/payment.ts"],
     },
+    security_threats: [
+      { threat: "会话劫持", vector: "XSS 注入", mitigation: "HttpOnly cookie + CSP" },
+      { threat: "CSRF", vector: "跨站表单提交", mitigation: "SameSite=Lax + CSRF token" },
+    ],
   };
 
   it("renders title as H1", () => {
@@ -51,8 +69,8 @@ describe("design.hbs", () => {
 
   it("renders decision section", () => {
     const out = render(data);
-    expect(out).toContain("- **Chosen**: B");
-    expect(out).toContain("- **Reason**: 安全审计需要主动失效能力");
+    expect(out).toContain("- **Chosen:** B");
+    expect(out).toContain("- **Reason:** 安全审计需要主动失效能力");
   });
 
   it("renders expanded tech stack card", () => {
@@ -82,10 +100,21 @@ describe("design.hbs", () => {
   });
 
   it("renders detailed design section", () => {
-    const out = render(data);
+    const out = render({
+      ...data,
+      data_model: "ALTER TABLE users ADD COLUMN email VARCHAR(255);",
+      api_changes: "POST /api/login + DELETE /api/login",
+    });
     expect(out).toContain("## Step 5: Detailed Design");
     expect(out).toContain("### 数据模型");
     expect(out).toContain("### API 设计");
+  });
+
+  it("skips detailed design subsections when all three fields are empty", () => {
+    const out = render({ ...data, data_model: "", api_changes: "", key_flow: "" });
+    expect(out).toContain("## Step 5: Detailed Design");
+    expect(out).not.toContain("### 数据模型");
+    expect(out).toContain("无详细设计变更");
   });
 
   it("renders blast radius section", () => {
@@ -97,7 +126,7 @@ describe("design.hbs", () => {
   it("renders innovation token accounting section", () => {
     const out = render(data);
     expect(out).toContain("## Step 7: Innovation Token Accounting");
-    expect(out).toContain("_累计:");
+    expect(out).toContain("**累计:");
   });
 
   it("renders trade-off analysis section", () => {
@@ -133,7 +162,6 @@ describe("design.hbs", () => {
   it("renders with minimal data (no techStack, no existingArchitecture)", () => {
     const out = render({ title: "最小设计", options: [], decision: { chosen: "", reason: "" } });
     expect(out).toContain("# DESIGN: 最小设计");
-    expect(out).toContain("[待定]");
     expect(out).not.toMatch(/\{\{[#/]?[a-zA-Z]+\}\}/);
   });
 

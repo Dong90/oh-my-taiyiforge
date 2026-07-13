@@ -62,6 +62,11 @@ const E2E_JSON_ARTIFACTS: Record<Exclude<PhaseId, "dev">, object> = {
   requirement: {
     title: "E2E Demo",
     one_liner: "九阶段 E2E 自动化回归：一键验证全流程工件生成、门控通过与 CI 集成",
+    user_stories: [
+      { as_a: "developer", i_want: "the E2E workflow to validate all nine phases", so_that: "I trust every release" },
+      { as_a: "CI maintainer", i_want: "automated gate verification", so_that: "human errors are caught early" },
+      { as_a: "contributor", i_want: "example artifacts I can inspect", so_that: "I understand the workflow without reading source code" },
+    ],
     features: [
       "As a developer, I want the E2E workflow to validate all nine phases so that I trust every release",
       "As a CI maintainer, I want automated gate verification so that human errors are caught early",
@@ -106,8 +111,8 @@ const E2E_JSON_ARTIFACTS: Record<Exclude<PhaseId, "dev">, object> = {
         { id: "NFR-P02", description: "单阶段 artifact 写入 < 500ms" },
       ],
       security: [
-        { id: "NFR-S01", description: "无硬编码密钥/令牌" },
-        { id: "NFR-S02", description: "state.json 不包含敏感路径信息" },
+        { id: "NFR-S01", description: "全代码 0 硬编码密钥/token（grep -r \"AKIA\\|sk-\" 预期 0 hit）", unit: "count", threshold: "= 0" },
+        { id: "NFR-S02", description: "state.json 0 敏感路径泄露（绝对路径 ≤ 0）", unit: "count", threshold: "= 0" },
       ],
       availability: [
         { id: "NFR-A01", description: "CI 可用性 99%+" },
@@ -245,6 +250,7 @@ const E2E_JSON_ARTIFACTS: Record<Exclude<PhaseId, "dev">, object> = {
         dependencies: "",
         parallelizable: true,
         completeness_score: 9,
+        time_estimate: "2h",
         physical_verification: "git diff --name-only",
         checkpoints: [
           "All nine phases complete in state.json",
@@ -263,6 +269,7 @@ const E2E_JSON_ARTIFACTS: Record<Exclude<PhaseId, "dev">, object> = {
         dependencies: "S1",
         parallelizable: false,
         completeness_score: 8,
+        time_estimate: "1h",
         physical_verification: "git diff --name-only",
         checkpoints: [
           "Archive dir has 11 files",
@@ -439,6 +446,14 @@ External npm registry in this test only.
 
 Dogfood validates WorkflowEngine and validators.
 
+## Reuse Analysis
+
+Reviewed existing pieces before composing this flow:
+
+- Reuses \`WorkflowEngine.completePhase\` gate pipeline already exercised by unit suites.
+- Reuses existing \`artifact-validator\` scores (completeness / consistency / verifiability / traceability / engineering_quality).
+- No new reusable modules required: change is documentation + harness orchestration only.
+
 ## Options
 
 | Option | Summary | Pros | Cons | Cost |
@@ -450,7 +465,7 @@ Dogfood validates WorkflowEngine and validators.
 
 **Chosen:** Option B for CI, script for local dogfood.
 
-**Reason:** Automated regression in every release.
+**Reason:** Picks Vitest because it gives reproducible CI 性能 (sub-second suite spin-up) at the cost of one extra dependency. Tradeoff accepted: a 复杂度-neutral harness that aligns with our existing 测试 pipeline, no new runtime cost in production.
 
 ## Architecture
 

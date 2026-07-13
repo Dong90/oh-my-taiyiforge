@@ -9,6 +9,22 @@ const tplPath = path.join(
   "../../src/templates/review.hbs"
 );
 
+Handlebars.registerHelper("eq", function (a, b) { return a === b; });
+Handlebars.registerHelper("neq", function (a, b) { return a !== b; });
+Handlebars.registerHelper("not", function (a) { return !a; });
+Handlebars.registerHelper("and", function (...args: unknown[]) {
+  return args.slice(0, -1).every((v) => Boolean(v));
+});
+Handlebars.registerHelper("or", function (...args: unknown[]) {
+  return args.slice(0, -1).some((v) => Boolean(v));
+});
+Handlebars.registerHelper("nonempty", function (v: unknown) {
+  if (v == null) return false;
+  if (typeof v === "string") return v.trim().length > 0;
+  if (Array.isArray(v)) return v.length > 0;
+  return true;
+});
+
 function render(data: unknown) {
   const source = fs.readFileSync(tplPath, "utf-8");
   return Handlebars.compile(source)(data);
@@ -19,8 +35,18 @@ describe("review.hbs", () => {
     title: "登录优化 review",
     verdict: "approved",
     findings: [
-      { id: "F-01", severity: "critical", resolved: false, description: "密码明文日志问题" },
-      { id: "F-02", severity: "medium", resolved: true, description: "缺少 loading 状态" },
+      { id: "F-01", severity: "critical", resolved: false, description: "密码明文日志问题", round: "R1" },
+      { id: "F-02", severity: "medium", resolved: true, description: "缺少 loading 状态", round: "R1" },
+    ],
+    code_quality: [
+      { dimension: "功能", score: "8", note: "核心逻辑正确" },
+    ],
+    test_coverage: [
+      { layer: "单元", passed: 42, total: 42, coverage: "95%", status: "✅" },
+    ],
+    security_audit: ["无硬编码密钥"],
+    performance_audit: [
+      { item: "N+1 查询", status: "N/A", note: "无数据库操作" },
     ],
   };
 
@@ -36,7 +62,7 @@ describe("review.hbs", () => {
 
   it("renders review scope section", () => {
     const out = render(fullData);
-    expect(out).toContain("## Step 1: Review Scope & Findings");
+    expect(out).toContain("## Step 1: Rounds & Findings");
   });
 
   it("renders findings with severity and resolution status", () => {
@@ -69,8 +95,7 @@ describe("review.hbs", () => {
   it("renders security audit section", () => {
     const out = render(fullData);
     expect(out).toContain("## Step 5: Security Audit");
-    expect(out).toContain("认证/授权检查完整");
-    expect(out).toContain("npm audit");
+    expect(out).toContain("无硬编码密钥");
   });
 
   it("renders performance audit section", () => {
@@ -82,8 +107,8 @@ describe("review.hbs", () => {
   it("renders quality gate with all checkboxes", () => {
     const out = render(fullData);
     expect(out).toContain("## Quality Gate");
-    expect(out).toContain("S1 所有finding有位置");
-    expect(out).toContain("S6 关键路径无瓶颈");
+    expect(out).toContain("S1 所有finding有位置+置信度+建议");
+    expect(out).toContain("[H]  S6 关键路径无瓶颈");
   });
 
   it("renders no unrendered Handlebars tokens", () => {
@@ -94,9 +119,12 @@ describe("review.hbs", () => {
   it("renders with no findings (falls back to default placeholders)", () => {
     const out = render({ title: "无问题", verdict: "approved" });
     expect(out).toContain("# REVIEW: 无问题");
-    expect(out).toContain("Critical — 暂无");
-    expect(out).toContain("High — 暂无");
-    expect(out).toMatch(/Medium.*暂无/);
+    expect(out).toMatch(/R1: Functional Review/);
+    expect(out).toMatch(/R2: Architecture Review/);
+    expect(out).toMatch(/R3: Test Review/);
+    expect(out).toMatch(/R4: Documentation Review/);
+    // Empty findings should produce STAMP warning
+    expect(out).toContain("REVIEW 缺口");
     expect(out).not.toMatch(/\{\{[#/]?[a-zA-Z]+\}\}/);
   });
 });

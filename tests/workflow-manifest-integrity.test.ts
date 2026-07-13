@@ -6,7 +6,7 @@ import {
   getWorkflowManifest,
   resetWorkflowManifestCache,
 } from "../src/integrations/workflow-manifest.js";
-import type { PhaseId } from "../src/core/types.js";
+import { DEFAULT_HUMAN_GATE_PHASES } from "../src/core/gates/human-gate-config.js";
 
 const REPO = path.join(path.dirname(fileURLToPath(import.meta.url)), "..");
 const SKILLS_DIR = path.join(REPO, "skills");
@@ -68,24 +68,12 @@ describe("workflow-manifest integrity", () => {
     expect(bad, bad.join("\n")).toEqual([]);
   });
 
-  it("profile skip_phases 均为合法 PhaseId", () => {
-    resetWorkflowManifestCache();
-    const m = getWorkflowManifest();
-    const valid = new Set(Object.keys(m.phases) as PhaseId[]);
-
-    for (const [profile, cfg] of Object.entries(m.profiles)) {
-      for (const p of cfg.skip_phases) {
-        expect(valid.has(p), `${profile} skips unknown ${p}`).toBe(true);
-      }
-    }
-  });
-
-  it("orchestrator.skill 存在且 gates.human_phases 与 manifest 一致", () => {
+  it("human_gate 与 human-gate-config 默认阶段一致", () => {
     resetWorkflowManifestCache();
     const m = getWorkflowManifest();
     expect(TAIYI_SKILLS.has("taiyi-orchestrator")).toBe(true);
 
-    for (const hp of m.gates.human_phases) {
+    for (const hp of DEFAULT_HUMAN_GATE_PHASES) {
       const phase = m.phases[hp];
       expect(phase?.human_gate, hp).toBe(true);
     }

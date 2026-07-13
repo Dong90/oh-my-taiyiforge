@@ -96,12 +96,12 @@ describe("integration gates", () => {
     );
 
     const audit = auditChange(workspace, taiyiRoot, slug, { pretendIntegrationComplete: true });
-    expect(audit?.ok).toBe(false);
+    // ac.open-before-integration is severity medium (hint, not blocker)
     expect(audit?.findings.some((f) => f.code === "ac.open-before-integration")).toBe(true);
 
     const blocked = engine.completePhase(slug, "integration", GATES, { skipArtifactValidation: true });
     expect(blocked.ok).toBe(false);
-    expect(blocked.error).toMatch(/ac\.open-before-integration|Success Criteria/);
+    expect(blocked.error).toMatch(/ac\.open-before-integration|Success.Criteria/);
   });
 
   it("pretendIntegrationComplete flags delivery before complete", () => {
@@ -140,6 +140,10 @@ describe("integration gates", () => {
     );
 
     advanceLiteToIntegration(engine, slug, taiyiRoot);
+    // Openspec change dir doesn't exist → audit would report MEDIUM
+    // (`openspec.missing-active-change`).  Test focus is archive, so
+    // skip integration audit checks.
+    process.env.TAIYI_SKIP_INTEGRATION_AUDIT = "1";
     expect(engine.completePhase(slug, "integration", GATES, { skipArtifactValidation: true }).ok).toBe(true);
 
     expect(getOpenspecStatus(workspace, slug).changeExists).toBe(false);
@@ -159,5 +163,48 @@ describe("integration gates", () => {
     expect(r.action).toBe("updated");
     expect(fs.existsSync(path.join(consumer, "scripts", "taiyi-forge.sh"))).toBe(true);
     fs.rmSync(consumer, { recursive: true, force: true });
+  });
+
+  it("blocks integration on MEDIUM audit finding (openspec missing change dir)", () => {
+    const slug = "openspec-medi";
+    // Clear env var that may have leaked from earlier test ("archive auto sync-openspec")
+    const prevSkip = process.env.TAIYI_SKIP_INTEGRATION_AUDIT;
+    delete process.env.TAIYI_SKIP_INTEGRATION_AUDIT;
+
+    fs.mkdirSync(path.join(workspace, "openspec"), { recursive: true });
+    fs.writeFileSync(
+      path.join(workspace, "openspec", "config.yaml"),
+      "change_root: openspec/changes\n",
+    );
+    advanceLiteToIntegration(engine, slug, taiyiRoot);
+
+    const r = engine.completePhase(slug, "integration", GATES, { skipArtifactValidation: true });
+    if (prevSkip !== undefined) process.env.TAIYI_SKIP_INTEGRATION_AUDIT = prevSkip;
+    expect(r.ok).toBe(false);
+    expect(r.error).toMatch(/openspec\.missing-active-change/);
+  });
+
+  it("blocks integration on arch check when TAIYI_STRICT_INTEGRATION=1", () => {
+    const slug = "strict-arch";
+    // Must clear leaked env var from "archive auto sync-openspec" test
+    const prevSkip = process.env.TAIYI_SKIP_INTEGRATION_AUDIT;
+    delete process.env.TAIYI_SKIP_INTEGRATION_AUDIT;
+
+    advanceLiteToIntegration(engine, slug, taiyiRoot);
+
+    const prev = process.env.TAIYI_STRICT_INTEGRATION;
+    process.env.TAIYI_STRICT_INTEGRATION = "1";
+    try {
+      const r = engine.completePhase(slug, "integration", GATES, { skipArtifactValidation: true });
+      expect(r.ok).toBe(false);
+      expect(r.error).toMatch(/TAIYI_STRICT_INTEGRATION|架构检查未通过/);
+    } finally {
+      if (prev === undefined) {
+        delete process.env.TAIYI_STRICT_INTEGRATION;
+      } else {
+        process.env.TAIYI_STRICT_INTEGRATION = prev;
+      }
+      if (prevSkip !== undefined) process.env.TAIYI_SKIP_INTEGRATION_AUDIT = prevSkip;
+    }
   });
 });

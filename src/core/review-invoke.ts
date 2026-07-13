@@ -24,7 +24,7 @@ export function formatAgentReviewLoopProtocol(slug: string, round?: number, maxR
   return [
     "Review 循环协议（先新一轮 review，直到无 blocking 项才停）:",
     "  0. 无需先推进到 review 阶段 — 直接审查当前代码/变更",
-    "  1. 【必须】taiyi-review / gstack review — 基于最新 git diff 写新一轮 REVIEW.md",
+    "  1. 【必须】taiyi-review — 基于最新 git diff 写新一轮 REVIEW.md",
     `  2. ${reviewCheckForge(slug)} — 检查是否仍有未解决 high / Request changes`,
     "  3. 若仍有 blocking → 修代码/TEST.md → 回到步骤 1 重新 review（勿停下来等用户）",
     "  4. 若无 blocking → 循环结束；正式过关 complete review --approver",

@@ -25,18 +25,23 @@ export interface CommandEntry {
   slashOnly?: boolean;
 }
 
+/** 仅聊天斜杠 — CLI 提示用 /taiyi:*；九阶段动词走引擎 CLI（taiyiPhaseWrite） */
 export const SLASH_ONLY = new Set([
-  "explore", "tdd",
-  "release", "sp", "gstack",
+  "tdd",
   "diagram-pipeline", "diagram-c4", "diagram-arch", "diagram-flow", "diagram-render",
   "commit", "ship", "land",
-  "change", "requirement", "design", "ui-design", "task", "dev", "test", "review", "integration",
 ]);
 
 export const LEGACY_REDIRECT: Record<string, string> = {
   done: "continue",
-  next: "status",
-  guide: "status",
-  phases: "status",
-  complete: "continue --approver",
+  mvp: "flow mvp",
+  micro: "flow micro",
+  nano: "flow nano",
+  service: "flow service",
+  "design-system": "flow design-system",
+  devops: "flow ci",
+  "ci-scenario": "flow ci",
 };
+
+/** 已从顶栏移除的引擎子命令 — 无替代 CLI，仅聊天伞形或 Skill */
+export const REMOVED_CLI = new Set(["chat", "code-review"]);

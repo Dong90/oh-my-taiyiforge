@@ -5,9 +5,11 @@ export type AgentRoleDef = {
   id: string;
   label: string;
   phases: PhaseId[];
-  /** 加载顺序：taiyi-* · superpowers/* · gstack/* */
+  /** 加载顺序：taiyi-* · superpowers/* · ecc/* */
   load: string[];
   when: string;
+  /** 本角色必须通过的引擎门控（TDD：先知道会被什么拦住，再写内容） */
+  gateChecks?: string[];
 };
 
 export const AGENT_ROLES: Record<string, AgentRoleDef> = {
@@ -24,61 +26,67 @@ export const AGENT_ROLES: Record<string, AgentRoleDef> = {
     phases: ["change", "requirement"],
     load: ["superpowers/brainstorming", "taiyi-change", "taiyi-requirement"],
     when: "澄清范围、风险、验收标准",
+    gateChecks: ["SC quantifiable", "blocked_by deps exist"],
   },
   planner: {
     id: "planner",
     label: "执行计划",
     phases: ["requirement", "task"],
-    load: ["superpowers/writing-plans", "taiyi-task"],
+    load: ["ecc/planner", "taiyi-task"],
     when: "bite-sized 切片与依赖顺序",
+    gateChecks: ["FR→slice coverage complete", "plan audit passed"],
   },
   architect: {
     id: "architect",
     label: "架构师",
     phases: ["design"],
-    load: ["taiyi-design", "taiyi-architect", "gstack/plan-eng-review"],
+    load: ["taiyi-design", "taiyi-architect", "ecc/architecture-audit"],
     when: "≥2 方案与 ADR",
+    gateChecks: ["security_threats ≥1", "data flow present (api/full)", "design approval audit"],
   },
   designer: {
     id: "designer",
     label: "UI/UX 设计",
     phases: ["ui-design"],
-    load: ["taiyi-ui-design", "gstack/plan-design-review"],
+    load: ["taiyi-ui-design", "ecc/web-design-guidelines"],
     when: "界面契约与无障碍",
+    gateChecks: ["states ≥3 (loading/empty/error)", "accessibility ≥1"],
   },
   executor: {
     id: "executor",
     label: "实现",
     phases: ["dev"],
-    load: ["taiyi-dev", "superpowers/test-driven-development"],
+    load: ["taiyi-dev", "ecc/tdd-workflow"],
     when: "TDD 红绿重构写代码",
+    gateChecks: ["TDD: test command present", "scope boundary intact", "architecture compliant"],
   },
   debugger: {
     id: "debugger",
     label: "排错",
     phases: ["dev", "test"],
-    load: ["superpowers/systematic-debugging", "taiyi-dev"],
+    load: ["ecc/agent-introspection-debugging", "taiyi-dev"],
     when: "测试失败、回归、异常栈",
   },
   "test-engineer": {
     id: "test-engineer",
     label: "测试工程",
     phases: ["task", "test"],
-    load: ["taiyi-task", "taiyi-test", "superpowers/test-driven-development"],
+    load: ["taiyi-task", "taiyi-test", "ecc/tdd-workflow"],
     when: "测试计划与 TEST.md 证据",
+    gateChecks: ["AC coverage ≥80%", "AC auto-scan populated", "coverage threshold ≥80%"],
   },
   verifier: {
     id: "verifier",
     label: "完成验证",
     phases: ["test", "integration"],
-    load: ["superpowers/verification-before-completion", "taiyi-test"],
+    load: ["ecc/verification-loop", "taiyi-test"],
     when: "声明完成前须有运行输出",
   },
   tracer: {
     id: "tracer",
     label: "追踪取证",
     phases: ["test", "review"],
-    load: ["taiyi-test", "gstack/browse"],
+    load: ["taiyi-test", "playwright/e2e"],
     when: "复现步骤、截图、日志证据",
   },
   "security-reviewer": {
@@ -92,22 +100,24 @@ export const AGENT_ROLES: Record<string, AgentRoleDef> = {
     id: "code-reviewer",
     label: "代码审查",
     phases: ["review"],
-    load: ["taiyi-review", "superpowers/requesting-code-review", "gstack/review"],
+    load: ["taiyi-review", "ecc/code-review", "ecc/security-scan"],
     when: "REVIEW.md 与 review-loop",
+    gateChecks: ["export callers ≥1", "upstream artifacts complete", "score ≥3.5", "rounds complete"],
   },
   "qa-tester": {
     id: "qa-tester",
     label: "QA 走查",
     phases: ["test"],
-    load: ["/taiyi:gstack qa", "/taiyi:test e2e", "taiyi-test"],
+    load: ["/taiyi:test e2e", "taiyi-test"],
     when: "站点/E2E 手工+自动 QA",
   },
   writer: {
     id: "writer",
     label: "文档",
     phases: ["integration"],
-    load: ["taiyi-integration", "gstack/document-release"],
+    load: ["taiyi-integration", "ecc/changelog-generator"],
     when: "CHANGELOG 与集成说明",
+    gateChecks: ["CHANGELOG non-seed", "all artifacts non-seed", "audit passed", "coverage ≥80%"],
   },
   "git-master": {
     id: "git-master",
@@ -127,7 +137,7 @@ export const AGENT_ROLES: Record<string, AgentRoleDef> = {
     id: "critic",
     label: "方案挑战",
     phases: ["design", "review"],
-    load: ["gstack/plan-eng-review", "/taiyi:review-loop"],
+    load: ["ecc/architecture-audit", "/taiyi:review-loop"],
     when: "挑战前提与 scope",
   },
   scientist: {
@@ -148,7 +158,7 @@ export const AGENT_ROLES: Record<string, AgentRoleDef> = {
     id: "style-reviewer",
     label: "风格审查",
     phases: ["dev", "review"],
-    load: ["gstack/review", "taiyi-dev"],
+    load: ["taiyi-review", "taiyi-dev"],
     when: "命名、格式、lint 一致性",
   },
   "api-reviewer": {
@@ -162,7 +172,7 @@ export const AGENT_ROLES: Record<string, AgentRoleDef> = {
     id: "performance-reviewer",
     label: "性能审查",
     phases: ["dev", "review"],
-    load: ["gstack/benchmark", "taiyi-test"],
+    load: ["taiyi-test"],
     when: "瓶颈、回归、bundle",
   },
   "dependency-expert": {
@@ -190,7 +200,7 @@ export const AGENT_ROLES: Record<string, AgentRoleDef> = {
     id: "ux-researcher",
     label: "UX 研究",
     phases: ["change", "ui-design"],
-    load: ["taiyi-ui-design", "gstack/plan-design-review"],
+    load: ["taiyi-ui-design", "ecc/web-design-guidelines"],
     when: "用户场景、可用性假设",
   },
   "information-architect": {
@@ -211,7 +221,7 @@ export const AGENT_ROLES: Record<string, AgentRoleDef> = {
     id: "vision",
     label: "视觉验证",
     phases: ["ui-design", "test"],
-    load: ["/taiyi:visual-verdict", "taiyi-ui-design", "gstack/browse"],
+    load: ["/taiyi:visual-verdict", "taiyi-ui-design"],
     when: "截图对比、视觉回归",
   },
 };
@@ -224,7 +234,7 @@ export const PHASE_AGENT_ROLES: Record<PhaseId, string[]> = {
   "ui-design": ["designer"],
   task: ["planner", "test-engineer"],
   dev: ["executor", "debugger", "test-engineer"],
-  test: ["verifier", "qa-tester", "tracer", "debugger"],
+  test: ["verifier", "qa-tester", "tracer", "debugger", "test-engineer"],
   review: [
     "code-reviewer",
     "security-reviewer",
@@ -295,8 +305,32 @@ export function formatPhaseAgentsPlain(phase: PhaseId, slug: string): string {
   const roles = rolesForPhase(phase);
   const lines = [`阶段 ${phase} 推荐专 Agent（/taiyi:agent <role>）:`];
   for (const r of roles) {
-    lines.push(`  · ${r.id} — ${r.label}（${r.when}）`);
+    const gates = r.gateChecks ? ` [门控: ${r.gateChecks.join(", ")}]` : "";
+    lines.push(`  · ${r.id} — ${r.label}（${r.when}）${gates}`);
   }
   lines.push(`  并行: /taiyi:team ${slug} · 高吞吐: /taiyi:ultrawork ${slug}`);
   return lines.join("\n");
+}
+
+/** 验证每个阶段至少有一个 agent 覆盖全部 gateChecks */
+export function verifyAgentGateCoverage(): { phase: PhaseId; covered: string[]; gaps: string[] }[] {
+  const phaseGates: Record<PhaseId, string[]> = {
+    change: ["SC quantifiable"],
+    requirement: ["blocked_by deps exist"],
+    design: ["security_threats ≥1", "data flow present (api/full)", "design approval audit"],
+    "ui-design": ["states ≥3 (loading/empty/error)", "accessibility ≥1"],
+    task: ["FR→slice coverage complete", "plan audit passed"],
+    dev: ["TDD: test command present", "scope boundary intact", "architecture compliant"],
+    test: ["AC coverage ≥80%", "AC auto-scan populated", "coverage threshold ≥80%"],
+    review: ["export callers ≥1", "upstream artifacts complete", "score ≥3.5", "rounds complete"],
+    integration: ["CHANGELOG non-seed", "all artifacts non-seed", "audit passed", "coverage ≥80%"],
+  };
+
+  return Object.entries(phaseGates).map(([phase, requiredGates]) => {
+    const roles = rolesForPhase(phase as PhaseId);
+    const allAgentGates = new Set(roles.flatMap(r => r.gateChecks ?? []));
+    const covered = requiredGates.filter(g => allAgentGates.has(g));
+    const gaps = requiredGates.filter(g => !allAgentGates.has(g));
+    return { phase: phase as PhaseId, covered, gaps };
+  });
 }

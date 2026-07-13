@@ -52,6 +52,8 @@ export type SeedVars = {
   code_style?: CodeStyleContract;
   /** 模块清单，用于 DESIGN→TASK→DEV 三阶段代码生成链 */
   module_manifest?: ModuleManifestEntry[];
+  /** 变更复杂度，控制 seed 数据和模板条件渲染 */
+  complexity?: { level: string; score: number };
 };
 
 export type TemplateEngineOptions = {
@@ -67,6 +69,20 @@ export class TemplateEngine {
     // 内置对比 helper，供模板 {{#if (eq a b)}} 使用
     this.handlebars.registerHelper("eq", (a: unknown, b: unknown) => a === b);
     this.handlebars.registerHelper("neq", (a: unknown, b: unknown) => a !== b);
+    this.handlebars.registerHelper("not", (a: unknown) => !a);
+    this.handlebars.registerHelper("and", (...args: unknown[]) =>
+      args.slice(0, -1).every((v) => Boolean(v)),
+    );
+    this.handlebars.registerHelper("or", (...args: unknown[]) =>
+      args.slice(0, -1).some((v) => Boolean(v)),
+    );
+    // Empty check for strings/arrays: {{#if (nonempty a)}}
+    this.handlebars.registerHelper("nonempty", (v: unknown) => {
+      if (v == null) return false;
+      if (typeof v === "string") return v.trim().length > 0;
+      if (Array.isArray(v)) return v.length > 0;
+      return true;
+    });
     if (opts?.partials) {
       for (const [name, content] of Object.entries(opts.partials)) {
         this.handlebars.registerPartial(name, content);

@@ -168,9 +168,9 @@ const SCENARIO_PLAYBOOKS: Record<ScenarioId, PlaybookDef> = {
     createLabel: "1. 创建 ui 变更:",
     body: [
       "重点阶段:",
-      "  ui-design → /taiyi:restyle · gstack plan-design-review",
+      "  ui-design → /taiyi:restyle",
       "  test → /taiyi:ui-test · playwright · accessibility",
-      "  review → visual QA · /taiyi:gstack design-review",
+      "  review → visual QA",
       "",
       'config: { "scenario": "design-system", "defaultProfile": "ui" }',
     ],

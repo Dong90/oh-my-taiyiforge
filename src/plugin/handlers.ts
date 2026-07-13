@@ -25,7 +25,8 @@ import { formatReviewLoopOutput, runReviewMachineCheck } from "../core/review-lo
 import { slugValidationError, validateSlug } from "../core/slug.js";
 import type { ComplexitySignals } from "../core/routing/complexity.js";
 import { buildPhaseGuide } from "../core/phase-guide.js";
-import { getOpenspecStatus, runOpenspecArchive } from "../integrations/openspec.js";
+import { getOpenspecStatus } from "../integrations/openspec.js";
+import { ProviderRegistry, type CapabilityResult } from "../config/providers.js";
 import { syncTaiyiToOpenspec } from "../integrations/openspec-sync.js";
 import {
   archiveTaiyiChange,
@@ -45,6 +46,12 @@ import {
   evaluateCommitTrailers,
   suggestCommitMessage,
 } from "../core/gates/commit-trailer.js";
+import { resolveDeliveryConfig } from "../core/delivery-config.js";
+import {
+  formatDeliveryPlanPlain,
+  planDeliveryChain,
+  type DeliveryPlan,
+} from "../core/delivery-plan.js";
 import { scanArtifactTokens } from "../core/token/scan-artifacts.js";
 import { loadTokenBudgetConfig } from "../core/token/budget-config.js";
 import { resolvePackageRoot } from "../core/package-root.js";
@@ -61,6 +68,7 @@ import {
 } from "../core/cli-hints.js";
 import { markHarnessCheckpoint, hookKey } from "../core/harness-checkpoints.js";
 import { trimAheadArtifacts, formatTrimAheadPlain } from "../core/trim-ahead-artifacts.js";
+import { undoPhase, formatUndoPlain, type UndoPhaseResult } from "../core/undo-phase.js";
 import { pruneOrphanChangeDirs, formatPrunePlain } from "../core/prune-changes.js";
 import {
   formatOrphanRuntimePlain,
@@ -74,6 +82,11 @@ import {
   verifyWorkspaceCi,
   formatCiVerifyPlain,
 } from "../core/ci-verify.js";
+import { validateArtifactFile, artifactPathForPhase } from "../core/artifact-validator.js";
+import { forceRenderPhaseFromJson } from "../core/artifact-render.js";
+import { syncProviders } from "../install/third-party-deps.js";
+import type { InstallTarget } from "../install/types.js";
+import { ALL_INSTALL_TARGETS } from "../install/types.js";
 import { auditWorkspace, formatAuditCompact, formatAuditPlain } from "../core/workflow-audit.js";
 import { formatAgentHealthProtocol } from "../core/health-invoke.js";
 import {
@@ -127,6 +140,8 @@ import {
   runWorkflowSkill,
   type WorkflowSkillId,
 } from "../core/runtime/workflow-skills.js";
+import { decomposeReadme, runAutoPlan } from "../core/auto-plan.js";
+import { allocateWaves } from "../core/wave-allocator.js";
 
 const TEMPLATES_DIR = resolveTemplatesDir(import.meta.url);
 
@@ -335,6 +350,46 @@ export function taiyiSyncOpenspec(
   return { ...result, state };
 }
 
+export function taiyiRender(
+  workspaceDir: string,
+  slug: string,
+  phaseId?: PhaseId,
+  options?: { plain?: boolean },
+) {
+  const invalid = rejectInvalidSlug(slug);
+  if (invalid) return invalid;
+  const engine = createEngine(workspaceDir);
+  const stateResult = requireChangeState(engine, slug);
+  if (!stateResult.ok) return stateResult;
+  const state = stateResult.state;
+
+  const resolvedPhase = phaseId ?? state.currentPhase;
+  if (resolvedPhase === "dev") {
+    return { ok: false as const, error: "dev 阶段无 json→md 渲染视图" };
+  }
+  if (!tryGetPhase(resolvedPhase)) {
+    return { ok: false as const, error: `未知阶段: ${resolvedPhase}` };
+  }
+
+  const taiyiRoot = resolveTaiyiRoot(workspaceDir);
+  const changeDir = resolveChangeDir(taiyiRoot, slug) ?? path.join(taiyiRoot, "changes", slug);
+  const result = forceRenderPhaseFromJson(changeDir, resolvedPhase, undefined, { slug });
+  if (!result.ok) return result;
+
+  const text =
+    options?.plain !== false
+      ? `已渲染 ${result.artifact}（来自 ${resolvedPhase}.json）`
+      : undefined;
+
+  return {
+    ok: true as const,
+    artifact: result.artifact,
+    phaseId: result.phaseId,
+    text,
+    state,
+  };
+}
+
 function finalizeTaiyiArchive(
   taiyiRoot: string,
   slug: string,
@@ -434,18 +489,20 @@ export function taiyiArchive(
     openspec = getOpenspecStatus(workspaceDir, slug);
   }
 
-  const result = openspecWasArchivedBefore
+  const result: CapabilityResult = openspecWasArchivedBefore
     ? {
-        ok: true as const,
-        skipped: true as const,
-        alreadyArchived: true as const,
+        ok: true,
+        skipped: true,
+        alreadyArchived: true,
         reason: openspec.archivedPath
           ? `OpenSpec 已归档: ${openspec.archivedPath}`
           : "OpenSpec 已归档",
+        provider: "unknown",
       }
-    : runOpenspecArchive(workspaceDir, slug, {
-        skipSpecs: options?.skipSpecs,
-        yes: true,
+    : ProviderRegistry.forProject(workspaceDir).runCapability("spec_archive", {
+        slug,
+        workspaceDir,
+        extraArgs: options?.skipSpecs ? ["--skip-specs"] : undefined,
       });
 
   if (result.skipped && result.ok && !result.alreadyArchived) {
@@ -628,9 +685,37 @@ export function taiyiCommitTrailers(
     resolved.slug,
     phase,
     subject?.trim() || "feat: deliver change slice",
+    workspaceDir,
   );
   const check = evaluateCommitTrailers(workspaceDir, resolved.slug, phase);
   return { ok: true, slug: resolved.slug, phase, suggestion, check };
+}
+
+export function taiyiDeliveryPlan(
+  workspaceDir: string,
+  slug?: string,
+  options?: { ghAvailable?: boolean },
+):
+  | { ok: true; slug: string; phase: string; plan: DeliveryPlan; text: string }
+  | { ok: false; error: string } {
+  const taiyiRoot = resolveTaiyiRoot(workspaceDir);
+  const resolved = resolveActiveSlug(taiyiRoot, slug);
+  if (!resolved.ok) return { ok: false, error: resolved.error };
+  const engine = createEngine(workspaceDir);
+  const stateResult = requireChangeState(engine, resolved.slug);
+  if (!stateResult.ok) return stateResult;
+  const phase = stateResult.state.currentPhase;
+  const config = resolveDeliveryConfig(workspaceDir);
+  const plan = planDeliveryChain(config, resolved.slug, phase, {
+    ghAvailable: options?.ghAvailable,
+  });
+  return {
+    ok: true,
+    slug: resolved.slug,
+    phase,
+    plan,
+    text: formatDeliveryPlanPlain(plan),
+  };
 }
 
 export function taiyiHandoff(
@@ -680,7 +765,7 @@ export function taiyiHandoff(
     };
   }
 
-  const tokenCfg = loadTokenBudgetConfig();
+  const tokenCfg = loadTokenBudgetConfig(process.env, workspaceDir);
   const artifactScan = scanArtifactTokens(changeDir);
   const compressHint =
     artifactScan.total > tokenCfg.compressThreshold
@@ -753,23 +838,12 @@ export function taiyiResume(
   return { ok: true, slug: resolved.slug, hasHandoff, handoffPath, text, statusText };
 }
 
-const GSTACK_SLASH_ONLY = [
-  "ship 仅聊天斜杠 — 加载 gstack `ship` Skill 或 prompts/taiyi-ship.md",
-  "land 仅聊天斜杠 — 加载 gstack `land-and-deploy` 或 prompts/taiyi-land.md",
-  "commit 仅聊天斜杠 — /taiyi:commit 或 taiyi commit-trailers",
-].join("\n");
-
 export function taiyiSlashOnlyHint(command: "ship" | "land" | "commit"): {
   ok: false;
   error: string;
   text: string;
 } {
-  const line =
-    command === "ship"
-      ? GSTACK_SLASH_ONLY.split("\n")[0]!
-      : command === "land"
-        ? GSTACK_SLASH_ONLY.split("\n")[1]!
-        : GSTACK_SLASH_ONLY.split("\n")[2]!;
+  const line = `${command} 仅聊天斜杠 — 用 /taiyi:${command} 加载对应 Skill（引擎 CLI 无 shell 实现）`;
   return {
     ok: false,
     error: line,
@@ -986,17 +1060,23 @@ export function taiyiContinue(
   const humanResolved = resolveHumanForComplete(phaseId, options?.approver);
   if (!humanResolved.ok) return humanResolved;
 
+  // 实际从工件推断 quality scores（不绕过质量门）
+  const changeDir = resolveChangeDir(taiyiRoot, slug) ?? path.join(taiyiRoot, "changes", slug);
+  const artifactPath = artifactPathForPhase(changeDir, phaseId);
+  const inferred = validateArtifactFile(artifactPath, phaseId);
+  const quality: QualityScores = inferred?.scores ?? {
+    completeness: false,
+    consistency: false,
+    verifiability: false,
+    traceability: false,
+    engineering_quality: false,
+  };
+
   const complete = engine.completePhase(
     slug,
     phaseId,
     {
-      quality: {
-        completeness: true,
-        consistency: true,
-        verifiability: true,
-        traceability: true,
-        engineering_quality: true,
-      },
+      quality,
       human: humanResolved.human,
     },
     { allowAutoHuman: humanResolved.allowAutoHuman },
@@ -1489,54 +1569,6 @@ export function taiyiFlow(
   return { ok: result.ok, result: { ...result, text: result.text } };
 }
 
-export function taiyiMvp(
-  workspaceDir: string,
-  args?: string,
-  options?: { plain?: boolean; create?: boolean },
-) {
-  return taiyiScenarioInternal(workspaceDir, "mvp", args, options);
-}
-
-export function taiyiMicro(
-  workspaceDir: string,
-  args?: string,
-  options?: { plain?: boolean; create?: boolean },
-) {
-  return taiyiScenarioInternal(workspaceDir, "micro", args, options);
-}
-
-export function taiyiNano(
-  workspaceDir: string,
-  args?: string,
-  options?: { plain?: boolean; create?: boolean },
-) {
-  return taiyiScenarioInternal(workspaceDir, "nano", args, options);
-}
-
-export function taiyiService(
-  workspaceDir: string,
-  args?: string,
-  options?: { plain?: boolean; create?: boolean },
-) {
-  return taiyiScenarioInternal(workspaceDir, "service", args, options);
-}
-
-export function taiyiDesignSystem(
-  workspaceDir: string,
-  args?: string,
-  options?: { plain?: boolean; create?: boolean },
-) {
-  return taiyiScenarioInternal(workspaceDir, "design-system", args, options);
-}
-
-export function taiyiCiScenario(
-  workspaceDir: string,
-  args?: string,
-  options?: { plain?: boolean },
-) {
-  return taiyiScenarioInternal(workspaceDir, "ci", args, { ...options, create: false });
-}
-
 export function taiyiStopMode(
   workspaceDir: string,
   options?: { force?: boolean; slug?: string; mode?: TaiyiModeId },
@@ -1614,6 +1646,94 @@ export function taiyiKeyword(workspaceDir: string, prompt: string, plain = true)
   return { ok: true, detected, text };
 }
 
+/** 项目级规划 CLI — README/PRD → 拆解 change 清单（聊天 /taiyi:plan 对偶） */
+export function taiyiProjectPlan(
+  workspaceDir: string,
+  fileArg?: string,
+  options?: { plain?: boolean; auto?: boolean },
+) {
+  const plain = options?.plain !== false;
+  let readmePath: string;
+
+  if (!fileArg) {
+    readmePath = path.join(workspaceDir, "README.md");
+    if (!fs.existsSync(readmePath)) {
+      return {
+        ok: false as const,
+        error: "未找到 README.md；请指定: taiyi plan <path>",
+      };
+    }
+  } else if (fileArg.startsWith("http://") || fileArg.startsWith("https://")) {
+    return {
+      ok: false as const,
+      error: "URL 规划请在聊天用 /taiyi:plan <url>（Agent webfetch）；CLI 请用本地文件路径",
+    };
+  } else {
+    readmePath = path.resolve(workspaceDir, fileArg);
+    if (!fs.existsSync(readmePath)) {
+      return { ok: false as const, error: `文件不存在: ${readmePath}` };
+    }
+  }
+
+  if (options?.auto) {
+    const result = runAutoPlan({
+      workspaceDir,
+      readmePath,
+      templatesDir: TEMPLATES_DIR,
+    });
+    const lines = [
+      "══ Taiyi auto-plan ══",
+      `  输入: ${readmePath}`,
+      `  changes: ${result.changes.length} · generated: ${result.generated}`,
+      ...(result.errors.length ? ["", "errors:", ...result.errors.map((e) => `  · ${e}`)] : []),
+      "",
+      ...result.changes.map((c) => `  · ${c.slug}: ${c.status} (${c.phases} phases)`),
+    ];
+    const text = lines.join("\n");
+    if (plain) return { ok: result.ok, text, result };
+    return { ok: result.ok, result, text };
+  }
+
+  const content = fs.readFileSync(readmePath, "utf8");
+  const decomposed = decomposeReadme(content);
+  if (decomposed.length === 0) {
+    return {
+      ok: false as const,
+      error: `未能从 ${path.basename(readmePath)} 拆解出 change；请检查标题结构`,
+    };
+  }
+
+  const waves = allocateWaves(
+    decomposed.map((c) => ({ slug: c.slug, dependsOn: c.dependsOn })),
+  );
+  const bySlug = new Map(decomposed.map((c) => [c.slug, c]));
+  const lines: string[] = [
+    "══ Taiyi 项目规划（decompose）══",
+    `  输入: ${readmePath}`,
+    `  建议 ${decomposed.length} 个 change：`,
+    "",
+  ];
+
+  for (const wave of waves) {
+    lines.push(`${wave.label}:`);
+    for (const item of wave.changes) {
+      const meta = bySlug.get(item.slug);
+      if (!meta) continue;
+      lines.push(`  · ${meta.slug} [${meta.profile}] ${meta.title} (${meta.priority})`);
+      if (meta.dependsOn.length) {
+        lines.push(`    depends: ${meta.dependsOn.join(", ")}`);
+      }
+    }
+    lines.push("");
+  }
+
+  lines.push("下一步: 确认后批量 /taiyi:new；全自动: taiyi plan <file> --auto");
+
+  const text = lines.join("\n");
+  if (plain) return { ok: true, text, changes: decomposed.length };
+  return { ok: true, text, changes: decomposed.length, decomposed, waves };
+}
+
 export function taiyiWorkflowSkill(
   workspaceDir: string,
   skill: string,
@@ -1689,6 +1809,47 @@ export function taiyiTrimAhead(workspaceDir: string, slug?: string, plain = true
   const text = formatTrimAheadPlain(resolved.slug, result);
   if (plain) return { ok: true, text, result };
   return { ok: true, result, text };
+}
+
+/**
+ * 重新检测已安装的第三方 provider 并刷新缓存。
+ * 返回 ok / registry / detail 供调用方（CLI / MCP / doctor）使用。
+ */
+export function taiyiSyncProviders(
+  workspaceDir: string,
+  targets?: InstallTarget[],
+) {
+  const resolvedTargets: InstallTarget[] = targets ?? ALL_INSTALL_TARGETS;
+  try {
+    const r = syncProviders(workspaceDir, resolvedTargets);
+    return { ok: true as const, registry: r.registry, detail: r.detail };
+  } catch (e) {
+    return { ok: false as const, error: e instanceof Error ? e.message : String(e) };
+  }
+}
+
+export function taiyiUndo(
+  workspaceDir: string,
+  slug?: string,
+  targetPhase?: string,
+  plain = true,
+):
+  | { ok: true; text: string; result: UndoPhaseResult }
+  | { ok: false; error: string; text: string } {
+  const taiyiRoot = resolveTaiyiRoot(workspaceDir);
+  const resolved = resolveActiveSlug(taiyiRoot, slug);
+  if (!resolved.ok) return { ok: false, error: resolved.error, text: resolved.error };
+  const invalid = rejectInvalidSlug(resolved.slug);
+  if (invalid) return { ...invalid, text: invalid.error };
+  const engine = createEngine(workspaceDir);
+  const result = undoPhase(engine, taiyiRoot, resolved.slug, targetPhase as PhaseId | undefined);
+  const text = formatUndoPlain(resolved.slug, result);
+  if (result.ok) {
+    if (plain) return { ok: true as const, text, result };
+    return { ok: true as const, result, text };
+  }
+  if (plain) return { ok: false as const, error: result.error, text };
+  return { ok: false as const, error: result.error, text };
 }
 
 export function taiyiPrune(workspaceDir: string, options?: { dryRun?: boolean; includeAborted?: boolean }, plain = true) {

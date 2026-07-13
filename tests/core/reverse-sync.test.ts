@@ -33,6 +33,9 @@ describe("checkAndSyncHumanEdits", () => {
 
   const baseData = {
     title: "用户登录",
+    user_stories: [
+      { as_a: "用户", i_want: "使用邮箱登录", so_that: "我能访问我的账号" },
+    ],
     features: ["邮箱登录"],
     acceptance_criteria: [
       { id: "AC-01", description: "能登录", is_checked: false },

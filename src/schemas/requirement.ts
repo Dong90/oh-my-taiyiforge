@@ -3,12 +3,36 @@ import { EvidenceSchema } from "./change.js";
 
 const NfrEntry = z.object({
   id: z.string(),
-  description: z.string(),
+  description: z.string()
+    .refine(
+      (s) => s.trim().length === 0 || s.trim().length >= 8,
+      { message: "NFR description 若填写则必须 ≥ 8 字符（trim 后），空值允许（seed 默认）" }
+    ),
+  metric_type: z.enum(["quantitative", "qualitative"]).optional()
+    .describe("度量类型：quantitative=数字/单位，qualitative=行为/规范"),
+  unit: z.string().optional().describe("量化单位（如 ms / req/s / MB / LOC）"),
+  threshold: z.string().optional().describe("阈值或目标（如 ≤ 50ms、= 0 errors）"),
 });
 
+/**
+ * trigger: 谁在什么时机调用这个 FR（如 "executor.dispatch() 每次调用后"）
+ * caller_module: 触发函数所在的源文件路径
+ * blocked_by: 当 caller 不在本 change scope 中时，标注依赖的 change slug
+ */
 const FuncReqItem = z.object({
   id: z.string(),
   description: z.string(),
+  trigger: z.string()
+    .trim()
+    .min(1, "trigger 不可为空字符串（填入谁调用、什么时机，或省略整个字段）")
+    .optional()
+    .describe("谁在什么时机调用这个 FR"),
+  caller_module: z.string()
+    .optional()
+    .describe("触发函数所在的源文件路径"),
+  blocked_by: z.string()
+    .optional()
+    .describe("caller 不在本 scope 时标注依赖的 change slug"),
 });
 
 const FuncReqModule = z.object({
@@ -44,10 +68,19 @@ const Dependency = z.object({
   risk: z.string(),
 });
 
+const UserStory = z.object({
+  as_a: z.string().describe("As a [角色]"),
+  i_want: z.string().describe("I want [功能]"),
+  so_that: z.string().describe("So that [价值]"),
+  priority: z.enum(["P0", "P1", "P2"]).optional().describe("优先级"),
+  sprint: z.string().optional().describe("归属版本"),
+});
+
 export const RequirementSchema = z.object({
   title: z.string().describe("用一句话概括核心需求"),
   one_liner: z.string().optional().describe("一句线描述"),
-  features: z.array(z.string()).describe("核心功能点列表"),
+  user_stories: z.array(UserStory).min(1).describe("用户故事 (As a / I want / So that) — 至少一条主路径; 反向/边界/异常建议各加一条以达到 ≥ 3 条"),
+  features: z.array(z.string()).optional().describe("[deprecated] 由 user_stories 取代"),
   scope_v1: z.array(z.string()).optional().describe("v1 范围"),
   scope_v2: z.array(z.string()).optional().describe("v2 范围"),
   scope_out: z.array(z.string()).optional().describe("明确排除项"),

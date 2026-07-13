@@ -1,124 +1,16 @@
-version: 1
-description: |
-  TaiyiForge 完整工作流单一真源 — 九阶段 · Superpowers · 开源外挂 · 辅助 Skill · harness · 门禁 · profile。
-  引擎读取本文件；skill-flow.yaml / harness-hooks.yaml 已废弃（仅保留 redirect 说明）。
-
-profiles:
-  full:
-    skip_phases: []
-  api:
-    skip_phases: [ui-design]
-  ui:
-    skip_phases: []
-  lite:
-    skip_phases: [design, ui-design, task, review]
-  spike:
-    skip_phases: [requirement, design, ui-design, task, review]
-  micro:
-    skip_phases: [requirement, design, ui-design, task, test, review]
-
-gates:
-  human_phases: [change, design, review]
-  delivery_phase: integration
-  quality_dimensions: [completeness, consistency, verifiability, traceability, engineering_quality]
-  dev_complete: ".dev-complete 须 command + exitCode 0"
-  integration: "delivery-gate + audit + AC 勾选"
-
-orchestrator:
-  skill: taiyi-orchestrator
-  when: init --auto 或 TAIYI_AUTO_HARNESS=1
+# workflow-manifest.yaml — harness / 工作流摘要真源
+# 去重选型：docs/taiyi/library-selection.md（Superpowers 纪律 + ECC 深度 + 少量 CLI）
+# ECC harness 未标 optional:true → 双线 harness 硬约束
 
 superpowers_catalog:
   using-superpowers:
-    when: 任意阶段入口；确认如何加载 Skill
+    when: 任意阶段入口；确认如何加载 Skill（目录参考）
   brainstorming:
     when: change 立项前澄清范围、风险、成功标准
-  writing-plans:
-    when: requirement/task 前写可执行计划（bite-sized · TDD · 频繁 commit）
   using-git-worktrees:
-    when: 大功能隔离开发；brainstorming/writing-plans 推荐 worktree
-  test-driven-development:
-    when: task 定测试策略 · dev 红绿重构
-  subagent-driven-development:
-    when: dev 大实现；主会话协调子 agent
-  dispatching-parallel-agents:
-    when: 多 TASK 切片并行
-  executing-plans:
-    when: task 完成后按计划在 dev 分批执行
-  verification-before-completion:
-    when: test/dev/integration 声明完成前须有运行证据
-  systematic-debugging:
-    when: 测试失败、回归、集成异常
-  requesting-code-review:
-    when: review 前派审；major feature 合并前
+    when: 大功能隔离开发；recommended  worktree
   receiving-code-review:
     when: 收到 CR 反馈后严谨处理
-  finishing-a-development-branch:
-    when: integration 前验证测试 · 合并/PR/清理选项
-  writing-skills:
-    when: 作者维护项目 Skill（元技能，非日常九阶段）
-
-external_skills:
-  gstack:
-    repo: https://github.com/garrytan/gstack
-    install: taiyi-forge-install --all
-    items:
-      - skill: plan-eng-review
-        phases: [design]
-      - skill: plan-design-review
-        phases: [ui-design]
-      - skill: qa
-        phases: [test]
-      - skill: review
-        phases: [review]
-      - skill: document-release
-        phases: [integration]
-      - skill: checkpoint
-        phases: [change, task, dev]
-        note: Token 压缩；见 token_compress
-  openspec:
-    repo: https://github.com/Fission-AI/OpenSpec
-    install: npm i -g @fission-ai/openspec
-    items:
-      - command: "openspec change show <slug>"
-        phases: [requirement]
-      - command: "taiyi archive <slug>"
-        phases: [integration, archive]
-  web-quality:
-    repo: https://github.com/addyosmani/web-quality-skills
-    install: npx skills add addyosmani/web-quality-skills -g -y
-    items:
-      - skill: accessibility
-        phases: [ui-design, test]
-      - skill: web-design-guidelines
-        phases: [ui-design]
-  playwright:
-    repo: https://github.com/microsoft/playwright
-    install: npm i -D @playwright/test
-    cli: npx playwright test
-    items:
-      - skill: e2e
-        phases: [test]
-  semgrep:
-    repo: https://github.com/semgrep/semgrep
-    install: pip install semgrep
-    cli: semgrep scan --config auto
-    items:
-      - skill: sast
-        phases: [review]
-  trivy:
-    repo: https://github.com/aquasecurity/trivy
-    install: brew install trivy
-    cli: trivy fs .
-    items:
-      - skill: vuln-scan
-        phases: [review]
-  changesets:
-    repo: https://github.com/changesets/changesets
-    install: npm i -D @changesets/cli
-    items:
-      - skill: version-release
-        phases: [integration]
 
 auxiliary_skills:
   - id: taiyi-intel-scan
@@ -133,10 +25,12 @@ auxiliary_skills:
   - id: taiyi-evolve
     phases: [test]
     artifact: architecture-sync.md
+  # required_when 解析入库，但引擎尚未求值 complexity
   - id: taiyi-health
     phases: [review]
     artifact: health-report.md
     required_when: "complexity medium|high"
+  # 有 when 字段 → 不进 auxiliaryForPhase 默认列表
   - id: taiyi-compress
     phases: [change, requirement, design, task, dev, test, review, integration]
     artifact: CONTEXT-COMPACT.md
@@ -162,59 +56,34 @@ auxiliary_skills:
     artifact: diagrams/flows.md
     when: 多分支 AC、状态机、九阶段/harness 可视化
 
-token_compress:
-  engine:
-    tool: taiyi
-    command: scripts/taiyi-forge.sh token compress <slug>
-    when: 工件按 ## 节截断 → CONTEXT-COMPACT.md
-  third_party:
-    - id: superpowers-subagent
-      tool: superpowers
-      skill: subagent-driven-development
-      harness_check: superpowers/subagent-driven-development
-    - id: superpowers-parallel
-      tool: superpowers
-      skill: dispatching-parallel-agents
-      harness_check: superpowers/dispatching-parallel-agents
-    - id: gstack-checkpoint
-      tool: gstack
-      skill: checkpoint
-      harness_check: gstack/checkpoint
-  phase_recommend:
-    change: [engine, gstack-checkpoint]
-    requirement: [engine]
-    design: [engine]
-    task: [engine, superpowers-subagent]
-    dev: [superpowers-subagent, superpowers-parallel]
-    test: [engine]
-
 phases:
   change:
-    order: 1
     taiyi_skill: taiyi-change
     artifact: CHANGE.md
-    kind: markdown
-    requires: []
     superpowers: [brainstorming]
-    superpowers_optional: [using-superpowers, using-git-worktrees]
-    external_optional: []
-    auxiliary: [taiyi-intel-scan]
+    superpowers_optional: [using-git-worktrees]
+    external_optional: [ecc/continuous-learning, ecc/market-research]
+    capabilities:
+      required: []
+      optional: []
     slash: ["/taiyi:explore", "/taiyi:continue"]
     human_gate: true
     harness:
       - tool: superpowers
         skill: brainstorming
         when: 立项前澄清范围与风险（/taiyi:explore）
+      - tool: ecc
+        skill: continuous-learning
+        when: 【硬约束】从历史变更提炼本能 / 模式（Continuous Learning）
   requirement:
-    order: 2
     taiyi_skill: taiyi-requirement
     artifact: REQUIREMENT.md
-    kind: markdown
-    requires: [change]
     superpowers: []
-    superpowers_optional: [writing-plans]
-    external_optional: [openspec]
-    auxiliary: []
+    superpowers_optional: []
+    external_optional: [openspec, ecc/iterative-retrieval]
+    capabilities:
+      required: []
+      optional: [spec_sync]
     slash: ["/taiyi:continue"]
     human_gate: false
     harness:
@@ -222,208 +91,187 @@ phases:
         skill: writing-plans
         optional: true
         when: 完整流程建议先写 bite-sized 计划再落 REQUIREMENT
+      - tool: ecc
+        skill: iterative-retrieval
+        when: 【硬约束】迭代检索知识库 / 文档支撑 REQUIREMENT
       - tool: openspec
         command: openspec change show <slug>
         optional: true
         when: 项目已 init OpenSpec 时对照 proposal/specs
   design:
-    order: 3
     taiyi_skill: taiyi-design
     artifact: DESIGN.md
-    kind: markdown
-    requires: [requirement]
     superpowers: []
-    superpowers_optional: [writing-plans]
-    external_optional: [gstack/plan-eng-review]
-    auxiliary: [taiyi-architect, taiyi-diagram-pipeline, taiyi-diagram-c4, taiyi-diagram-arch, taiyi-diagram-flow, taiyi-diagram-render]
+    superpowers_optional: []
+    external_optional: [ecc/architecture-audit, ecc/backend-patterns, ecc/coding-standards, ecc/planner]
+    capabilities:
+      required: []
+      optional: []
     slash: ["/taiyi:continue"]
     human_gate: true
     harness:
-      - tool: gstack
-        skill: plan-eng-review
-        optional: true
-        when: 工程评审（完整流程建议打卡）
+      - tool: ecc
+        skill: architecture-audit
+        when: 【硬约束】多维架构分析 + adr/（ECC 架构审查）
+      - tool: ecc
+        skill: backend-patterns
+        when: 【硬约束】后端栈级 patterns
+      - tool: ecc
+        skill: coding-standards
+        when: 【硬约束】编码规范对齐 DESIGN
   ui-design:
-    order: 4
     taiyi_skill: taiyi-ui-design
     artifact: UI-DESIGN.md
-    kind: markdown
-    requires: [design]
     superpowers: []
     superpowers_optional: []
-    external_optional: [gstack/plan-design-review, web-quality/accessibility, web-quality/web-design-guidelines]
-    auxiliary: [taiyi-restyle]
+    external_optional: [ecc/web-design-guidelines, ecc/accessibility-audit, ecc/frontend-patterns]
+    capabilities:
+      required: []
+      optional: []
     slash: ["/taiyi:continue"]
     human_gate: false
     harness:
-      - tool: gstack
-        skill: plan-design-review
-        optional: true
-        when: UI/UX 设计计划评审（有界面时建议）
-      - tool: web-quality
-        skill: accessibility
-        optional: true
-        when: 无障碍/WCAG（web-quality-skills）
-      - tool: web-quality
+      - tool: ecc
         skill: web-design-guidelines
-        optional: true
-        when: Web 界面设计规范审查
+        when: 【硬约束】Web 设计规范（替代 web-quality / design-review）
+      - tool: ecc
+        skill: accessibility-audit
+        when: 【硬约束】WCAG 无障碍审计（纯 API 可 N/A+打卡）
+      - tool: ecc
+        skill: frontend-patterns
+        when: 【硬约束】前端栈 patterns
   task:
-    order: 5
     taiyi_skill: taiyi-task
     artifact: TASK.md
-    kind: markdown
-    requires: [ui-design]
-    superpowers: [writing-plans, test-driven-development]
-    superpowers_optional: [executing-plans, using-git-worktrees]
-    external_optional: []
-    auxiliary: [taiyi-diagram-flow]
+    superpowers: []
+    superpowers_optional: [using-git-worktrees]
+    external_optional: [ecc/planner, ecc/tdd-workflow, ecc/autonomous-loops]
+    capabilities:
+      required: []
+      optional: []
     slash: ["/taiyi:tdd plan", "/taiyi:continue"]
     human_gate: false
     harness:
-      - tool: superpowers
-        skill: writing-plans
-        when: 可执行计划 + 切片（与 TASK.md 对齐）
-      - tool: superpowers
-        skill: test-driven-development
-        when: 切片测试计划（/taiyi:tdd plan）
+      - tool: ecc
+        skill: planner
+        when: 【硬约束】可执行计划 + 切片（取代 Superpowers writing-plans）
+      - tool: ecc
+        skill: tdd-workflow
+        when: 【硬约束】TDD 测试计划（取代 Superpowers test-driven-development）
       - tool: taiyi
         skill: taiyi-ultrawork
         optional: true
-        when: TASK.md 多切片并行或 /taiyi:ultrawork（TAIYI_ULW_AUTO_TASK=1 强制 Task 派发）
+        when: TASK.md 多切片并行或 /taiyi:ultrawork
   dev:
-    order: 6
     taiyi_skill: taiyi-dev
     artifact: dev.bundle
-    kind: code
-    requires: [task]
-    superpowers: [test-driven-development]
-    superpowers_optional: [subagent-driven-development, dispatching-parallel-agents, executing-plans, systematic-debugging, using-git-worktrees]
-    external_optional: []
-    auxiliary: []
+    superpowers: []
+    superpowers_optional: [using-git-worktrees]
+    external_optional: [ecc/tdd-workflow, ecc/agent-introspection-debugging, ecc/autonomous-loops, ecc/backend-patterns, ecc/coding-standards]
+    capabilities:
+      required: []
+      optional: []
     slash: ["/taiyi:tdd dev", "/taiyi:apply", "/taiyi:continue"]
     human_gate: false
     engine_gate: ".dev-complete 须 command + exitCode 0"
     harness:
-      - tool: superpowers
-        skill: test-driven-development
-        when: TDD 红绿重构（/taiyi:tdd dev）
-      - tool: superpowers
-        skill: subagent-driven-development
-        optional: true
-        when: 大实现拆 subagent
-      - tool: superpowers
-        skill: dispatching-parallel-agents
-        optional: true
-        when: 多切片并行
+      - tool: ecc
+        skill: tdd-workflow
+        when: 【硬约束】TDD 红绿重构（取代 Superpowers test-driven-development）
       - tool: superpowers
         skill: using-git-worktrees
         optional: true
         when: 隔离 worktree 开发
+      - tool: ecc
+        skill: agent-introspection-debugging
+        optional: true
+        when: 测试失败时科学调试（取代 Superpowers systematic-debugging）
+      - tool: ecc
+        skill: autonomous-loops
+        optional: true
+        when: 按计划分批执行（取代 Superpowers executing-plans）
       - tool: taiyi
         skill: taiyi-ultrawork
         optional: true
-        when: 多切片并行 dev 或 /taiyi:ultrawork（TAIYI_ULW_AUTO_TASK=1 强制 Task 派发）
+        when: 多切片并行 dev 或 /taiyi:ultrawork
+      - tool: ecc
+        skill: coding-standards
+        when: 【硬约束】实现期编码规范
+      - tool: ecc
+        skill: backend-patterns
+        when: 【硬约束】后端 patterns 落地
   test:
-    order: 7
     taiyi_skill: taiyi-test
     artifact: TEST.md
-    kind: markdown
-    requires: [dev]
-    superpowers: [verification-before-completion]
-    superpowers_optional: [systematic-debugging]
-    external_optional: [gstack/qa, web-quality/accessibility, playwright]
-    auxiliary: [taiyi-evolve]
+    superpowers: []
+    superpowers_optional: []
+    external_optional: [playwright, ecc/test-coverage-analysis, ecc/eval-harness, ecc/verification-loop]
+    capabilities:
+      required: []
+      optional: [e2e_test]
     slash: ["/taiyi:apply", "/taiyi:continue"]
     human_gate: false
     harness:
-      - tool: superpowers
-        skill: verification-before-completion
-        when: 声明测试完成前要有运行证据
-      - tool: superpowers
-        skill: systematic-debugging
-        optional: true
-        when: 测试失败时科学调试
-      - tool: gstack
-        skill: qa
-        optional: true
-        when: 有 web 面时站点 QA
-      - tool: playwright
-        command: npx playwright test
-        optional: true
-        when: E2E 回归（项目已装 @playwright/test）
-      - tool: web-quality
-        skill: accessibility
-        optional: true
-        when: 测试阶段无障碍复验
+      - tool: ecc
+        skill: verification-loop
+        when: 【硬约束】声明完成前要有运行证据（取代 Superpowers verification-before-completion）
+      - tool: ecc
+        skill: test-coverage-analysis
+        when: 【硬约束】覆盖率深度分析
+      - tool: ecc
+        skill: eval-harness
+        when: 【硬约束】Eval / AI 评估 harness
   review:
-    order: 8
     taiyi_skill: taiyi-review
     artifact: REVIEW.md
-    kind: markdown
-    requires: [test]
-    superpowers: [requesting-code-review]
+    superpowers: []
     superpowers_optional: [receiving-code-review]
-    external_optional: [gstack/review, semgrep, trivy]
-    auxiliary: [taiyi-health]
-    slash: ["/taiyi:review-loop", "/taiyi:health", "/taiyi:gstack review", "/taiyi:commit", "/taiyi:ship", "/taiyi:continue"]
+    external_optional: [ecc/security-scan, ecc/code-review]
+    capabilities:
+      required: []
+      optional: []
+    slash: ["/taiyi:review-loop", "/taiyi:health", "/taiyi:commit", "/taiyi:ship", "/taiyi:continue"]
     human_gate: true
     harness:
-      - tool: superpowers
-        skill: requesting-code-review
-        when: 派审 / 合并前验证（/taiyi:review-loop）
+      - tool: ecc
+        skill: code-review
+        when: 【硬约束】派审 / 合并前验证（取代 Superpowers requesting-code-review）
       - tool: superpowers
         skill: receiving-code-review
         optional: true
         when: 处理 CR 反馈
-      - tool: gstack
-        skill: review
-        optional: true
-        when: gstack PR diff 结构审查
-      - tool: semgrep
-        command: semgrep scan --config auto
-        optional: true
-        when: SAST 静态安全扫描
-      - tool: trivy
-        command: trivy fs .
-        optional: true
-        when: 依赖/文件系统漏洞扫描
+      - tool: ecc
+        skill: security-scan
+        when: 【硬约束】AgentShield（替代 semgrep/trivy 主路径）
   integration:
-    order: 9
     taiyi_skill: taiyi-integration
     artifact: CHANGELOG.md
-    kind: markdown
-    requires: [review]
-    superpowers: [finishing-a-development-branch, verification-before-completion]
+    superpowers: []
     superpowers_optional: []
-    external_optional: [gstack/document-release, openspec/archive, changesets]
-    auxiliary: []
+    external_optional: [openspec/archive, changesets, ecc/strategic-compact, ecc/continuous-learning-v2, ecc/changelog-generator, ecc/delivery-gate, ecc/verification-loop]
+    capabilities:
+      required: [spec_archive]
+      optional: [version_release]
     slash: ["/taiyi:audit", "/taiyi:land", "/taiyi:release", "/taiyi:continue", "/taiyi:archive"]
     human_gate: false
     engine_gate: delivery-gate + audit + AC 勾选
     harness:
-      - tool: superpowers
-        skill: finishing-a-development-branch
-        when: 验证测试 · 合并/PR/清理（integration 前）
-      - tool: superpowers
-        skill: verification-before-completion
-        when: 再次确认证据先于「已交付」
-      - tool: gstack
-        skill: document-release
-        optional: true
-        when: 同步 README/CHANGELOG
+      - tool: ecc
+        skill: delivery-gate
+        when: 【硬约束】验证测试 · 合并/PR/清理（取代 Superpowers finishing-a-development-branch）
+      - tool: ecc
+        skill: verification-loop
+        when: 【硬约束】再次确认证据先于「已交付」（取代 Superpowers verification-before-completion）
+      - tool: ecc
+        skill: changelog-generator
+        when: 【硬约束】从 commits 生成 CHANGELOG 草稿
+      - tool: ecc
+        skill: strategic-compact
+        when: 【硬约束】战略级会话 / 上下文压缩
+      - tool: ecc
+        skill: continuous-learning-v2
+        when: 【硬约束】Cross-change 本能更新（Continuous Learning v2）
       - tool: openspec
         command: taiyi archive <slug>
         optional: true
         when: OpenSpec 归档
-      - tool: changesets
-        command: npx changeset version
-        optional: true
-        when: monorepo 版本发布
-
-archive:
-  slash: ["/taiyi:archive", "/taiyi:sync"]
-  steps:
-    - sync-openspec
-    - merge-root-changelog
-    - optional: taiyi-evolve

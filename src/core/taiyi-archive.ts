@@ -151,23 +151,45 @@ export function archiveTaiyiChange(
     return { ok: false, reason: `变更目录不存在: ${src}` };
   }
 
+  // 归档前审计：扫描 DESIGN.md 中未关闭的 Open Questions
+  const designPath = path.join(src, "DESIGN.md");
+  if (fs.existsSync(designPath)) {
+    const designContent = fs.readFileSync(designPath, "utf8");
+    const openSection = designContent.match(/##\s*Open[^\n]*\n([\s\S]*?)(?=\n##\s|$)/);
+    if (openSection) {
+      const openItems = openSection[1].split("\n").map(l => l.trim()).filter(l => /^- \[ \]/.test(l));
+      if (openItems.length > 0) {
+        console.warn(`[taiyi-archive] ⚠️ ${slug}: ${openItems.length} open question(s) in DESIGN.md — consider resolving before archiving:`);
+        for (const item of openItems) {
+          console.warn(`[taiyi-archive]   ${item}`);
+        }
+      }
+    }
+  }
+
   const archiveRoot = path.join(taiyiRoot, "archive");
   fs.mkdirSync(archiveRoot, { recursive: true });
 
   const dest = path.join(archiveRoot, slug);
 
-  fs.renameSync(src, dest);
+  // 二次检查（防 race：check-then-act 窗口）—— 已存在则改用 dated 目录
+  let finalDest = dest;
+  if (fs.existsSync(dest)) {
+    const stamp = new Date().toISOString().replace(/[:.]/g, "-");
+    finalDest = path.join(archiveRoot, `${slug}-${stamp}`);
+  }
+  fs.renameSync(src, finalDest);
   // 存相对路径，避免 .taiyi-archive.json 泄漏绝对路径
-  const relPath = path.relative(taiyiRoot, dest);
+  const relPath = path.relative(taiyiRoot, finalDest);
   const manifest = {
     slug,
     archivedAt: new Date().toISOString(),
-    path: relPath.startsWith("..") ? dest : relPath,
+    path: relPath.startsWith("..") ? finalDest : relPath,
     openspec: options?.openspec ?? false,
   };
-  fs.writeFileSync(path.join(dest, ".taiyi-archive.json"), JSON.stringify(manifest, null, 2) + "\n");
+  fs.writeFileSync(path.join(finalDest, ".taiyi-archive.json"), JSON.stringify(manifest, null, 2) + "\n");
 
-  return { ok: true, dest };
+  return { ok: true, dest: finalDest };
 }
 
 export function formatTaiyiArchivePlain(slug: string, result: TaiyiArchiveResult): string {

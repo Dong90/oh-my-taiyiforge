@@ -19,11 +19,11 @@ export function taiyiControlPlaneBody(platform: "cursor" | "claude"): string {
       : `- 引擎：\`~/.claude/skills/taiyi-forge/SKILL.md\`
 - 编排：\`taiyi-orchestrator\`（\`--auto\`）
 - 阶段：\`taiyi-change\` … \`taiyi-integration\`
-- 铁三角：Superpowers / gstack 在对话内加载。`;
+- 双线 harness：Superpowers / ECC 在对话内加载。`;
 
   return `## 原则（对齐 oh-my-codex / omc.sh）
 
-1. **聊天里**：加载 \`taiyi-*\` 阶段 Skill、Superpowers、gstack 写工件与评审。
+1. **聊天里**：加载 \`taiyi-*\` 阶段 Skill、Superpowers 写工件与评审。
 2. **引擎过关**：用户说 **/taiyi:new**、**/taiyi:continue**、**/taiyi:apply**、**/taiyi:archive**、**/taiyi:cancel**、**/taiyi:pause**（Codex：**$taiyi-new** 等），你用 **终端工具** 代跑 \`scripts/taiyi-forge.sh\`。
 3. **禁止**让用户手打长 shell 路径；**禁止**未执行过关就声称阶段已完成。
 4. **一步一 continue**：只写当前阶段工件；**禁止**跳步创建后续阶段 md 或改业务代码（dev 前）。
@@ -50,11 +50,11 @@ ${chatIntro}
 
 **主流程：** /taiyi:new · /taiyi:status · /taiyi:continue · /taiyi:apply · /taiyi:archive
 
-**常用辅助：** /taiyi:doctor · /taiyi:audit · /taiyi:verify · /taiyi:list · /taiyi:check · /taiyi:sync · /taiyi:pause · /taiyi:handoff · /taiyi:cancel · /taiyi:write · /taiyi:feature · /taiyi:bug · /taiyi:ralph · /taiyi:autopilot · /taiyi:team · /taiyi:ultrawork · /taiyi:agent · /taiyi:review-loop · /taiyi:review-check · /taiyi:token *
+**常用辅助：** /taiyi:verify · /taiyi:list · /taiyi:check · /taiyi:sync · /taiyi:pause · /taiyi:handoff · /taiyi:cancel · /taiyi:write · /taiyi:feature · /taiyi:bug · /taiyi:token *
 
 **引擎斜杠（原 engine-only）：** /taiyi:init · /taiyi:complete · … · /taiyi:ci platform · /taiyi:ci prompt
 
-**交付链（gstack）：** /taiyi:commit · /taiyi:ship · /taiyi:land · /taiyi:gstack review · /taiyi:gstack qa · /taiyi:release
+**交付链：** /taiyi:commit · /taiyi:ship · /taiyi:land
 
 九阶段写工件：聊天用 **/taiyi:write**；仍加载 \`taiyi-change\` … \`taiyi-integration\` Skill，见 docs/taiyi/workflow.md
 

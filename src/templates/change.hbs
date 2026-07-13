@@ -17,11 +17,14 @@ downstream: [requirement]
 > **[ALL]** Goal: 证明值得做 | Inputs: 用户反馈/监控/业务指标
 <!-- Action: 用数据回答: 当前多痛、不改多惨、改了多好 -->
 
-**当前状态**: {{#if motivation}}{{motivation}}{{else}}{{#if description}}{{description}}{{else}}[变更目的和价值]{{/if}}{{/if}}
+**当前状态**: {{#if motivation}}{{motivation}}{{else}}> 💡 用一句话说明当前痛点，最好带数据。例: "用户登录超时后必须重新输入密码，日均流失 3%。"
+{{#if description}}{{description}}{{/if}}{{/if}}
 
-**不改的代价**: {{#if do_nothing_cost}}{{do_nothing_cost}}{{else}}[量化]{{/if}}
+**不改的代价**: {{#if do_nothing_cost}}{{do_nothing_cost}}{{else}}> 💡 如果不改会怎样? 例: "继续流失用户，Q3 预测 NPS 下降 5 点"
+{{/if}}
 
-**目标状态**: {{#if target_state}}{{target_state}}{{else}}[理想结果]{{/if}}
+**目标状态**: {{#if target_state}}{{target_state}}{{else}}> 💡 改完之后目标状态是什么? 例: "登录态保持 7 天，超时后刷新 Token 无需重新登录"
+{{/if}}
 
 <!-- Validate: 有可度量数字？ -->
 
@@ -40,30 +43,34 @@ downstream: [requirement]
 - {{this}}
 {{/each}}
 {{else}}
-- _无_
+- 无
 {{/if}}
 
 <!-- Validate: In/Out互斥且穷尽？ -->
 
+{{#if is_cli_only}}
+> ✅ **Step 3 skipped**: 本变更仅 CLI/library — 无视觉面。详细 UI 决策见 Phase 4 ui-design。
+{{else}}
 ## Step 3: Visual Direction
 > **[UI]** Goal: 前端项目预选视觉方向 | Inputs: 产品定位/品牌/竞品
 <!-- Action: 前端项目必填，纯后端 skip。此选择被 Phase 4 ui-design 继承并深化 -->
 
-- **调性**: {{#if visual_tone}}{{visual_tone}}{{else}}_待选定_{{/if}}
-- **理由**: {{#if visual_reason}}{{visual_reason}}{{else}}_结合业务说明_{{/if}}
-- **参考产品**: {{#if visual_references}}{{visual_references}}{{else}}_3 个参考产品_{{/if}}
-- **明确排除**: {{#if visual_excluded}}{{visual_excluded}}{{else}}_无 — CLI/workflow only; no visual surface_{{/if}}
+- **调性**: {{#if visual_tone}}{{visual_tone}}{{/if}}
+- **理由**: {{#if visual_reason}}{{visual_reason}}{{/if}}
+- **参考产品**: {{#if visual_references}}{{visual_references}}{{/if}}
+- **明确排除**: {{#if visual_excluded}}{{visual_excluded}}{{else}}无 — CLI/workflow only; no visual surface{{/if}}
 
 <!-- Validate: 调性选择有理由支撑？参考产品有可比性？ -->
+{{/if}}
 
 ## Step 4: Premise Challenge
 > **[ALL]** Goal: 确认这是正确的问题 | Inputs: Step1+2
 <!-- Action: 换角度重新审视 — 能不能不做/复用/更简单定义？有没有完全不同的路径？ -->
 
-- **换个角度**: {{#if premise_redefine}}{{premise_redefine}}{{else}}[重新定义问题会怎样？]{{/if}}
-- **不做代价**: {{#if premise_cost}}{{premise_cost}}{{else}}[量化]{{/if}}
-- **已有复用**: {{#if premise_existing}}{{premise_existing}}{{else}}[有无现成方案？]{{/if}}
-- **Scrap it?**: {{#if premise_scrap}}{{premise_scrap}}{{else}}[有没有完全不同的方案更值得做？gstack PD#9: 有更好的方法就说]{{/if}}
+- **换个角度**: {{#if premise_redefine}}{{premise_redefine}}{{/if}}
+- **不做代价**: {{#if premise_cost}}{{premise_cost}}{{/if}}
+- **已有复用**: {{#if premise_existing}}{{premise_existing}}{{/if}}
+- **Scrap it?**: {{#if premise_scrap}}{{premise_scrap}}{{/if}}
 
 <!-- Validate: 挑战≥2个假设 + 至少考虑了一个替代路径 -->
 
@@ -77,11 +84,9 @@ downstream: [requirement]
 {{#each impact_map}}
 | {{module}} | {{impact}} | {{owner}} |
 {{/each}}
-{{else}}
-| 模块/服务/团队 | 影响 | 负责人 |
-|--------------|------|--------|
-| _本次变更仅影响测试套件_ | _无生产模块_ | _CI/CD_ |
 {{/if}}
+
+> ⚠️ 如未列出 impact_map，Zod 校验会要求 ≥ 1 条；占位 fallback 已删除。
 
 <!-- Validate: 遗漏=上线事故 -->
 
@@ -101,7 +106,7 @@ downstream: [requirement]
 
 ```
   CURRENT              THIS CHANGE              12-MONTH IDEAL
-  _现状_     --->      _本次增量_    --->        _理想终态_
+  {{#if dream_state.current}}{{dream_state.current}}{{/if}}     --->      {{#if dream_state.this_change}}{{dream_state.this_change}}{{/if}}    --->        {{#if dream_state.ideal}}{{dream_state.ideal}}{{/if}}
 ```
 
 <!-- Validate: 向理想靠近而非引入未来技术债？ -->
@@ -119,7 +124,7 @@ downstream: [requirement]
 {{else}}
 | 风险 | 概率 | 影响 | 缓解 |
 |------|------|------|------|
-| _本次为测试/文档变更，无新增风险_ | _N/A_ | _N/A_ | _N/A_ |
+| 本次为测试/文档变更，无新增风险 | N/A | N/A | N/A |
 {{/if}}
 
 <!-- Validate: 三类全覆盖？缓解可执行？ -->
@@ -137,10 +142,10 @@ downstream: [requirement]
 {{else}}
 | 技术决策 | Token? | 不选成熟方案的理由 |
 |---------|:--:|-------------------|
-| _本次无新技术引入_ | 否 | _沿用现有技术栈_ |
+| 本次无新技术引入 | 否 | 沿用现有技术栈 |
 {{/if}}
 
-_已花费: {{#if innovation_tokens}}{{innovation_tokens.length}}{{else}}0{{/if}}/3_
+**已花费: {{#if innovation_tokens}}{{innovation_tokens.length}}{{else}}0{{/if}}/3**
 
 <!-- Validate: ≤3？每个"是"有充分理由？ -->
 
@@ -148,10 +153,10 @@ _已花费: {{#if innovation_tokens}}{{innovation_tokens.length}}{{else}}0{{/if}
 > **[HIGH]** Goal: 上线回退有预案 | Inputs: Step4+7
 <!-- Action: 数据迁移/API变更/行为变更时描述切换和回退 -->
 
-**迁移**: {{#if migration_steps}}{{migration_steps}}{{else}}[步骤]{{/if}}
-**回滚触发**: {{#if rollback_trigger}}{{rollback_trigger}}{{else}}[量化条件]{{/if}}
-**回滚操作**: {{#if rollback_ops}}{{rollback_ops}}{{else}}[精确到命令]{{/if}}
-**回滚时间**: {{#if rollback_time}}≤{{rollback_time}}{{else}}≤_N_min{{/if}}
+**迁移**: {{#if migration_steps}}{{migration_steps}}{{/if}}
+**回滚触发**: {{#if rollback_trigger}}{{rollback_trigger}}{{/if}}
+**回滚操作**: {{#if rollback_ops}}{{rollback_ops}}{{/if}}
+**回滚时间**: {{#if rollback_time}}≤{{rollback_time}}{{/if}}
 
 <!-- Validate: 回滚≤30min？步骤精确？ -->
 
@@ -168,22 +173,32 @@ _已花费: {{#if innovation_tokens}}{{innovation_tokens.length}}{{else}}0{{/if}
 {{else}}
 | 角色 | 姓名 | 诉求 |
 |------|------|------|
-| _本次为测试变更，无额外干系人_ | _CI/CD_ | _自动化回归通过_ |
+| 本次为测试变更，无额外干系人 | CI/CD | 自动化回归通过 |
 {{/if}}
 
 ---
 ## Quality Gate
-<!-- Evidence-first: 每项通过需要可验证证据，不是"感觉对了"。Superpowers verification-before-completion -->
+<!-- Evidence-first: 每项通过需要可验证证据，不是"感觉对了"。ECC verification-loop 取代 Superpowers verification-before-completion -->
 
 ⬜ S1 有量化数据
 ⬜ S2 边界清晰
+{{#unless is_cli_only}}
 ⬜ [UI] S3 视觉调性已选定
+{{/unless}}
 ⬜ S4 挑战≥2假设 + 有Scrap-it备选
 ⬜ S5 影响模块无遗漏
 ⬜ S6 每条SC可度量
+{{#if dream_state.current}}
 ⬜ [M+] S7 向理想靠近
+{{/if}}
+{{#if risks}}
 ⬜ [M+] S8 三类风险全覆盖
+{{/if}}
+{{#if innovation_tokens.length}}
 ⬜ [M+] S9 Token≤3
+{{/if}}
 ⬜ [H]  S10 回滚方案可执行
+{{#if stakeholders}}
 ⬜ [M+] S11 干系人无遗漏
-⬜ **TODOS.md**: 延期项已记录 | gstack PD#7: 没写=不存在
+{{/if}}
+⬜ **TODOS.md**: 延期项已记录 | PD#7: 没写=不存在

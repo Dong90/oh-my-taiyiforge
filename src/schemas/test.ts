@@ -40,6 +40,14 @@ export const TestSchema = z.object({
   title: z.string().describe("测试计划标题"),
   unit_framework: z.string().optional().describe("单元测试框架"),
   unit_coverage_target: z.string().optional().describe("单元覆盖率目标"),
+  test_rounds: z.array(
+    z.object({
+      round: z.string().describe("轮次名（功能/性能/安全/兼容/可观测）"),
+      scope: z.string().describe("本轮覆盖范围"),
+      status: z.string().describe("状态（✅ 必跑 / ⚠️ 跳过 / ❌ 未跑）"),
+      skip_reason: z.string().optional().describe("跳过理由"),
+    })
+  ).optional().describe("5 Round 覆盖矩阵"),
   test_plan: z.array(
     z.object({
       id: z.string().describe("测试用例 ID"),
@@ -56,6 +64,18 @@ export const TestSchema = z.object({
   coverage: z.string().optional().describe("覆盖率信息"),
   mocking_boundaries: z.array(MockingBoundary).optional().describe("Mock 边界契约：明确定义哪些层级可 mock 哪些不可"),
   evidence: EvidenceSchema.optional().describe("真验证记录,test_plan 有 passed 状态时推荐填"),
+  test_coverage: z.object({
+    unit: z.string().describe("单元测试覆盖率，如 '85%'"),
+    integration: z.string().describe("集成测试覆盖率，如 '60%'"),
+    e2e: z.string().describe("E2E 测试覆盖率，如 '30%'"),
+  }).optional().describe("测试覆盖率数据"),
+  test_results_summary: z.string().optional().describe("test results summary, e.g. '1494/1502 passed'"),
+  ac_coverage: z.array(
+    z.object({
+      ac_id: z.string().describe("REQUIREMENT AC id, e.g. AC-01"),
+      test_case_ids: z.array(z.string()).describe("test_plan case ids covering this AC"),
+    })
+  ).optional().describe("AC→TC traceability: which test cases cover each acceptance criterion"),
 }).strict();
 
 export type TestSpec = z.infer<typeof TestSchema>;

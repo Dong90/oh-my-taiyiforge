@@ -1,11 +1,9 @@
 import { execSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
-import {
-  commitTrailersEnabled,
-  evaluateCommitTrailers,
-} from "./commit-trailer.js";
+import { commitTrailersEnabled, evaluateCommitTrailers, resolveBaseBranch } from "./commit-trailer.js";
 import { resolveDeliveryVerifyCmd } from "./consumer-config.js";
+import { resolveDeliveryConfig, resolveDeliveryGateEnabled } from "../delivery-config.js";
 import type { ArchitectureTemplate } from "../types.js";
 
 export type DeliveryGateResult = {
@@ -24,29 +22,9 @@ function runGit(workspaceDir: string, args: string): string {
   }).trim();
 }
 
-function resolveBaseBranch(workspaceDir: string): string {
-  let current = "HEAD";
-  try {
-    current = runGit(workspaceDir, "rev-parse --abbrev-ref HEAD");
-  } catch {
-    /* keep HEAD */
-  }
-
-  for (const candidate of ["origin/develop", "origin/main", "origin/master", "develop", "main", "master"]) {
-    if (candidate === current) continue;
-    try {
-      runGit(workspaceDir, `rev-parse --verify ${candidate}`);
-      return candidate;
-    } catch {
-      /* try next */
-    }
-  }
-  try {
-    runGit(workspaceDir, "rev-parse --verify HEAD~1");
-    return "HEAD~1";
-  } catch {
-    return "HEAD";
-  }
+function resolveBaseBranchForWorkspace(workspaceDir: string): string {
+  const config = resolveDeliveryConfig(workspaceDir);
+  return resolveBaseBranch(workspaceDir, config.git.baseBranches);
 }
 
 function normalizeRel(file: string): string {
@@ -64,13 +42,22 @@ export function isChangeScopedDirtyPath(file: string, slug: string): boolean {
   return false;
 }
 
+/** 分类 dirty 文件：in-scope（阻塞） / other-change / gitignore-noise。 */
+export type DirtyBucket = "in-scope" | "other-change" | "gitignore-noise" | "untracked-other";
+export function classifyDirtyFile(file: string, slug: string): DirtyBucket {
+  const n = normalizeRel(file);
+  if (isChangeScopedDirtyPath(n, slug)) return "in-scope";
+  if (n.startsWith(".taiyi/changes/") || n.startsWith(".taiyi/archive/")) return "other-change";
+  if (n.startsWith("openspec/changes/")) return "other-change";
+  if (n.includes("/.taiyi/")) return "gitignore-noise";
+  if (/^\.(editorconfig|prettierrc|prettierrc\.|eslintrc|eslintignore|gitignore|gitattributes|husky)/.test(n)) return "gitignore-noise";
+  if (n.endsWith(".log")) return "gitignore-noise";
+  return "untracked-other";
+}
+
 function listUncommitted(workspaceDir: string): string[] {
   const parts: string[] = [];
-  for (const cmd of [
-    "diff --name-only",
-    "diff --cached --name-only",
-    "ls-files --others --exclude-standard",
-  ]) {
+  for (const cmd of ["diff --name-only", "diff --cached --name-only", "ls-files --others --exclude-standard"]) {
     try {
       const out = runGit(workspaceDir, cmd);
       if (out) parts.push(...out.split("\n").filter(Boolean));
@@ -83,14 +70,7 @@ function listUncommitted(workspaceDir: string): string[] {
 
 /** integration 交付门：代码须已 commit，工作区须干净（相对默认 base 分支）。 */
 export function deliveryGateEnabled(workspaceDir: string, env = process.env): boolean {
-  if (env.TAIYI_DELIVERY_GATE === "0" || env.TAIYI_DELIVERY_GATE === "false") {
-    return false;
-  }
-  if (env.TAIYI_DELIVERY_GATE === "1" || env.TAIYI_DELIVERY_GATE === "true") {
-    return true;
-  }
-  // 默认：git 仓库启用，非 git 工作区（单测 tmpdir）跳过
-  return fs.existsSync(path.join(workspaceDir, ".git"));
+  return resolveDeliveryGateEnabled(workspaceDir, env);
 }
 
 export function evaluateDeliveryGate(
@@ -101,7 +81,15 @@ export function evaluateDeliveryGate(
     return { passed: true, skipped: true };
   }
 
-  const base = resolveBaseBranch(workspaceDir);
+  const base = resolveBaseBranchForWorkspace(workspaceDir);
+  const count = (() => {
+    try {
+      const out = runGit(workspaceDir, "rev-list --count HEAD");
+      return parseInt(out.trim(), 10) || 0;
+    } catch {
+      return 0;
+    }
+  })();
   let committedAhead: string[] = [];
   try {
     const out = runGit(workspaceDir, `diff --name-only ${base}...HEAD`);
@@ -114,38 +102,67 @@ export function evaluateDeliveryGate(
   }
 
   if (committedAhead.length === 0) {
-    let count = 0;
-    try {
-      count = parseInt(runGit(workspaceDir, "rev-list --count HEAD"), 10) || 0;
-    } catch {
-      count = 0;
+    // 当 base 是远端追踪分支且同步后 diff 为空时，用 HEAD~1 作为 fallback
+    if (base !== "HEAD" && !base.startsWith("HEAD")) {
+      try {
+        const out = runGit(workspaceDir, "diff --name-only HEAD~1 HEAD");
+        committedAhead = out ? out.split("\n").filter(Boolean) : [];
+      } catch {
+        /* HEAD~1 不存在（单 commit 仓库）— 走下方逻辑 */
+      }
     }
-    if (base === "HEAD" && count >= 1) {
-      // 新仓库仅 main 且无远端 base：首个 commit 即视为已有交付 commit
-    } else {
+    if (count === 0 && base === "HEAD") {
+      // 完全空仓库（无 commit + base 解析 fallback 到 HEAD）— 明确 fail，避免静默通过
       return {
         passed: false,
-        reason: `integration 需在实现代码 commit 之后（相对 ${base} 无新 commit）`,
+        reason: `未检测到任何 commit 且未识别 base 分支（main/master/develop 等）；请先 git commit 初始内容并 git push 远端`,
         hints: [
-          "先按 TASK 切片 commit，再 complete integration",
-          "或设置 TAIYI_DELIVERY_GATE=0 仅用于本地演示（不推荐）",
+          "git push -u origin <branch>  # 创建远端 base 后重试",
+          "或设置 TAIYI_DELIVERY_GATE=0 仅本地演示（不推荐）",
         ],
       };
     }
+    if (count > 0 && base === "HEAD") {
+      // 单 commit 仓库（base fallback 到 HEAD）— 旧 silent-pass 保留，避免破坏单 commit 起步场景
+      // no-op
+    } else {
+      return {
+        passed: false,
+        reason: `integration 关卡：相对 ${base} 还没有 commit。请先 commit 实现的代码再试。`,
+        hints: [
+          `git add .  # 暂存`,
+          `git commit -m "feat: ${options?.slug ?? "<slug>"} slice\n\nTaiyi-Change: ${options?.slug ?? "<slug>"}\nTaiyi-Phase: integration"`,
+          `git push  # 让远端 ${base.split('/').pop()} 也收到这些 commit`,
+          `或一键:taiyi-forge.sh commit ${options?.slug ?? "<slug>"} 生成正确 trailer`,
+          "本地演示: TAIYI_DELIVERY_GATE=0（不推荐 CI）",
+        ],
+      };    }
   }
 
   const dirty = listUncommitted(workspaceDir);
-  const blockingDirty = options?.slug
-    ? dirty.filter((f) => isChangeScopedDirtyPath(f, options.slug!))
-    : dirty;
+  const blockingDirty = options?.slug ? dirty.filter((f) => isChangeScopedDirtyPath(f, options.slug!)) : dirty;
+  // 完整 dirty 分类（用于更好错误信息）
+  const buckets: Record<DirtyBucket, string[]> = {
+    "in-scope": [],
+    "other-change": [],
+    "gitignore-noise": [],
+    "untracked-other": [],
+  };
+  for (const f of dirty) buckets[classifyDirtyFile(f, options?.slug ?? "")].push(f);
+
   if (blockingDirty.length > 0) {
     const slugTag = options?.slug ? `[${options.slug}] ` : "";
     const slugHint = options?.slug ?? "<slug>";
+    const noiseHint = buckets["gitignore-noise"].length > 0
+      ? `\n  也含 ${buckets["gitignore-noise"].length} 个 gitignore 噪音文件（建议加进 .gitignore 而非每次提交）`
+      : "";
     return {
       passed: false,
       reason: `delivery.not-closed ${slugTag}${blockingDirty.length} 个未提交文件（本变更范围）`,
       hints: [
         `未提交: ${blockingDirty.slice(0, 8).join(", ")}${blockingDirty.length > 8 ? " …" : ""}`,
+        `其他工作目录变化: ${buckets["other-change"].length} 个（不影响本 change）`,
+        noiseHint,
         "必须含 trailer,示例:",
         "  git add .",
         `  git commit -m "feat: deliver ${slugHint} slice\n\nTaiyi-Change: ${slugHint}\nTaiyi-Phase: integration"`,
@@ -180,11 +197,7 @@ export function evaluateDeliveryGate(
   }
 
   if (options?.slug && commitTrailersEnabled()) {
-    const trailers = evaluateCommitTrailers(
-      workspaceDir,
-      options.slug,
-      options.phase ?? "integration",
-    );
+    const trailers = evaluateCommitTrailers(workspaceDir, options.slug, options.phase ?? "integration");
     if (!trailers.skipped && !trailers.passed) {
       return {
         passed: false,
@@ -206,10 +219,7 @@ export type ProductionReadinessResult = {
 };
 
 /** Check that package.json contains required scripts. */
-function checkPackageScripts(
-  workspaceDir: string,
-  required: string[],
-): ProductionReadinessResult {
+function checkPackageScripts(workspaceDir: string, required: string[]): ProductionReadinessResult {
   const pkgPath = path.join(workspaceDir, "package.json");
   if (!fs.existsSync(pkgPath)) {
     return { passed: false, warnings: ["missing package.json"] };
@@ -233,18 +243,13 @@ function checkPackageScripts(
 
 /** Scan source files for health endpoint pattern (GET /health, GET /api/health, /ready, /live). */
 function scanHealthEndpoint(workspaceDir: string): ProductionReadinessResult {
-  const patterns = [
-    /(?:\/health|\/api\/health|\/ready|\/live)/i,
-    /healthCheck|health_check|\/healthz/i,
-  ];
+  const patterns = [/(?:\/health|\/api\/health|\/ready|\/live)/i, /healthCheck|health_check|\/healthz/i];
   const srcDir = path.join(workspaceDir, "src");
   if (!fs.existsSync(srcDir)) {
     return { passed: false, warnings: ["src/ 目录不存在，无法检查 health endpoint"] };
   }
   try {
-    const files = listFilesRecursive(srcDir).filter(
-      (f) => f.endsWith(".ts") || f.endsWith(".js") || f.endsWith(".py"),
-    );
+    const files = listFilesRecursive(srcDir).filter((f) => f.endsWith(".ts") || f.endsWith(".js") || f.endsWith(".py"));
     const found = files.some((f) => {
       const content = fs.readFileSync(path.join(workspaceDir, f), "utf8");
       return patterns.some((p) => p.test(content));
@@ -269,9 +274,7 @@ function scanCorsUsage(workspaceDir: string): ProductionReadinessResult {
     return { passed: false, warnings: ["src/ 目录不存在，无法检查 CORS"] };
   }
   try {
-    const files = listFilesRecursive(srcDir).filter(
-      (f) => f.endsWith(".ts") || f.endsWith(".js") || f.endsWith(".py"),
-    );
+    const files = listFilesRecursive(srcDir).filter((f) => f.endsWith(".ts") || f.endsWith(".js") || f.endsWith(".py"));
     const found = files.some((f) => {
       const content = fs.readFileSync(path.join(workspaceDir, f), "utf8");
       return corsPattern.test(content);

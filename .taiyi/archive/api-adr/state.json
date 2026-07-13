@@ -1,0 +1,33 @@
+{
+  "slug": "api-adr",
+  "currentPhase": "integration",
+  "completedPhases": [
+    "dev",
+    "integration"
+  ],
+  "profile": "nano",
+  "skippedPhases": [
+    "change",
+    "requirement",
+    "design",
+    "ui-design",
+    "task",
+    "test",
+    "review"
+  ],
+  "strictDev": false,
+  "autoHarness": true,
+  "complexity": {
+    "level": "low",
+    "score": 3,
+    "recommendedSkills": [
+      "taiyi-intel-scan"
+    ],
+    "recommendedProfile": "micro"
+  },
+  "auxiliaryCompleted": [],
+  "workflowStatus": "completed",
+  "createdAt": "2026-06-27T11:59:08.311Z",
+  "updatedAt": "2026-07-04T08:13:13.902Z",
+  "version": 3
+}

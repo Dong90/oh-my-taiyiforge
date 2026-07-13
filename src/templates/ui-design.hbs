@@ -9,7 +9,7 @@ downstream: [task, dev]
 <!-- phase:ui-design skill:taiyi-ui-design gate:auto est:20min produces:UI-DESIGN.md upstream:[design,requirement] downstream:[task,dev] cplx:[ALL]5steps +[M+]2 +[H]1 -->
 # UI-DESIGN: {{title}}
 
-> **Scope**: {{#if scope}}{{scope}}{{else}}[涉及页面/组件]{{/if}}
+> **Scope**: {{#if scope}}{{scope}}{{/if}}
 
 ---
 
@@ -24,9 +24,11 @@ downstream: [task, dev]
 > - **例外**: {{styling_contract.exceptions}}
 {{/if}}
 {{else}}
-> - _待选定 CSS 方案（Tailwind / CSS Modules / styled-components）_
-> - _内联样式禁止策略_
-> - _主题变量规则_
+{{#if is_cli_only}}
+> - **CSS 方案**: N/A（CLI-only 变更，无 UI 样式）
+> - **内联样式**: N/A（无 UI 层，不涉及内联样式）
+> - **主题变量**: N/A（无 UI 层，不涉及主题变量）
+{{/if}}
 {{/if}}
 > 
 > <!-- Validate: CSS 方案单一无混用？无内联 style？颜色/间距/字体仅用主题变量？ -->
@@ -36,9 +38,7 @@ downstream: [task, dev]
 | 页面/组件 | 操作 | 路径 | 变更 |
 |----------|------|------|------|
 {{#if is_cli_only}}
-| _N/A — {{scope}}_ |
-{{else}}
-| _待列出页面/组件_ | _新增/修改/删除_ | _路径_ | _变更描述_ |
+| N/A — {{scope}} |
 {{/if}}
 
 <!-- Validate: 公共组件(Header/Footer/ErrorBoundary)是否遗漏？ -->
@@ -49,12 +49,7 @@ downstream: [task, dev]
 
 ```
 {{#if is_cli_only}}
-_N/A — {{scope}}_
-{{else}}
-_组件树待补充_
-ComponentRoot
-├── ComponentA (props:..., state:...)
-└── ComponentB
+N/A — {{scope}}
 {{/if}}
 ```
 
@@ -69,36 +64,40 @@ ComponentRoot
 - **{{name}}**: {{description}}
 {{/each}}
 {{else}}
-### _组件名_
+### {{#if component_name}}{{component_name}}{{else}}N/A{{/if}}
+{{#if is_cli_only}}
+N/A — CLI-only change, no visual states
+{{else}}
 | 状态 | 触发 | 视觉 |
 |------|------|------|
-| Default | _默认状态_ | _视觉描述_ |
-| Loading | _加载中_ | _视觉描述_ |
-| Empty | _无数据_ | _视觉描述_ |
-| Error | _出错时_ | _视觉描述_ |
-| Success | _成功时_ | _视觉描述_ |
-| Edge | _边界情况_ | _视觉描述_ |
+| Default | — | — |
+| Loading | — | — |
+| Empty | — | — |
+| Error | — | — |
+| Success | — | — |
+| Edge | — | — |
+{{/if}}
 {{/if}}
 
 <!-- Validate: 6状态全覆盖？每个有视觉描述？ -->
 
 ## Step 4: Interaction Edge Cases
 > **[ALL]** Goal: 交互边界不翻车 | Inputs: Step3
-<!-- Action: gstack PD#4: 9种交互边界全覆盖 -->
+<!-- Action: PD#4: 9种交互边界全覆盖 -->
 
+{{#if is_cli_only}}
+> ✅ **Step 4 skipped**: 本变更仅 CLI/library — 无交互边界。
+{{else}}
 | 边界 | 行为 |
 |------|------|
-| Double-click | 按钮disabled防重复提交 |
-| Navigate away | |
-| Slow (>3s) | |
-| Stale state | |
-| Concurrent tabs | |
-| Back button | |
-| Zero state | |
-| Max input | |
-| Offline | |
+{{#if interaction_boundaries}}
+{{#each interaction_boundaries}}
+| {{boundary}} | {{behavior}} |
+{{/each}}
+{{/if}}
 
 <!-- Validate: 9种全覆盖？每个有具体行为？ -->
+{{/if}}
 
 ## Step 5: Responsive Breakpoints
 > **[MEDIUM+]** Goal: 多端都可用 | Inputs: Step1+2
@@ -123,9 +122,9 @@ ComponentRoot
 | 交互 | 触发 | 动效 | 时长 |
 |------|------|------|------|
 {{#if is_cli_only}}
-| _N/A — {{scope}}_ |
+| N/A — {{scope}} |
 {{else}}
-| _交互描述_ | _触发条件_ | _动效内容_ | _时长_ |
+| 交互描述 | 触发条件 | 动效内容 | 时长 |
 {{/if}}
 
 <!-- Validate: 动效增强可用性而非纯装饰？有reduced-motion方案？ -->
@@ -158,9 +157,9 @@ ComponentRoot
 | Token | 值 | 来源 |
 |-------|-----|------|
 {{#if is_cli_only}}
-| _N/A — {{scope}}_ |
+| N/A — {{scope}} |
 {{else}}
-| _Token名称_ | _值_ | _来源_ |
+| Token名称 | 值 | 来源 |
 {{/if}}
 
 <!-- Validate: 新增组件复用现有Token？与DESIGN.md一致？ -->
@@ -174,13 +173,17 @@ ComponentRoot
 
 ---
 ## Quality Gate
-<!-- Evidence-first: 用实际渲染截图验证，非凭感觉。gstack PD#4: 交互边界9场景全覆盖 -->
+<!-- Evidence-first: 用实际渲染截图验证，非凭感觉。PD#4: 交互边界9场景全覆盖 -->
 
 - [ ] S1 组件清单完整
 - [ ] S2 组件树清晰
 - [ ] S3 6状态全覆盖
-- [ ] S4 9种交互边界全覆盖 | gstack PD#4
+{{#if interaction_boundaries}}
+- [ ] S4 9种交互边界全覆盖 | PD#4
+{{/if}}
 - [ ] [M+] S5 响应式断点已定义
 - [ ] [M+] S6 动效有规范(含prefers-reduced-motion)
+{{#if accessibility}}
 - [ ] [ALL] S7 WCAG AA已覆盖 | axe/Lighthouse审计通过
+{{/if}}
 - [ ] [H]  S8 Design Token对齐

@@ -1,13 +1,13 @@
-# TaiyiForge 工作流（四动词 + 九阶段）
+# TaiyiForge 工作流（v30 主链 + 九阶段）
 
 ## 两层结构
 
 | 层 | 是什么 | 数量 |
 |----|--------|------|
-| **聊天动词** | `/taiyi:new` `continue` `apply` `archive` `status` | 5 条 |
+| **v30 主链** | `/taiyi:new` `status` `write` `continue` `apply` `archive` | 6 条 |
 | **九阶段** | 引擎状态机 + `taiyi-*` Skill 写工件 | 9 个 |
 
-**四动词不是把九阶段合并成三步。** `continue` 在规划期要**每个阶段各用一次**。
+**主链不是把九阶段合并成三步。** 每个规划/收尾阶段仍须单独 `write` → `status` 预检 → `continue`。
 
 单变更可省略 slug。**多变更时先 `/taiyi:list`**。
 
@@ -15,17 +15,18 @@
 
 | 类型 | TaiyiForge | OMX 对标 |
 |------|------------|----------|
-| **主流程** | new → status → continue → apply → archive | new → plan → apply → review → archive |
-| **辅助** | doctor, list, check, sync, run | doctor, mode, run, clarify |
+| **主流程** | new → status → write → continue → apply → archive | new → plan → apply → review → archive |
+| **辅助** | doctor, list, verify, audit, sync, run | doctor, mode, run, clarify |
 
 ### 主流程（日常必用）
 
 | 命令 | 何时用 |
 |------|--------|
 | `/taiyi:new 功能名` | 开始新变更 |
-| `/taiyi:status` | 随时查看「当前第几阶段、该加载哪个 Skill」 |
-| `/taiyi:continue` | 规划/收尾阶段：写完工件后推进 |
-| `/taiyi:apply` | **仅 dev / test**：打印实现 harness（不 complete；写完代码后 continue） |
+| `/taiyi:status` | 随时查看「当前第几阶段、该加载哪个 Skill、qualityReady」 |
+| `/taiyi:write` | 写当前阶段工件（引擎输出应加载的 `@taiyi-*` Skill） |
+| `/taiyi:continue` | 当前阶段工件就绪后过关（每阶段一次） |
+| `/taiyi:apply` | **仅 dev / test**：打印实现 harness（不 complete；写完代码后 status → continue） |
 | `/taiyi:archive` | 九阶段全部完成后归档 |
 
 ### 辅助命令（按需）
@@ -33,10 +34,10 @@
 | 命令 | 何时用 |
 |------|--------|
 | `/taiyi:doctor` | 安装/升级后自检（≈ `omc doctor`）+ **工作区流程** |
-| `/taiyi:pause` | 暂停前写 HANDOFF.md（≈ OMC notepad / gstack checkpoint） |
+| `/taiyi:pause` | 暂停前写 HANDOFF.md（≈ 会话续作 / ECC strategic-compact） |
 | `/taiyi:cancel` | 取消进行中变更（aborted） |
 | `/taiyi:list` | **多个变更并行**时列 slug（否则 continue 报错） |
-| `/taiyi:check` | `--auto` 时每阶段看 harness 铁三角清单 |
+| `/taiyi:check` | `--auto` 时每阶段看 harness 双线清单 |
 | `/taiyi:continue xN` | 循环 `continue` 直到完成或阻塞（人工门需 `--approver`） |
 | `/taiyi:verify` | PR/CI 工件门禁（`ci verify` 的斜杠入口） |
 | `/taiyi:audit` | 流程/交付排查（git 未入库、CHANGE 漂移等） |
@@ -49,17 +50,14 @@
 | `/taiyi:flow` | Superpowers 全技能 × 九阶段总览（onboarding 首选） |
 | `/taiyi:tdd plan\|dev` | task/dev：Superpowers TDD（计划切片测试 / 红绿重构） |
 
-### Git / PR / 部署（gstack · 见 [delivery-slash.md](./delivery-slash.md)）
+### Git / PR / 部署（见 [delivery-slash.md](./delivery-slash.md)）
 
 | 斜杠 | 何时用 |
 |------|--------|
 | `/taiyi:commit` | 实现完成后，带 Taiyi-Change trailer 的 git commit |
-| `/taiyi:ship` | 推分支、开 PR（gstack ship） |
-| `/taiyi:land` | 合并 PR、部署、canary（gstack land-and-deploy） |
-| `/taiyi:gstack review` | PR diff 结构审查（gstack review） |
-| `/taiyi:gstack qa` | 站点 QA（test 阶段 optional） |
+| `/taiyi:ship` | 推分支、开 PR |
+| `/taiyi:land` | 合并 PR、部署、canary |
 | `/taiyi:release` | 文档/CHANGELOG 发布同步（integration optional） |
-| `/taiyi:gstack <skill>` | 任意 gstack（design-shotgun · autoplan · canary · gstack-upgrade …） |
 | `/taiyi:sp <skill>` | 任意 Superpowers（writing-skills …） |
 | `/taiyi:security` | semgrep + trivy（review） |
 | `/taiyi:e2e` | Playwright E2E（test） |
@@ -77,33 +75,40 @@
 | 组件 | 行为 |
 |------|------|
 | **OpenSpec** | requirement / integration 钩子 `optional: true`；未装 CLI 自动跳过 |
-| **gstack/qa** | test 阶段 optional；CLI-only 可不打卡 |
-| **gstack/plan-design-review** | ui-design 阶段 optional；纯 API 可跳过 |
+| **ECC** | 双线 harness 核心 — 架构审查/安全扫描/代码审查/语言检测/框架检测 |
+| **web-quality** | ui-design 阶段 optional；纯 API 可跳过 |
 | **/taiyi:explore** | 文档 + `$taiyi-explore` prompt → Superpowers brainstorming |
 
-`/taiyi:status` 会显示 **意图分析**（模块/UI/测试层级推断）与铁三角清单（含「可选」标记）。
+`/taiyi:status` 会显示 **意图分析**（模块/UI/测试层级推断）与双线 harness 清单（含「可选」标记）。
 
 ## 九阶段完整路径
 
 ```
 /taiyi:new 用户登录
 
-① change       → taiyi-change        → CHANGE.md        → /taiyi:continue
-② requirement  → taiyi-requirement   → REQUIREMENT.md   → /taiyi:continue
-③ design       → taiyi-design        → DESIGN.md        → /taiyi:continue
-④ ui-design    → taiyi-ui-design     → UI-DESIGN.md     → /taiyi:continue
-⑤ task         → taiyi-task + TDD计划 → TASK.md          → /taiyi:tdd plan → continue
-⑥ dev          → taiyi-dev + TDD     → 代码              → /taiyi:tdd dev · /taiyi:apply
-⑦ test         → taiyi-test          → TEST.md          → /taiyi:apply 或 continue
-⑧ review       → taiyi-review → REVIEW.md → /taiyi:health · /taiyi:gstack review · /taiyi:review-loop
-                 → /taiyi:commit → /taiyi:ship → continue --approver
-⑨ integration  → @taiyi-integration → /taiyi:land（可选）· /taiyi:release → /taiyi:continue
+① change       → @taiyi-change        → CHANGE.md + change.json
+                 → status（预检）→ continue [--approver]
+② requirement  → REQUIREMENT.md + requirement.json → status → continue
+③ design       → DESIGN.md + design.json → status → continue [--approver]
+④ ui-design    → UI-DESIGN.md + ui-design.json → status → continue
+                 （api profile 跳过）
+⑤ task         → TASK.md + task.json → status → continue
+                 可选 /taiyi:tdd plan
+⑥ dev          → TDD 实现 + .dev-complete → apply → status → continue
+⑦ test         → TEST.md + test.json → apply 或 status → continue
+⑧ review       → REVIEW.md + review.json
+                 → /taiyi:health · ECC code-review · /taiyi:review-loop
+                 → /taiyi:commit → /taiyi:ship → continue review --approver
+⑨ integration  → CHANGELOG.md + integration.json
+                 → /taiyi:land（可选）· /taiyi:release → status → continue
    ※ 交付门：须 commit + 干净工作区 + Taiyi-Change trailer（见 delivery-gate.md）
 
 /taiyi:archive
 ```
 
-`--auto` 时每阶段另有 harness 铁三角打卡 + **手动 mark-aux**（见 `taiyi-orchestrator`）。
+每阶段默认循环：`status → write → status（预检）→ 用户确认 → continue`。
+
+`--auto` 时每阶段另有 harness 双线打卡 + **手动 mark-aux**（见 `taiyi-orchestrator`）。
 
 ## init 与 new（推荐路径）
 

@@ -6,7 +6,6 @@ import { getPhase } from "./phase-registry.js";
 import { DEV_COMPLETE_EVIDENCE } from "./dev-complete.js";
 import { renderE2ePhaseArtifact } from "./run-e2e-workflow.js";
 import { generateCodeFromChange } from "./code-gen.js";
-import { listAgentRoleIds, PHASE_AGENT_ROLES } from "./agent-roles.js";
 import { requiresHumanGate } from "./gates/human-gate-config.js";
 import { skippedPhasesForProfile } from "./profile.js";
 import type { ChangeProfile, PhaseId } from "./types.js";
@@ -160,10 +159,7 @@ function seedPhaseArtifact(changeDir: string, phaseId: PhaseId, templatesDir?: s
   const { md, json } = E2E_ARTIFACTS[phaseId];
   const phase = getPhase(phaseId);
 
-  const rendered = templatesDir
-    ? renderE2ePhaseArtifact(phaseId, templatesDir)
-    : null;
-  fs.writeFileSync(path.join(changeDir, phase.artifact), rendered ?? md, "utf8");
+  fs.writeFileSync(path.join(changeDir, phase.artifact), md, "utf8");
   fs.writeFileSync(path.join(changeDir, `${phaseId}.json`), JSON.stringify(json, null, 2), "utf8");
 }
 
@@ -188,35 +184,11 @@ function runReviewExtras(
 ): void {
   fs.writeFileSync(path.join(changeDir, "health-report.md"), HEALTH_REPORT, "utf8");
 
-  for (const argv of [
-    ["health", slug],
-    ["mark-aux", slug, "taiyi-health"],
-    ["review-check", slug],
-  ]) {
-    const r = runForge(repoRoot, cwd, argv);
-    steps.push({ command: argv.join(" "), code: r.code, ok: r.code === 0 });
-    if (r.code !== 0) errors.push(`review ${argv.join(" ")}: ${r.out}`);
-  }
-
-  const loopFirst = runForge(repoRoot, cwd, ["review-loop", slug]);
-  steps.push({
-    command: `review-loop ${slug} (round1)`,
-    code: loopFirst.code,
-    ok: loopFirst.code === 1,
-  });
-  if (loopFirst.code !== 1) {
-    errors.push(`review-loop 首轮应 exit 1: ${loopFirst.out}`);
-  }
-
-  refreshReviewArtifact(changeDir, templatesDir);
-
-  const loopPass = runForge(repoRoot, cwd, ["review-loop", slug]);
-  steps.push({
-    command: `review-loop ${slug} (round2)`,
-    code: loopPass.code,
-    ok: loopPass.code === 0,
-  });
-  if (loopPass.code !== 0) errors.push(`review-loop 二轮: ${loopPass.out}`);
+  // health / review-check / review-loop — 引擎 CLI；聊天伞形 /taiyi:review …
+  // only mark-aux remains
+  const mark = runForge(repoRoot, cwd, ["mark-aux", slug, "taiyi-health"]);
+  steps.push({ command: `mark-aux ${slug} taiyi-health`, code: mark.code, ok: mark.code === 0 });
+  if (mark.code !== 0) errors.push(`mark-aux ${slug} taiyi-health: ${mark.out}`);
 }
 
 function collectGeneratedFiles(
@@ -299,15 +271,10 @@ export function runSlashFlow(options: RunSlashFlowOptions): SlashFlowRunResult {
   }
 
   if (options.verifyAllAgents) {
-    const list = runForge(options.repoRoot, workspaceDir, ["agent", "list", slug]);
-    steps.push({ command: `agent list ${slug}`, code: list.code, ok: list.code === 0 });
-    if (list.code !== 0) errors.push(`agent list: ${list.out}`);
-
-    for (const roleId of listAgentRoleIds()) {
-      const r = runForge(options.repoRoot, workspaceDir, ["agent", roleId, slug]);
-      steps.push({ command: `agent ${roleId}`, code: r.code, ok: r.code === 0 });
-      if (r.code !== 0) errors.push(`agent ${roleId}: ${r.out}`);
-    }
+    // agent modes: pass-through to mode orchestrator when invoked via CLI
+    const modesList = runForge(options.repoRoot, workspaceDir, ["modes"]);
+    steps.push({ command: "modes", code: modesList.code, ok: modesList.code === 0 });
+    if (modesList.code !== 0) errors.push(`modes: ${modesList.out}`);
   }
 
   for (const phaseId of phaseOrder) {
@@ -338,16 +305,7 @@ export function runSlashFlow(options: RunSlashFlowOptions): SlashFlowRunResult {
       if (argv[0] === "status" && r.code !== 0) errors.push(`status ${phaseId}: ${r.out}`);
     }
 
-    for (const roleId of PHASE_AGENT_ROLES[phaseId]) {
-      const ar = runForge(options.repoRoot, workspaceDir, ["agent", roleId, slug]);
-      steps.push({
-        phase: phaseId,
-        command: `agent ${roleId}`,
-        code: ar.code,
-        ok: ar.code === 0,
-      });
-      if (ar.code !== 0) errors.push(`agent ${roleId} @ ${phaseId}: ${ar.out}`);
-    }
+    // per-phase agent roles via taiyi agent <role>
 
     if (phaseId === "review") {
       runReviewExtras(options.repoRoot, workspaceDir, slug, changeDir, templatesDir, steps, errors);

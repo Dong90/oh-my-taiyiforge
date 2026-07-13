@@ -111,17 +111,18 @@ change → requirement → design → ui-design → task → dev → test → re
 
 不管是 Claude Code 的 `/taiyi:new`、Cursor 的同名 slash、Codex 的 `$taiyi-new`，还是 OpenCode 的插件工具——**同一套词汇，同一种行为**。
 
-| 命令 | 做什么 |
-|------|-------|
-| `/taiyi:plan [file]` | **项目规划**：README / PRD / PDF / URL → 一次性拆出全部模块 + 一键生成代码骨架 |
-| `/taiyi:new` | 创建变更 |
-| `/taiyi:status` | 查看进度 |
-| `/taiyi:write` | 写当前阶段 |
-| `/taiyi:continue` | 推进下一阶段 |
-| `/taiyi:apply` | 进入实现 |
-| `/taiyi:archive` | 全阶段归档 |
+**v30 推荐顶栏（21 条）**：
 
-[29 条完整命令表 →](docs/taiyi/canonical-commands.md)
+| 组 | 命令 |
+|----|------|
+| 项目 (1) | `/taiyi:plan [file]` — README/PRD/PDF/URL → 多个 change |
+| 主链 (6) | `/taiyi:new` · `/taiyi:status` · `/taiyi:write` · `/taiyi:continue` · `/taiyi:apply` · `/taiyi:archive` |
+| 会话 (4) | `/taiyi:pause` · `/taiyi:pause --resume` · `/taiyi:cancel` · `/taiyi:list` |
+| 排查 (2) | `/taiyi:verify` · `/taiyi:render` |
+| 交付 (3) | `/taiyi:commit` · `/taiyi:ship` · `/taiyi:land` |
+| 伞形 (5) | `/taiyi:skill <name>` · `/taiyi:token …` · `/taiyi:test …` · `/taiyi:review …` · `/taiyi:diagram …` |
+
+[21 条完整命令表 →](docs/taiyi/canonical-commands.md)
 
 ### 项目级 vs Change 级
 
@@ -162,7 +163,7 @@ agent/
     └── metrics.js                    # 前端指标上报
 ```
 
-**对应九阶段工件**：每个模块同步产出 `CHANGE.md → REQUIREMENT.md → DESIGN.md → TASK.md → TEST.md`（在 `.taiyi/changes/<slug>/` 下，仓库不提交，本地可见）。整个产物**过了 48 个单测 + e2e + integration**，CI 全绿。
+**对应九阶段工件**：每个模块在 `.taiyi/changes/<slug>/` 产出 `{phase}.json` + hbs 渲染的 `CHANGE.md → … → CHANGELOG.md`（本地可见，默认不提交仓库）。
 
 **怎么跑**：从需求文件开始
 
@@ -171,7 +172,7 @@ agent/
 /taiyi:plan PRD.pdf --profile=full   # 半自动：拆模块后等人确认
 ```
 
-[完整示例 →](examples/translation-assistant/agent/) · [plan 命令参考 →](docs/taiyi/canonical-commands.md#taiyiplan)
+[完整示例 →](examples/translation-assistant/agent/) · [plan 命令参考 →](docs/taiyi/canonical-commands.md#v30-项目1)
 
 ### 不止流水线
 
@@ -180,6 +181,7 @@ agent/
 - **token 压缩**：长会话自动产出 `CONTEXT-COMPACT.md`，跨天无缝续上
 - **ChangeGraph**：自动追踪变更间依赖，改一处知全局
 - **不搞一刀切**：大功能 `full`，小修复 `lite`，typo 改 `nano`
+- **5 个插件式 Registry**（v1.0.0-rc.1）：Profile / CodePattern / SSOTRule / Extractor / RunnerPolicy 统一为 `Registry<T>` 抽象，支持 builtin + YAML + `node_modules` 三种扩展源，老 API 保持兼容。详见 [CHANGELOG](CHANGELOG.md)。
 
 ---
 
@@ -200,9 +202,10 @@ agent/
 | 文档 | 内容 | 什么时候读 |
 |------|------|-----------|
 | [QUICKSTART](docs/QUICKSTART.md) | 5 分钟走通全流程 | 第一次用 |
+| [nine-phase-flow](docs/taiyi/nine-phase-flow.md) | 九阶段步骤、过关命令、profile 跳过 | 跑某一阶段时 |
 | [USAGE](docs/USAGE.md) | 日常节奏、场景、交付链 | 跑通之后 |
 | [ARCHITECTURE](docs/ARCHITECTURE.md) | 系统架构 + 代码布局 | 想改引擎 |
-| [canonical-commands](docs/taiyi/canonical-commands.md) | 29 条 slash 命令表 | 查命令 |
+| [canonical-commands](docs/taiyi/canonical-commands.md) | 21 条 slash 命令表（v30 顶栏） | 查命令 |
 | [examples/translation-assistant/agent/](examples/translation-assistant/agent/) | `/taiyi:plan --auto` 一次产出的全栈骨架 | 想要代码长什么样 |
 | [control-plane](docs/taiyi/control-plane.md) | Agent 纪律 + token 纪律 | 给 Agent 配 onboarding |
 | [full-oss-flow](docs/taiyi/full-oss-flow.md) | Superpowers + 全插件端到端 | 想看完整流程 |

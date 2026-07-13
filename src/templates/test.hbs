@@ -13,18 +13,19 @@ downstream: [review]
 
 ---
 
-## Step 1: Test Strategy
+## Test Plan
+
 > **[ALL]** Goal: 三层覆盖有目标 | Inputs: TASK.md + 实现代码
 <!-- Action: 单元/集成/E2E分层+覆盖率目标+重点 -->
 
-### 单元: {{#if unit_framework}}{{unit_framework}}{{else}}_vitest_{{/if}} | 目标≥{{#if unit_coverage_target}}{{unit_coverage_target}}{{else}}_X_%{{/if}}
-- 重点: _核心逻辑、边界条件、错误路径的测试覆盖_
+### 单元: {{#if unit_framework}}{{unit_framework}}{{else}}vitest{{/if}} | 目标≥{{#if unit_coverage_target}}{{unit_coverage_target}}{{else}}80%{{/if}}
+- 重点: 核心逻辑、边界条件、错误路径的测试覆盖
 
 ### 集成:
-- 重点: _模块间契约验证、外部mock策略_
+- 重点: 模块间契约验证、外部mock策略
 
-### E2E: [Playwright/Cypress]
-- 重点: _关键用户旅程、跨系统端到端验证_
+### E2E: Playwright / Cypress
+- 重点: 关键用户旅程、跨系统端到端验证
 
 <!-- Validate: 三层全覆盖？覆盖率目标明确？ -->
 
@@ -34,11 +35,11 @@ downstream: [review]
 
 | Round | 范围 | 状态 | 跳过理由 |
 |-------|------|:--:|---------|
-| Round 1 · 功能 | 全部 AC | ✅ 必跑 | — |
-| Round 2 · 性能 | Lighthouse / k6 / bundle | ⚠️ / ❌ | _如果跳过，请在此说明理由_ |
-| Round 3 · 安全 | 依赖审计 / SAST / OWASP | ⚠️ / ❌ | _如果跳过，请在此说明理由_ |
-| Round 4 · 兼容 | 浏览器 / 视口 / 数据迁移 | ⚠️ / ❌ | _如果跳过，请在此说明理由_ |
-| Round 5 · 可观测 | 日志 / 指标 / 告警 | ⚠️ / ❌ | _如果跳过，请在此说明理由_ |
+{{#if test_rounds}}
+{{#each test_rounds}}
+| {{round}} | {{scope}} | {{status}} | {{#if skip_reason}}{{skip_reason}}{{else}}—{{/if}} |
+{{/each}}
+{{/if}}
 
 <!-- Validate: 每轮状态明确？跳过有理由？ -->
 
@@ -53,13 +54,13 @@ downstream: [review]
 | {{layer}} | {{#if can_mock}}✅ 允许{{else}}❌ 禁止{{/if}} | {{reason}} |
 {{/each}}
 {{else}}
-| _外部 HTTP API_ | ✅ 允许 | _网络不稳定，mock 保证确定性_ |
-| _数据库_ | ✅ 允许 | _避免测试污染生产数据_ |
-| _时间/Date.now_ | ✅ 允许 | _时间敏感逻辑需要确定性_ |
-| _文件系统_ | ✅ 允许 | _避免测试残留_ |
-| _核心业务逻辑_ | ❌ 禁止 | _mock 后测试无实际验证意义_ |
-| _输入验证_ | ❌ 禁止 | _必须用真实验证逻辑_ |
-| _公开 API 契约_ | ❌ 禁止 | _契约测试必须走真实端点_ |
+| 外部 HTTP API | ✅ 允许 | 网络不稳定，mock 保证确定性 |
+| 数据库 | ✅ 允许 | 避免测试污染生产数据 |
+| 时间/Date.now | ✅ 允许 | 时间敏感逻辑需要确定性 |
+| 文件系统 | ✅ 允许 | 避免测试残留 |
+| 核心业务逻辑 | ❌ 禁止 | mock 后测试无实际验证意义 |
+| 输入验证 | ❌ 禁止 | 必须用真实验证逻辑 |
+| 公开 API 契约 | ❌ 禁止 | 契约测试必须走真实端点 |
 {{/if}}
 
 <!-- Validate: 外部依赖可 mock 但核心逻辑不许 mock？每个 mock 有理由？ -->
@@ -73,6 +74,20 @@ downstream: [review]
 {{/each}}
 
 <!-- Validate: 每个TC有Given/When/Then？覆盖成功+失败？ -->
+
+{{#if ac_coverage}}
+## Step 2b: AC to TC Traceability Matrix
+> **[ALL]** Goal: 每个 AC 都有测试覆盖 | Inputs: REQUIREMENT.md Step 4
+<!-- Action: 逐一对照 AC 编号，确保 test_plan 中有对应的测试用例 -->
+
+| AC | 覆盖的测试用例 | 状态 |
+|----|-------------|------|
+{{#each ac_coverage}}
+| {{ac_id}} | {{#each test_case_ids}}`{{this}}`{{#unless @last}}, {{/unless}}{{/each}} | ⚠ |
+{{/each}}
+
+<!-- Validate: 每个 AC 至少 1 个 TC？遗漏的 AC 已标注？ -->
+{{/if}}
 
 ## Step 3: Code Path Coverage
 > **[MEDIUM+]** Goal: 不漏测试 | Inputs: 实现代码diff
@@ -101,7 +116,7 @@ GAPS: N (N need E2E, N eval)
 
 ## Step 4: Regression Rule
 > **[ALL]** Goal: 回归必有测试 | Inputs: Step3
-<!-- Action: gstack IRON RULE + Superpowers red-green: 1)写测试→跑(过) 2)回退修复→跑(必须挂) 3)恢复修复→跑(过)。三步全绿才算验证完成 -->
+<!-- Action: IRON RULE + ECC red-green: 1)写测试→跑(过) 2)回退修复→跑(必须挂) 3)恢复修复→跑(过)。三步全绿才算验证完成 -->
 
 {{#if regression_items}}
 | 回归项 | 原行为 | 新行为 | 测试 | Red-green | 状态 |
@@ -112,7 +127,11 @@ GAPS: N (N need E2E, N eval)
 {{else}}
 | 回归项 | 原行为 | 新行为 | 测试 | Red-green | 状态 |
 |--------|--------|--------|------|-----------|------|
-| _全量 vitest_ | _126 pass_ | _126 pass_ | _npm test_ | _✅_ | _✅_ |
+{{#if test_results_summary}}
+| 全量测试 | — | — | npm test | ✅ | {{test_results_summary}} |
+{{else}}
+| 全量测试 | 待验证 | 待验证 | npm test | ⚠️ | — |
+{{/if}}
 {{/if}}
 
 <!-- Validate: 所有修改的已有代码路径都有覆盖？Red-green三步都跑过了？ -->
@@ -130,7 +149,7 @@ GAPS: N (N need E2E, N eval)
 {{else}}
 | 场景 | TC | 状态 |
 |------|-----|------|
-| _并发_ | _待设计_ | _⚠_ |
+| 并发 | 待设计 | ⚠ |
 {{/if}}
 
 <!-- Validate: 典型边界全覆盖？ -->
@@ -148,8 +167,6 @@ GAPS: N (N need E2E, N eval)
 - **实际**: {{actual}}
 - **执行人 / 时间**: {{executor}}
 {{/each}}
-{{else}}
-> ⚠️ 未提供 UAT 脚本 — 集成阶段前请补充手动验证步骤
 {{/if}}
 
 <!-- Validate: 覆盖所有需手动验证的 AC？ -->
@@ -167,7 +184,7 @@ GAPS: N (N need E2E, N eval)
 {{else}}
 | 场景 | 目标 | 工具 | 结果 |
 |------|------|------|------|
-| _CLI smoke_ | _<5s 全流程_ | _vitest_ | _通过_ |
+| CLI smoke | <5s 全流程 | vitest | 通过 |
 {{/if}}
 
 <!-- Validate: 覆盖目标QPS？有基线对比？ -->
@@ -225,7 +242,11 @@ GAPS: N (N need E2E, N eval)
 {{else}}
 | 回归范围 | 用例数 | 执行方式 | 负责人 |
 |---------|--------|---------|--------|
-| _全量 vitest_ | _780+_ | _npm test_ | _CI_ |
+{{#if test_results_summary}}
+| 全量测试 | {{test_results_summary}} | npm test | CI |
+{{else}}
+| 全量测试 | 待执行 | npm test | CI |
+{{/if}}
 {{/if}}
 
 <!-- Validate: 回归范围覆盖所有相关模块？ -->
@@ -242,15 +263,23 @@ GAPS: N (N need E2E, N eval)
 
 ---
 ## Quality Gate
-<!-- Evidence-first: 所有测试用例必须实际跑过，不是"应该能过"。Superpowers: 没有新鲜输出=没有验证 -->
+<!-- Evidence-first: 所有测试用例必须实际跑过，不是"应该能过"。ECC: 没有新鲜输出=没有验证 -->
 
 - [ ] S1 三层全覆盖
 - [ ] S2 TC用Given/When/Then
 - [ ] S2 覆盖成功+失败
 - [ ] [ALL] S4 回归规则+Red-green已应用
 - [ ] [M+] S3 Coverage图完整
+{{#if edge_cases}}
 - [ ] [M+] S5 边界全覆盖
+{{/if}}
+{{#if performance_tests}}
 - [ ] [M+] S6 性能有基线
+{{/if}}
+{{#if security_checks}}
 - [ ] [H]  S7 OWASP全覆盖
+{{/if}}
+{{#if regression_plan}}
 - [ ] [H]  S8 回归范围完整
+{{/if}}
 - [ ] CI可自动化
