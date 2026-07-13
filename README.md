@@ -11,9 +11,9 @@
 [![CI](https://img.shields.io/github/actions/workflow/status/Dong90/oh-my-taiyiforge/ci.yml?branch=main&label=CI)](https://github.com/Dong90/oh-my-taiyiforge/actions/workflows/ci.yml)
 [![Platforms](https://img.shields.io/badge/platforms-OpenCode%20%7C%20Claude%20%7C%20Codex%20%7C%20Cursor-8a2be2)](docs/QUICKSTART.md)
 
-</div>
+![TaiyiForge 架构](docs/diagrams/visual/taiyiforge-architecture-ai-full-4k-zh.png)
 
-![TaiyiForge 架构](docs/diagrams/visual/taiyiforge-architecture-ai-v023-full-4k-zh-v2-fix.png)
+</div>
 
 [快速开始](#快速开始) · [核心能力](#核心能力) · [文档](#文档) · [社区](#社区)
 
