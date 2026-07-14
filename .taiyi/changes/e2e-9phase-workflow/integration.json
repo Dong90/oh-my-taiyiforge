@@ -1,0 +1,20 @@
+{
+  "title": "E2E 九阶段全流程集成测试",
+  "changelog_entries": [
+    {
+      "type": "test",
+      "description": "添加完整九阶段工作流 E2E 集成测试 (full-9-phase + review-gate + blocked-by-check) — 18 个测试用例覆盖 WorkflowEngine 核心路径"
+    }
+  ],
+  "release_version": "1.1.0",
+  "release_date": "2026-07-14",
+  "breaking_changes": [],
+  "alerts": [],
+  "post_launch": {
+    "period": "post-merge 1 week",
+    "metrics": "CI 中 full-9-phase.test.ts 执行时间 < 30s",
+    "exit_criteria": "所有 CI 构建稳定，无 E2E 测试不稳定失败"
+  },
+  "rollback_trigger": "E2E 测试在 CI 中误报导致构建阻塞",
+  "rollback_step1": "git revert <commit> 回退测试文件提交"
+}

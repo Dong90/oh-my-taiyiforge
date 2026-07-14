@@ -1,0 +1,61 @@
+{
+  "title": "E2E 集成测试：九阶段全流程",
+  "motivation": "当前 taiyi-forge 引擎缺少覆盖九阶段全流程的集成测试。单测覆盖了各模块的独立逻辑，但无人验证 init → change → requirement → design → ui-design → task → dev → test → review → integration 整条流水线的正确性。每次改核心引擎代码（workflow-engine.ts、artifact-validator.ts、phase-registry.ts 等）只能靠手动点检，回归风险高。E2E 测试能让引擎的每次变更都有可重复的验证手段，释放手动 QA 的 30+ 分钟/次。",
+  "scope": {
+    "includes": [
+      "编写一个端到端测试，模拟完整九阶段流程：init → change → requirement → design → ui-design → task → dev → test → review → integration",
+      "每阶段验证 artifact（.json + .md）的正确生成与字段完整性",
+      "每阶段验证 quality gate 的触发与通过",
+      "测试 continue 推进逻辑 — complete 后 currentPhase 正确推进到下一阶段",
+      "验证 review 阶段的评分机制（四维 ≥9.5）与 review-loop 重试逻辑",
+      "验证 skip profile（lite/micro/nano）的跳过行为",
+      "验证失败场景：gate 不通过时 continue 被拒绝",
+      "使用 vitest 作为测试框架，测试文件放在 tests/e2e/ 目录下"
+    ],
+    "excludes": [
+      "不测试 UI 交互界面",
+      "不测试多 change 间的并行/冲突场景",
+      "不测试 taiyi CLI 的终端用户交互",
+      "不测试外部工具集成（OpenSpec、GStack 等）"
+    ]
+  },
+  "success_criteria": [
+    {
+      "id": "SC-01",
+      "description": "创建 mock 的 .taiyi/changes/{slug}/ 目录结构，九阶段全流程走通后所有 artifact 文件存在且 JSON Schema 校验通过",
+      "is_checked": false
+    },
+    {
+      "id": "SC-02",
+      "description": "每个阶段 complete 后 status 的 currentPhase 正确推进到下一阶段",
+      "is_checked": false
+    },
+    {
+      "id": "SC-03",
+      "description": "review 阶段评分 ≥9.5 时通过，<9.5 时被拒绝",
+      "is_checked": false
+    },
+    {
+      "id": "SC-04",
+      "description": "lite profile 可跳过 design 和 ui-design 阶段",
+      "is_checked": false
+    }
+  ],
+  "risks": [
+    {
+      "risk": "引擎内部 API 变动",
+      "probability": "高",
+      "impact": "E2E 测试与引擎核心 API 紧密耦合，API 重构时需要同步更新测试",
+      "mitigation": "测试采用引擎暴露的公共 API（workflow-engine、state-sync），而非内部细节；API 变动时测试编译失败可立即感知"
+    },
+    {
+      "risk": "测试执行时间过长",
+      "probability": "中",
+      "impact": "完整九阶段模拟可能耗时数秒以上，CI 流水线变慢",
+      "mitigation": "使用轻量 mock 避免真实文件 I/O 和外部进程调用；可加 test.skip 标记作为可选运行"
+    }
+  ],
+  "impact_map": [
+    { "module": "tests/e2e", "impact": "新增 E2E 测试目录和测试文件", "owner": "self" }
+  ]
+}
