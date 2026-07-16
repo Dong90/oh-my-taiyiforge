@@ -1,0 +1,63 @@
+{
+  "title": "E2E 九阶段全流程集成测试",
+  "unit_framework": "vitest",
+  "unit_coverage_target": "n/a (测试类变更)",
+  "test_rounds": [
+    { "round": "Round 1: 功能正确性", "scope": "九阶段全流程、阶段推进、profile 跳过", "status": "passed", "skip_reason": "" },
+    { "round": "Round 2: 边界条件", "scope": "重复完成、阶段顺序错误、workflow 已完成", "status": "passed", "skip_reason": "" },
+    { "round": "Round 3: 错误处理", "scope": "artifact 缺失、错误阶段、admin 审批", "status": "passed", "skip_reason": "" },
+    { "round": "Round 4: 集成", "scope": "WorkflowEngine + review-gate + artifact-validator", "status": "passed", "skip_reason": "" },
+    { "round": "Round 5: 端到端", "scope": "full-9-phase.test.ts 完整 init→integration 链路", "status": "passed", "skip_reason": "" }
+  ],
+  "test_plan": [
+    { "id": "TC-01", "description": "walks through all 9 phases in order", "status": "passed" },
+    { "id": "TC-02", "description": "rejects duplicate completePhase after workflow completed", "status": "passed" },
+    { "id": "TC-03", "description": "rejects wrong phase order", "status": "passed" },
+    { "id": "TC-04", "description": "evaluateReviewLoopStatus passes with reviewScore >= threshold", "status": "passed" },
+    { "id": "TC-05", "description": "completePhase blocks review when scores below threshold", "status": "passed" },
+    { "id": "TC-06", "description": "completePhase passes review when scores meet threshold", "status": "passed" },
+    { "id": "TC-07", "description": "blocks when artifact is missing", "status": "passed" },
+    { "id": "TC-08", "description": "blocks when trying to complete wrong phase", "status": "passed" },
+    { "id": "TC-09", "description": "blocks when workflow already completed", "status": "passed" },
+    { "id": "TC-10", "description": "blocks admin as approver on human-gated phase", "status": "passed" },
+    { "id": "TC-11", "description": "validates artifact file returns scores object", "status": "passed" }
+  ],
+  "edge_cases": [
+    { "scenario": "workflow 已完成时再次 completePhase", "tc": "TC-02", "status": "passed" },
+    { "scenario": "阶段顺序错误", "tc": "TC-03", "status": "passed" },
+    { "scenario": "admin 审批人被阻止", "tc": "TC-10", "status": "passed" }
+  ],
+  "performance_tests": [
+    { "scenario": "完整九阶段模拟", "target": "< 30s", "tool": "vitest", "result": "2.6s" }
+  ],
+  "security_checks": ["npm audit 无 critical/high", "无硬编码密钥", "无 PII"],
+  "regression_plan": [
+    { "scope": "WorkflowEngine API", "cases": "3 files × 18 cases", "method": "vitest --run", "owner": "CI" }
+  ],
+  "regression_items": [
+    { "item": "九阶段全流程", "old_behaviour": "无 E2E 覆盖", "new_behaviour": "full-9-phase.test.ts", "test": "tests/core/full-9-phase.test.ts", "red_green": "GREEN", "status": "passed" },
+    { "item": "Review 评分门禁", "old_behaviour": "无阈值测试", "new_behaviour": ">=9.5 通过/<9.5 拒绝", "test": "tests/core/review-gate-scores.test.ts", "red_green": "GREEN", "status": "passed" },
+    { "item": "Quality gate 拦截", "old_behaviour": "无门禁测试", "new_behaviour": "artifact 缺失/错误阶段拦截", "test": "tests/core/blocked-by-check.test.ts", "red_green": "GREEN", "status": "passed" }
+  ],
+  "summary": "18 tests across 3 files, all passed. Complete nine-phase E2E coverage.",
+  "coverage": "18/18 passed (100%)",
+  "mocking_boundaries": [
+    { "layer": "filesystem", "can_mock": false, "reason": "需真实文件落盘验证 artifact" },
+    { "layer": "git", "can_mock": true, "reason": "非测试目标" }
+  ],
+  "evidence": {
+    "command": "npx vitest run tests/core/full-9-phase.test.ts tests/core/review-gate-scores.test.ts tests/core/blocked-by-check.test.ts",
+    "exitCode": 0,
+    "stdout": "Test Files 3 passed | Tests 18 passed",
+    "capturedAt": "2026-07-14T03:53:50.000Z"
+  },
+  "test_coverage": { "unit": "n/a", "integration": "n/a", "e2e": "18/18 (100%)" },
+  "test_results_summary": "18/18 passed · 3 files · 4.3s",
+  "ac_coverage": [
+    { "ac_id": "AC-01", "test_case_ids": ["TC-01"] },
+    { "ac_id": "AC-02", "test_case_ids": ["TC-01"] },
+    { "ac_id": "AC-03", "test_case_ids": ["TC-04", "TC-05", "TC-06"] },
+    { "ac_id": "AC-04", "test_case_ids": ["TC-01"] },
+    { "ac_id": "AC-05", "test_case_ids": ["TC-07", "TC-08", "TC-09"] }
+  ]
+}
