@@ -28,3 +28,21 @@ class TestSettings:
         s = Settings(OPENAI_API_KEY="sk-test")
         # Should not raise
         s.validate_required()
+
+    def test_atlascloud_provider_maps_openai_compatible_settings(self):
+        s = Settings(
+            LLM_PROVIDER="atlascloud",
+            ATLASCLOUD_API_KEY="atlas-test",
+        )
+
+        s.validate_required()
+
+        assert s.OPENAI_API_KEY == "atlas-test"
+        assert s.OPENAI_BASE_URL == "https://api.atlascloud.ai/v1"
+        assert s.OPENAI_MODEL == "deepseek-ai/deepseek-v4-pro"
+
+    def test_atlascloud_provider_requires_atlas_key(self):
+        s = Settings(LLM_PROVIDER="atlascloud", ATLASCLOUD_API_KEY="")
+
+        with pytest.raises(ConfigError, match="ATLASCLOUD_API_KEY"):
+            s.validate_required()
