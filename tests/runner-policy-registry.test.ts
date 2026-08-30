@@ -1,4 +1,4 @@
-import { describe, expect, it, beforeEach } from "vitest";
+import { describe, expect, it, beforeEach, afterEach } from "vitest";
 import {
   RunnerPolicyRegistry,
   getDefaultRunnerPolicyRegistry,
@@ -13,6 +13,11 @@ import { BUILTIN_RUNNER_POLICIES } from "../src/core/builtin-runner-policies.js"
 beforeEach(() => {
   resetDefaultRunnerPolicyRegistry();
   getDefaultRunnerPolicyRegistry();
+});
+
+afterEach(() => {
+  delete process.env.TAIYI_STRICT_CONFIG;
+  delete process.env.CI;
 });
 
 describe("runner-policy-registry: in-memory register/get/list", () => {

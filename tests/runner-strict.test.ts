@@ -12,6 +12,7 @@ describe("strict runner policy", () => {
 
   it("keeps interactive fallback for unknown policies", () => {
     delete process.env.TAIYI_STRICT_CONFIG;
+    delete process.env.CI;
     expect(selectRunnerForPolicy("not-configured", new RunnerPolicyRegistry())).toBe("autopilot");
   });
 });
