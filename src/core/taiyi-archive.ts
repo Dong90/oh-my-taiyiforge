@@ -5,6 +5,10 @@ export type TaiyiArchiveResult = {
   ok: boolean;
   dest?: string;
   reason?: string;
+  taiyiArchived?: boolean;
+  externalArchived?: boolean;
+  partial?: boolean;
+  retryable?: boolean;
 };
 
 function isExistingDir(p: string): boolean {
@@ -189,10 +193,19 @@ export function archiveTaiyiChange(
   };
   fs.writeFileSync(path.join(finalDest, ".taiyi-archive.json"), JSON.stringify(manifest, null, 2) + "\n");
 
-  return { ok: true, dest: finalDest };
+  return { ok: true, dest: finalDest, taiyiArchived: true, externalArchived: options?.openspec ?? false };
 }
 
 export function formatTaiyiArchivePlain(slug: string, result: TaiyiArchiveResult): string {
+  if (result.partial) {
+    return [
+      `Taiyi 归档 partial (${slug})`,
+      `  taiyiArchived: ${result.taiyiArchived === true}`,
+      `  externalArchived: ${result.externalArchived === true}`,
+      `  retryable: ${result.retryable === true}`,
+      `  ${result.reason ?? "unknown"}`,
+    ].join("\n");
+  }
   if (!result.ok) return `Taiyi 归档失败 (${slug}): ${result.reason ?? "unknown"}`;
   if (result.reason?.match(/幂等|already|跳过重复/i)) {
     return [

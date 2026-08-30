@@ -320,7 +320,22 @@ const handlers: Record<string, CliHandler> = {
     const slug = firstIsSlug ? first : null;
     const title = firstIsSlug ? positional.slice(1).join(" ").trim() : positional.join(" ").trim();
     if (!title) {
-      log.error("用法: new <slug> <标题> 或 new <标题> [--profile full|lite|api|micro|nano|spike|ui]");
+      console.log([
+        "╔══════════════════════════════════════════════════╗",
+        "║          TaiyiForge — 创建一个新变更              ║",
+        "╠══════════════════════════════════════════════════╣",
+        "║                                                  ║",
+        "║  按场景选择：                                     ║",
+        "║  taiyi new \"修个 typo\"                  → nano  ║",
+        "║  taiyi new \"加个小功能\" --profile=lite   → lite  ║",
+        "║  taiyi new \"重构模块\"                   → full  ║",
+        "║  taiyi new \"搭个 API\"  --profile=api     → api   ║",
+        "║                                                  ║",
+        "║  默认 profile: full（9 阶段）                       ║",
+        "║  完整用法: new <标题> [--profile p]                 ║",
+        "║  可选 profile: nano lite full api ui micro spike    ║",
+        "╚══════════════════════════════════════════════════╝",
+      ].join("\n"));
       process.exitCode = 1;
       return;
     }

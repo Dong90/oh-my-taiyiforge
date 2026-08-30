@@ -1,0 +1,76 @@
+{
+  "title": "E2E 集成测试：九阶段全流程",
+  "slices": [
+    {
+      "id": "S1",
+      "label": "E2E 九阶段全流程测试",
+      "description": "创建 full-9-phase.test.ts，顺序验证各阶段 artifact 存在和 currentPhase 推进",
+      "time_estimate": "1.5h",
+      "read_files": ["src/core/workflow-engine.ts", "src/core/artifact-validator.ts"],
+      "write_files": ["tests/core/full-9-phase.test.ts"],
+      "dependencies": "",
+      "parallelizable": false
+    },
+    {
+      "id": "S2",
+      "label": "Review 评分门禁测试",
+      "description": "创建 review-gate-scores.test.ts，验证 ≥9.5 通过 / <9.5 拒绝逻辑",
+      "time_estimate": "1h",
+      "read_files": ["src/core/review-gate.ts"],
+      "write_files": ["tests/core/review-gate-scores.test.ts"],
+      "dependencies": "",
+      "parallelizable": true
+    },
+    {
+      "id": "S3",
+      "label": "Quality gate 拦截专项测试",
+      "description": "创建 blocked-by-check.test.ts，验证缺少必填字段时 continue 被拒绝",
+      "time_estimate": "1h",
+      "read_files": ["src/core/artifact-validator.ts"],
+      "write_files": ["tests/core/blocked-by-check.test.ts"],
+      "dependencies": "",
+      "parallelizable": true
+    },
+    {
+      "id": "S4",
+      "label": "测试 fixture 与集成验证",
+      "description": "创建 tests/fixtures/9phase/ 目录，放置 valid+invalid fixture JSON，运行所有测试确认全部通过",
+      "time_estimate": "1h",
+      "write_files": ["tests/fixtures/9phase/valid-change.json", "tests/fixtures/9phase/invalid-change.json"],
+      "dependencies": "S1, S2, S3",
+      "parallelizable": false
+    }
+  ],
+  "waves": [
+    {
+      "name": "W1: 核心 E2E 流程",
+      "slices": [
+        {"slice_id": "S1", "description": "实现完整的九阶段 E2E 测试作为主干测试用例"}
+      ]
+    },
+    {
+      "name": "W2: 专项门禁测试",
+      "slices": [
+        {"slice_id": "S2", "description": "编写评分门禁测试用例验证阈值逻辑"},
+        {"slice_id": "S3", "description": "编写 quality gate 拦截测试用例"}
+      ]
+    },
+    {
+      "name": "W3: 集成验证",
+      "slices": [
+        {"slice_id": "S4", "description": "集成所有测试并验证全部通过"}
+      ]
+    }
+  ],
+  "slice_risks": [
+    {"slice": "S1", "risk": "engine API 签名在实际调用时可能与 fixture 假设不符", "probability": "medium", "mitigation": "先读 engine 源码确认导出接口后编写测试"},
+    {"slice": "S2", "risk": "评分门禁阈值可能硬编码于 engine 内部无法外部覆盖", "probability": "low", "mitigation": "先确认 threshold 值是否可通过参数覆盖否则直接 mock"},
+    {"slice": "S3", "risk": "Zod schema 字段变更可能导致校验逻辑失效", "probability": "medium", "mitigation": "测试中 mock 当前 schema 版本同步跟踪 schema 变更"}
+  ],
+  "slice_rollbacks": [
+    {"slice": "S1", "rollback": "git checkout -- tests/core/full-9-phase.test.ts 删除测试文件", "time": "1min", "data_impact": "仅删除测试文件不影响 engine 源码"},
+    {"slice": "S2", "rollback": "git checkout -- tests/core/review-gate-scores.test.ts 删除测试文件", "time": "1min", "data_impact": "仅删除测试文件不影响 engine 源码"},
+    {"slice": "S3", "rollback": "git checkout -- tests/core/blocked-by-check.test.ts 删除测试文件", "time": "1min", "data_impact": "仅删除测试文件不影响 engine 源码"},
+    {"slice": "S4", "rollback": "rm -rf tests/fixtures/9phase/ 删除 fixture 目录", "time": "1min", "data_impact": "仅删除测试 fixture 数据不影响 engine"}
+  ]
+}

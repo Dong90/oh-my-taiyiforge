@@ -5,6 +5,10 @@ import { requiresHumanGate } from "./gates/human-gate-config.js";
 import { isWorkflowCompleted, completedWorkflowMessage } from "./change-status.js";
 import type { PhaseId } from "./types.js";
 import { resolveTaiyiRoot } from "./paths.js";
+import {
+  auxiliarySkillIdsForPhase,
+  getPhaseFromManifest,
+} from "../integrations/workflow-manifest.js";
 
 export type PhaseWriteHint = {
   superpowers: string[];
@@ -140,19 +144,28 @@ export type PhaseWriteResult = {
   skipped?: boolean;
 };
 
-function formatHintBlock(hints: PhaseWriteHint): string[] {
+function formatHintBlock(hints: PhaseWriteHint, phase: PhaseId): string[] {
   const lines: string[] = [];
+  const manifest = getPhaseFromManifest(phase);
+  const manifestHooks = manifest?.harness ?? [];
+  const manifestAgentHooks = manifestHooks.filter((hook) => hook.skill && hook.tool !== "openspec");
+  const manifestAuxiliary = auxiliarySkillIdsForPhase(phase);
+  const dynamicExternal = manifestAgentHooks.map(
+    (hook) => `/taiyi:skill ${hook.tool} ${hook.skill}${hook.optional ? "?" : ""}`,
+  );
   if (hints.superpowers.length) {
     lines.push(`  Superpowers: ${hints.superpowers.map((s) => `/taiyi:sp ${s}`).join(" · ")}`);
   }
   if (hints.superpowersOptional.length) {
     lines.push(`  可选 SP: ${hints.superpowersOptional.map((s) => `/taiyi:sp ${s}`).join(" · ")}`);
   }
-  if (hints.auxiliary.length) {
-    lines.push(`  辅助: ${hints.auxiliary.map((s) => `@${s}`).join(" · ")}（完成后 mark-aux）`);
+  const auxiliary = manifestAuxiliary.length ? manifestAuxiliary : hints.auxiliary;
+  if (auxiliary.length) {
+    lines.push(`  辅助: ${auxiliary.map((s) => `@${s}`).join(" · ")}（完成后 mark-aux）`);
   }
-  if (hints.external.length) {
-    lines.push(`  外挂: ${hints.external.join(" · ")}`);
+  const external = dynamicExternal.length ? dynamicExternal : hints.external;
+  if (external.length) {
+    lines.push(`  外挂: ${external.join(" · ")}`);
   }
   if (hints.slashExtras.length) {
     lines.push(`  相关斜杠: ${hints.slashExtras.join(" · ")}`);
@@ -231,7 +244,7 @@ export function runPhaseWriteGuide(
 
   lines.push("加载与执行:");
   lines.push(`  1. 读 Skill \`${def.skill}\`（= \`@${def.skill}\`）`);
-  lines.push(...formatHintBlock(hints));
+  lines.push(...formatHintBlock(hints, phase));
   lines.push("");
   lines.push("引擎核对:");
   lines.push("  scripts/taiyi-forge.sh status " + slug);

@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { getLogger } from "./logger.js";
 import { BUILTIN_RUNNER_POLICIES } from "./builtin-runner-policies.js";
+import { matchesLanguage } from "./language-match.js";
 
 const log = getLogger();
 
@@ -34,6 +35,11 @@ export const RunnerPolicyDefinitionSchema = z
     verifyEachPhase: z.boolean().default(false),
     /** Optional: prompt hint to inject into runner. */
     promptHint: z.string().optional(),
+    /** Languages this policy applies to (v2.0). Optional.
+     *  - undefined: language-agnostic
+     *  - empty array: applies to all
+     *  - non-empty: only applies when project language is in the list */
+    languages: z.array(z.string()).optional(),
     /** Mark as builtin (cannot be overridden by non-builtin sources). */
     builtin: z.boolean().optional(),
     description: z.string().optional(),
@@ -114,14 +120,18 @@ export class RunnerPolicyRegistry {
     return { ok: true, value: undefined };
   }
 
-  get(id: string): RunnerPolicyDefinition | undefined {
+  get(id: string, language?: string): RunnerPolicyDefinition | undefined {
     this.ensureBuiltins();
-    return this.byId.get(id)?.def;
+    const def = this.byId.get(id)?.def;
+    if (!def) return undefined;
+    if (matchesLanguage(def.languages, language)) return def;
+    return undefined;
   }
 
-  list(): RunnerPolicyDefinition[] {
+  list(language?: string): RunnerPolicyDefinition[] {
     this.ensureBuiltins();
     return [...this.byId.values()]
+      .filter((e) => matchesLanguage(e.def.languages, language))
       .sort((a, b) => {
         const pa = SOURCE_PRIORITY[a.source];
         const pb = SOURCE_PRIORITY[b.source];
@@ -158,18 +168,38 @@ export function registerRunnerPolicy(
 
 /** Resolve a policy id to the underlying runner name to invoke.
  *  Falls back to "autopilot" for unknown policy ids (with a warning so the
- *  silent fallback is at least visible in logs). */
+ *  silent fallback is at least visible in logs).
+ *
+ *  v2.0: when callers know the project language, pass it so a language-scoped
+ *  policy (e.g. `languages=["python"]`) is not silently misclassified as
+ *  "unknown policy" and warned about. Without a language, scoped policies
+ *  are invisible (matchesLanguage semantics: undefined project language
+ *  cannot satisfy a non-empty `languages` allowlist).
+ *
+ *  Signature: `(policyId, registry?, language?)`. Registry is optional
+ *  for testability / injection; language is the rightmost param so existing
+ *  callers `(policyId)` and `(policyId, registry)` keep working. */
 export function selectRunnerForPolicy(
   policyId: string,
-  registry: RunnerPolicyRegistry = getDefaultRunnerPolicyRegistry(),
+  registry: RunnerPolicyRegistry | undefined = undefined,
+  language: string | undefined = undefined,
 ): RunnerName {
-  const def = registry.get(policyId);
+  const reg = registry ?? getDefaultRunnerPolicyRegistry();
+  const def = reg.get(policyId, language);
   if (def) return def.runner;
+  // Re-check with no language filter: a universal policy truly exists but
+  // was hidden by the language filter above. Avoids a false "unknown" warning.
+  if (language !== undefined) {
+    const unfiltered = reg.get(policyId);
+    if (unfiltered) return unfiltered.runner;
+  }
   if ((RUNNER_NAMES as readonly string[]).includes(policyId)) {
     return policyId as RunnerName;
   }
-  log.warn(
-    `Unknown runner policy "${policyId}", falling back to "autopilot"`,
-  );
+  const message = `Unknown runner policy "${policyId}"`;
+  if (process.env.TAIYI_STRICT_CONFIG === "1" || process.env.CI === "true") {
+    throw new Error(message);
+  }
+  log.warn(`${message}, falling back to "autopilot"`);
   return "autopilot";
 }

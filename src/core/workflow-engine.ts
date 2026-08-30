@@ -625,7 +625,7 @@ export class WorkflowEngine {
           if (((ui.states as any[]) ?? []).length < 3) return { ok: false, fixHints: [{ file: "ui-design.json", field: "states", action: "Add >=3 states" }], error: "[UI Gate] states need >=3" };
           if (((ui.accessibility as string[]) ?? []).length < 1) return { ok: false, fixHints: [{ file: "ui-design.json", field: "accessibility", action: "Add >=1 WCAG item" }], error: "[UI Gate] a11y need >=1" };
         }
-      } catch {}
+      } catch { this.log.warn("ui-design.json parse failed or incomplete", { slug }); }
     }
 
     if (phaseId === "design" && !options?.skipArtifactValidation) {
@@ -639,7 +639,7 @@ export class WorkflowEngine {
           const dj = JSON.parse(fs.readFileSync(djp, "utf8"));
           if (((dj.security_threats as any[]) ?? []).length === 0)
             this.log.warn("[Security Gate] " + workingState.profile + " requires >=1 security_threats — add to design.json");
-        } catch {}
+        } catch { this.log.warn("design.json parse failed", { slug }); }
       }
       const designContent = fs.readFileSync(designMdPath, "utf8");
       const isSeed = designContent.includes("<!-- taiyi:seed-template -->");
@@ -968,7 +968,7 @@ export class WorkflowEngine {
           const arts: Record<string, string> = {};
           for (const f of fs.readdirSync(cdir)) {
             const fp = path.join(cdir, f);
-            if (fs.statSync(fp).isFile()) try { arts[f] = fs.readFileSync(fp, "utf8"); } catch {}
+            if (fs.statSync(fp).isFile()) try { arts[f] = fs.readFileSync(fp, "utf8"); } catch { this.log.warn("artifact read failed in auto-fix", { slug, file: f }); }
           }
           const aiResult = await this.aiAutoFixFn({
             slug, phase: phaseId, changeDir: cdir,
@@ -990,7 +990,7 @@ export class WorkflowEngine {
           // JSON files: parse → fix field → write back
           if (h.file.endsWith(".json")) {
             let data: any = {};
-            if (fs.existsSync(fp)) { try { data = JSON.parse(fs.readFileSync(fp, "utf8")); } catch {} }
+            if (fs.existsSync(fp)) { try { data = JSON.parse(fs.readFileSync(fp, "utf8")); } catch { this.log.warn("JSON parse failed in fixHints", { slug, file: h.file }); } }
             if (h.field) {
               // Remove problematic fields
               if (h.action.includes("Remove") || h.action.includes("blocked_by")) {
@@ -1017,7 +1017,7 @@ export class WorkflowEngine {
           for (const f of fs.readdirSync(cdir)) {
             const fp = path.join(cdir, f);
             if (fs.statSync(fp).isFile() && (f.endsWith(".md") || f.endsWith(".json"))) {
-              try { arts[f] = fs.readFileSync(fp, "utf8"); } catch {}
+              try { arts[f] = fs.readFileSync(fp, "utf8"); } catch { this.log.warn("artifact read failed in context builder", { slug, file: f }); }
             }
           }
           const ctx = {
