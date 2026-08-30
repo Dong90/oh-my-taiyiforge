@@ -82,6 +82,19 @@ describe("code-pattern-registry: in-memory register/get/list", () => {
     }
   });
 
+  it("rejects a language-scoped pattern when no language is provided", () => {
+    const reg = new CodePatternRegistry({ templatesDir: path.join(tmpDir, "templates") });
+    reg.register(
+      { pattern: "PythonOnly", templateFile: "python.hbs", languages: ["python"] },
+      "programmatic",
+    );
+
+    const result = reg.resolve("PythonOnly");
+
+    expect(result.ok).toBe(false);
+    if (!result.ok) expect(result.error.code).toBe("NOT_FOUND");
+  });
+
   it("builtin patterns are loaded on ensureBuiltins()", () => {
     const reg = new CodePatternRegistry({ templatesDir: path.join(tmpDir, "templates") });
     reg.ensureBuiltins();

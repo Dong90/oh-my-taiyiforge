@@ -4,6 +4,7 @@ import path from "node:path";
 import { BUILTIN_PROFILES } from "./builtin-profiles.js";
 import { parseYamlListBlocks } from "./yaml-list-parse.js";
 import { getLogger } from "./logger.js";
+import { matchesLanguage } from "./language-match.js";
 
 const log = getLogger();
 
@@ -19,6 +20,11 @@ export const ProfileDefinitionSchema = z
     builtin: z.boolean().optional(),
     keywords: z.array(z.string()).optional(),
     auxiliaryHints: z.array(z.string()).optional(),
+    /** Languages this profile targets (v2.0). Optional.
+     *  - undefined: language-agnostic
+     *  - empty array: applies to all
+     *  - non-empty: only when project language is in the list */
+    languages: z.array(z.string()).optional(),
   })
   .strict();
 
@@ -42,6 +48,39 @@ const SOURCE_PRIORITY: Record<ProfileSource, number> = {
   yaml: 200,
   programmatic: 1000,
 };
+
+/** v2.0: Effective languages across an extends chain.
+ *  Returns one of:
+ *    { universal: true }                            — every def is universal (no constraints)
+ *    { universal: false, langs: string[] }          — language allowlist (possibly empty)
+ *  "Empty intersection" ({universal:false, langs:[]}) is *not* the same as
+ *  universal — it means "no language satisfies this chain," and the resolve
+ *  caller MUST treat it as a hard miss for any language.
+ *
+ *  Why separate from `matchesLanguage`: the shared helper treats
+ *  `[] === universal` for *single-registry* lookup, which is the correct
+ *  semantic there ("empty allowlist = open the gate"). But chain
+ *  intersection can produce an empty result from `["a","b"] ∩ ["c"]`, and
+ *  folding that into matchesLanguage's "empty = universal" would
+ *  accidentally approve a non-viable chain. So this function returns a
+ *  distinct sentinel. */
+function computeLanguageIntersection(
+  chain: ProfileDefinition[],
+): { universal: true } | { universal: false; langs: string[] } {
+  let acc: string[] | undefined;
+  for (const d of chain) {
+    const langs = d.languages;
+    if (!langs || langs.length === 0) continue;
+    if (acc === undefined) {
+      acc = [...langs];
+    } else {
+      acc = acc.filter((l) => langs.includes(l));
+      if (acc.length === 0) return { universal: false, langs: [] }; // early exit: no match possible
+    }
+  }
+  if (acc === undefined) return { universal: true };
+  return { universal: false, langs: acc };
+}
 
 export class ProfileRegistry {
   private byId = new Map<string, { def: ProfileDefinition; source: ProfileSource }>();
@@ -119,17 +158,21 @@ export class ProfileRegistry {
     return { ok: true, value: undefined };
   }
 
-  get(id: string): ProfileDefinition | undefined {
+  get(id: string, language?: string): ProfileDefinition | undefined {
     this.ensureBuiltins();
-    return this.byId.get(id)?.def;
+    const def = this.byId.get(id)?.def;
+    if (!def) return undefined;
+    if (matchesLanguage(def.languages, language)) return def;
+    return undefined;
   }
 
-  list(): ProfileDefinition[] {
+  list(language?: string): ProfileDefinition[] {
     this.ensureBuiltins();
     // For builtin profiles, preserve the canonical order from BUILTIN_PROFILES.
     // For other sources, fall back to id sort.
     const builtinOrder = new Map(BUILTIN_PROFILES.map((d, i) => [d.id, i]));
     return [...this.byId.values()]
+      .filter((e) => matchesLanguage(e.def.languages, language))
       .sort((a, b) => {
         const pa = SOURCE_PRIORITY[a.source];
         const pb = SOURCE_PRIORITY[b.source];
@@ -152,8 +195,16 @@ export class ProfileRegistry {
    *
    *  Strategy: first walk to the root of the chain (collecting all defs in order),
    *  then apply from root → child so child wins on scalar fields.
-   */
-  resolve(id: string): Result<ProfileDefinition, ProfileError> {
+   *
+   *  v2.0 language filter: the chain's effective `languages` is the **intersection**
+   *  of every def's `languages`. A child profile that omits `languages` does NOT
+   *  inherit its parent's — its allowlist is treated as universal, but the parent
+   *  still constrains the result. So `py-parent (languages=["python"]) ←
+   *  universal-child` resolves a profile whose effective languages is `["python"]`,
+   *  and `resolve(id, "rust")` returns NOT_FOUND. Conversely `universal-parent
+   *  ← ts-child (languages=["typescript"])` narrows to `["typescript"]` — child
+   *  cannot widen beyond parent. */
+  resolve(id: string, language?: string): Result<ProfileDefinition, ProfileError> {
     this.ensureBuiltins();
     const visited = new Set<string>();
     const chain: ProfileDefinition[] = [];
@@ -187,6 +238,34 @@ export class ProfileRegistry {
       // 规范化：空字符串视为无 extends
       const ext = entry.def.extends;
       currentId = ext && ext.length > 0 ? ext : undefined;
+    }
+
+    // v2.0: compute intersection of languages across the entire chain.
+    // Empty intersection (universal:false, langs:[]) is NOT universal — it's
+    // a hard miss. Universal (universal:true) admits any concrete language.
+    const intersection = computeLanguageIntersection(chain);
+    if (!intersection.universal && intersection.langs.length === 0) {
+      return {
+        ok: false,
+        error: {
+          code: "NOT_FOUND",
+          message: `Profile ${id} has no language satisfying its extends chain`,
+          profileId: id,
+        },
+      };
+    }
+    if (!intersection.universal) {
+      // Scoped chain — project language must be in the allowlist.
+      if (!language || !intersection.langs.includes(language)) {
+        return {
+          ok: false,
+          error: {
+            code: "NOT_FOUND",
+            message: `Profile not available for language: ${language ?? "unknown"}`,
+            profileId: id,
+          },
+        };
+      }
     }
 
     // Apply from root (last in chain) → child (first in chain)

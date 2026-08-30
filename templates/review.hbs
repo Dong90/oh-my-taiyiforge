@@ -1,0 +1,208 @@
+---
+phase: review
+skill: taiyi-review
+gate: human
+produces: REVIEW.md
+upstream: [test, dev]
+downstream: [integration]
+---
+<!-- phase:review skill:taiyi-review gate:human est:20min produces:REVIEW.md upstream:[test,dev] downstream:[integration] cplx:[ALL]2steps +[M+]2 +[H]2 -->
+# REVIEW: {{title}}
+
+> **Reviewer**: {{#if reviewer}}{{reviewer}}{{else}}AI{{/if}} | **Date**: {{#if review_date}}{{review_date}}{{else}}待定{{/if}} | **Verdict**: **{{#if verdict}}{{verdict}}{{else}}Pending{{/if}}**{{#if overall_score}} | ⭐ **{{overall_score}}/10**{{/if}}
+
+---
+
+## Verdict
+
+{{#if (eq verdict "approved")}}
+- [x] **Approve** — 可合并
+{{else}}{{#if (eq verdict "changes_requested")}}
+- [x] **Request changes** — 需修复后重审
+{{else}}{{#if (eq verdict "blocked")}}
+- [x] **Blocked** — 阻塞合并
+{{else}}{{#if (eq verdict "unreviewable")}}
+- [ ] **⚠ Unreviewable** — 审查未实质开展，需重做
+{{else}}
+- [ ] **Approve** (未确认，需 explicit verdict 字段)
+- [ ] **Request changes**
+- [ ] **Blocked**
+- [ ] **Unreviewable** (审查跳过)
+{{/if}}{{/if}}{{/if}}{{/if}}
+
+{{#if (and (eq verdict "approved") (or (not findings) (eq findings.length 0)))}}
+> 🚨 **STAMP WARNING**: verdict=approved 但 findings=[]. 这是盖印式审查。Schema 已要求 explicit verdict + findings (或 findings_acknowledged=true).
+{{/if}}
+
+{{#unless findings}}
+> 🚨 **REVIEW 缺口**: 没有 findings. 实际审查过才能选 `approved`. 否则选 `unreviewable` + `findings_acknowledged=true`.
+{{/unless}}
+
+---
+
+## ⭐ Overall Score{{#if overall_score}}: {{overall_score}}/10{{/if}}
+
+| 维度 | 评分 | 备注 |
+|------|------|------|
+{{#if code_quality}}
+{{#each code_quality}}
+| {{dimension}} | {{score}}/10 | {{note}} |
+{{/each}}
+{{/if}}
+
+---
+
+## Step 1: Rounds & Findings
+> **[ALL]** Goal: R1/R2/R3/R4 四轮结构化审查，每轮按 Critical → Low 排序 | Inputs: 代码diff + TEST.md
+
+> ⚠️ **约束**: schema 已强制 findings ≥ 1 (除非 findings_acknowledged=true). 这是 review.hbs 渲染结果的硬性约束；空 findings 在此阶段会显式 STAMP 警告 + 不推荐 approved.
+
+### R1: Functional Review
+{{#each findings}}
+{{#if (eq round "R1")}}
+- {{id}} `[{{severity}}]` {{#if resolved}}✅{{else}}❌{{/if}}: {{description}}{{#if file}} (`{{file}}{{#if line}}:{{line}}{{/if}}`){{/if}}
+  {{#if suggestion}}- 建议: {{suggestion}}{{/if}}
+{{/if}}
+{{/each}}
+
+### R2: Architecture Review
+{{#each findings}}
+{{#if (eq round "R2")}}
+- {{id}} `[{{severity}}]` {{#if resolved}}✅{{else}}❌{{/if}}: {{description}}{{#if file}} (`{{file}}{{#if line}}:{{line}}{{/if}}`){{/if}}
+  {{#if suggestion}}- 建议: {{suggestion}}{{/if}}
+{{/if}}
+{{/each}}
+
+### R3: Test Review
+{{#each findings}}
+{{#if (eq round "R3")}}
+- {{id}} `[{{severity}}]` {{#if resolved}}✅{{else}}❌{{/if}}: {{description}}{{#if file}} (`{{file}}{{#if line}}:{{line}}{{/if}}`){{/if}}
+  {{#if suggestion}}- 建议: {{suggestion}}{{/if}}
+{{/if}}
+{{/each}}
+
+### R4: Documentation Review
+{{#each findings}}
+{{#if (eq round "R4")}}
+- {{id}} `[{{severity}}]` {{#if resolved}}✅{{else}}❌{{/if}}: {{description}}{{#if file}} (`{{file}}{{#if line}}:{{line}}{{/if}}`){{/if}}
+  {{#if suggestion}}- 建议: {{suggestion}}{{/if}}
+{{/if}}
+{{/each}}
+
+{{#unless findings}}
+> 🚨 **REVIEW 缺口警告**: schema 已强制 findings ≥ 1 (除非 findings_acknowledged=true).
+> 实际审查过才能选 verdict=approved. 否则选 unreviewable.
+{{/unless}}
+
+<!-- Validate: 每个finding有具体位置+置信度+修复建议？ -->
+
+## Step 2: Verdict & Action Items
+> **[ALL]** Goal: 明确裁决和后续动作 | Inputs: Step1
+
+**必须修复** (blocking merge):
+{{#if blocking_items}}
+{{#each blocking_items}}
+- {{this}}
+{{/each}}
+{{else}}
+- 无
+{{/if}}
+
+**建议修复** (可后续):
+{{#if suggestion_items}}
+{{#each suggestion_items}}
+- {{this}}
+{{/each}}
+{{else}}
+- 无
+{{/if}}
+
+<!-- Validate: Verdict明确？blocking项有owner+deadline？ -->
+
+## Step 3: Code Quality Audit
+> **[MEDIUM+]** Goal: 五维评分 | Inputs: 代码diff
+
+| 维度 | 评分 | 备注 |
+|------|------|------|
+{{#if code_quality}}
+{{#each code_quality}}
+| {{dimension}} | {{score}}/10 | {{note}} |
+{{/each}}
+{{/if}}
+
+<!-- Validate: 每维有具体改进建议而非仅打分？ -->
+
+## Step 4: Test Coverage Audit
+> **[MEDIUM+]** Goal: 对齐TEST.md | Inputs: TEST.md
+
+| 层 | 通过/总 | 覆盖率 | 状态 |
+|----|--------|--------|------|
+{{#if test_coverage}}
+{{#each test_coverage}}
+| {{layer}} | {{passed}}/{{total}} | {{coverage}} | {{status}} |
+{{/each}}
+{{/if}}
+
+<!-- Validate: 与TEST.md数据一致？gap有补救计划？ -->
+
+## Step 5: Security Audit
+> **[HIGH]** Goal: 安全不出事 | Inputs: 代码diff+DESIGN.md §10
+
+{{#if security_audit}}
+{{#each security_audit}}
+- [ ] {{this}}
+{{/each}}
+{{else}}
+- [ ] 认证/授权检查完整
+- [ ] 敏感数据不打印日志
+- [ ] 输入校验完整
+- [ ] npm audit无critical/high
+{{/if}}
+
+<!-- Validate: OWASP Top10全覆盖？跑过审计工具？ -->
+
+> 📎 **SSOT 规则**: 安全评审应交叉验证 [CHANGE.md §Risks](CHANGE.md) + [REQUIREMENT.md §Security](REQUIREMENT.md) + [DESIGN.md §Security Model](DESIGN.md) 的三者一致性，不独立重评。发现不一致即标记为 blocking。
+
+## Step 6: Performance Audit
+> **[HIGH]** Goal: 上线不卡 | Inputs: 代码diff
+
+{{#if performance_audit}}
+| 检查项 | 状态 | 备注 |
+|--------|------|------|
+{{#each performance_audit}}
+| {{item}} | {{status}} | {{note}} |
+{{/each}}
+{{else}}
+| 检查项 | 状态 | 备注 |
+|--------|------|------|
+| N+1 查询 | N/A | 无数据库操作 |
+{{/if}}
+
+<!-- Validate: 关键路径无性能瓶颈？峰值QPS可撑？ -->
+
+{{#if summary}}
+## Summary
+{{summary}}
+{{/if}}
+
+---
+## Quality Gate
+<!-- Evidence-first: 每个finding基于实际代码审查，非推测。Prior Learnings已检索。 -->
+
+- [ ] S1 所有finding有位置+置信度+建议
+- [ ] S1 Critical/High有修复计划
+- [ ] S2 Verdict明确+blocking项有owner
+{{#if code_quality}}
+- [ ] [M+] S3 五维评分完整
+{{/if}}
+{{#if test_coverage}}
+- [ ] [M+] S4 测试对齐TEST.md
+{{/if}}
+{{#if security_audit}}
+- [ ] [H]  S5 OWASP全覆盖
+{{/if}}
+{{#if performance_audit}}
+- [ ] [H]  S6 关键路径无瓶颈
+{{/if}}
+- [ ] **Prior Learnings**: 已检索过往session learnings并应用 | learnings-search
+- [ ] **Score Gate**: 代码≥9.5 文档≥9.5 测试≥9.5 总评≥9.5（不达标 → 针对性优化策略 → 重新审查；TAIYI_REVIEW_ENFORCE_SCORES=0 关闭）

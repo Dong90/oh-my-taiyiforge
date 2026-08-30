@@ -38,26 +38,51 @@ export function normalizeCurrentPhase(raw: ChangeState): PhaseId {
 }
 
 export function normalizeState(raw: ChangeState): ChangeState {
-  const completedPhases = raw.completedPhases ?? [];
-  const skippedPhases = raw.skippedPhases ?? [];
+  const legacy = raw as unknown as Record<string, unknown>;
+  const legacyPhase = legacy.currentPhase;
+  const modernRaw: Record<string, unknown> = typeof legacyPhase === "object" && legacyPhase !== null
+    ? {
+        ...legacy,
+        currentPhase: String((legacyPhase as { current?: unknown }).current ?? "change"),
+        completedPhases: Array.isArray(legacy.completedPhases)
+          ? legacy.completedPhases
+          : Array.isArray(legacy.phases)
+            ? (legacy.phases as Array<{ id?: string; complete?: boolean }>)
+                .filter((phase) => phase.complete && typeof phase.id === "string")
+                .map((phase) => phase.id)
+            : [],
+        skippedPhases: Array.isArray(legacy.skippedPhases) ? legacy.skippedPhases : [],
+        strictDev: typeof legacy.strictDev === "boolean" ? legacy.strictDev : false,
+        autoHarness: typeof legacy.autoHarness === "boolean" ? legacy.autoHarness : false,
+        auxiliaryCompleted: Array.isArray(legacy.auxiliaryCompleted) ? legacy.auxiliaryCompleted : [],
+            createdAt: typeof legacy.createdAt === "string" ? legacy.createdAt : String(legacy.created ?? ""),
+        updatedAt: typeof legacy.updatedAt === "string" ? legacy.updatedAt : String(legacy.lastModified ?? legacy.created ?? ""),
+        workflowStatus: legacy.workflowStatus ?? (legacy.active === false ? "completed" : "active"),
+      }
+    : legacy;
+  const completedPhases = Array.isArray(modernRaw.completedPhases) ? modernRaw.completedPhases as PhaseId[] : [];
+  const skippedPhases = Array.isArray(modernRaw.skippedPhases) ? modernRaw.skippedPhases as PhaseId[] : [];
   const draft: ChangeState = {
-    ...raw,
-    profile: raw.profile ?? "full",
+    ...modernRaw,
+    profile: typeof modernRaw.profile === "string" ? modernRaw.profile as ChangeState["profile"] : "full",
     skippedPhases,
     completedPhases,
-    strictDev: raw.strictDev ?? false,
-    autoHarness: raw.autoHarness ?? false,
-    auxiliaryCompleted: raw.auxiliaryCompleted ?? [],
-    complexity: normalizeComplexity(raw.complexity),
-    currentPhase: normalizeCurrentPhase({ ...raw, completedPhases, skippedPhases }),
-  };
+    strictDev: modernRaw.strictDev === true,
+    autoHarness: modernRaw.autoHarness === true,
+    auxiliaryCompleted: Array.isArray(modernRaw.auxiliaryCompleted) ? modernRaw.auxiliaryCompleted as string[] : [],
+    complexity: normalizeComplexity(modernRaw.complexity),
+    currentPhase: normalizeCurrentPhase({ ...modernRaw, currentPhase: String(modernRaw.currentPhase ?? "change"), completedPhases, skippedPhases } as ChangeState),
+  } as ChangeState;
   const completed = isWorkflowCompleted(draft);
-  const workflowStatus =
-    raw.workflowStatus === "aborted"
+  const rawStatus = modernRaw.workflowStatus;
+  const workflowStatus: ChangeState["workflowStatus"] =
+    rawStatus === "aborted"
       ? "aborted"
-      : raw.workflowStatus === "completed" && !completed
+      : rawStatus === "completed" && !completed
         ? "active"
-        : (raw.workflowStatus ?? (completed ? "completed" : "active"));
+        : rawStatus === "completed" || rawStatus === "active"
+          ? rawStatus
+          : (completed ? "completed" : "active");
 
   return {
     ...draft,

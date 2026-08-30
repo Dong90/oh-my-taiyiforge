@@ -2,18 +2,21 @@ import fs from "node:fs";
 import path from "node:path";
 import type { ChangeState } from "./types.js";
 import { resolveChangeDir } from "./taiyi-archive.js";
+import { effectiveCompletedPhases, listPhases } from "./phase-registry.js";
 import { normalizeState } from "./normalize-state.js";
 
 export function expectedPhaseCount(state: ChangeState): number {
-  return 9 - (state.skippedPhases?.length ?? 0);
+  const registered = new Set(listPhases().map((phase) => phase.id));
+  const skipped = new Set(state.skippedPhases ?? []);
+  return [...registered].filter((phase) => !skipped.has(phase)).length;
 }
 
 function structurallyCompleted(state: ChangeState): boolean {
-  const total = expectedPhaseCount(state);
-  return (
-    state.completedPhases.length >= total &&
-    state.completedPhases.includes("integration")
-  );
+  const effective = new Set(effectiveCompletedPhases(state.completedPhases, state.skippedPhases));
+  const required = listPhases()
+    .map((phase) => phase.id)
+    .filter((phase) => !(state.skippedPhases ?? []).includes(phase));
+  return required.length > 0 && required.every((phase) => effective.has(phase));
 }
 
 /** 九阶段（含 profile 跳过）是否已全部完成 */

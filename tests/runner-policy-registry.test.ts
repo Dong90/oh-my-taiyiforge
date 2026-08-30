@@ -1,4 +1,4 @@
-import { describe, expect, it, beforeEach } from "vitest";
+import { describe, expect, it, beforeEach, afterEach } from "vitest";
 import {
   RunnerPolicyRegistry,
   getDefaultRunnerPolicyRegistry,
@@ -13,6 +13,11 @@ import { BUILTIN_RUNNER_POLICIES } from "../src/core/builtin-runner-policies.js"
 beforeEach(() => {
   resetDefaultRunnerPolicyRegistry();
   getDefaultRunnerPolicyRegistry();
+});
+
+afterEach(() => {
+  delete process.env.TAIYI_STRICT_CONFIG;
+  delete process.env.CI;
 });
 
 describe("runner-policy-registry: in-memory register/get/list", () => {
@@ -95,6 +100,63 @@ describe("runner-policy-registry: selectRunnerForPolicy", () => {
     const reg = getDefaultRunnerPolicyRegistry();
     reg.ensureBuiltins();
     expect(selectRunnerForPolicy("loop", reg)).toBe("loop");
+  });
+
+  it("v2.0: language-scoped policy resolves correctly when language is passed", () => {
+    // Repro of the regression found in review: a policy with languages=["python"]
+    // must not be misclassified as "unknown" when the caller knows the language.
+    const reg = new RunnerPolicyRegistry();
+    reg.register(
+      {
+        id: "py-fastapi",
+        runner: "ultrawork",
+        maxIterations: 50,
+        maxTokens: 100000,
+        autoHarness: false,
+        parallelism: 1,
+        verifyEachPhase: false,
+        languages: ["python"],
+      },
+      "yaml",
+    );
+    expect(selectRunnerForPolicy("py-fastapi", reg, "python")).toBe("ultrawork");
+  });
+
+  it("v2.0: scoped policy without language falls back through universal-check then to autopilot (NOT silent false-warning)", () => {
+    // Use a non-builtin id so the registration actually takes effect; with
+    // an id like "team" the register() call silently returns DUPLICATE
+    // (builtin protection), which would otherwise make this test a green
+    // herring covering the builtin, not the scoped fixture. The expected
+    // behavior chain:
+    //   1. get(id, undefined) → undefined (scoped, no language match)
+    //   2. language === undefined, so unfiltered fallback skips
+    //   3. id is not a runner name
+    //   4. log.warn + return "autopilot"
+    const reg = new RunnerPolicyRegistry();
+    const r = reg.register(
+      {
+        id: "py-scoped-policy",
+        runner: "ralph",
+        maxIterations: 50,
+        maxTokens: 100000,
+        autoHarness: false,
+        parallelism: 1,
+        verifyEachPhase: false,
+        languages: ["python"],
+      },
+      "yaml",
+    );
+    expect(r.ok).toBe(true); // sanity: registration must succeed
+
+    // No language + non-builtin id → fallback chain returns "autopilot"
+    expect(selectRunnerForPolicy("py-scoped-policy", reg)).toBe("autopilot");
+
+    // With matching language → resolves to the scoped runner
+    expect(selectRunnerForPolicy("py-scoped-policy", reg, "python")).toBe("ralph");
+
+    // With mismatched language → unfiltered-fallback also fails (id is not
+    // a universal policy, id is not a runner name) → still "autopilot"
+    expect(selectRunnerForPolicy("py-scoped-policy", reg, "rust")).toBe("autopilot");
   });
 });
 

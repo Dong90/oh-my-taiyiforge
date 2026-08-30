@@ -10,6 +10,11 @@ export type AgentRoleDef = {
   when: string;
   /** 本角色必须通过的引擎门控（TDD：先知道会被什么拦住，再写内容） */
   gateChecks?: string[];
+  /** v2.0: 语言专长。Optional.
+   *  - undefined: 通用角色，适用于所有语言
+   *  - 非空数组: 仅当项目语言在此列表中才匹配
+   *  默认所有现有角色均为通用；新增"语言专家"角色时可标注 */
+  languageSkills?: string[];
 };
 
 export const AGENT_ROLES: Record<string, AgentRoleDef> = {
@@ -259,6 +264,22 @@ export function rolesForPhase(phase: PhaseId): AgentRoleDef[] {
   return (PHASE_AGENT_ROLES[phase] ?? [])
     .map((id) => AGENT_ROLES[id])
     .filter((r): r is AgentRoleDef => Boolean(r));
+}
+
+/** v2.0: Returns true if a role's languageSkills matches the project language.
+ *  Universal role (no languageSkills or empty array) matches any language.
+ *  Scoped role matches only when language is in the array. */
+export function agentHasLanguage(role: AgentRoleDef, language: string | undefined): boolean {
+  const skills = role.languageSkills;
+  if (!skills || skills.length === 0) return true;
+  if (!language) return false;
+  return skills.includes(language);
+}
+
+/** v2.0: Returns roles for a phase filtered by project language. Universal roles
+ *  are always included. */
+export function rolesForLanguage(phase: PhaseId, language: string | undefined): AgentRoleDef[] {
+  return rolesForPhase(phase).filter((r) => agentHasLanguage(r, language));
 }
 
 export function formatAgentRoleProtocol(roleId: string, slug: string, phase: PhaseId): string {

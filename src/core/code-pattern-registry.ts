@@ -26,6 +26,19 @@ export const CodePatternDefinitionSchema = z
     templateFile: z.string().min(1),
     /** Default output file extension. Defaults to ".py" if not set. */
     outputExtension: z.string().default(".py"),
+    /** Multi-language mapping (v2.0). Optional.
+     *  Map: language → { templateFile, outputExtension } */
+    outputExtensionMap: z
+      .record(
+        z.string(),
+        z.object({
+          templateFile: z.string().min(1),
+          outputExtension: z.string().min(1),
+        }),
+      )
+      .optional(),
+    /** Languages this pattern supports (v2.0). Optional. */
+    languages: z.array(z.string()).optional(),
     /** Optional description for the agent. */
     description: z.string().optional(),
     /** Mark as builtin (cannot be overridden by non-builtin sources). */
@@ -139,7 +152,22 @@ export class CodePatternRegistry {
       .map((e) => e.def);
   }
 
-  resolve(pattern: string): Result<CodePatternDefinition, CodePatternError> {
+  /** Resolve a pattern, optionally overriding `templateFile` + `outputExtension`
+   *  for a specific project language. Precedence (v2.0, mirrors the schema's
+   *  invariant that `outputExtensionMap` keys must be a subset of `languages`):
+   *    1. No `language` argument  → return base definition unchanged.
+   *    2. `outputExtensionMap[language]` exists
+   *       → return definition with overridden template/outputExtension.
+   *    3. `languages` is set and excludes the requested language
+   *       → return NOT_FOUND.
+   *    4. Otherwise (universal pattern) → return base definition.
+   *
+   *  Why this precedence: `outputExtensionMap` describes a concrete override
+   *  (per-language template + extension) and is meaningful only when the
+   *  pattern *targets* that language. The `languages` allowlist is a
+   *  coarse-grained gate saying "this pattern applies to these languages."
+   *  Schema validation guarantees the map's keys are a subset of `languages`. */
+  resolve(pattern: string, language?: string): Result<CodePatternDefinition, CodePatternError> {
     this.ensureBuiltins();
     const entry = this.byPattern.get(pattern);
     if (!entry) {
@@ -152,7 +180,39 @@ export class CodePatternRegistry {
         },
       };
     }
-    return { ok: true, value: entry.def };
+    const def = entry.def;
+    if (!language) {
+      if (def.languages && def.languages.length > 0) {
+        return {
+          ok: false,
+          error: {
+            code: "NOT_FOUND",
+            message: `Pattern ${pattern} requires a project language: ${def.languages.join(", ")}`,
+            pattern,
+          },
+        };
+      }
+      return { ok: true, value: def };
+    }
+    if (def.outputExtensionMap && def.outputExtensionMap[language]) {
+      const override: CodePatternDefinition = {
+        ...def,
+        templateFile: def.outputExtensionMap[language].templateFile,
+        outputExtension: def.outputExtensionMap[language].outputExtension,
+      };
+      return { ok: true, value: override };
+    }
+    if (def.languages && def.languages.length > 0 && !def.languages.includes(language)) {
+      return {
+        ok: false,
+        error: {
+          code: "NOT_FOUND",
+          message: `Pattern ${pattern} not available for language: ${language}`,
+          pattern,
+        },
+      };
+    }
+    return { ok: true, value: def };
   }
 
   reset(): void {

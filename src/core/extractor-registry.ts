@@ -1,6 +1,7 @@
 import type { GraphNode, NodeKind } from "./change-graph/types.js";
 import type { PhaseId } from "./types.js";
 import { BUILTIN_EXTRACTORS } from "./builtin-extractors.js";
+import { matchesLanguage } from "./language-match.js";
 
 /** Context provided to an extractor function. The extract() function may call
  *  addItems/addScalar to add nodes, or return an explicit array of nodes. */
@@ -28,6 +29,11 @@ export type ExtractorDefinition = {
   name: string;
   /** True if this is a builtin (cannot be overridden by non-builtin sources). */
   builtin?: boolean;
+  /** Languages this extractor applies to (v2.0). Optional.
+   *  - undefined: language-agnostic, applies to all
+   *  - empty array: applies to all (explicit universal)
+   *  - non-empty: only applies when project language is in the list */
+  languages?: string[];
   /** The extractor function. Receives the phase JSON data and a context
    *  with helper methods; returns 0 or more GraphNode entities. */
   extract: (data: Record<string, unknown>, ctx: ExtractorContext) => GraphNode[];
@@ -109,14 +115,18 @@ export class ExtractorRegistry {
     return { ok: true, value: undefined };
   }
 
-  get(phase: string, name: string): ExtractorDefinition | undefined {
+  get(phase: string, name: string, language?: string): ExtractorDefinition | undefined {
     this.ensureBuiltins();
-    return this.byKey.get(`${phase}::${name}`)?.def;
+    const def = this.byKey.get(`${phase}::${name}`)?.def;
+    if (!def) return undefined;
+    if (matchesLanguage(def.languages, language)) return def;
+    return undefined;
   }
 
-  list(): ExtractorDefinition[] {
+  list(language?: string): ExtractorDefinition[] {
     this.ensureBuiltins();
     return [...this.byKey.values()]
+      .filter((e) => matchesLanguage(e.def.languages, language))
       .sort((a, b) => {
         const pa = SOURCE_PRIORITY[a.source];
         const pb = SOURCE_PRIORITY[b.source];
@@ -129,10 +139,13 @@ export class ExtractorRegistry {
       .map((e) => e.def);
   }
 
-  listByPhase(phase: string): ExtractorDefinition[] {
-    return this.list().filter((e) => e.phase === phase);
+  listByPhase(phase: string, language?: string): ExtractorDefinition[] {
+    return this.list(language).filter((e) => e.phase === phase);
   }
 
+  /** Phases discovered across all extractors (language-agnostic by design —
+   *  phases are a fixed axis of the framework; project language filters WHICH
+   *  extractors run, not WHICH phases exist). */
   listPhases(): string[] {
     return [...new Set(this.list().map((e) => e.phase))];
   }

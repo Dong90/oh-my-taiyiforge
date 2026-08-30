@@ -1,0 +1,27 @@
+{
+  "title": "E2E 集成测试：九阶段全流程",
+  "scope": "tests/core/ 目录下的 E2E 测试文件 — 无用户 UI，纯 CLI/引擎测试",
+  "styling_contract": {
+    "scheme": "",
+    "no_inline_styles": true,
+    "theme_var_only": true
+  },
+  "is_cli_only": true,
+  "component_name": "TestRunner",
+  "states": [
+    {
+      "name": "initialized",
+      "description": "测试环境已初始化，.taiyi/changes/{slug}/ 目录就绪，state.json 显示阶段 0"
+    },
+    {
+      "name": "phase_running",
+      "description": "当前阶段正在执行中，engine API 返回 currentPhase 为激活阶段"
+    },
+    {
+      "name": "phase_completed",
+      "description": "当前阶段 complete 成功，state.json 中 currentPhase 推进到下一阶段，artifact JSON 更新"
+    }
+  ],
+  "accessibility": [],
+  "links": []
+}
