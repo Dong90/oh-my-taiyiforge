@@ -182,6 +182,16 @@ export class CodePatternRegistry {
     }
     const def = entry.def;
     if (!language) {
+      if (def.languages && def.languages.length > 0) {
+        return {
+          ok: false,
+          error: {
+            code: "NOT_FOUND",
+            message: `Pattern ${pattern} requires a project language: ${def.languages.join(", ")}`,
+            pattern,
+          },
+        };
+      }
       return { ok: true, value: def };
     }
     if (def.outputExtensionMap && def.outputExtensionMap[language]) {

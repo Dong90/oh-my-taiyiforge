@@ -23,7 +23,9 @@
 import { WorkflowEngine } from "./workflow-engine.js";
 import type { ChangeProfile, ChangeState, PhaseId, GateInput } from "./types.js";
 import { resolveDefaultProfile } from "./project-config.js";
+import { resolveTaiyiRoot } from "./paths.js";
 import { resolveHbsTemplatesDir } from "./package-root.js";
+import { slugifyTitle } from "./active-slug.js";
 import { listChanges } from "./list-changes.js";
 import type { ListChangesOptions } from "./list-changes.js";
 
@@ -48,7 +50,7 @@ export class TaiyiAPI {
 
   constructor(workspaceDir: string) {
     this.engine = new WorkflowEngine(
-      workspaceDir,
+      resolveTaiyiRoot(workspaceDir),
       resolveHbsTemplatesDir(import.meta.url),
     );
   }
@@ -95,12 +97,7 @@ export class TaiyiAPI {
   }
 
   private slugify(title: string): string {
-    return title
-      .toLowerCase()
-      .replace(/[^a-z0-9\s-]/g, "")
-      .replace(/\s+/g, "-")
-      .replace(/-+/g, "-")
-      .slice(0, 48);
+    return slugifyTitle(title);
   }
 }
 
