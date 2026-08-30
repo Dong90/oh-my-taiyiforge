@@ -4,6 +4,7 @@ from __future__ import annotations
 import logging
 from typing import Final
 
+from pydantic import model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -31,6 +32,14 @@ class Settings(BaseSettings):
     APP_PORT: int = 8000
     LOG_LEVEL: str = "INFO"
 
+    # ── Provider ───────────────────────────────────────────────────
+    LLM_PROVIDER: str = "openai"
+
+    # ── Atlas Cloud ───────────────────────────────────────────────
+    ATLASCLOUD_API_KEY: str = ""
+    ATLASCLOUD_BASE_URL: str = "https://api.atlascloud.ai/v1"
+    ATLASCLOUD_MODEL: str = "deepseek-ai/deepseek-v4-pro"
+
     # ── OpenAI ──────────────────────────────────────────────────────────
     OPENAI_API_KEY: str = ""
     OPENAI_MODEL: str = "gpt-4o-mini"
@@ -38,6 +47,15 @@ class Settings(BaseSettings):
     OPENAI_TIMEOUT_SECONDS: int = 30
     OPENAI_MAX_TOKENS: int = 1024
     OPENAI_TEMPERATURE: float = 0.3
+
+    @model_validator(mode="after")
+    def resolve_provider(self) -> "Settings":
+        """Map provider presets onto the existing OpenAI-compatible client."""
+        if self.LLM_PROVIDER.lower() == "atlascloud":
+            self.OPENAI_API_KEY = self.ATLASCLOUD_API_KEY
+            self.OPENAI_BASE_URL = self.ATLASCLOUD_BASE_URL
+            self.OPENAI_MODEL = self.ATLASCLOUD_MODEL
+        return self
 
     def validate_required(self) -> None:
         """Check that all required values are present.
@@ -47,7 +65,11 @@ class Settings(BaseSettings):
         """
         missing: list[str] = []
         if not self.OPENAI_API_KEY:
-            missing.append("OPENAI_API_KEY")
+            missing.append(
+                "ATLASCLOUD_API_KEY"
+                if self.LLM_PROVIDER.lower() == "atlascloud"
+                else "OPENAI_API_KEY"
+            )
         if missing:
             msg = f"Missing required environment variables: {', '.join(missing)}"
             raise ConfigError(msg)
