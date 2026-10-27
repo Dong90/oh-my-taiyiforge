@@ -40,6 +40,11 @@ class Settings(BaseSettings):
     ATLASCLOUD_BASE_URL: str = "https://api.atlascloud.ai/v1"
     ATLASCLOUD_MODEL: str = "deepseek-ai/deepseek-v4-pro"
 
+    # ── Cheaper Inference ─────────────────────────────────────────
+    CHEAPERINFERENCE_API_KEY: str = ""
+    CHEAPERINFERENCE_BASE_URL: str = "https://api.cheaperinference.com/v1"
+    CHEAPERINFERENCE_MODEL: str = "gpt-5.4-mini"
+
     # ── OpenAI ──────────────────────────────────────────────────────────
     OPENAI_API_KEY: str = ""
     OPENAI_MODEL: str = "gpt-4o-mini"
@@ -55,6 +60,10 @@ class Settings(BaseSettings):
             self.OPENAI_API_KEY = self.ATLASCLOUD_API_KEY
             self.OPENAI_BASE_URL = self.ATLASCLOUD_BASE_URL
             self.OPENAI_MODEL = self.ATLASCLOUD_MODEL
+        elif self.LLM_PROVIDER.lower() == "cheaperinference":
+            self.OPENAI_API_KEY = self.CHEAPERINFERENCE_API_KEY
+            self.OPENAI_BASE_URL = self.CHEAPERINFERENCE_BASE_URL
+            self.OPENAI_MODEL = self.CHEAPERINFERENCE_MODEL
         return self
 
     def validate_required(self) -> None:
@@ -66,9 +75,10 @@ class Settings(BaseSettings):
         missing: list[str] = []
         if not self.OPENAI_API_KEY:
             missing.append(
-                "ATLASCLOUD_API_KEY"
-                if self.LLM_PROVIDER.lower() == "atlascloud"
-                else "OPENAI_API_KEY"
+                {
+                    "atlascloud": "ATLASCLOUD_API_KEY",
+                    "cheaperinference": "CHEAPERINFERENCE_API_KEY",
+                }.get(self.LLM_PROVIDER.lower(), "OPENAI_API_KEY")
             )
         if missing:
             msg = f"Missing required environment variables: {', '.join(missing)}"

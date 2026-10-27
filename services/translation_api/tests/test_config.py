@@ -46,3 +46,21 @@ class TestSettings:
 
         with pytest.raises(ConfigError, match="ATLASCLOUD_API_KEY"):
             s.validate_required()
+
+    def test_cheaperinference_provider_maps_openai_compatible_settings(self):
+        s = Settings(
+            LLM_PROVIDER="cheaperinference",
+            CHEAPERINFERENCE_API_KEY="ci-test",
+        )
+
+        s.validate_required()
+
+        assert s.OPENAI_API_KEY == "ci-test"
+        assert s.OPENAI_BASE_URL == "https://api.cheaperinference.com/v1"
+        assert s.OPENAI_MODEL == "gpt-5.4-mini"
+
+    def test_cheaperinference_provider_requires_cheaperinference_key(self):
+        s = Settings(LLM_PROVIDER="cheaperinference", CHEAPERINFERENCE_API_KEY="")
+
+        with pytest.raises(ConfigError, match="CHEAPERINFERENCE_API_KEY"):
+            s.validate_required()
